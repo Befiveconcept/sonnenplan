@@ -680,6 +680,24 @@ details.pf:not([open])>summary{border-bottom:0}
 .ch-last{display:block;font-size:11.5px;color:var(--muted);font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px}
 .ch-newteam{margin:0 0 8px;flex:none;justify-content:center}
 .who-chip.team{background:var(--sun)}
+/* Projektverlauf: Updates an Notizen, Themen-Wörter */
+.lnk{background:none;border:0;padding:0;color:var(--muted);font-size:12.5px;cursor:pointer;font-weight:500}
+.lnk:hover{color:var(--ink);text-decoration:underline}
+.vl-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:6px}
+.vl-tog{color:#7a6a00;font-weight:600}
+.vl-acts{display:inline-flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap}
+.vl-acts .icon-btn{width:26px;height:26px}
+.vl-ups{margin:8px 0 0 6px;border-left:3px solid var(--sun);padding-left:12px;display:flex;flex-direction:column;gap:6px}
+.vl-up{padding:4px 0}
+.vl-um{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vl-ut{font-size:14px;line-height:1.5;white-space:pre-wrap}
+.tw{text-decoration:underline;text-decoration-color:var(--sun);text-decoration-thickness:2px;text-underline-offset:3px;cursor:pointer;border-radius:3px}
+.tw:hover{background:var(--sun-soft)}
+.vl-sug{background:var(--sun-soft);border:1px solid var(--sun);border-radius:10px;padding:8px 12px;font-size:13.5px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.vl-tl{border-left:2px solid var(--line);margin-left:6px;padding-left:14px;display:flex;flex-direction:column;gap:6px}
+.vl-tl>div{position:relative;font-size:14px;line-height:1.5}
+.vl-tl>div::before{content:'';position:absolute;left:-20px;top:7px;width:10px;height:10px;border-radius:50%;background:var(--sun)}
+.menu{max-height:80vh;overflow:auto}
 #printArea{display:none}
 @media print{
   .pr-land{page:land}
@@ -2265,7 +2283,6 @@ function projStatus(p){
   const ms=p.ms||{}, pp=pipe(p);
   const adm=isAdmin();
   // Aufbau ohne langes Scrollen: links Notizen (neueste 3 sichtbar, Rest aufklappbar), rechts To-Dos + Statusverlauf
-  if(SAMPLE) setTimeout(()=>noteHeadsFill(p.id),400);
   const nbKey=np=>{ const m=String(np.d||'').match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})?/); if(!m) return ''; const y=m[3]?(m[3].length===2?'20'+m[3]:m[3]):TODAY().slice(0,4); return y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0')+' '+(np.tm||'00:00'); };
   const nbCard=(b,k,i)=>{ const nb=noteParts(b), hd=noteHead(p,b);
     return `<div class="nb"><div class="nb-h"><b class="${hd.ai?'':'nb-auto'}">${esc(hd.t)}</b><span class="nb-meta">${esc([nb.d,nb.tm,nb.by].filter(Boolean).join(' · '))}${k==='notes'?' · Notiz':''}</span>${adm?`<span class="nb-a"><button class="icon-btn" title="Eintrag bearbeiten" data-act="editNoteBlock" data-pid="${p.id}" data-k="${k}" data-i="${i}">${ic('edit')}</button><button class="icon-btn" title="Eintrag löschen" data-act="delNoteBlock" data-pid="${p.id}" data-k="${k}" data-i="${i}">${ic('x')}</button></span>`:''}</div><div class="nb-t">${esc(shortMailRefs(nb.text))}</div></div>`; };
@@ -2281,9 +2298,7 @@ function projStatus(p){
   <div class="card ps-notes"><div class="card-h"><h3>Notizen & Updates</h3><span class="small muted">${allNb.length} Einträge · neueste oben</span></div><div class="card-b" style="display:flex;flex-direction:column;gap:12px">
     <div class="quick-note"><textarea id="qn_${p.id}" rows="2" placeholder="Neue Notiz … (Datum und Kürzel ${esc(meK())} kommen automatisch dazu, Strg+Enter speichert)" aria-label="Neue Notiz">${esc(QN[p.id]||'')}</textarea>
       <div class="row"><select class="catsel" id="qnf_${p.id}" aria-label="Ablegen unter"><option value="updates">als Update</option><option value="notes">als Notiz</option><option value="questions">als offene Frage</option></select><span class="spacer"></span><button class="btn pri sm" data-act="quickNote" data-pid="${p.id}">Speichern</button></div></div>
-    <div class="nb-list">${top3.map(x=>nbCard(x.b,x.k,x.i)).join('')||'<div class="empty">Noch keine Notizen.</div>'}</div>
-    ${restN||p.scope||p.questions||arr('tasks').some(t=>t.pid===p.id&&(t.upd2||[]).length)?`<details class="nb-more" ${UI.nbAll?'open':''} data-nball="1"><summary>${restN?`Ältere Notizen & Updates (${restN})`:'Weitere Einträge'}${p.questions?' · offene Fragen':''}${p.scope?' · Auftrag':''} anzeigen</summary>
-      <div style="display:flex;flex-direction:column;gap:14px;margin-top:10px">${txt('Zu klärende Fragen',p.questions,'questions')}${txt('Updates',p.updates,'updates')}${txt('Notizen',p.notes,'notes')}${todoUpdBlock(p)}${txt('Auftrag Inhalt',p.scope,'scope')}</div></details>`:''}
+    ${projVerlauf(p,adm)}
   </div></div>
    <details class="card st-det" ${UI.stOpen?'open':''} data-stdet="1"><summary class="card-h"><h3>Statusverlauf <span class="mono small muted">${pp.work}/${pp.total}</span></h3><span class="small muted">aufklappen · Haken setzt das heutige Datum · ⊘ = Schritt entfällt</span></summary>
     <div class="flow-pick"><label for="flow_${p.id}">Projektart / Ablauf</label><select id="flow_${p.id}" class="inp" data-chg="projFlow" data-pid="${p.id}">${Object.entries(FLOWS).map(([k,f])=>`<option value="${k}" ${k===flowId(p)?'selected':''}>${esc(f.n)}</option>`).join('')}</select></div>
@@ -2336,7 +2351,7 @@ const fixNames=s=>NAME_FIX.reduce((t,[rx,to])=>t.replace(rx,to),String(s||''));
 function saveNote(pid,f,text){
   text=fixNames(String(text||'').trim()); if(!text) return false;
   const p=clone(S.projects[pid]); const d0=new Date(), stamp=nowStamp();
-  p[f]=(p[f]?p[f].replace(/\s+$/,'')+'\n':'')+stamp+' ('+meK()+'): '+text; delete p.now; delete p.nowD; put('projects',p); toast('Notiz gespeichert.'); suggestTodos(pid,text);
+  p[f]=(p[f]?p[f].replace(/\s+$/,'')+'\n':'')+stamp+' ('+meK()+'): '+text; delete p.now; delete p.nowD; put('projects',p); toast('Notiz gespeichert.'); VL_NEW.add(strHash(text)); suggestTodos(pid,text);
 }
 // Notiztext in Einträge zerlegen: ein Eintrag beginnt mit einem Datum (z. B. „22.10.26:“), Folgezeilen gehören dazu
 // Zeitstempel fuer neue Eintraege: TT.MM.JJ HH:MM
@@ -3907,7 +3922,10 @@ const A = {
    onSave:v=>{ const items=((S.config||{}).checkItems||[]).concat([{id:'ci_'+uid(),t:v.t,ph:v.ph,r:v.r}]); saveTpl({checkItems:items}); checkSet(items[items.length-1].id,true); }}),
  openPick:d=>{ UI.stockTab='listen'; go('stock'); },
  newMenu:(d,el)=>showMenu(el,[['newProject','Projekt','proj'],['newTask','To-Do','todo'],['newEvent','Termin','cal'],['newOrder','Bestellung','box'],['newOffer','Angebot','offer'],['newReport','Tagesrapport','report']].map(x=>{ if(UI.view==='project'&&x[0]!=='newProject') x[3]=`data-pid="${UI.pid}"`; return x; })),
- moreMenu:(d,el)=>showMenu(el,[['askMe','Ich bin: '+(ME?meK():'?')+' · ändern','assign'],['nav','Bestellungen & Wareneingänge','box','data-v="orders"'],['nav','Lagerverwaltung','stock','data-v="stock"'],['nav','Datenablage','files','data-v="files"'],['nav','Angebote','offer','data-v="offers"'],['nav','Tagesrapporte','report','data-v="reports"'],['nav','Vorlagen & Checklisten','tpl','data-v="templates"'],['nav','Team & Einstellungen','gear','data-v="settings"'],...(canSeeActivity()?[['nav','Aktivität (wer hat was gemacht)','form','data-v="activity"']]:[])]),
+ // Handy-Menü „Mehr“ = dieselben Rubriken wie die Seitenleiste am Desktop (ohne die 4 Tabs unten)
+ moreMenu:(d,el)=>showMenu(el,[['askMe','Ich bin: '+(ME?meK():'?'),'assign'],
+   ...NAV.filter(n=>canSee(n[0])&&!['dash','projects','week'].includes(n[0])).map(([v,l,i,parent])=>['nav',(parent?'– ':'')+l,i,`data-v="${v}"`]),
+   ...(window.SB_LOGOUT?[['sbLogout','Abmelden','lock']]:[])]),
  newProject:()=>projectForm(), editProject:d=>projectForm(S.projects[d.id]),
  openProject:d=>{ if(!d.id) return; if(UI.pid!==d.id&&!d.keep) UI.ptab='status'; go('project',d.id); },
  newTask:d=>taskForm(null,{pid:d.pid||''}), editTask:d=>S.tasks[d.id]&&taskForm(S.tasks[d.id]),
@@ -4879,6 +4897,103 @@ Mach daraus sauberen, sinnvollen Text: Satzzeichen und Groß-/Kleinschreibung, o
   t.dispatchEvent(new Event('input',{bubbles:true})); t.dispatchEvent(new Event('change',{bubbles:true}));
   VOICE_EL=t; voicePlace();
 }
+
+/* ========== Projektverlauf: Notizen mit angehängten Updates und Themen-Wörtern ========== */
+// Einträge bleiben Text in p.notes / p.updates. Zusätzlich je Eintrag (am Text-Hash):
+//   p.threads[kind]=eltern   (Update hängt an einer Notiz)      p.threadsMan[kind]=1  (von Hand gesetzt → Claude ändert nicht)
+//   p.noteTopics[h]=[Wörter] (von Claude)                       p.topicsMan[h]={add:[],del:[]} (von Hand)
+//   p.vlDone[h]=1            (Claude hat den Eintrag ausgewertet)
+const VL_NEW=new Set(); // in dieser Sitzung neu geschrieben → Claude schlägt Zuordnung vor statt sie selbst zu setzen
+function vlEntries(p){
+  const key=np=>{ const m=String(np.d||'').match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})?/); if(!m) return ''; const y=m[3]?(m[3].length===2?'20'+m[3]:m[3]):TODAY().slice(0,4); return y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0')+' '+(np.tm||'00:00'); };
+  return ['notes','updates'].flatMap(k=>noteBlocks(p[k]).map((b,i)=>{ const np=noteParts(b); return {k,i,b,np,h:strHash(np.text),key:key(np)}; })).filter(e=>e.np.text);
+}
+function vlTopics(p,h){ const ai=(p.noteTopics||{})[h]||[], man=(p.topicsMan||{})[h]||{}; return [...new Set(ai.filter(w=>!(man.del||[]).includes(w)).concat(man.add||[]))].filter(Boolean); }
+// Baum: Wurzeln (eigene Notizen) mit ihren Updates; Ketten werden auf die oberste Notiz zusammengezogen
+function vlTree(p){
+  const es=vlEntries(p), byH={}; es.forEach(e=>{ if(!byH[e.h]) byH[e.h]=e; });
+  const th=p.threads||{}, root=e=>{ let x=e, seen=0; while(th[x.h]&&byH[th[x.h]]&&byH[th[x.h]]!==x&&seen++<10) x=byH[th[x.h]]; return x; };
+  const roots=[], kids={};
+  es.forEach(e=>{ const r=root(e); if(r===e) roots.push(e); else (kids[r.h]=kids[r.h]||[]).push(e); });
+  roots.forEach(r=>{ r.kids=(kids[r.h]||[]).sort((a,b)=>b.key.localeCompare(a.key)); r.last=[r.key,...r.kids.map(k=>k.key)].sort().pop(); });
+  return roots.sort((a,b)=>b.last.localeCompare(a.last));
+}
+// Themen-Wörter im Text unterstreichen (anklickbar → Pop-up mit der Geschichte des Themas)
+function vlMark(text,words){ let s=esc(shortMailRefs(text)); const ws=[...words].sort((a,b)=>b.length-a.length);
+  ws.forEach(w=>{ const e=esc(w).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); s=s.replace(new RegExp('(^|[^\\wäöüÄÖÜß>])('+e+')(?![\\wäöüÄÖÜß])','i'),(m,a,b)=>a+`<span class="tw" data-act="vlTopic" data-w="${esc(w)}" title="Alles zum Thema „${esc(w)}“">${b}</span>`); });
+  return s; }
+function vlCard(p,e,adm,child){
+  const hd=noteHead(p,e.b), np=e.np, meta=[np.d,np.tm,np.by].filter(Boolean).join(' · '), tp=vlTopics(p,e.h);
+  const acts=`<span class="vl-acts">${child?'':`<button class="lnk" data-act="vlAdd" data-pid="${p.id}" data-h="${e.h}">Update dazu</button>`}<button class="lnk" data-act="vlLink" data-pid="${p.id}" data-h="${e.h}">Zuordnen</button><button class="lnk" data-act="vlTopicsEdit" data-pid="${p.id}" data-h="${e.h}">Themen</button>${adm?`<button class="icon-btn" title="Bearbeiten" data-act="editNoteBlock" data-pid="${p.id}" data-k="${e.k}" data-i="${e.i}">${ic('edit')}</button><button class="icon-btn" title="Löschen" data-act="delNoteBlock" data-pid="${p.id}" data-k="${e.k}" data-i="${e.i}">${ic('x')}</button>`:''}</span>`;
+  if(child) return `<div class="vl-up"><div class="vl-um"><span class="nb-meta">${esc(meta)}</span>${acts}</div><div class="vl-ut">${vlMark(np.text,tp)}</div></div>`;
+  const n=(e.kids||[]).length, open=UI.vlOpen&&UI.vlOpen[e.h];
+  return `<div class="nb vl-nb"><div class="nb-h"><b class="${hd.ai?'':'nb-auto'}">${esc(hd.t)}</b><span class="nb-meta">${esc(meta)}${e.k==='notes'?' · Notiz':''}</span></div>
+    <div class="nb-t">${vlMark(np.text,tp)}</div>
+    <div class="vl-bar">${n?`<button class="lnk vl-tog" data-act="vlToggle" data-h="${e.h}">${open?'▾ ':'▸ '}${n} Update${n>1?'s':''} · zuletzt ${esc(e.kids[0].np.d.slice(0,6))}</button>`:''}${acts}</div>
+    ${n&&open?`<div class="vl-ups">${e.kids.map(k=>vlCard(p,k,adm,true)).join('')}</div>`:''}</div>`;
+}
+function projVerlauf(p,adm){
+  if(SAMPLE) setTimeout(()=>vlFill(p.id),400);
+  const roots=vlTree(p), top=roots.slice(0,3), rest=roots.slice(3), sg=UI.vlSug&&UI.vlSug.pid===p.id?UI.vlSug:null;
+  return `${sg?`<div class="vl-sug">✨ Gehört das zu „<b>${esc(sg.title)}</b>“ vom ${esc(sg.date)}? <button class="btn sm pri" data-act="vlSugYes" data-pid="${p.id}">Als Update anhängen</button><button class="btn sm" data-act="vlSugNo">Eigene Notiz</button></div>`:''}
+    <div class="nb-list">${top.map(e=>vlCard(p,e,adm,false)).join('')||'<div class="empty">Noch keine Notizen.</div>'}</div>
+    ${rest.length||p.questions||p.scope?`<details class="nb-more" ${UI.nbAll?'open':''} data-nball="1"><summary>${rest.length?`Ältere Notizen (${rest.length})`:'Weitere Einträge'}${p.questions?' · offene Fragen':''}${p.scope?' · Auftrag':''} anzeigen</summary>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px"><div class="nb-list">${rest.map(e=>vlCard(p,e,adm,false)).join('')}</div>
+      ${p.questions?`<div><div class="eyebrow nb-eb"><span>Zu klärende Fragen</span></div><div class="longtext">${esc(p.questions)}</div></div>`:''}${p.scope?`<div><div class="eyebrow nb-eb"><span>Auftrag Inhalt</span></div><div class="longtext">${esc(p.scope)}</div></div>`:''}</div></details>`:''}`;
+}
+// Claude: Überschrift, Zuordnung (Update zu welcher Notiz?) und Themen-Wörter je Eintrag – einmal pro Eintrag
+const VL_RUN={}, VL_TRIED={};
+async function vlFill(pid){
+  const p=S.projects[pid]; if(!p||!SAMPLE||VL_RUN[pid]) return;
+  const es=vlEntries(p).sort((a,b)=>a.key.localeCompare(b.key)), done=p.vlDone||{}, heads=p.noteHeads||{};
+  const todo=es.map((e,i)=>({e,i})).filter(({e})=>(!done[e.h]||!heads[e.h])&&!VL_TRIED[e.h]).slice(-30); if(!todo.length) return;
+  VL_RUN[pid]=true; todo.forEach(({e})=>VL_TRIED[e.h]=1);
+  const list=es.map((e,i)=>(i+1)+'. ['+e.key.slice(0,10)+'] '+e.np.text.slice(0,400)).join('\n').slice(-14000);
+  try{ const r=await SAMPLE.json(`Projekt „${p.name}“ eines Solar-Installationsbetriebs. Alle Notizen/Updates, älteste zuerst:\n${list}
+Für die Einträge Nr. ${todo.map(x=>x.i+1).join(', ')}:
+- h: kurze Überschrift (2–5 Wörter, keine Personennamen)
+- p: Nummer eines FRÜHEREN Eintrags, zu dem dieser Eintrag ein Update/Fortschritt/Erledigung ist (gleiche Sache) – sonst 0. Nur bei klarem Bezug.
+- t: 1–3 Themen-Wörter, die GENAU so im Text vorkommen (z. B. „Westnetz“, „Kran-Firma“, „Zählerschrank“) – Firmen, Bauteile, Vorgänge; keine Personen, keine Allerweltswörter.
+Antworte nur mit JSON: {"items":[{"n":Nummer,"h":"…","p":0,"t":["…"]}]}`,{modelTier:'quick',bg:true});
+    const cur=clone(S.projects[pid]); if(!cur) return; const th={...(cur.threads||{})}, man=cur.threadsMan||{}, tp={...(cur.noteTopics||{})}, hd={...(cur.noteHeads||{})}, dn={...(cur.vlDone||{})};
+    let sug=null;
+    (r&&Array.isArray(r.items)?r.items:[]).forEach(it=>{ const e=es[(+it.n||0)-1]; if(!e) return; dn[e.h]=1;
+      if(String(it.h||'').trim()) hd[e.h]=String(it.h).trim().slice(0,60);
+      tp[e.h]=(Array.isArray(it.t)?it.t:[]).map(w=>String(w).trim()).filter(w=>w&&e.np.text.toLowerCase().includes(w.toLowerCase())).slice(0,3);
+      const par=es[(+it.p||0)-1];
+      if(par&&par.key<=e.key&&par.h!==e.h&&!man[e.h]){ if(VL_NEW.has(e.h)) sug={pid,h:e.h,parent:par.h,title:hd[par.h]||noteHead(cur,par.b).t,date:par.np.d}; else th[e.h]=par.h; } });
+    const upd={threads:th,noteTopics:tp,noteHeads:hd,vlDone:dn}; Object.assign(S.projects[pid],upd);
+    if(MODE==='cloud'&&DB&&mayWrite('projects')) DB.collection('projects').doc(pid).update(upd).catch(()=>{});
+    if(sug) UI.vlSug=sug; scheduleRender(); }
+  catch(e){} finally{ VL_RUN[pid]=false; }
+}
+function vlSet(pid,fn,msg){ const p=clone(S.projects[pid]); if(!p) return; fn(p); put('projects',p); if(msg) toast(msg); }
+Object.assign(A,{
+ vlToggle:d=>{ UI.vlOpen={...(UI.vlOpen||{}),[d.h]:!(UI.vlOpen||{})[d.h]}; render(); },
+ vlSugYes:d=>{ const s=UI.vlSug; UI.vlSug=null; if(!s) return render(); vlSet(s.pid,p=>{ p.threads={...(p.threads||{}),[s.h]:s.parent}; p.threadsMan={...(p.threadsMan||{}),[s.h]:1}; },'Als Update angehängt.'); UI.vlOpen={...(UI.vlOpen||{}),[s.parent]:true}; },
+ vlSugNo:()=>{ const s=UI.vlSug; UI.vlSug=null; if(s) vlSet(s.pid,p=>{ p.threadsMan={...(p.threadsMan||{}),[s.h]:1}; }); else render(); },
+ vlAdd:d=>{ const p=S.projects[d.pid], par=vlEntries(p).find(e=>e.h===d.h); if(!par) return;
+   openSheet({title:'Update zu „'+noteHead(p,par.b).t+'“',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:6px">${esc(par.np.d)} · ${esc(shortMailRefs(par.np.text).slice(0,200))}</div><textarea id="vl_t" class="inp" rows="4" style="width:100%" placeholder="Was ist neu? (Datum, Uhrzeit und Kürzel kommen automatisch dazu)"></textarea></div>`,saveLabel:'Update speichern',
+     onSave:()=>{ const t=fixNames(($('#vl_t').value||'').trim()); if(t.length<3){ toast('Bitte kurz beschreiben, was neu ist.'); return false; }
+       vlSet(d.pid,pp=>{ pp.updates=(pp.updates?pp.updates.replace(/\s+$/,'')+'\n':'')+nowStamp()+' ('+meK()+'): '+t; delete pp.now; delete pp.nowD; const h=strHash(t); pp.threads={...(pp.threads||{}),[h]:d.h}; pp.threadsMan={...(pp.threadsMan||{}),[h]:1}; },'Update angehängt.');
+       UI.vlOpen={...(UI.vlOpen||{}),[d.h]:true}; }}); },
+ vlLink:d=>{ const p=S.projects[d.pid], es=vlEntries(p), me=es.find(e=>e.h===d.h); if(!me) return; const cur=(p.threads||{})[d.h]||'';
+   const opts=vlTree(p).filter(r=>r.h!==d.h).map(r=>`<option value="${r.h}" ${r.h===cur?'selected':''}>${esc(r.np.d)} · ${esc(noteHead(p,r.b).t)}</option>`).join('');
+   openSheet({title:'Eintrag zuordnen',html:`<div class="fld full"><div class="small muted" style="margin-bottom:6px">${esc(me.np.d)} · ${esc(shortMailRefs(me.np.text).slice(0,160))}</div><label for="vl_p">Gehört als Update zu</label><select id="vl_p" class="inp"><option value="">– eigene Notiz (keinem Eintrag zugeordnet) –</option>${opts}</select></div>`,saveLabel:'Übernehmen',
+     onSave:()=>{ const v=$('#vl_p').value; vlSet(d.pid,pp=>{ const th={...(pp.threads||{})}; if(v) th[d.h]=v; else delete th[d.h]; pp.threads=th; pp.threadsMan={...(pp.threadsMan||{}),[d.h]:1}; },v?'Zugeordnet.':'Als eigene Notiz geführt.'); if(v) UI.vlOpen={...(UI.vlOpen||{}),[v]:true}; }}); },
+ vlTopicsEdit:d=>{ const p=S.projects[d.pid], tp=vlTopics(p,d.h);
+   openSheet({title:'Themen-Wörter',html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Unterstrichene Wörter öffnen beim Anklicken alles zu diesem Thema. Das Wort muss so im Text stehen.</div>
+     <div id="vl_tp">${tp.map(w=>`<label class="mt-opt" style="padding:3px 0"><input type="checkbox" class="ck vl-keep" value="${esc(w)}" checked><span>${esc(w)}</span></label>`).join('')||'<div class="small muted">Noch keine Themen.</div>'}</div>
+     <label for="vl_add" style="margin-top:10px;display:block">Weitere Wörter (mit Komma trennen)</label><input id="vl_add" class="inp" placeholder="z. B. Westnetz, Zählerschrank"></div>`,saveLabel:'Speichern',
+     onSave:()=>{ const keep=[...document.querySelectorAll('.vl-keep')].filter(c=>c.checked).map(c=>c.value), drop=[...document.querySelectorAll('.vl-keep')].filter(c=>!c.checked).map(c=>c.value), add=($('#vl_add').value||'').split(',').map(s=>s.trim()).filter(Boolean);
+       vlSet(d.pid,pp=>{ const m={...(pp.topicsMan||{})}, o=m[d.h]||{add:[],del:[]}; m[d.h]={add:[...new Set([...(o.add||[]).filter(w=>!drop.includes(w)),...add])],del:[...new Set([...(o.del||[]).filter(w=>!add.includes(w)),...drop])]}; pp.topicsMan=m; },'Themen gespeichert.'); }}); },
+ vlTopic:d=>{ const p=S.projects[UI.pid], w=String(d.w||''), lw=w.toLowerCase(); if(!p||!w) return;
+   const items=vlEntries(p).filter(e=>e.np.text.toLowerCase().includes(lw)).map(e=>({key:e.key,lbl:e.np.d+(e.np.by?' '+e.np.by:''),t:shortMailRefs(e.np.text)}));
+   arr('tasks').filter(t=>t.pid===p.id).forEach(t=>{ if([t.title,t.notes].join(' ').toLowerCase().includes(lw)) items.push({key:String(t.at||'').slice(0,10)+' 99',lbl:'To-Do'+(t.done?' ✓':''),t:t.title+(t.who?' · '+shortWho(t.who):'')+(t.due?' · fällig '+fmtD(t.due):''),task:t.id});
+     (t.upd2||[]).forEach(u=>{ if(String(u.t).toLowerCase().includes(lw)||[t.title].join(' ').toLowerCase().includes(lw)) items.push({key:u.d+' '+(updTime(u)||''),lbl:fmtD(u.d)+' '+(u.by||''),t:'To-Do-Update: '+u.t}); }); });
+   items.sort((a,b)=>a.key.localeCompare(b.key));
+   openSheet({title:'Thema: '+w,wide:1,html:`<div class="fld full"><div class="vl-tl">${items.map(x=>`<div>${x.task?`<button class="lnk" data-act="editTask" data-id="${x.task}">`:''}<span class="nb-meta">${esc(x.lbl)}</span> ${esc(x.t)}${x.task?'</button>':''}</div>`).join('')||'<div class="small muted">Nichts gefunden.</div>'}</div></div>`,saveLabel:'Schließen',onSave:()=>{}}); },
+});
 // Aufklappen der Updates am To-Do öffnet nicht gleich das To-Do
 document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('.tu-inl')) e.stopPropagation(); },true);
 Object.assign(CHG,{ prioSelCls:(d,el)=>{ el.className='inp prio-sel p-'+el.value; }, mtAllP:(d,el)=>{ if(el.value==='__keep') return; document.querySelectorAll('#mt_list .mt-p').forEach(s=>{ s.value=el.value; s.classList.toggle('none',!el.value); }); }, mtRowP:(d,el)=>el.classList.toggle('none',!el.value), todoSort:(d,el)=>{ UI.todoSort=el.value; saveUI(); render(); } });
