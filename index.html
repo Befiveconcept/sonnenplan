@@ -590,6 +590,10 @@ details.pf:not([open])>summary{border-bottom:0}
 .sheet .smart-act input[type=radio]{width:18px!important;height:18px;min-width:0;flex:none;margin-top:3px;padding:0;accent-color:var(--primary)}
 .sheet .smart-act select{width:100%}
 .smart-act select{margin-top:4px;max-width:420px}
+.sm-rel{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.sm-rel-row{background:var(--sun-soft);border-left:3px solid var(--sun);border-radius:0 10px 10px 0;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.sm-rel-a{display:grid;grid-template-columns:220px minmax(0,1fr);gap:6px;padding-left:28px}
+@media (max-width:640px){ .sm-rel-a{grid-template-columns:1fr;padding-left:0} }
 #printArea{display:none}
 @media print{
   .pr-land{page:land}
@@ -4354,7 +4358,8 @@ const SMART_ACTS={
   delivery:{l:'Wareneingang: Lieferschein abgleichen',d:'Mit der offenen Bestellung vergleichen und zeigen, was fehlt'},
   todos:{l:'To-Dos daraus erstellen',d:'Aufgaben, Zuständige und Fristen erkennen, mit bestehenden To-Dos abgleichen'},
   note:{l:'Als Notiz ins Projekt',d:'Text als Update in die Projekt-Notizen (mit Kürzel)'},
-  file:{l:'In der Datenablage ablegen',d:'Einheitlich benennen, Art und Projekt zuordnen (Mails unter Korrespondenz)'}};
+  file:{l:'In der Datenablage ablegen',d:'Einheitlich benennen, Art und Projekt zuordnen (Mails unter Korrespondenz)'},
+  none:{l:'Sonst nichts – nur die bestehenden To-Dos aktualisieren',d:'Nur die oben markierten To-Do-Updates speichern'}};
 const SMART_TYPES={bestellung:'Bestellung',ab:'Auftragsbestätigung',rechnung:'Rechnung',lieferschein:'Lieferschein',todos:'Aufgaben / To-Do-Liste',notiz:'Notiz / Stand zum Projekt',angebot:'Angebot',korrespondenz:'Korrespondenz (E-Mail)',plan:'Plan / Zeichnung',foto:'Foto',vertrag:'Vertrag',sonst:'Sonstiges'};
 const SMART_MAP={bestellung:'order',ab:'order',rechnung:'order',lieferschein:'delivery',todos:'todos',notiz:'note',korrespondenz:'todos',angebot:'file',plan:'file',foto:'file',vertrag:'file',sonst:'file'};
 function smartDropHtml(){
@@ -4379,7 +4384,7 @@ async function smartDrop(files,text){
   let type=guessKind((f&&f.name)||'',all,!!mail,f&&f.type); type={mail:'korrespondenz'}[type]||type;
   if(!files.length&&!mail) type=isTodoList(body)?'todos':'notiz';
   if(/^image\//.test((f&&f.type)||'')&&/liefer|ls[-_ ]?\d/i.test(f.name)) type='lieferschein';
-  let pid=matchProject(all).pid||'', orderId='', summary='', why='';
+  let pid=matchProject(all).pid||'', orderId='', summary='', why='', related=null;
   const openOrders=arr('orders').filter(o=>orderState(o).open);
   if(SAMPLE){
     const plist=arr('projects').filter(p=>['laufend','planung','onhold'].includes(catOf(p))).map(p=>`${p.id} | ${p.name} | ${p.nr||''} | ${String(p.place||'').replace(/\n/g,' ')} | ${p.customer||''}`).join('\n');
@@ -4388,6 +4393,7 @@ async function smartDrop(files,text){
 """${all.slice(0,7000)}"""
 Projekte (ID | Name | Nummer | Ort | Kunde):\n${plist}
 Offene Bestellungen (ID | Lieferant | Bestell-Nr. | Projekt | Positionen):\n${olist}
+Offene To-Dos (ID | Aufgabe | Projekt | Wer):\n${arr('tasks').filter(x=>!x.done).slice(0,150).map(x=>x.id+' | '+x.title+' | '+(projName(x.pid)||'-')+' | '+(x.who?shortWho(x.who):'-')).join('\n')||'-'}
 Was ist das? Wähle genau einen Typ:
 - "bestellung"/"ab"/"rechnung": Bestellung, Auftragsbestätigung oder Rechnung eines LIEFERANTEN an uns (Material/Dienstleistung, die wir einkaufen)
 - "lieferschein": Lieferschein / Warenbegleitschein zu einer Lieferung an uns
@@ -4395,27 +4401,41 @@ Was ist das? Wähle genau einen Typ:
 - "notiz": Stand/Info zu einem Projekt ohne konkrete Aufgabe (z. B. Baustellenbericht, Gesprächsnotiz)
 - "angebot": Angebot (von uns an Kunden oder von Lieferanten an uns), "korrespondenz": sonstige Mail ohne Aufgaben, "plan", "foto", "vertrag", "sonst"
 Ordne ein Projekt zu, wenn eindeutig (Projektname, Nummer, Kommission, Adresse, Kunde); Lager/Büro: "intern"; sonst "". Bei Lieferschein/AB/Rechnung: passende offene Bestellung (orderId), falls Lieferant + Nummer/Positionen passen, sonst "".
-Antworte nur mit JSON: {"type":"","projectId":"","orderId":"","summary":"1 Satz, was es ist und worum es geht","why":"kurz"}`;
+Prüfe außerdem: Ist das eine Rückmeldung, ein Fortschritt oder eine Erledigung zu einem der offenen To-Dos (gleiche Sache, nicht nur gleiches Projekt)? Dann in "related" aufnehmen: relation "update" (neue Info) oder "erledigt" (die Sache ist damit erledigt), update = 1 kurzer Satz, was neu ist. Sonst related leer.
+Antworte nur mit JSON: {"type":"","projectId":"","orderId":"","summary":"1 Satz, was es ist und worum es geht","why":"kurz","related":[{"id":"To-Do-ID","relation":"update|erledigt","update":"kurz"}]}`;
     try{ const r=await SAMPLE.json(prompt,{modelTier:'default'});
-      if(r&&SMART_TYPES[r.type]) type=r.type; if(r&&r.projectId&&(S.projects[r.projectId]||r.projectId===INTERN)) pid=r.projectId; if(r&&r.orderId&&S.orders[r.orderId]) orderId=r.orderId; summary=r&&r.summary||''; why=r&&r.why||''; }
+      if(r&&SMART_TYPES[r.type]) type=r.type; if(r&&r.projectId&&(S.projects[r.projectId]||r.projectId===INTERN)) pid=r.projectId; if(r&&r.orderId&&S.orders[r.orderId]) orderId=r.orderId; summary=r&&r.summary||''; why=r&&r.why||''; related=(r&&Array.isArray(r.related)?r.related:[]).filter(x=>x&&S.tasks[x.id]&&!S.tasks[x.id].done).slice(0,5).map(x=>({id:x.id,relation:x.relation==='erledigt'?'erledigt':'update',update:String(x.update||summary||'').slice(0,300),by:'Claude'})); }
     catch(e){ if(e&&e.code&&e.code!=='cancelled') toast(SAMPLE_ERR[e.code]||'Claude nicht erreichbar – einfache Erkennung.'); } }
   if(!orderId&&type==='lieferschein'){ const sup=openOrders.find(o=>o.supplier&&all.toLowerCase().includes(String(o.supplier).toLowerCase().split(' ')[0])&&(!pid||o.pid===pid)); if(sup) orderId=sup.id; }
   if(files.length>1&&!mail) type=type==='lieferschein'?type:'sonst';
-  smartSheet({files,text,type,pid,orderId,summary,why,mail,many:files.length>1});
+  // Ohne Claude: Wortvergleich mit offenen To-Dos (schwache Treffer werden nur angezeigt, nicht vorausgewählt)
+  if(!related){ const head=(mail?mail.subject+' '+mail.text.slice(0,300):body.slice(0,300))||(f&&f.name)||''; const fr=findRelated({title:head,projectId:pid});
+    related=fr?[{id:fr.id,relation:'update',update:(mail?mail.subject:body.replace(/\s+/g,' ').slice(0,160))||'',by:'Wortvergleich',weak:!fr.strong}]:[]; }
+  smartSheet({files,text,type,pid,orderId,summary,why,mail,related,many:files.length>1});
 }
 function smartSheet(c){
   const rec=c.many&&c.type!=='lieferschein'?'file':SMART_MAP[c.type]||'file';
-  const acts=Object.keys(SMART_ACTS).filter(k=>!(k==='note'&&c.files.length)&&!(k==='delivery'&&!c.files.length&&!c.text));
+  const rel=c.related||[], acts=Object.keys(SMART_ACTS).filter(k=>!(k==='note'&&c.files.length)&&!(k==='delivery'&&!c.files.length&&!c.text)&&!(k==='none'&&!rel.length));
   const openOrders=arr('orders').filter(o=>orderState(o).open).sort((a,b)=>(a.supplier||'').localeCompare(b.supplier||''));
   const what=c.files.length?c.files.map(f=>f.name).slice(0,4).join(', ')+(c.files.length>4?' …':''):(c.mail?'Kopierte E-Mail':'Kopierter Text');
   openSheet({title:'Was ist das?',wide:1,html:`<div class="fld full">
     <div class="small muted">${esc(what)}</div>
     <div class="smart-guess"><span class="pill pri">${esc(SMART_TYPES[c.type]||'Sonstiges')}</span>${c.summary?` <b>${esc(c.summary)}</b>`:''}${c.why?`<div class="small muted">${esc(c.why)}</div>`:''}</div>
     <label class="info-f" style="margin:10px 0"><span>Projekt</span><select class="inp" id="sm_pid">${fileProjOpts(c.pid).replace('– nicht zugeordnet –','– kein Projekt / automatisch –')}</select></label>
+    ${rel.length?`<div class="sec-t" style="margin:6px 0">Passt zu bestehendem To-Do</div><div class="sm-rel">${rel.map((x,i)=>{ const t=S.tasks[x.id]; return `<div class="sm-rel-row"><label class="mt-opt"><input type="checkbox" class="ck" id="smr_c${i}" ${x.weak?'':'checked'}><span><b>${esc(t.title)}</b> <span class="small muted">· ${esc([projName(t.pid),t.who?shortWho(t.who):'niemand',t.due?'fällig '+fmtD(t.due):''].filter(Boolean).join(' · '))} · erkannt per ${esc(x.by)}${x.weak?' (unsicher)':''}</span></span></label>
+      <div class="sm-rel-a"><select class="inp" id="smr_a${i}" aria-label="Was tun?"><option value="update" ${x.relation==='update'?'selected':''}>Update eintragen</option><option value="erledigt" ${x.relation==='erledigt'?'selected':''}>Update + als erledigt abhaken</option></select><input class="inp" id="smr_t${i}" value="${esc(x.update)}" placeholder="Was ist neu?" aria-label="Update-Text"></div></div>`; }).join('')}</div>`:''}
     <div class="sec-t" style="margin:6px 0">Was soll passieren?</div>
     <div class="smart-acts">${acts.map(k=>`<label class="smart-act ${k===rec?'rec':''}"><input type="radio" name="sm_act" value="${k}" ${k===rec?'checked':''}><span><b>${SMART_ACTS[k].l}</b>${k===rec?' <span class="pill ok">Vorschlag</span>':''}<span class="small muted">${SMART_ACTS[k].d}</span>
       ${k==='delivery'?`<select class="inp" id="sm_order" aria-label="Bestellung"><option value="">– offene Bestellung wählen –</option>${openOrders.map(o=>`<option value="${o.id}" ${o.id===c.orderId?'selected':''}>${esc((o.supplier||'Lieferant')+(o.no?' · '+o.no:'')+' · '+(projName(o.pid)||'ohne Projekt'))}</option>`).join('')}</select>`:''}</span></label>`).join('')}</div></div>`,saveLabel:'Los',
     onSave:()=>{ const act=(document.querySelector('input[name=sm_act]:checked')||{}).value, pid=$('#sm_pid').value;
+      // markierte To-Do-Updates zuerst speichern (Datum + Kürzel; bei „erledigt“ abhaken und in den Projekt-Notizen vermerken)
+      let nu=0; rel.forEach((x,i)=>{ if(!$('#smr_c'+i).checked||!S.tasks[x.id]) return; const how=$('#smr_a'+i).value, txt=($('#smr_t'+i).value||'').trim()||'Neue Info'+(c.mail&&c.mail.subject?' (Mail: '+c.mail.subject+')':'');
+        const t=clone(S.tasks[x.id]); t.upd2=[...(t.upd2||[]),{d:TODAY(),by:meK(),t:txt.slice(0,400),at:new Date().toISOString()}];
+        if(how==='erledigt'){ t.done=true; t.doneAt=new Date().toISOString(); t.doneBy=meK(); t.doneNote=txt.slice(0,300);
+          if(t.pid&&S.projects[t.pid]){ const p=clone(S.projects[t.pid]), d0=new Date(), stamp=String(d0.getDate()).padStart(2,'0')+'.'+String(d0.getMonth()+1).padStart(2,'0')+'.'+String(d0.getFullYear()).slice(2); p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+stamp+' ('+meK()+'): ✓ Erledigt: '+t.title+' – '+txt; delete p.now; delete p.nowD; put('projects',p); } }
+        put('tasks',t); nu++; });
+      if(nu) toast(nu+' To-Do'+(nu>1?'s':'')+' aktualisiert.');
+      if(act==='none'){ if(!nu){ toast('Kein To-Do markiert.'); return false; } return; }
       if(act==='note'){ if(!pid||!S.projects[pid]){ toast('Bitte ein Projekt wählen.'); return false; } saveNote(pid,'updates',c.text); return; }
       if(act==='delivery'){ const oid=($('#sm_order')||{}).value; if(!oid){ toast('Bitte die offene Bestellung wählen.'); return false; } const file=c.files[0];
         setTimeout(()=>{ A.receive({id:oid}); if(file) setTimeout(()=>scanDeliveryNote(oid,file),400); else toast('Bitte im Wareneingang die Mengen prüfen.'); },50); return; }
