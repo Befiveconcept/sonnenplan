@@ -187,6 +187,7 @@ a{color:var(--primary)}
 .drag-ghost{position:fixed;z-index:90;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12.5px;padding:5px 9px;border-radius:6px;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 8px 20px rgba(0,0,0,.25)}
 .dragging-src{opacity:.4}
 body.dragging,body.dragging *{cursor:grabbing!important}
+.mg-box{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg-soft,transparent)}
 .drop-hi{outline:2px dashed var(--sun)!important;outline-offset:-2px;background:var(--sun-soft)!important}
 .team .cell{min-height:44px}
 .sug-list{display:flex;flex-direction:column;gap:8px}
@@ -891,6 +892,11 @@ body.stock-dragging .pick{outline:2px dashed rgba(244,219,2,.8);outline-offset:2
   .hl{font-size:11px}
   .hero-ey{font-size:11px}
   .hero-sm .hero-a{justify-content:flex-start}
+  /* Handy-Startseite: „Neu“ steht schon oben in der Leiste – Begrüßung mittig */
+  .hero-sm .hero-in{grid-template-columns:minmax(0,1fr);text-align:center;align-items:start}
+  .hero-sm .hero-a [data-act="newMenu"]{display:none}
+  .hero-sm .hero-a{justify-content:center}
+  .hero-sm .hero-a:not(:has(.ghost-l)){display:none}
   .seg-mode{margin-left:0}
   .pgrid{grid-template-columns:minmax(0,1fr)}
 }
@@ -2157,7 +2163,7 @@ function taskUpdInline(t){ const u=(t.upd2||[]).slice().sort((a,b)=>updKey(b).lo
   return `<details class="tu-inl" data-stop="1"><summary><span class="tu-sum">💬 ${u.length} Update${u.length>1?'s':''} · zuletzt ${esc(updStamp(u[0]))} · ${esc(u[0].by||'?')}</span></summary>${u.map(line).join('')}</details>`; }
 function taskLi(t){  const late=t.due&&t.due<TODAY()&&!t.done;
   const bsel=UI.bulk&&['todos','pool'].includes(UI.view);
-  return `<div class="li ${t.done?'done':''} ${bsel&&SEL.has(t.id)?'sel':''}" data-drag="task:${t.id}">${bsel?`<input type="checkbox" class="sel-ck" data-chg="selTask" data-id="${t.id}" ${SEL.has(t.id)?'checked':''} aria-label="Auswählen: ${esc(t.title)}" title="Für Mehrfachbearbeitung auswählen">`:''}<input type="checkbox" class="ck" data-chg="toggleTask" data-id="${t.id}" ${t.done?'checked':''} aria-label="Erledigt"><div class="body clickable" data-act="editTask" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="mt">${t.ext?`<span class="pill ext-pill" title="Liegt extern">extern: ${esc(t.ext)}</span>`:''}${t.pid?`<span>${esc(projName(t.pid))}</span>`:''}${t.due?`<span class="${late?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?`<span class="pill ${PRIO[t.prio][2]}">${PRIO[t.prio][0]}</span>`:''}${t.pool?'<span class="pill">allgemein</span>':''}${t.by&&t.by!=='?'?`<span class="by-line">angelegt ${esc(t.by)} ${esc(fmtD((t.at||'').slice(0,10)).slice(3))}</span>`:''}${t.done?`<span class="done-by">✓ erledigt von <b>${esc(t.doneBy||t.updBy||'?')}</b>${t.doneAt?' · '+esc(stampTxt(t.doneAt)):''}${t.doneNote?' – '+esc(t.doneNote):''}</span>`:''}</div>${taskUpdInline(t)}</div>
+  return `<div class="li ${t.done?'done':''} ${bsel&&SEL.has(t.id)?'sel':''}" data-drag="task:${t.id}"${t.done?'':` data-drop-task="${t.id}"`}>${bsel?`<input type="checkbox" class="sel-ck" data-chg="selTask" data-id="${t.id}" ${SEL.has(t.id)?'checked':''} aria-label="Auswählen: ${esc(t.title)}" title="Für Mehrfachbearbeitung auswählen">`:''}<input type="checkbox" class="ck" data-chg="toggleTask" data-id="${t.id}" ${t.done?'checked':''} aria-label="Erledigt"><div class="body clickable" data-act="editTask" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="mt">${t.ext?`<span class="pill ext-pill" title="Liegt extern">extern: ${esc(t.ext)}</span>`:''}${t.pid?`<span>${esc(projName(t.pid))}</span>`:''}${t.due?`<span class="${late?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?`<span class="pill ${PRIO[t.prio][2]}">${PRIO[t.prio][0]}</span>`:''}${t.pool?'<span class="pill">allgemein</span>':''}${t.by&&t.by!=='?'?`<span class="by-line">angelegt ${esc(t.by)} ${esc(fmtD((t.at||'').slice(0,10)).slice(3))}</span>`:''}${t.done?`<span class="done-by">✓ erledigt von <b>${esc(t.doneBy||t.updBy||'?')}</b>${t.doneAt?' · '+esc(stampTxt(t.doneAt)):''}${t.doneNote?' – '+esc(t.doneNote):''}</span>`:''}</div>${taskUpdInline(t)}</div>
     <select class="who-sel ${t.who?'':'none'}" data-chg="taskWho" data-id="${t.id}" aria-label="Zuständig für: ${esc(t.title)}" title="Zuständigkeit ändern"><option value="">offen</option>${[...new Set([...staff().map(s=>s.name),...(t.who?[t.who]:[])])].map(n=>`<option value="${esc(n)}" ${n===t.who?'selected':''}>${esc(shortWho(n))}</option>`).join('')}<option value="__ext">→ liegt extern …</option>${t.ext?'<option value="__int">→ wieder intern</option>':''}</select>${isAdmin()?`<button type="button" class="icon-btn task-del" title="Aufgabe löschen" aria-label="Aufgabe löschen: ${esc(t.title)}" data-act="taskDel" data-id="${t.id}">${ic('x')}</button>`:''}</div>`;
 }
 
@@ -3817,7 +3823,26 @@ function resizeRef(ref,date){
   else if(t==='event'){ const e=clone(S.events[id]); if(!e||!setEnd(e.date,e,'end')) return; put('events',e); toast(e.end?'Dauer: '+fmtD(e.date)+' – '+fmtD(e.end):'Termin auf einen Tag verkürzt.'); }
 }
 let DRAG=null, SUPPRESS_CLICK=false;
-function dropTargetAt(x,y){ const el=document.elementFromPoint(x,y); return el&&el.closest('[data-drop-d],[data-drop-who]'); }
+// Ein To-Do auf ein anderes To-Do ziehen → wird dort als Update übernommen
+function dropTargetAt(x,y){ const el=document.elementFromPoint(x,y); if(!el) return null;
+  if(DRAG&&String(DRAG.ref).startsWith('task:')){ const tk=el.closest('[data-drop-task]'); if(tk&&'task:'+tk.dataset.dropTask!==DRAG.ref) return tk; }
+  return el.closest('[data-drop-d],[data-drop-who]'); }
+function mergeTask(srcId,dstId){
+  const a=S.tasks[srcId], b=S.tasks[dstId]; if(!a||!b||a.id===b.id) return; if(!mayWrite('tasks')) return toast('Keine Berechtigung, To-Dos zu ändern.');
+  const ups=(a.upd2||[]).length;
+  openSheet({title:'Als Update übernehmen?',html:`<div class="fld full"><div class="mg-box"><div class="small muted">Dieses To-Do …</div><b>${esc(a.title)}</b>${a.who?` <span class="small muted">· ${esc(shortWho(a.who))}</span>`:''}${ups?`<div class="small muted">mit ${ups} Update${ups>1?'s':''}</div>`:''}</div>
+    <div style="text-align:center;margin:6px 0">↓ wird Update in</div><div class="mg-box"><b>${esc(b.title)}</b>${b.who?` <span class="small muted">· ${esc(shortWho(b.who))}</span>`:''}${b.pid?`<div class="small muted">${esc(projName(b.pid))}</div>`:''}</div>
+    <label class="mt-opt" style="margin-top:12px"><input type="checkbox" class="ck" id="mg_del" ${isAdmin()?'':'disabled'}><span>Ursprüngliches To-Do danach löschen${isAdmin()?'':' (nur EP/AvE)'} – sonst wird es als erledigt abgehakt</span></label></div>`,saveLabel:'Übernehmen',
+    onSave:()=>{ const x=clone(S.tasks[dstId]), src=S.tasks[srcId]; if(!x||!src) return;
+      const now=nowStamp(), extra=[src.notes,src.ext?'extern: '+src.ext:'',src.due?'fällig '+fmtD(src.due):''].filter(Boolean).join(' · ');
+      x.upd2=[...(x.upd2||[]),...(src.upd2||[]).map(u=>({...u,t:'['+src.title+'] '+u.t})),{d:TODAY(),tm:now.slice(9),by:meK(),t:'Übernommen aus To-Do: '+src.title+(extra?' ('+extra+')':''),at:new Date().toISOString()}];
+      if(src.prio&&PRIO[src.prio]&&PRIO[x.prio||'normal']&&PRIO[src.prio][1]>PRIO[x.prio||'normal'][1]) x.prio=src.prio;
+      if(!x.due&&src.due) x.due=src.due;
+      put('tasks',x);
+      if($('#mg_del').checked&&isAdmin()) del('tasks',srcId);
+      else put('tasks',{...clone(src),done:true,doneAt:new Date().toISOString(),doneBy:meK(),doneNote:'als Update übernommen in: '+x.title});
+      toast('Als Update in „'+x.title.slice(0,40)+'“ übernommen.'); }});
+}
 function startDrag(){
   DRAG.started=true; const g=document.createElement('div'); g.className='drag-ghost';
   g.textContent=DRAG.mode==='resize'?'↔ Ende auf Tag ziehen':(DRAG.el.innerText||'').replace(/\s+/g,' ').trim().slice(0,48);
@@ -3844,7 +3869,8 @@ document.addEventListener('touchmove',e=>{ if(DRAG&&DRAG.started) e.preventDefau
 document.addEventListener('pointerup',e=>{
   if(!DRAG) return; const d=DRAG; if(!d.started){ endDrag(); return; }
   const t=dropTargetAt(e.clientX,e.clientY); endDrag(); SUPPRESS_CLICK=true; setTimeout(()=>{ SUPPRESS_CLICK=false; },60);
-  if(!t) return; if(d.mode==='resize'){ if(t.dataset.dropD) resizeRef(d.ref,t.dataset.dropD); } else moveRef(d.ref,t.dataset.dropD||'',t.dataset.dropWho);
+  if(!t) return; if(t.dataset.dropTask){ mergeTask(String(d.ref).slice(5),t.dataset.dropTask); return; }
+  if(d.mode==='resize'){ if(t.dataset.dropD) resizeRef(d.ref,t.dataset.dropD); } else moveRef(d.ref,t.dataset.dropD||'',t.dataset.dropWho);
 });
 document.addEventListener('pointercancel',()=>endDrag());
 document.addEventListener('click',e=>{ if(SUPPRESS_CLICK){ e.stopPropagation(); e.preventDefault(); } },true);
@@ -4262,11 +4288,11 @@ function printWeek(){
   printDoc('Wochenplan KW '+kw,fmtD(ws)+' – '+fmtD(dd[dd.length-1]),body,true);
   try{ localStorage.setItem('sonnenplan-wkprint',String(kw)); }catch(e){}
 }
-// Einmal pro Woche (ab Freitag für die nächste, sonst für die laufende Woche) an den Ausdruck erinnern – nur EP/AvE
+// Nur montags einmal an den Ausdruck erinnern – nur EP/AvE; weggeklickt bleibt weg
 let WK_ASKED=false;
 function checkWeekPrint(){
-  if(WK_ASKED||MODE==='init'||SHEET||!isBaseAdmin()) return; const dow=new Date().getDay(); const target=dow>=5||dow===0?addDays(mondayOf(TODAY()),7):mondayOf(TODAY()); const kw=kwOf(target);
-  let last=''; try{ last=localStorage.getItem('sonnenplan-wkprint')||''; }catch(e){} if(last===String(kw)) return; WK_ASKED=true;
+  if(WK_ASKED||MODE==='init'||SHEET||!isBaseAdmin()) return; if(new Date().getDay()!==1) return; const target=mondayOf(TODAY()); const kw=kwOf(target);
+  let last=''; try{ last=localStorage.getItem('sonnenplan-wkprint')||''; }catch(e){} if(last===String(kw)) return; WK_ASKED=true; try{ localStorage.setItem('sonnenplan-wkprint',String(kw)); }catch(e){}
   openSheet({title:'Wochenplan KW '+kw+' drucken?',html:`<div class="fld full">Die ausgedruckte Wochenansicht für <b>KW ${kw}</b> (${esc(fmtD(target))} – ${esc(fmtD(addDays(target,4)))}) mit Einsätzen je Mitarbeiter, fälligen To-Dos und Lieferungen.<div class="small muted" style="margin-top:8px">Dazu gibt es die persönlichen Pläne für die Monteure (Termine, Material, Lückenfüller).</div></div>`,saveLabel:'Team-Plan drucken',extraBtn:`<button type="button" class="btn sun" data-act="monteurSheet" data-ws="${target}">Monteur-Pläne drucken</button>`,
     onSave:()=>{ setTimeout(()=>{ const prev=UI.week; UI.week=target; printWeek(); UI.week=prev; },300); },onDelete:()=>{ try{ localStorage.setItem('sonnenplan-wkprint',String(kw)); }catch(e){} closeSheet(); },deleteLabel:'Diese Woche nicht'});
 }
