@@ -2002,7 +2002,7 @@ function agenda(items){
   return h? `<div class="ag">${h}</div>`:'';
 }
 // Updates direkt am To-Do: letztes Update sichtbar, alle per Klick aufklappbar
-function taskUpdInline(t){ const u=(t.upd2||[]).slice().sort((a,b)=>b.d.localeCompare(a.d)); if(!u.length) return '';
+function taskUpdInline(t){ const u=(t.upd2||[]).slice().sort((a,b)=>updKey(b).localeCompare(updKey(a))); if(!u.length) return '';
   const line=x=>`<div class="tu"><b class="mono">${esc(updStamp(x))}</b> <span class="who-chip">${esc(x.by||'?')}</span> ${esc(x.t)}</div>`;
   return u.length===1?`<div class="tu-inl">${line(u[0])}</div>`:`<details class="tu-inl" data-stop="1"><summary>${line(u[0])}<span class="small muted">+ ${u.length-1} ältere Update${u.length>2?'s':''}</span></summary>${u.slice(1).map(line).join('')}</details>`; }
 function taskLi(t){  const late=t.due&&t.due<TODAY()&&!t.done;
