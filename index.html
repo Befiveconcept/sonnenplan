@@ -667,6 +667,12 @@ details.pf:not([open])>summary{border-bottom:0}
 .vm-btn.on{background:var(--bad);color:#fff;border-color:var(--bad);animation:recp 1s infinite}
 .vm-busy{opacity:.6}
 .sv-rec{display:flex;align-items:center;gap:8px}
+/* Ladesonne */
+#sunLoader{position:fixed;inset:0;z-index:9000;display:grid;place-items:center;pointer-events:none;opacity:0;transition:opacity .25s}
+#sunLoader.on{opacity:1}
+#sunLoader svg{width:130px;height:130px;opacity:.55;filter:drop-shadow(0 4px 18px rgba(244,219,2,.45));animation:sunspin 3.2s linear infinite}
+@keyframes sunspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){ #sunLoader svg{animation-duration:12s} }
 #printArea{display:none}
 @media print{
   .pr-land{page:land}
@@ -1093,6 +1099,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 <input type="file" id="fileIn" accept="application/pdf,image/jpeg,image/png,image/webp,.eml,.msg,message/rfc822" hidden>
 <input type="file" id="lsIn" accept="image/*,application/pdf" hidden>
 <input type="file" id="fdIn" multiple hidden>
+<div id="sunLoader" class="on" aria-hidden="true"><svg viewBox="0 0 100 100"><g fill="#F4DB02"><circle cx="50" cy="50" r="19"/><g stroke="#F4DB02" stroke-width="6" stroke-linecap="round"><line x1="50" y1="6" x2="50" y2="20"/><line x1="50" y1="80" x2="50" y2="94"/><line x1="6" y1="50" x2="20" y2="50"/><line x1="80" y1="50" x2="94" y2="50"/><line x1="18.9" y1="18.9" x2="28.8" y2="28.8"/><line x1="71.2" y1="71.2" x2="81.1" y2="81.1"/><line x1="18.9" y1="81.1" x2="28.8" y2="71.2"/><line x1="71.2" y1="28.8" x2="81.1" y2="18.9"/></g></g></svg></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js"></script>
 <script>
@@ -1677,15 +1684,21 @@ function putConfig(cfg){
   chains.cfg=(chains.cfg||Promise.resolve()).then(()=>DB.doc('config/main').set(JSON.parse(JSON.stringify(cfg)))).catch(writeErr);
 }
 const clone = o=>JSON.parse(JSON.stringify(o));
+// Drehende, transparente Sonne, solange die App lädt oder Claude/Upload arbeitet (Hintergrund-KI mit bg:true ohne Sonne)
+let BUSY=1; const BUSY_ONCE={}; // 1 = erstes Laden läuft
+function busy(d,once){ if(once){ if(BUSY_ONCE[once]) return; BUSY_ONCE[once]=1; } BUSY=Math.max(0,BUSY+d); const el=document.getElementById('sunLoader'); if(el) el.classList.toggle('on',BUSY>0); }
+function busyWrapSample(s){ if(!s) return s; const run=f=>async(input,opts)=>{ const o={...(opts||{})}, bg=o.bg; delete o.bg; if(!bg) busy(1); try{ return await f(input,o); } finally{ if(!bg) busy(-1); } };
+  const w=run((i,o)=>s(i,o)); w.json=run((i,o)=>s.json(i,o)); w.limits=(...a)=>s.limits(...a); return w; }
+function busyWrapAssets(a){ if(!a) return a; return {...a,upload:async(...x)=>{ busy(1); try{ return await a.upload(...x); } finally{ busy(-1); } },list:(...x)=>a.list(...x),delete:(...x)=>a.delete(...x)}; }
 async function initStore(){
   let tries=0;
   while(!(window.claude&&window.claude.use) && tries<15){ await new Promise(r=>setTimeout(r,200)); tries++; }
   let db=null;
   if(window.claude&&window.claude.use){ try{ db=await window.claude.use('db'); }catch(e){ db=null; } }
-  if(!db){ MODE='local'; loadLocal(); scheduleRender(); return; }
+  if(!db){ MODE='local'; loadLocal(); scheduleRender(); busy(-1,'init'); return; }
   DB=db; MODE='cloud'; initCaps(); initMe();
   COLLS.forEach(k=>{
-    db.collection(k).onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); }); S[k]=o; scheduleRender(); if(k==='projects') setTimeout(ensureIntern,1500); },
+    db.collection(k).onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); }); S[k]=o; scheduleRender(); if(k==='projects'){ setTimeout(ensureIntern,1500); busy(-1,'init'); } },
       err=>{ toast('Verbindung unterbrochen ('+err.code+'). Seite neu laden.'); });
   });
   db.doc('config/main').onSnapshot(s=>{ S.config = s.exists? s.data() : {staff:[]}; applyTplConfig(); applyUserMap(); scheduleRender(); }, ()=>{});
@@ -1840,7 +1853,7 @@ let SHORT={}, SHORT_RUN=false, RD_TITLES=[]; try{ SHORT=JSON.parse(localStorage.
 function shortTitle(s){ s=String(s||''); if(SHORT[s]) return SHORT[s]; const w=s.replace(/\([^)]*\)/g,'').split(/\s+/).filter(Boolean); return w.length<=4?w.join(' '):w.slice(0,4).join(' ')+' …'; }
 function shortenTitles(titles){
   if(!SAMPLE||SHORT_RUN) return; const need=[...new Set(titles)].filter(x=>!SHORT[x]&&x.replace(/\([^)]*\)/g,'').split(/\s+/).filter(Boolean).length>4).slice(0,40); if(!need.length) return; SHORT_RUN=true;
-  SAMPLE.json(`Fasse jede Aufgabe eines Solar-Installationsbetriebs in 2 bis 3 Wörtern als Stichwort zusammen (z. B. „Kran klären“, „Angebot nachfassen“, „Zähler anmelden“). Keine Namen, kein Satz.\n${need.map((x,i)=>(i+1)+'. '+x).join('\n')}\nAntworte nur mit JSON in derselben Reihenfolge: {"k":["…","…"]}`,{modelTier:'quick'})
+  SAMPLE.json(`Fasse jede Aufgabe eines Solar-Installationsbetriebs in 2 bis 3 Wörtern als Stichwort zusammen (z. B. „Kran klären“, „Angebot nachfassen“, „Zähler anmelden“). Keine Namen, kein Satz.\n${need.map((x,i)=>(i+1)+'. '+x).join('\n')}\nAntworte nur mit JSON in derselben Reihenfolge: {"k":["…","…"]}`,{modelTier:'quick',bg:true})
     .then(r=>{ (r&&Array.isArray(r.k)?r.k:[]).forEach((x,i)=>{ if(need[i]&&String(x||'').trim()) SHORT[need[i]]=String(x).trim().slice(0,40); }); try{ localStorage.setItem('sonnenplan-short',JSON.stringify(SHORT)); }catch(e){} scheduleRender(); })
     .catch(()=>{}).finally(()=>{ SHORT_RUN=false; });
 }
@@ -2049,7 +2062,7 @@ async function tlAI(pid,silent){
 Wähle NUR die wirklich wichtigen Meilensteine des Projekts aus (höchstens 10–12 für das ganze Projekt): z. B. Auftrag erteilt, Anschlussanfrage/Zusage Netzbetreiber, Genehmigungen, Material bestellt/geliefert (nur Hauptkomponenten), Baubeginn, DC/AC fertig, Zählersetzung, Inbetriebnahme, Schlussrechnung, große Probleme/Verzögerungen. Kleinkram, Rückfragen, Telefonate, Kleinteile, Absichten und Routine-Updates WEGLASSEN.
 Fasse jeden Meilenstein in 2 bis 3 kurze Überbegriffe (je 1–3 Wörter, Substantive, z. B. „Auftrag erteilt“, „Netzanschlusszusage“, „Module geliefert“). Keine Sätze, keine Namen.
 Antworte nur mit JSON: {"ms":[{"d":"YYYY-MM-DD","b":["Begriff","Begriff"],"k":"start|bestellt|geliefert|anfrage|zusage|montage|zaehler|ibn|rechnung|problem|sonst"}]}`;
-  try{ const r=await SAMPLE.json(prompt,{modelTier:'quick'}); const ms=(r&&Array.isArray(r.ms)?r.ms:[]).filter(m=>/^\d{4}-\d{2}-\d{2}$/.test(m.d||'')&&Array.isArray(m.b)&&m.b.length).slice(0,120).map(m=>({d:m.d,t:m.b.slice(0,3).map(x=>String(x).trim().slice(0,30)).filter(Boolean).join(' · '),k:m.k||''}));
+  try{ const r=await SAMPLE.json(prompt,{modelTier:'quick',bg:!!silent}); const ms=(r&&Array.isArray(r.ms)?r.ms:[]).filter(m=>/^\d{4}-\d{2}-\d{2}$/.test(m.d||'')&&Array.isArray(m.b)&&m.b.length).slice(0,120).map(m=>({d:m.d,t:m.b.slice(0,3).map(x=>String(x).trim().slice(0,30)).filter(Boolean).join(' · '),k:m.k||''}));
     const data={h:notesHash(S.projects[pid]),ms,at:new Date().toISOString()}; TL_MEM[pid]=data;
     // still speichern (Zwischenspeicher, kein Eintrag im Verlauf)
     if(S.projects[pid]) S.projects[pid].tlAI=data; if(MODE==='cloud'&&DB&&mayWrite('projects')) DB.collection('projects').doc(pid).update({tlAI:data}).catch(()=>{}); scheduleRender();
@@ -2294,7 +2307,7 @@ function completeProjTask(id){
       {k:'info',label:'Projekt',type:'html',html:`<div><b>${esc(p0.name)}</b>${t0.who?` · zuständig ${esc(shortWho(t0.who))}`:''}</div>`},
       {k:'x',label:'Was wurde gemacht? (Pflicht – kommt in die Projekt-Notizen)',type:'textarea',req:1,ph:'z. B. Zählerschrank verdrahtet, Kunde informiert, Termin Zählersetzung am 12.11.'}],
     saveLabel:'Erledigt & in Notizen eintragen',
-    onSave:v=>{ const x=(v.x||'').trim(); if(x.length<5){ toast('Bitte kurz beschreiben, was gemacht wurde.'); return false; }
+    onSave:v=>{ const x=fixNames((v.x||'').trim()); if(x.length<5){ toast('Bitte kurz beschreiben, was gemacht wurde.'); return false; }
       const t=clone(S.tasks[id]); t.done=true; t.doneAt=new Date().toISOString(); t.doneBy=meK(); t.doneNote=x; put('tasks',t);
       const p=clone(S.projects[t.pid]); const d0=new Date(), stamp=nowStamp();
       const line=stamp+' ('+meK()+'): ✓ Erledigt: '+t.title+(t.who&&shortWho(t.who)!==meK()?' (zuständig '+shortWho(t.who)+')':'')+' – '+x;
@@ -2305,8 +2318,11 @@ function completeProjTask(id){
 }
 // Direkt-Notiz im Projekt: Entwurf bleibt beim Neuzeichnen erhalten
 const QN={};
+// Schreibweisen im Betrieb: Marc immer mit c (auch aus Diktat / Spracherkennung)
+const NAME_FIX=[[/\bMark(?=\s+Krebber\b|\s*[,.;:!?)]|\s+(?:soll|muss|hat|kann|wird|ist|macht|kümmert|ruft|schickt|bestellt|fragt|klärt|und|oder|sagt|meint)\b|\s*$)/g,'Marc'],[/\bMarks\b(?=\s)/g,'Marcs']];
+const fixNames=s=>NAME_FIX.reduce((t,[rx,to])=>t.replace(rx,to),String(s||''));
 function saveNote(pid,f,text){
-  text=String(text||'').trim(); if(!text) return false;
+  text=fixNames(String(text||'').trim()); if(!text) return false;
   const p=clone(S.projects[pid]); const d0=new Date(), stamp=nowStamp();
   p[f]=(p[f]?p[f].replace(/\s+$/,'')+'\n':'')+stamp+' ('+meK()+'): '+text; delete p.now; delete p.nowD; put('projects',p); toast('Notiz gespeichert.'); suggestTodos(pid,text);
 }
@@ -2326,7 +2342,7 @@ async function noteHeadsFill(pid){
   const p=S.projects[pid]; if(!p||!SAMPLE||NH_RUN[pid]) return; const have=p.noteHeads||{};
   const todo=[...new Set(['updates','notes','questions'].flatMap(k=>noteBlocks(p[k]).map(b=>noteParts(b).text)).filter(t=>t&&t.length>3&&!have[strHash(t)]&&!NH_TRIED[strHash(t)]))].slice(0,40); if(!todo.length) return;
   NH_RUN[pid]=true; todo.forEach(t=>NH_TRIED[strHash(t)]=1); // pro Sitzung nur einmal versuchen
-  try{ const r=await SAMPLE.json(`Gib jedem Notiz-Eintrag aus einem Solar-Projekt („${p.name}“) eine kurze, aussagekräftige Überschrift mit 2 bis 5 Wörtern (z. B. „Zählerschrank verdrahtet“, „Netzbetreiber-Frist läuft“, „Termin Kran geklärt“). Keine Namen von Personen, kein Datum.\n${todo.map((t,i)=>(i+1)+'. '+t.slice(0,600)).join('\n')}\nAntworte nur mit JSON in derselben Reihenfolge: {"h":["…","…"]}`,{modelTier:'quick'});
+  try{ const r=await SAMPLE.json(`Gib jedem Notiz-Eintrag aus einem Solar-Projekt („${p.name}“) eine kurze, aussagekräftige Überschrift mit 2 bis 5 Wörtern (z. B. „Zählerschrank verdrahtet“, „Netzbetreiber-Frist läuft“, „Termin Kran geklärt“). Keine Namen von Personen, kein Datum.\n${todo.map((t,i)=>(i+1)+'. '+t.slice(0,600)).join('\n')}\nAntworte nur mit JSON in derselben Reihenfolge: {"h":["…","…"]}`,{modelTier:'quick',bg:true});
     const heads={...((S.projects[pid]||{}).noteHeads||{})}; (r&&Array.isArray(r.h)?r.h:[]).forEach((h,i)=>{ if(todo[i]&&String(h||'').trim()) heads[strHash(todo[i])]=String(h).trim().slice(0,60); });
     if(S.projects[pid]) S.projects[pid].noteHeads=heads; if(MODE==='cloud'&&DB&&mayWrite('projects')) DB.collection('projects').doc(pid).update({noteHeads:heads}).catch(()=>{}); scheduleRender(); }
   catch(e){} finally{ NH_RUN[pid]=false; }
@@ -2973,8 +2989,8 @@ function confirmSheet(msg,fn){
 let ASSETS=null, SAMPLE=null, SLIM=null;
 async function initCaps(){
   if(!(window.claude&&window.claude.use)) return;
-  try{ ASSETS=await window.claude.use('assets'); }catch(e){ ASSETS=null; }
-  try{ SAMPLE=await window.claude.use('sample'); if(SAMPLE) SLIM=await SAMPLE.limits().catch(()=>null); }catch(e){ SAMPLE=null; }
+  try{ ASSETS=busyWrapAssets(await window.claude.use('assets')); }catch(e){ ASSETS=null; }
+  try{ SAMPLE=busyWrapSample(await window.claude.use('sample')); if(SAMPLE) SLIM=await SAMPLE.limits().catch(()=>null); }catch(e){ SAMPLE=null; }
   scheduleRender();
 }
 function loadScript(src){ return new Promise((res,rej)=>{ if(document.querySelector(`script[src="${src}"]`)) return res(); const s=document.createElement('script'); s.src=src; s.onload=()=>res(); s.onerror=()=>rej(new Error('Skript nicht ladbar')); document.head.appendChild(s); }); }
@@ -4364,7 +4380,7 @@ function slimDrop(pid){ return `<div class="dropz fdrop slim" data-fdrop="${esc(
 Object.assign(A,{
  poolNew:()=>poolForm(null), poolEdit:d=>S.tasks[d.id]&&poolForm(S.tasks[d.id]), poolAI:()=>poolAI(),
  poolTake:d=>{ const t=clone(S.tasks[d.id]); if(!t||!ME) return; t.who=ME; t.takenAt=TODAY(); put('tasks',t); toast('Übernommen: '+t.title); },
- taskUpdAdd:d=>{ const tx=($('#tu_t')||{}).value||'', dd=($('#tu_d')||{}).value||TODAY(); if(tx.trim().length<3) return toast('Bitte kurz schreiben, was passiert ist.');
+ taskUpdAdd:d=>{ const tx=fixNames(($('#tu_t')||{}).value||''), dd=($('#tu_d')||{}).value||TODAY(); if(tx.trim().length<3) return toast('Bitte kurz schreiben, was passiert ist.');
    const t=clone(S.tasks[d.id]); if(!t){ toast('Bitte das To-Do zuerst speichern.'); return; } t.upd2=[...(t.upd2||[]),{d:dd,tm:($('#tu_h')||{}).value||'',by:meK(),t:tx.trim(),at:new Date().toISOString()}]; put('tasks',t);
    $('#tu_t').value=''; const l=$('#tu_list'); if(l) l.innerHTML=taskUpdList(t); toast('Update gespeichert.'); },
  weekPrint:()=>printWeek(),
@@ -4442,7 +4458,7 @@ async function analyzeTodos(m,files,txt){
       :`Liste von Aufgaben (Stichpunkte, Notizen) aus einem Solar-Installationsbetrieb (nutz die Sonne GmbH; PV, Speicher, Ladesäulen):\n"""${m.text.slice(0,6000)}"""`;
     const prompt=`Heute ist ${TODAY()}. ${src}
 Projekte (ID | Name | Nummer | Ort | Kunde):\n${plist}
-Mitarbeiter (Kürzel = Name, Rolle):\n${roster}
+Mitarbeiter (Kürzel = Name, Rolle):\n${roster}\nNamen genau so schreiben wie in dieser Liste (z. B. Marc immer mit c).
 ${isMail?`1) Gehört die Mail insgesamt zu einem Projekt? Nur bei eindeutigem Bezug. Lager/Büro ohne Kundenbezug: "intern". Sonst "".
 2) Welche Aufgaben ergeben sich für UNS (Anfragen beantworten, Unterlagen schicken, Termin bestätigen, Rechnung prüfen, Rückruf, Material bestellen …)? Keine Aufgaben für den Absender, reine Infos = keine Aufgabe.`
 :`1) Jede Zeile/jeder Stichpunkt ist in der Regel ein eigenes To-Do (zusammengehörige Zeilen zusammenfassen, Überschriften sind keine To-Dos). Formuliere jedes als kurze Aufgabe im Imperativ.`}
@@ -4680,7 +4696,7 @@ function meetStart(id){
   const r=new SRec(); r.lang='de-DE'; r.continuous=true; r.interimResults=true; MEET_REC=r; MEET_ON=id; MEET_INT='';
   let lastStamp='';
   r.onresult=e=>{ let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ const res=e.results[i], t=res[0].transcript.trim(); if(!t) continue;
-      if(res.isFinal){ const st=nowStamp().slice(9); const pre=st!==lastStamp?'\n['+st+'] ':' '; lastStamp=st; MEET_TX[id]=(meetTx(S.meetings[id]||{id})+pre+t.charAt(0).toUpperCase()+t.slice(1)+'.').replace(/^\n/,''); }
+      if(res.isFinal){ const st=nowStamp().slice(9); const pre=st!==lastStamp?'\n['+st+'] ':' '; lastStamp=st; const tf=fixNames(t); MEET_TX[id]=(meetTx(S.meetings[id]||{id})+pre+tf.charAt(0).toUpperCase()+tf.slice(1)+'.').replace(/^\n/,''); }
       else interim+=t+' '; }
     MEET_INT=interim; const ta=$('#mt_tx'); if(ta&&ta.dataset.id===id){ ta.value=meetTx(S.meetings[id]||{id}); ta.scrollTop=ta.scrollHeight; } const li=$('#mt_live'); if(li) li.textContent=interim; };
   r.onerror=e=>{ if(e.error==='not-allowed'||e.error==='service-not-allowed'){ toast('Kein Zugriff aufs Mikrofon – bitte im Browser erlauben.'); meetStop(); } };
@@ -4721,7 +4737,7 @@ async function meetEval(id){
 Teilnehmer: ${(m.who||[]).map(shortWho).join(', ')||'-'}${(m.pids||[]).length?'\nThemen-Projekte: '+m.pids.map(projName).join(', '):''}
 """${tx.slice(0,24000)}"""
 Projekte (ID | Name | Nummer | Ort | Kunde):\n${plist}
-Mitarbeiter (Kürzel = Name, Rolle):\n${roster}
+Mitarbeiter (Kürzel = Name, Rolle):\n${roster}\nNamen genau so schreiben wie in dieser Liste (z. B. Marc immer mit c).
 1) summary: kurze Zusammenfassung in 3–6 Stichpunkten (je Zeile ein „- “).
 2) notes: Für JEDES besprochene Projekt eine sachliche Notiz (Stand, Entscheidungen, Probleme) in 1–3 Sätzen. projectId aus der Liste, allgemeine Themen (Lager, Büro, Fahrzeuge, Personal) → "intern".
 3) todos: alle vereinbarten Aufgaben, kurz im Imperativ, je mit projectId, zuständigem Kürzel (nur wenn genannt/klar), Frist (nur wenn genannt), prio dringend|hoch|normal|niedrig.
@@ -4815,14 +4831,14 @@ const voiceJoin=(base,pos,ins)=>{ if(!ins) return base; const a=base.slice(0,pos
 async function voiceStop(){
   const r=VOICE_REC, t=VOICE_EL; VOICE_REC=null; try{ r&&r.stop(); }catch(e){} voiceBtn.classList.remove('on'); voiceBtn.textContent='🎙'; voiceBtn.title='Diktieren (Mikrofon)';
   const raw=VOICE_BUF.trim(); if(!t) return; if(!raw){ t.value=VOICE_BASE; return; }
-  let out=raw;
+  let out=fixNames(raw);
   if(SAMPLE){ voiceBtn.textContent='…'; t.classList.add('vm-busy');
     const single=t.tagName!=='TEXTAREA';
     try{ const res=await SAMPLE(`Diktierte Spracheingabe für das Feld „${voiceLabel(t)}“ in der Projekt-App eines Solar-Installationsbetriebs (nutz die Sonne GmbH: PV-Anlagen, Speicher, Ladesäulen, Netzbetreiber wie Westnetz, Begriffe wie Wechselrichter, kWp, Zählerschrank, DC/AC, Inbetriebnahme, MaStR).
-Mitarbeiter-Kürzel: ${staff().map(s=>shortWho(s.name)+' = '+s.name.replace(/\s*\([^)]*\)$/,'')).join(', ')}. Projekte: ${arr('projects').filter(p=>['laufend','planung'].includes(catOf(p))).map(p=>p.name).slice(0,60).join('; ')}.
+Namen genau so schreiben wie in der Mitarbeiterliste (z. B. Marc immer mit c). Mitarbeiter-Kürzel: ${staff().map(s=>shortWho(s.name)+' = '+s.name.replace(/\s*\([^)]*\)$/,'')).join(', ')}. Projekte: ${arr('projects').filter(p=>['laufend','planung'].includes(catOf(p))).map(p=>p.name).slice(0,60).join('; ')}.
 Rohtext (Spracherkennung, ohne Satzzeichen, evtl. Hörfehler): """${raw.slice(0,4000)}"""
 Mach daraus sauberen, sinnvollen Text: Satzzeichen und Groß-/Kleinschreibung, offensichtliche Hörfehler und Fachbegriffe/Namen/Projekte korrigieren, Füllwörter („äh“, „also“) weg, Zahlen, Daten und Uhrzeiten als Ziffern, Mitarbeiter als Kürzel wenn genannt. Nichts dazuerfinden, Inhalt nicht weglassen.${single?' Es ist ein einzeiliges Feld: kurz und knapp, eine Zeile.':' Mehrere Gedanken gern als kurze Sätze oder Stichpunkte.'} Antworte nur mit dem fertigen Text.`,{modelTier:'quick',cache:false});
-      const c=String(res&&res.text||'').trim().replace(/^["„]|["“]$/g,''); if(c) out=c; }
+      const c=fixNames(String(res&&res.text||'').trim().replace(/^["„]|["“]$/g,'')); if(c) out=c; }
     catch(e){} t.classList.remove('vm-busy'); voiceBtn.textContent='🎙'; }
   if(t.tagName!=='TEXTAREA') out=out.replace(/\s*\n+\s*/g,' ');
   t.value=voiceJoin(VOICE_BASE,VOICE_POS,out); const end=VOICE_POS+(t.value.length-VOICE_BASE.length);
