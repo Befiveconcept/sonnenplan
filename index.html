@@ -538,6 +538,42 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .ask-box{border-radius:16px}
 .ask-box.over .gs-in{border-color:var(--sun);border-style:dashed;background:var(--sun-soft)}
 .ask-go{flex:none}
+/* KI-Assistent (Chat-Fenster) */
+.aic{position:fixed;right:16px;bottom:16px;width:min(460px,calc(100vw - 32px));height:min(680px,calc(100vh - 32px));background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 14px 44px rgba(0,0,0,.28);display:flex;flex-direction:column;z-index:45;overflow:hidden}
+.aic[hidden]{display:none}
+.aic-h{display:flex;align-items:center;gap:6px;padding:10px 12px;background:var(--night);color:#fff}
+.aic-h b{color:var(--sun);font-size:15px}
+.aic-ib{width:30px;height:30px;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:#fff;cursor:pointer;font-size:14px}
+.aic-ib.on{background:var(--sun);color:var(--ink)}
+.aic-msgs{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--bg)}
+.aic-empty{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.aic-empty .chip{text-align:left}
+.aic-m{max-width:92%;padding:9px 12px;border-radius:14px;font-size:14.5px;line-height:1.5}
+.aic-m.u{align-self:flex-end;background:var(--sun);color:var(--ink);border-bottom-right-radius:4px;white-space:pre-wrap}
+.aic-m.a{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px;max-width:100%}
+.aic-m ul{margin:4px 0;padding-left:18px}
+.aic-acts{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px}.aic-acts:empty{display:none}
+.aic-acts .lnk{font-size:12.5px;font-weight:600;color:#7a6a00}
+.aic-in{display:flex;gap:6px;align-items:flex-end;padding:10px;border-top:1px solid var(--line);background:var(--surface)}
+.aic-in textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:12px;padding:9px 11px;font:inherit;font-size:15px;max-height:120px;background:var(--bg);color:var(--ink)}
+.aic-tw{overflow:auto;margin-top:8px;max-height:320px}
+.aic-tb{border-collapse:collapse;font-size:12.5px;width:100%}
+.aic-tb th,.aic-tb td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+.aic-tb th{font-family:var(--f-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.aic-ch{margin-top:10px}
+.aic-ch svg{width:100%;height:auto;display:block}
+.aic-ch .aic-pie{max-width:200px;margin:0 auto}
+.aic-ct{font-weight:600;font-size:13.5px;margin-bottom:4px}
+.aic-ax{font-size:9px;fill:var(--muted)}
+.aic-val{font-size:9px;fill:var(--ink);font-weight:600}
+.aic-lg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;margin-top:6px}
+.aic-lg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.aic-dots i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--muted);margin:0 2px;animation:aicd 1s infinite}
+.aic-dots i:nth-child(2){animation-delay:.15s}.aic-dots i:nth-child(3){animation-delay:.3s}
+@keyframes aicd{50%{opacity:.25;transform:translateY(-3px)}}
+.aic-fab{position:fixed;right:18px;bottom:18px;z-index:44;width:52px;height:52px;border-radius:50%;border:0;background:var(--night);color:var(--sun);font-size:22px;box-shadow:0 6px 20px rgba(0,0,0,.3);cursor:pointer}
+.aic-fab[hidden]{display:none}
+@media (max-width:760px){ .aic{inset:0;width:auto;height:auto;border-radius:0;border:0} .aic-fab{bottom:calc(76px + env(safe-area-inset-bottom,0px))} }
 .gs-spk{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:15px;line-height:1;display:grid;place-items:center;cursor:pointer;padding:0;opacity:.7}
 .gs-spk.on{background:var(--sun-soft);border-color:var(--sun);opacity:1}
 .ask-spk{display:inline-block;margin-top:6px;color:var(--sun);cursor:pointer;font-weight:600;font-size:13px}
@@ -4560,46 +4596,120 @@ A.askSpkTog=()=>{ ASK_SPEAK=!ASK_SPEAK; try{ localStorage.setItem('sonnenplan-sp
 A.askSpeak=()=>speak(ASK_LAST);
 // Antwort im Feld zeigen (+ Vorlese-Knopf) und – wenn eingeschaltet – gleich vorlesen
 function askSay(say){ ASK_LAST=say||''; if(say&&ASK_SPEAK) speak(say); }
-async function askAI(q){
-  const show=h=>{ const o=$('#askOut'); if(o) o.innerHTML=h; };
-  show('<span>✨</span><span>Claude schaut nach …</span>');
-  const ql=q.toLowerCase(), ws=ql.split(/[^a-zäöüß0-9-]+/).filter(w=>w.length>=4);
-  const cand=arr('projects').map(p=>{ const n=[p.name,p.place,p.customer,p.nr].join(' ').toLowerCase(); return {p,s:ws.filter(w=>n.includes(w)).length}; }).filter(x=>x.s).sort((a,b)=>b.s-a.s).slice(0,3).map(x=>x.p);
-  const lastUp=t=>{ const u=[...(t.upd2||[])].sort((a,b)=>updKey(b).localeCompare(updKey(a)))[0]; return u?' · letztes Update '+u.d+': '+u.t:''; };
-  const ctx=cand.map(p=>`PROJEKT ${p.id} „${p.name}“ (${CATS[catOf(p)]||''})\nNotizen, neueste Tage zuerst:\n${diaryDays(p).slice(0,5).map(x=>'- '+(x.d||'ohne Datum')+': '+x.items.map(dyPlain).join(' | ').slice(0,600)).join('\n')||'- keine'}\nOffene To-Dos:\n${openTasks(p.id).slice(0,10).map(t=>'- '+t.id+': '+t.title+(t.who?' ('+shortWho(t.who)+')':'')+(t.due?' fällig '+t.due:'')+lastUp(t)).join('\n')||'- keine'}`).join('\n\n');
-  const tk=arr('tasks').filter(t=>!t.done&&ws.some(w=>(t.title+' '+(t.notes||'')).toLowerCase().includes(w))).slice(0,10).map(t=>'- '+t.id+': '+t.title+' · '+(projName(t.pid)||'allgemein')+(t.who?' · '+shortWho(t.who):'')+lastUp(t)).join('\n');
-  const views=NAV.filter(n=>canSee(n[0])&&!String(n[0]).startsWith('f:')).map(n=>n[0]+' = '+n[1]).join(', ');
-  try{ const r=await SAMPLE.json(`Du bist der Assistent in der Projekt-App eines Solar-Installationsbetriebs (nutz die Sonne GmbH). Heute ist ${TODAY()}, ich bin ${meK()}.
-Anfrage (evtl. gesprochen): """${q.slice(0,600)}"""
-Alle Projekte (id | Name): ${arr('projects').map(p=>p.id+' | '+p.name).join('; ').slice(0,6000)}
-${ctx?'Passende Projekte im Detail:\n'+ctx:''}
-${tk?'Passende offene To-Dos:\n'+tk:''}
-Ansichten: ${views}
-Projekt-Reiter: status (Notizen + To-Dos), timeline, todos, material (Bestellungen), dateien, infos.
-Entscheide, was zu tun ist, und antworte nur mit JSON:
-{"do":"open|answer|search|capture","pid":"Projekt-id oder leer","tab":"status|timeline|todos|material|dateien|infos","day":"JJJJ-MM-TT des gemeinten Notiz-Tages oder leer","task":"To-Do-id oder leer","view":"Ansicht-id oder leer","q":"Suchbegriff (bei search)","say":"kurze Antwort auf Deutsch, 1–2 Sätze, mit dem konkreten Inhalt (z. B. was im neuesten Update steht)"}
-- open: das passende Fenster öffnen (Projekt + Reiter, ein To-Do oder eine Ansicht). „Neuestes Update / letzte Notiz zu X“ → tab status, day = neuester Tag, say = Inhalt.
-- answer: nur antworten, nichts öffnen.
-- search: allgemeine Volltextsuche mit q (1–3 Stichwörter).
-- capture: die Anfrage ist etwas zum Festhalten (Aufgabe, Info, Notiz, z. B. „MK soll morgen Westnetz anrufen“).
-Nichts erfinden: steht etwas nicht in den Daten, sag das in say.`,{modelTier:'quick'});
-    const say=String(r&&r.say||'').trim(), pid=r&&S.projects[r.pid]?r.pid:'', task=r&&S.tasks[r.task]?r.task:'', view=r&&NAV.some(n=>n[0]===r.view&&canSee(n[0]))?r.view:'';
-    const sayH=say?esc(say):'';
-    if(r&&r.do==='capture'){ show(''); return smartDrop([],q); }
-    const spk=say&&CAN_SPEAK?` <span class="lnk" role="button" tabindex="0" data-act="askSpeak">🔊 Vorlesen</span>`:''; askSay(say);
-    if(r&&r.do==='search'&&r.q){ const i=$('#gSearch'); if(i){ i.value=r.q; i.dispatchEvent(new Event('input',{bubbles:true})); } show(sayH?`<span>✨</span><span>${sayH}${spk}</span>`:''); return; }
-    if(r&&r.do==='open'&&(pid||task||view)){
-      show(''); if(say) askPop('✨ '+sayH,say);
-      if(pid){ const p=S.projects[pid], day=/^\d{4}-\d{2}-\d{2}$/.test(r.day||'')?r.day:'';
-        if(day&&diaryDays(p).findIndex(x=>x.d===day)>=5) UI.nbAll=true;
-        A.openAt({id:pid,at:['infos','todos','material','timeline'].includes(r.tab)?r.tab:'status'}); if(r.tab==='dateien'){ UI.ptab='dateien'; render(); }
-        if(day&&(r.tab||'status')==='status') setTimeout(()=>{ const c=document.querySelector(`.nb.dy[data-drop-note="${day}"]`); if(c){ c.scrollIntoView({behavior:'smooth',block:'center'}); c.classList.add('dy-hi'); setTimeout(()=>c.classList.remove('dy-hi'),3000); } },120); }
-      else if(view) go(view);
-      if(task) setTimeout(()=>A.editTask({id:task}),pid||view?150:0);
-      return; }
-    show(`<span>✨</span><span>${sayH||'Dazu habe ich nichts gefunden.'}${spk}</span>`);
-  }catch(e){ show('<span>⚠️</span><span>Claude ist gerade nicht erreichbar – ich zeige die normale Suche.</span>'); }
+/* ========== KI-Assistent als Chat: Verlauf, genaue Antworten aus allen Daten, Diagramme/Tabellen, öffnet passende Fenster ========== */
+// Liegt als eigenes Fenster über der App (unabhängig vom Neuzeichnen), damit das Gespräch beim Öffnen anderer Seiten stehen bleibt.
+const AIC={open:false,busy:false,msgs:[]}; // msgs: {role:'u'|'a', text, chart, table, open}
+async function askAI(q){ return aiChat(q); }
+function aicEl(){ let d=$('#aic'); if(d) return d;
+  d=document.createElement('section'); d.id='aic'; d.className='aic'; d.hidden=true; d.setAttribute('aria-label','KI-Assistent');
+  d.innerHTML=`<header class="aic-h"><b>✨ Assistent</b><span class="spacer"></span>${CAN_SPEAK?'<button type="button" class="aic-ib" data-aic="spk" title="Antworten vorlesen"></button>':''}<button type="button" class="aic-ib" data-aic="new" title="Neues Gespräch">↺</button><button type="button" class="aic-ib" data-aic="close" title="Schließen">✕</button></header>
+    <div class="aic-msgs" id="aic_msgs"></div>
+    <form class="aic-in" id="aic_f"><textarea id="aic_tx" rows="1" placeholder="Frag mich etwas – z. B. „Diagramm: offene To-Dos je Mitarbeiter“" aria-label="Nachricht"></textarea>${SRec?'<button type="button" class="gs-mic" data-aic="mic" title="Sprechen">🎙</button>':''}<button type="submit" class="btn sun sm">Los</button></form>`;
+  document.body.appendChild(d);
+  d.addEventListener('click',e=>{ const b=e.target.closest('[data-aic]'); if(!b) return; const k=b.dataset.aic;
+    if(k==='close') aicShow(false); else if(k==='new'){ AIC.msgs=[]; speakStop(); aicPaint(); } else if(k==='spk'){ A.askSpkTog(); aicPaint(); }
+    else if(k==='mic') aicMic(b); else if(k==='say') speak(AIC.msgs[+b.dataset.i].text); else if(k==='go') aicDo(AIC.msgs[+b.dataset.i].open,true); });
+  d.querySelector('#aic_f').addEventListener('submit',e=>{ e.preventDefault(); const t=$('#aic_tx'); const v=t.value.trim(); if(!v) return; t.value=''; aiChat(v); });
+  d.querySelector('#aic_tx').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); d.querySelector('#aic_f').requestSubmit(); } });
+  return d; }
+function aicFab(){ let b=$('#aicFab'); if(!b&&SAMPLE){ b=document.createElement('button'); b.id='aicFab'; b.type='button'; b.className='aic-fab'; b.title='KI-Assistent'; b.setAttribute('aria-label','KI-Assistent öffnen'); b.textContent='✨'; b.onclick=()=>aicShow(true); document.body.appendChild(b); } if(b) b.hidden=AIC.open||!SAMPLE||MODE==='init'; }
+setInterval(aicFab,1500);
+function aicShow(on){ AIC.open=on; const d=aicEl(); d.hidden=!on; aicFab(); if(on){ aicPaint(); setTimeout(()=>{ const t=$('#aic_tx'); if(t&&innerWidth>700) t.focus(); },50); } else speakStop(); }
+// Leichte Formatierung: **fett**, Aufzählungen, Zeilenumbrüche
+function aicMd(s){ return esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').split('\n').map(l=>/^\s*[-•*]\s+/.test(l)?'<li>'+l.replace(/^\s*[-•*]\s+/,'')+'</li>':l).join('\n').replace(/(<li>[\s\S]*?<\/li>)(?!\n<li>)/g,'<ul>$1</ul>').replace(/<\/li>\n<li>/g,'</li><li>').replace(/\n/g,'<br>'); }
+function aicTable(t){ if(!t||!Array.isArray(t.cols)||!Array.isArray(t.rows)||!t.rows.length) return '';
+  return `<div class="aic-tw"><table class="aic-tb"><thead><tr>${t.cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${t.rows.slice(0,60).map(r=>`<tr>${(r||[]).map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`; }
+// Diagramme als SVG: Balken, Linie, Torte
+function aicChart(c){
+  if(!c||!Array.isArray(c.labels)||!Array.isArray(c.series)||!c.series.length) return '';
+  const L=c.labels.slice(0,24).map(String), SR=c.series.slice(0,4).map(s=>({name:String(s.name||''),data:L.map((_,i)=>+((s.data||[])[i])||0)}));
+  const COL=['var(--sun)','var(--ink)','#8a96a3','#e08a2c'], unit=c.unit?' '+c.unit:'', fmt=v=>(Math.round(v*10)/10).toLocaleString('de-DE')+unit;
+  const head=c.title?`<div class="aic-ct">${esc(c.title)}</div>`:'';
+  const leg=(items)=>`<div class="aic-lg">${items.map(([n,col])=>`<span><i style="background:${col}"></i>${esc(n)}</span>`).join('')}</div>`;
+  if(c.type==='pie'){ const v=SR[0].data, tot=v.reduce((a,b)=>a+b,0)||1, PC=['var(--sun)','var(--ink)','#8a96a3','#e08a2c','#5b9bd5','#9bbb59','#c0504d','#8064a2'];
+    let a0=-Math.PI/2; const arcs=v.map((x,i)=>{ const a1=a0+x/tot*2*Math.PI, big=a1-a0>Math.PI?1:0, p=(a)=>[80+70*Math.cos(a),80+70*Math.sin(a)].map(n=>n.toFixed(1)).join(' ');
+      const d=x>=tot?'M 80 10 A 70 70 0 1 1 79.9 10 Z':`M 80 80 L ${p(a0)} A 70 70 0 ${big} 1 ${p(a1)} Z`; a0=a1; return `<path d="${d}" style="fill:${PC[i%PC.length]}" stroke="var(--surface)" stroke-width="2"><title>${esc(L[i])}: ${fmt(x)}</title></path>`; }).join('');
+    return `<div class="aic-ch">${head}<svg viewBox="0 0 160 160" class="aic-pie" role="img" aria-label="${esc(c.title||'Diagramm')}">${arcs}</svg>${leg(L.map((l,i)=>[l+': '+fmt(v[i])+' ('+Math.round(v[i]/tot*100)+' %)',PC[i%PC.length]]))}</div>`; }
+  const W=340,H=190,pl=36,pb=44,pt=10, iw=W-pl-6, ih=H-pb-pt, max=Math.max(1,...SR.flatMap(s=>s.data)), step=Math.pow(10,Math.floor(Math.log10(max))), top=Math.ceil(max/step)*step, y=v=>pt+ih-(v/top)*ih, gw=iw/L.length;
+  const grid=[0,.25,.5,.75,1].map(f=>`<line x1="${pl}" x2="${W-6}" y1="${y(top*f)}" y2="${y(top*f)}" stroke="var(--line)"/><text x="${pl-4}" y="${y(top*f)+3}" text-anchor="end" class="aic-ax">${(Math.round(top*f*10)/10).toLocaleString('de-DE')}</text>`).join('');
+  const xl=L.map((l,i)=>{ const x=pl+gw*i+gw/2, s=l.length>10?l.slice(0,9)+'…':l; return L.length>6?`<text x="${x}" y="${H-pb+12}" transform="rotate(-35 ${x} ${H-pb+12})" text-anchor="end" class="aic-ax">${esc(s)}</text>`:`<text x="${x}" y="${H-pb+14}" text-anchor="middle" class="aic-ax">${esc(s)}</text>`; }).join('');
+  let marks='';
+  if(c.type==='line') marks=SR.map((s,k)=>`<polyline fill="none" stroke="${COL[k]}" stroke-width="2.5" points="${s.data.map((v,i)=>(pl+gw*i+gw/2).toFixed(1)+','+y(v).toFixed(1)).join(' ')}"/>${s.data.map((v,i)=>`<circle cx="${pl+gw*i+gw/2}" cy="${y(v)}" r="3" fill="${COL[k]}"><title>${esc(L[i])}: ${fmt(v)}</title></circle>`).join('')}`).join('');
+  else { const bw=Math.min(28,gw*.8/SR.length); marks=SR.map((s,k)=>s.data.map((v,i)=>{ const x=pl+gw*i+(gw-bw*SR.length)/2+bw*k; return `<rect x="${x.toFixed(1)}" y="${y(v).toFixed(1)}" width="${bw.toFixed(1)}" height="${(pt+ih-y(v)).toFixed(1)}" rx="2" style="fill:${COL[k]}"><title>${esc(L[i])}${s.name?' · '+esc(s.name):''}: ${fmt(v)}</title></rect>${SR.length===1&&L.length<=12?`<text x="${(x+bw/2).toFixed(1)}" y="${(y(v)-3).toFixed(1)}" text-anchor="middle" class="aic-val">${(Math.round(v*10)/10).toLocaleString('de-DE')}</text>`:''}`; }).join('')).join(''); }
+  return `<div class="aic-ch">${head}<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(c.title||'Diagramm')}">${grid}${marks}${xl}</svg>${SR.length>1?leg(SR.map((s,k)=>[s.name,COL[k]])):''}</div>`;
 }
+function aicOpenLabel(o){ if(!o) return ''; if(o.task&&S.tasks[o.task]) return 'To-Do „'+S.tasks[o.task].title.slice(0,40)+'“ öffnen'; if(o.pid&&S.projects[o.pid]) return projName(o.pid)+' · '+({todos:'To-Dos',material:'Material/Bestellungen',timeline:'Timeline',dateien:'Dateien',infos:'Infos'}[o.tab]||'Notizen')+' öffnen'; const n=NAV.find(n=>n[0]===o.view); return n?n[1]+' öffnen':''; }
+function aicPaint(){ const box=$('#aic_msgs'); if(!box) return; const sp=document.querySelector('#aic [data-aic=spk]'); if(sp){ sp.textContent=ASK_SPEAK?'🔊':'🔈'; sp.classList.toggle('on',ASK_SPEAK); }
+  box.innerHTML=(AIC.msgs.length?'':`<div class="aic-empty"><b>Was möchtest du wissen?</b><div class="small muted">Ich kenne alle Projekte, Notizen, To-Dos, Bestellungen, Lager und die Wochenplanung. Beispiele:</div>${['Gib mir alle To-Dos zum Energiepark','Was ist diese Woche bei Strundepark passiert?','Diagramm: offene To-Dos je Mitarbeiter','Welche Lieferungen kommen diese Woche?'].map(x=>`<button type="button" class="chip" data-aicq="${esc(x)}">${esc(x)}</button>`).join('')}</div>`)+
+    AIC.msgs.map((m,i)=>m.role==='u'?`<div class="aic-m u">${esc(m.text)}</div>`:`<div class="aic-m a">${m.err?`<span class="muted">${esc(m.text)}</span>`:aicMd(m.text)}${aicTable(m.table)}${aicChart(m.chart)}<div class="aic-acts">${m.open&&aicOpenLabel(m.open)?`<button type="button" class="lnk" data-aic="go" data-i="${i}">↗ ${esc(aicOpenLabel(m.open))}</button>`:''}${CAN_SPEAK&&m.text&&!m.err?`<button type="button" class="lnk" data-aic="say" data-i="${i}">🔊 Vorlesen</button>`:''}</div></div>`).join('')+
+    (AIC.busy?'<div class="aic-m a"><span class="aic-dots"><i></i><i></i><i></i></span></div>':'');
+  box.querySelectorAll('[data-aicq]').forEach(b=>b.onclick=()=>aiChat(b.dataset.aicq));
+  box.scrollTop=box.scrollHeight; }
+// Fenster öffnen, das zur Antwort gehört
+function aicDo(o,manual){ if(!o) return; const pid=S.projects[o.pid]?o.pid:'', task=S.tasks[o.task]?o.task:'', view=NAV.some(n=>n[0]===o.view&&canSee(n[0]))?o.view:''; if(!pid&&!task&&!view) return;
+  if(innerWidth<760) aicShow(false); // Handy: Chat einklappen, ✨ holt ihn zurück
+  if(pid){ const p=S.projects[pid], day=/^\d{4}-\d{2}-\d{2}$/.test(o.day||'')?o.day:'', tab=['status','timeline','todos','material','dateien','infos'].includes(o.tab)?o.tab:'status';
+    if(day&&diaryDays(p).findIndex(x=>x.d===day)>=5) UI.nbAll=true;
+    A.openAt({id:pid,at:['infos','todos','material','timeline'].includes(tab)?tab:'status'}); if(tab==='dateien'){ UI.ptab='dateien'; render(); }
+    if(day&&tab==='status') setTimeout(()=>{ const c=document.querySelector(`.nb.dy[data-drop-note="${day}"]`); if(c){ c.scrollIntoView({behavior:'smooth',block:'center'}); c.classList.add('dy-hi'); setTimeout(()=>c.classList.remove('dy-hi'),3000); } },120); }
+  else if(view) go(view);
+  if(task&&(manual||!pid)) setTimeout(()=>A.editTask({id:task}),pid||view?150:0); }
+// Daten für Claude: kompakter Gesamtüberblick + Details zu den Projekten, um die es geht
+function aiSnapshot(q,hist){
+  // Projekte, um die es geht: ganze Wörter aus Frage + letzter Gesprächsrunde gegen Projektname/Ort/Kunde/Nummer (ohne Allerweltswörter)
+  const STOP=new Set('alle allen alles bitte diese dieser diesem gibt geben zeig zeige zeigen neueste neuestes neusten letzte letzten update updates todos to-dos projekt projekte woche heute morgen offene offen welche welcher wann warum machen mach mache sagen sag stand status über ueber noch auch einen einem eine eines dass oder und mit für fuer von bei beim zum zur dem den der die das was wer wie nutzer assistent diagramm tabelle liste'.split(' '));
+  const ql=(hist.split('\n').slice(-2).join(' ')+' '+q).toLowerCase(), ws=[...new Set(ql.split(/[^a-zäöüß0-9]+/).filter(w=>w.length>=4&&!STOP.has(w)))], t0=TODAY(), mon=mondayOf(t0);
+  const lastUp=t=>{ const u=[...(t.upd2||[])].sort((a,b)=>updKey(b).localeCompare(updKey(a)))[0]; return u?u.d+' '+(u.by||'')+': '+String(u.t).slice(0,120):''; };
+  const ps=arr('projects'), scored=ps.map(p=>{ const tok=[p.name,p.place,p.customer,p.nr].join(' ').toLowerCase().split(/[^a-zäöüß0-9]+/).filter(Boolean); return {p,s:ws.reduce((a,w)=>a+(tok.includes(w)?2:tok.some(t=>w.length>=5&&t.length>=5&&(t.startsWith(w)||w.startsWith(t)))?1:0),0)}; }).filter(x=>x.s);
+  const best=Math.max(0,...scored.map(x=>x.s)), cand=scored.filter(x=>x.s===best).slice(0,3).map(x=>x.p);
+  const out=[];
+  out.push('PROJEKTE (id | Name | Kategorie | erreichter Status | nächster Schritt | kWp | PL | offene To-Dos | letzte Notiz):\n'+ps.map(p=>{ const pp=pipe(p), nw=nowOf(p); return [p.id,p.name,CATS[catOf(p)]||'',pp.label||'-',pp.nextLabel||'-',p.kwp||'',p.pl?shortWho(p.pl):'',openTasks(p.id).length,nw&&nw.d?nw.d:''].join(' | '); }).join('\n'));
+  const ot=arr('tasks').filter(t=>!t.done);
+  out.push('OFFENE TO-DOS (id | Titel | Projekt | wer | fällig | Dringlichkeit | angelegt | letztes Update):\n'+ot.map(t=>[t.id,t.title.slice(0,140),projName(t.pid)||(t.pool?'Allgemein':'-'),t.ext?'extern: '+t.ext:(t.who?shortWho(t.who):'niemand'),t.due||'',t.prio||'normal',t.created||String(t.at||'').slice(0,10),lastUp(t)].join(' | ')).join('\n'));
+  const dn=arr('tasks').filter(t=>t.done&&String(t.doneAt||'')>=addDays(t0,-30)); if(dn.length) out.push('IN DEN LETZTEN 30 TAGEN ERLEDIGT (Titel | Projekt | wer | erledigt am):\n'+dn.map(t=>[t.title.slice(0,100),projName(t.pid)||'-',t.doneBy||shortWho(t.who||''),String(t.doneAt).slice(0,10)].join(' | ')).join('\n'));
+  const oo=arr('orders').filter(o=>orderState(o).open); if(oo.length) out.push('OFFENE BESTELLUNGEN (Lieferant | Projekt | bestellt | Liefertermin | Status | bestellt über | Positionen):\n'+oo.map(o=>[o.supplier||'',projName(o.pid)||'-',o.ordered||'',o.delivery||'',orderState(o).k,o.buyer||'',(o.items||[]).slice(0,5).map(i=>(i.qty||'')+' '+(i.unit||'')+' '+i.art).join('; ')].join(' | ')).join('\n'));
+  const wk=arr('plan').flatMap(w=>(w.entries||[]).filter(e=>e.d>=mon&&e.d<=addDays(mon,11)).map(e=>[e.d,e.who?shortWho(e.who):'-',e.t||'',projName(e.pid)||''].join(' | '))); if(wk.length) out.push('WOCHENPLANUNG diese + nächste Woche (Datum | wer | was | Projekt):\n'+wk.join('\n'));
+  const st=arr('stock').filter(s=>+s.qty>0).slice(0,80); if(st.length) out.push('LAGER (Artikel | Bestand | Lagerort):\n'+st.map(s=>[s.art,qn(s.qty)+' '+(s.unit||''),s.loc||''].join(' | ')).join('\n'));
+  cand.forEach(p=>out.push(`DETAILS ${p.name} (${p.id}):\nNotizen je Tag (neueste zuerst):\n${diaryDays(p).slice(0,10).map(x=>'- '+(x.d||'ohne Datum')+': '+x.items.map(e=>(e.by?e.by+': ':'')+dyPlain(e)).join(' | ').slice(0,900)).join('\n')||'- keine'}\nAlle To-Dos inkl. erledigte:\n${arr('tasks').filter(t=>t.pid===p.id).map(t=>'- '+(t.done?'✓ ':'☐ ')+t.title+(t.who?' ('+shortWho(t.who)+')':'')+(t.due?' fällig '+t.due:'')+((t.upd2||[]).length?' · Updates: '+[...t.upd2].sort((a,b)=>updKey(a).localeCompare(updKey(b))).map(u=>u.d+' '+(u.by||'')+': '+u.t).join(' / ').slice(0,500):'')).join('\n')||'- keine'}${p.questions?'\nOffene Fragen: '+p.questions.slice(0,600):''}`));
+  return out.join('\n\n').slice(0,45000);
+}
+async function aiChat(q){
+  q=fixNames(String(q||'').trim()); if(!q) return; if(!SAMPLE){ toast('Der Assistent braucht die KI – gerade nicht verfügbar.'); return; }
+  aicShow(true); AIC.msgs.push({role:'u',text:q}); AIC.busy=true; aicPaint();
+  const hist=AIC.msgs.slice(-9,-1).map(m=>(m.role==='u'?'Nutzer: ':'Assistent: ')+String(m.text).slice(0,600)).join('\n');
+  const views=NAV.filter(n=>canSee(n[0])&&!String(n[0]).startsWith('f:')).map(n=>n[0]+' = '+n[1]).join(', ');
+  try{ const r=await SAMPLE.json(`Du bist der KI-Assistent in der Projekt-App der nutz die Sonne GmbH (Solar-Installationsbetrieb: PV-Anlagen, Speicher, Ladesäulen). Heute ist ${fmtD(TODAY())} (${TODAY()}), ich bin ${meK()}.
+Antworte wie ein guter Chat-Assistent: genau, vollständig, knapp, auf Deutsch. Nutze NUR die Daten unten – nichts erfinden; fehlt etwas, sag es. Zahlen und Listen exakt aus den Daten zählen. Datumsangaben als TT.MM., Mitarbeiter als Kürzel.
+${hist?'Bisheriges Gespräch:\n'+hist+'\n':''}Neue Nachricht: """${q.slice(0,1500)}"""
+
+DATEN:
+${aiSnapshot(q,hist)}
+
+Ansichten der App: ${views}
+Projekt-Reiter: status (Notizen + To-Dos), todos (alle To-Dos des Projekts), material (Bestellungen), timeline, dateien, infos.
+
+Antworte nur mit JSON:
+{"say":"Antwort; Aufzählungen mit '- ', Wichtiges mit **fett**","open":{"pid":"","tab":"","day":"","task":"","view":""},"chart":null,"table":null,"capture":false}
+Regeln:
+- open: das Fenster, das zur Frage passt (sonst null). Fragt jemand nach MEHREREN Dingen (alle To-Dos, alle Bestellungen eines Projekts, Material) → die Listen-Seite öffnen (pid + tab "todos" bzw. "material", oder view "todos"/"orders"), NIE nur ein einzelnes To-Do. "task" nur, wenn genau ein bestimmtes To-Do gemeint ist. „Neuestes Update/letzte Notiz zu X“ → tab "status", day = neuester Tag.
+- Bei Listen-Fragen zusätzlich die Einträge vollständig in say auflisten (oder als table, wenn es mehr als 6 sind oder mehrere Spalten sinnvoll sind).
+- chart: nur wenn ein Diagramm gewünscht ist oder Zahlen sich klar besser zeigen lassen: {"type":"bar|line|pie","title":"…","labels":["…"],"series":[{"name":"…","data":[Zahlen]}],"unit":""}. Werte exakt aus den Daten zählen/summieren.
+- table: {"cols":["…"],"rows":[["…"]]}
+- capture: true nur, wenn die Nachricht etwas zum Festhalten ist (neue Aufgabe/Info/Notiz, z. B. „MK soll morgen Westnetz anrufen“) und keine Frage.`,{modelTier:'default'});
+    AIC.busy=false;
+    if(r&&r.capture){ AIC.msgs.push({role:'a',text:'Das halte ich fest – bitte im Fenster prüfen und zuordnen.'}); aicPaint(); smartDrop([],q); return; }
+    const o=r&&r.open&&typeof r.open==='object'?r.open:null, m={role:'a',text:String(r&&r.say||'').trim()||'Dazu habe ich in den Daten nichts gefunden.',chart:r&&r.chart,table:r&&r.table,open:o&&(o.pid||o.task||o.view)?o:null};
+    AIC.msgs.push(m); aicPaint(); askSay(m.text.replace(/\*\*/g,'').replace(/^\s*-\s+/gm,''));
+    if(m.open) aicDo(m.open,false);
+  }catch(e){ AIC.busy=false; AIC.msgs.push({role:'a',err:1,text:SAMPLE_ERR[e&&e.code]||'Die KI ist gerade nicht erreichbar. Bitte gleich nochmal versuchen.'}); aicPaint(); }
+}
+// Sprechen im Chat
+let AIC_REC=null;
+function aicMic(btn){ if(AIC_REC){ try{ AIC_REC.stop(); }catch(e){} return; } if(!SRec) return; const r=new SRec(); r.lang='de-DE'; r.continuous=false; r.interimResults=true; AIC_REC=r; let said=''; const t=$('#aic_tx');
+  r.onresult=e=>{ let s=''; for(let i=0;i<e.results.length;i++) s+=e.results[i][0].transcript; said=fixNames(s.trim()); if(t) t.value=said; };
+  r.onend=()=>{ AIC_REC=null; btn.classList.remove('on'); btn.textContent='🎙'; if(said){ if(t) t.value=''; aiChat(said); } };
+  r.onerror=e=>{ if(['not-allowed','service-not-allowed'].includes(e.error)) toast('Kein Zugriff aufs Mikrofon – bitte im Browser erlauben.'); };
+  try{ r.start(); btn.classList.add('on'); btn.textContent='■'; }catch(e){ AIC_REC=null; } }
 // Sprechen: Gesprochenes landet im Feld, danach wird es wie Enter ausgeführt (Claude fragen)
 let GS_REC=null;
 A.gsVoice=(d,el)=>{ if(GS_REC){ try{ GS_REC.stop(); }catch(e){} return; } if(!SRec) return; if(MEET_ON) return toast('Während einer Meeting-Mitschrift ist das Mikrofon belegt.');
@@ -5083,7 +5193,7 @@ window.addEventListener('beforeunload',()=>{ if(MEET_ON) meetSave(MEET_ON,true);
 
 /* ========== Diktieren in jedes Textfeld: Mikrofon-Knopf am aktiven Feld, Claude macht den Text sauber ========== */
 // Ein schwebender Knopf folgt dem Feld mit Fokus (statt in jedes Formular einen eigenen einzubauen).
-const VOICE_OK=t=>t&&(t.tagName==='TEXTAREA'||(t.tagName==='INPUT'&&['text','search',''].includes((t.getAttribute('type')||'').toLowerCase())))&&!t.readOnly&&!t.disabled&&t.id!=='mt_tx'&&t.id!=='gSearch'&&t.id!=='sv_tx';
+const VOICE_OK=t=>t&&(t.tagName==='TEXTAREA'||(t.tagName==='INPUT'&&['text','search',''].includes((t.getAttribute('type')||'').toLowerCase())))&&!t.readOnly&&!t.disabled&&t.id!=='mt_tx'&&t.id!=='gSearch'&&t.id!=='sv_tx'&&t.id!=='aic_tx';
 let VOICE_EL=null, VOICE_REC=null, VOICE_BUF='', VOICE_BASE='', VOICE_POS=0;
 const voiceBtn=(()=>{ const b=document.createElement('button'); b.type='button'; b.className='vm-btn'; b.title='Diktieren (Mikrofon)'; b.setAttribute('aria-label','Diktieren'); b.textContent='🎙'; b.hidden=true; document.body.appendChild(b); return b; })();
 function voicePlace(){ const t=VOICE_EL; if(!t||!document.body.contains(t)||!SRec){ if(!VOICE_REC) voiceBtn.hidden=true; return; }
