@@ -648,6 +648,16 @@ details.pf:not([open])>summary{border-bottom:0}
 .nb-h .nb-a{margin-left:auto;display:inline-flex;gap:2px}
 .nb-list .nb-t{font-size:15px;line-height:1.55;margin-top:4px;white-space:pre-wrap}
 .tu-sum{font-size:12.5px;color:var(--muted)}
+/* Projekt-Status ohne langes Scrollen */
+.ps-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:1000px){ .ps-grid{grid-template-columns:minmax(0,1fr)} }
+.ps-side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.ps-side .who-sel{max-width:96px;font-size:12px}
+.ps-side .li .tt{font-size:13.5px}
+.ps-notes .quick-note textarea{min-height:56px}
+.nb-more>summary{cursor:pointer;font-weight:600;color:var(--ink);padding:8px 12px;border:1px dashed var(--line);border-radius:10px;list-style:none}
+.nb-more>summary::-webkit-details-marker{display:none}
+.nb-more>summary::before{content:'▸ ';color:var(--muted)}.nb-more[open]>summary::before{content:'▾ '}
 #printArea{display:none}
 @media print{
   .pr-land{page:land}
@@ -2220,29 +2230,36 @@ function projPhaseNav(pr){
 function projStatus(p){
   const ms=p.ms||{}, pp=pipe(p);
   const adm=isAdmin();
-  // Notizen als Karten: Überschrift (von Claude), Datum/Uhrzeit/Kürzel, Text – neueste oben
+  // Aufbau ohne langes Scrollen: links Notizen (neueste 3 sichtbar, Rest aufklappbar), rechts To-Dos + Statusverlauf
   if(SAMPLE) setTimeout(()=>noteHeadsFill(p.id),400);
-  const txt=(l,v,k)=>{ if(!v) return '';
-    const blocks=noteBlocks(v).map((b,i)=>({b,i})).reverse();
-    return `<div><div class="eyebrow nb-eb"><span>${l} · ${blocks.length}</span>${adm?`<button class="btn ghost sm" data-act="editNoteAll" data-pid="${p.id}" data-k="${k}">${ic('edit')}Ganzen Text bearbeiten</button>`:''}</div>
-      <div class="nb-list">${blocks.map(({b,i})=>{ const nb=noteParts(b), hd=noteHead(p,b);
-        return `<div class="nb"><div class="nb-h"><b class="${hd.ai?'':'nb-auto'}">${esc(hd.t)}</b><span class="nb-meta">${esc([nb.d,nb.tm,nb.by].filter(Boolean).join(' · '))}</span>${adm?`<span class="nb-a"><button class="icon-btn" title="Eintrag bearbeiten" data-act="editNoteBlock" data-pid="${p.id}" data-k="${k}" data-i="${i}">${ic('edit')}</button><button class="icon-btn" title="Eintrag löschen" data-act="delNoteBlock" data-pid="${p.id}" data-k="${k}" data-i="${i}">${ic('x')}</button></span>`:''}</div><div class="nb-t">${esc(shortMailRefs(nb.text))}</div></div>`; }).join('')}</div></div>`; };
-  // „Wer macht gerade was“: To-Do mit dem neuesten Update (oder zuletzt angelegt) oben
+  const nbKey=np=>{ const m=String(np.d||'').match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})?/); if(!m) return ''; const y=m[3]?(m[3].length===2?'20'+m[3]:m[3]):TODAY().slice(0,4); return y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0')+' '+(np.tm||'00:00'); };
+  const nbCard=(b,k,i)=>{ const nb=noteParts(b), hd=noteHead(p,b);
+    return `<div class="nb"><div class="nb-h"><b class="${hd.ai?'':'nb-auto'}">${esc(hd.t)}</b><span class="nb-meta">${esc([nb.d,nb.tm,nb.by].filter(Boolean).join(' · '))}${k==='notes'?' · Notiz':''}</span>${adm?`<span class="nb-a"><button class="icon-btn" title="Eintrag bearbeiten" data-act="editNoteBlock" data-pid="${p.id}" data-k="${k}" data-i="${i}">${ic('edit')}</button><button class="icon-btn" title="Eintrag löschen" data-act="delNoteBlock" data-pid="${p.id}" data-k="${k}" data-i="${i}">${ic('x')}</button></span>`:''}</div><div class="nb-t">${esc(shortMailRefs(nb.text))}</div></div>`; };
+  const txt=(l,v,k)=>{ if(!v) return ''; const blocks=noteBlocks(v).map((b,i)=>({b,i})).reverse();
+    return `<div><div class="eyebrow nb-eb"><span>${l} · ${blocks.length}</span>${adm?`<button class="btn ghost sm" data-act="editNoteAll" data-pid="${p.id}" data-k="${k}">${ic('edit')}Ganzen Text bearbeiten</button>`:''}</div><div class="nb-list">${blocks.map(({b,i})=>nbCard(b,k,i)).join('')}</div></div>`; };
+  const allNb=['updates','notes'].flatMap(k=>noteBlocks(p[k]).map((b,i)=>({b,i,k,key:nbKey(noteParts(b))}))).sort((a,b)=>b.key.localeCompare(a.key));
+  const top3=allNb.slice(0,3), restN=allNb.length-top3.length;
   const nw=nowOf(p), tasks=openTasks(p.id).sort((a,b)=>taskActKey(b).localeCompare(taskActKey(a))), active=['planung','laufend'].includes(catOf(p));
   const nxTask=pp.next&&arr('tasks').find(t=>t.pid===p.id&&t.ms===pp.next&&!t.done);
-  return `<div class="card now-card">
-    <div><div class="eyebrow"><span>Aktueller Stand${nw&&nw.d?' · '+esc(fmtD(nw.d))+(nw.tm?' · '+esc(nw.tm):''):''}</span><button class="btn ghost sm" data-act="editNow" data-pid="${p.id}">${ic('plus')}Neuer Stand</button></div>
-      ${nw?`<div>${esc(nw.t)}</div>${nw.own?'':'<div class="small muted" style="margin-top:4px">neuester Eintrag in den Updates'+(nw.by?' · von '+esc(nw.by):'')+'</div>'}`:'<div class="muted">Noch kein Stand notiert.</div>'}</div>
-    <div><div class="eyebrow"><span>Wer macht gerade was · ${tasks.length} offen</span><button class="btn ghost sm" data-act="newTask" data-pid="${p.id}">${ic('assign')}Aufgabe zuweisen</button></div>
+  const dn=arr('tasks').filter(x=>x.pid===p.id&&x.done).sort((a,b)=>String(b.doneAt||'').localeCompare(String(a.doneAt||'')));
+  return `<div class="ps-grid">
+  <div class="card ps-notes"><div class="card-h"><h3>Notizen & Updates</h3><span class="small muted">${allNb.length} Einträge · neueste oben</span></div><div class="card-b" style="display:flex;flex-direction:column;gap:12px">
+    <div class="quick-note"><textarea id="qn_${p.id}" rows="2" placeholder="Neue Notiz … (Datum und Kürzel ${esc(meK())} kommen automatisch dazu, Strg+Enter speichert)" aria-label="Neue Notiz">${esc(QN[p.id]||'')}</textarea>
+      <div class="row"><select class="catsel" id="qnf_${p.id}" aria-label="Ablegen unter"><option value="updates">als Update</option><option value="notes">als Notiz</option><option value="questions">als offene Frage</option></select><span class="spacer"></span><button class="btn pri sm" data-act="quickNote" data-pid="${p.id}">Speichern</button></div></div>
+    <div class="nb-list">${top3.map(x=>nbCard(x.b,x.k,x.i)).join('')||'<div class="empty">Noch keine Notizen.</div>'}</div>
+    ${restN||p.scope||p.questions||arr('tasks').some(t=>t.pid===p.id&&(t.upd2||[]).length)?`<details class="nb-more" ${UI.nbAll?'open':''} data-nball="1"><summary>${restN?`Ältere Notizen & Updates (${restN})`:'Weitere Einträge'}${p.questions?' · offene Fragen':''}${p.scope?' · Auftrag':''} anzeigen</summary>
+      <div style="display:flex;flex-direction:column;gap:14px;margin-top:10px">${txt('Zu klärende Fragen',p.questions,'questions')}${txt('Updates',p.updates,'updates')}${txt('Notizen',p.notes,'notes')}${todoUpdBlock(p)}${txt('Auftrag Inhalt',p.scope,'scope')}</div></details>`:''}
+  </div></div>
+  <div class="ps-side">
+   <div class="card"><div class="card-b" style="display:flex;flex-direction:column;gap:12px">
+    <div><div class="eyebrow"><span>Wer macht gerade was · ${tasks.length} offen</span><button class="btn ghost sm" data-act="newTask" data-pid="${p.id}">${ic('assign')}Aufgabe</button></div>
       <div class="list">${tasks.map(taskLi).join('')||'<div class="small muted">Keine offenen Aufgaben.</div>'}</div>
-      ${(()=>{ const dn=arr('tasks').filter(x=>x.pid===p.id&&x.done).sort((a,b)=>String(b.doneAt||'').localeCompare(String(a.doneAt||''))); return dn.length?`<label class="tog-sw" style="margin-top:8px"><input type="checkbox" data-chg="toggleDoneSw" ${UI.todoShowDone?'checked':''}><span class="sw" aria-hidden="true"></span><span class="small">Erledigte einblenden (${dn.length})</span></label>${UI.todoShowDone?`<div class="list done-list">${dn.map(taskLi).join('')}</div>`:''}`:''; })()}</div>
+      ${dn.length?`<label class="tog-sw" style="margin-top:8px"><input type="checkbox" data-chg="toggleDoneSw" ${UI.todoShowDone?'checked':''}><span class="sw" aria-hidden="true"></span><span class="small">Erledigte einblenden (${dn.length})</span></label>${UI.todoShowDone?`<div class="list done-list">${dn.map(taskLi).join('')}</div>`:''}`:''}</div>
     <div><div class="eyebrow"><span>Standardisiert als Nächstes</span>${SAMPLE?`<button class="btn ghost sm" data-act="aiNext" data-pid="${p.id}" title="Claude schlägt konkrete nächste Schritte vor (Fristen, Pflichten, Netzbetreiber …)">✨ KI-Vorschläge</button>`:''}</div>
       ${active&&pp.next?`<div class="nxbox"><b>${esc(pp.nextLabel)}</b>${pp.afterNext?`<span class="small muted">danach${pp.flow.opt.includes(pp.afterNext)?' optional':''}: ${esc(PIPE_DO[pp.afterNext-1])}</span>`:''}
         ${nxTask?`<span class="small">Zugewiesen an <b>${esc(nxTask.who||'niemand')}</b>${nxTask.due?' · bis '+esc(fmtD(nxTask.due)):''}</span>`:`<button class="btn sm pri" data-act="assignNext" data-pid="${p.id}">${ic('assign')}Next Step zuweisen</button>`}
         <button class="btn sm" data-act="doneNext" data-pid="${p.id}">Als erledigt markieren</button></div>`:`<div class="small muted">${active?'Alle Pflichtschritte erledigt (100 %).'+(pp.opt?' Optional: '+esc(PIPE_DO[pp.optStep-1])+' – im Statusverlauf abhaken, falls vereinbart.':''):'Projekt ist '+esc(CATS[catOf(p)])+'.'}</div>`}</div>
-  </div>
-  ${slimDrop(p.id)}
-  <div class="ps-stack">
+   </div></div>
    <details class="card st-det" ${UI.stOpen?'open':''} data-stdet="1"><summary class="card-h"><h3>Statusverlauf <span class="mono small muted">${pp.work}/${pp.total}</span></h3><span class="small muted">aufklappen · Haken setzt das heutige Datum · ⊘ = Schritt entfällt</span></summary>
     <div class="flow-pick"><label for="flow_${p.id}">Projektart / Ablauf</label><select id="flow_${p.id}" class="inp" data-chg="projFlow" data-pid="${p.id}">${Object.entries(FLOWS).map(([k,f])=>`<option value="${k}" ${k===flowId(p)?'selected':''}>${esc(f.n)}</option>`).join('')}</select></div>
     ${flowOf(p).st.map(([n,steps])=>{ let h=''; const sk=p.skip||{}; for(const i of steps){ const v=ms['m'+i]||'', isDate=/^\d{4}-\d{2}-\d{2}$/.test(v), isOpt=pp.flow.opt.includes(i);
@@ -2253,11 +2270,9 @@ function projStatus(p){
     ${(()=>{ const inFlow=new Set(flowOf(p).st.flatMap(s=>s[1])); const extra=Object.keys(ms).map(k=>+k.slice(1)).filter(i=>i&&!inFlow.has(i)&&i<30).sort((a,b)=>a-b);
       return extra.length?`<div class="stage"><h4><span>Aus früherem Ablauf / Excel</span><span class="mono">${extra.length}</span></h4>${extra.map(i=>`<div class="ms"><input type="checkbox" class="ck" data-chg="msCheck" data-pid="${p.id}" data-i="${i}" checked aria-label="${esc(PIPE[i-1])}"><span class="lb">${esc(PIPE[i-1])} <span class="small muted">· zählt nicht zum Ablauf</span></span><span class="small muted">${esc(msVal(ms['m'+i]))}</span></div>`).join('')}</div>`:''; })()}
    </details>
-   <div class="card ps-notes"><div class="card-h"><h3>Notizen & Updates</h3><span class="small muted">neueste oben · Überschriften fasst Claude automatisch zusammen</span></div><div class="card-b" style="display:flex;flex-direction:column;gap:14px">
-    <div class="quick-note"><textarea id="qn_${p.id}" placeholder="Neue Notiz schreiben … (wird mit Datum und Kürzel ${esc(meK())} angehängt, Strg+Enter speichert)" aria-label="Neue Notiz">${esc(QN[p.id]||'')}</textarea>
-      <div class="row"><select class="catsel" id="qnf_${p.id}" aria-label="Ablegen unter"><option value="updates">als Update</option><option value="notes">als Notiz</option><option value="questions">als offene Frage</option></select><span class="spacer"></span><button class="btn pri sm" data-act="quickNote" data-pid="${p.id}">Speichern</button></div></div>
-    ${txt('Auftrag Inhalt',p.scope,'scope')}${txt('Zu klärende Fragen',p.questions,'questions')}${txt('Notizen',p.notes,'notes')}${txt('Updates',p.updates,'updates')}${todoUpdBlock(p)}${adm?'<div class="small muted">Als Admin (EP, AvE) kannst du jeden Eintrag bearbeiten oder löschen. Jede Änderung steht im Verlauf.</div>':''}
-    ${!p.scope&&!p.questions&&!p.notes&&!p.updates?'<div class="empty">Noch keine Notizen.</div>':''}</div></div></div>`;
+  </div>
+  </div>
+  ${slimDrop(p.id)}`;
 }
 // Abgehakte Aufgabe automatisch als Update ins Projekt; danach optional ein ergänzender Satz
 // Projekt-To-Do abhaken: Beschreibung ist Pflicht und landet mit Kürzel als Update in den Notizen
@@ -4364,7 +4379,7 @@ Object.assign(CHG,{
  poolGive:(d,el)=>{ if(!el.value) return; const t=clone(S.tasks[d.id]); if(!t) return; t.who=el.value; put('tasks',t); toast('Zugewiesen an '+shortWho(el.value)+'.'); },
  ckNote:(d,el)=>{ const p=clone(S.projects[d.pid]); if(!p) return; const v=el.value.trim(); p.checkNotes={...(p.checkNotes||{})}; if(v) p.checkNotes[d.iid]=v; else delete p.checkNotes[d.iid]; put('projects',p); },
 });
-document.addEventListener('toggle',e=>{ const d=e.target; if(d&&d.dataset&&d.dataset.stdet){ UI.stOpen=d.open; } if(d&&d.dataset&&d.dataset.pf){ UI.pfOpen={...(UI.pfOpen||{}),[d.dataset.pf]:d.open}; } },true);
+document.addEventListener('toggle',e=>{ const d=e.target; if(d&&d.dataset&&d.dataset.stdet){ UI.stOpen=d.open; } if(d&&d.dataset&&d.dataset.nball){ UI.nbAll=d.open; } if(d&&d.dataset&&d.dataset.pf){ UI.pfOpen={...(UI.pfOpen||{}),[d.dataset.pf]:d.open}; } },true);
 
 
 /* ========== To-Dos aus E-Mails: Mail ablegen → KI erkennt Projekt, Aufgaben und Zuständige ========== */
