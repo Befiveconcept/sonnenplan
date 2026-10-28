@@ -524,6 +524,8 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .gs-in:focus-within{border-color:var(--sun);box-shadow:0 0 0 3px var(--sun-soft)}
 .gs-in svg{width:20px;height:20px;color:var(--muted);flex:none}
 .gs-in input{flex:1;min-width:0;border:0;background:transparent;padding:14px 0;font-size:16px;outline:none}
+.gs-mic{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--sun);font-size:15px;line-height:1;display:grid;place-items:center;cursor:pointer;padding:0}
+.gs-mic.on{background:var(--bad);color:#fff;border-color:var(--bad);animation:recp 1s infinite}
 .gs-in kbd{font-family:var(--f-mono);font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
 .gs-res:empty{display:none}
 .gs-res{margin-top:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:6px;max-height:60vh;overflow:auto;box-shadow:var(--shadow)}
@@ -532,7 +534,9 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .gs-r:hover,.gs-r:focus-visible{background:var(--sun-soft);outline:none}
 .gs-r span{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;max-width:100%;white-space:nowrap}
 .gs-none{padding:12px;color:var(--muted)}
-@media (max-width:640px){ .gs-in kbd{display:none} }
+@media (max-width:640px){ .gs-mic{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--sun);font-size:15px;line-height:1;display:grid;place-items:center;cursor:pointer;padding:0}
+.gs-mic.on{background:var(--bad);color:#fff;border-color:var(--bad);animation:recp 1s infinite}
+.gs-in kbd{display:none} }
 /* Allgemeine Aufgaben */
 .pool-it{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px dashed var(--line)}
 .pool-it .tt{font-weight:600}
@@ -668,6 +672,7 @@ details.pf:not([open])>summary{border-bottom:0}
 .nb-more>summary::before{content:'▸ ';color:var(--muted)}.nb-more[open]>summary::before{content:'▾ '}
 /* Diktier-Knopf am aktiven Textfeld */
 .vm-btn{position:fixed;z-index:100000;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:var(--surface);box-shadow:0 2px 8px rgba(0,0,0,.15);font-size:14px;line-height:1;display:grid;place-items:center;cursor:pointer;padding:0}
+.vm-btn[hidden]{display:none}
 .vm-btn:hover{background:var(--sun)}
 .vm-btn.on{background:var(--bad);color:#fff;border-color:var(--bad);animation:recp 1s infinite}
 .vm-busy{opacity:.6}
@@ -697,6 +702,20 @@ details.pf:not([open])>summary{border-bottom:0}
 .vl-sug{background:var(--sun-soft);border:1px solid var(--sun);border-radius:10px;padding:8px 12px;font-size:13.5px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .vl-tl{border-left:2px solid var(--line);margin-left:6px;padding-left:14px;display:flex;flex-direction:column;gap:6px}
 .vl-tl>div{position:relative;font-size:14px;line-height:1.5}
+.nb.dy{display:block;padding:10px 4px 12px}
+.dy-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.dy-h b{font-size:15px}
+.dy-d{font-family:var(--f-mono);font-size:12px;font-weight:600;background:var(--sun-soft);border-radius:6px;padding:2px 7px}
+.dy-list{display:flex;flex-direction:column;gap:5px}
+.dy-e{display:flex;gap:8px;align-items:flex-start;font-size:14.5px;line-height:1.5}
+.dy-m{flex:none;min-width:62px;font-family:var(--f-mono);font-size:11.5px;opacity:.6;padding-top:2px}
+.dy-t{flex:1;min-width:0;white-space:pre-wrap}
+.dy-a{display:inline-flex;gap:2px;opacity:.5}.dy-e:hover .dy-a{opacity:1}
+.dy-a .icon-btn{width:24px;height:24px}
+.dy-task{font-size:13.5px;opacity:.85}
+.dy-t .lnk,.dy-lh .lnk{display:inline;text-align:left;white-space:normal;font:inherit;font-weight:600;padding:0}
+.dy-link{margin-top:8px;border-left:3px solid var(--sun);padding:4px 0 4px 10px;display:flex;flex-direction:column;gap:3px;font-size:13.5px}
+.dy-lh{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.dy-lh .icon-btn{width:22px;height:22px;margin-left:auto}
 .vl-tl>div::before{content:'';position:absolute;left:-20px;top:7px;width:10px;height:10px;border-radius:50%;background:var(--sun)}
 .menu{max-height:80vh;overflow:auto}
 #printArea{display:none}
@@ -2301,7 +2320,7 @@ function projStatus(p){
   const dn=arr('tasks').filter(x=>x.pid===p.id&&x.done).sort((a,b)=>String(b.doneAt||'').localeCompare(String(a.doneAt||'')));
   return `<div class="ps-grid">
   <div class="ps-main">
-  <div class="card ps-notes"><div class="card-h"><h3>Notizen & Updates</h3><span class="small muted">${allNb.length} Einträge · neueste oben</span></div><div class="card-b" style="display:flex;flex-direction:column;gap:12px">
+  <div class="card ps-notes"><div class="card-h"><h3>Notizen</h3><span class="small muted">eine Notiz pro Tag · neueste oben · To-Do auf eine Notiz ziehen = verknüpfen</span></div><div class="card-b" style="display:flex;flex-direction:column;gap:12px">
     <div class="quick-note"><textarea id="qn_${p.id}" rows="2" placeholder="Neue Notiz … (Datum und Kürzel ${esc(meK())} kommen automatisch dazu, Strg+Enter speichert)" aria-label="Neue Notiz">${esc(QN[p.id]||'')}</textarea>
       <div class="row"><select class="catsel" id="qnf_${p.id}" aria-label="Ablegen unter"><option value="updates">als Update</option><option value="notes">als Notiz</option><option value="questions">als offene Frage</option></select><span class="spacer"></span><button class="btn pri sm" data-act="quickNote" data-pid="${p.id}">Speichern</button></div></div>
     ${projVerlauf(p,adm)}
@@ -2357,7 +2376,7 @@ const fixNames=s=>NAME_FIX.reduce((t,[rx,to])=>t.replace(rx,to),String(s||''));
 function saveNote(pid,f,text){
   text=fixNames(String(text||'').trim()); if(!text) return false;
   const p=clone(S.projects[pid]); const d0=new Date(), stamp=nowStamp();
-  p[f]=(p[f]?p[f].replace(/\s+$/,'')+'\n':'')+stamp+' ('+meK()+'): '+text; delete p.now; delete p.nowD; put('projects',p); toast('Notiz gespeichert.'); VL_NEW.add(strHash(text)); suggestTodos(pid,text);
+  p[f]=(p[f]?p[f].replace(/\s+$/,'')+'\n':'')+stamp+' ('+meK()+'): '+text; delete p.now; delete p.nowD; put('projects',p); toast('Notiz gespeichert.'); suggestTodos(pid,text);
 }
 // Notiztext in Einträge zerlegen: ein Eintrag beginnt mit einem Datum (z. B. „22.10.26:“), Folgezeilen gehören dazu
 // Zeitstempel fuer neue Eintraege: TT.MM.JJ HH:MM
@@ -2572,10 +2591,14 @@ function vOrders(){
   const f=UI.orderFilter; let os=arr('orders');
   // „Offen“ zeigt auch Gelieferte, deren Ware noch nicht ins Lager / auf die Baustelle verteilt ist
   if(f==='offen') os=os.filter(o=>orderState(o).open||unrouted(o).length); else if(f==='geliefert') os=os.filter(o=>!orderState(o).open);
+  // Filter „Bestellt über“ (bestellende Firma)
+  const bk=s=>String(s||'').trim().toLowerCase(), fb=UI.orderBuyer||'', buyers=[...new Map([...FIRMS(),...arr('orders').map(o=>o.buyer)].filter(s=>String(s||'').trim()).map(s=>[bk(s),String(s).trim()])).values()];
+  if(fb==='__none') os=os.filter(o=>!bk(o.buyer)); else if(fb) os=os.filter(o=>bk(o.buyer)===fb);
   const recent=arr('orders').flatMap(o=>(o.receipts||[]).map(r=>({...r,o}))).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,8);
   return head('Bestellungen & Wareneingänge', arr('orders').filter(o=>orderState(o).open).length+' Lieferungen offen', `${ASSETS||SAMPLE?`<button class="btn sun" data-act="newOrderFromInvoice">${ic('plus')}Aus Rechnung anlegen</button>`:''}<button class="btn" data-act="newOrder">${ic('plus')}Bestellung</button>`)+
   dropZoneHtml('')+(dueDeliveries().length?`<div class="banner row"><span>${ic('truck','style="width:18px;height:18px;vertical-align:-3px"')} ${dueDeliveries().length} Lieferung${dueDeliveries().length>1?'en sind':' ist'} fällig und noch nicht gebucht.</span><span class="spacer"></span><button class="btn sun sm" data-act="checkDlv">Jetzt prüfen</button></div>`:'')+
   `<div class="chips">${[['offen','Offen'],['geliefert','Geliefert'],['alle','Alle']].map(([k,l])=>`<button class="chip ${f===k?'on':''}" data-act="orderFilter" data-v="${k}">${l}</button>`).join('')}</div>
+  ${buyers.length?`<div class="chips"><span class="small muted" style="align-self:center">Bestellt über:</span>${[['','Alle'],...buyers.map(b=>[bk(b),b]),['__none','ohne Angabe']].map(([k,l])=>`<button class="chip ${fb===k?'on':''}" data-act="orderBuyer" data-v="${esc(k)}">${esc(l)}</button>`).join('')}</div>`:''}
   <div class="card">${ordersTable(os)}</div>
   <div class="card"><div class="card-h"><h3>Letzte Warenannahmen</h3></div><div class="list">${recent.map(r=>`<div class="li clickable" data-act="editOrder" data-id="${r.o.id}"><span class="pill ${r.dmg?'bad':'ok'}">${r.dmg?'Schaden':'ok'}</span><div class="body"><div class="tt">${esc(r.o.supplier)} · ${esc(projName(r.o.pid))}</div><div class="mt"><span>${fmtD(r.date)}</span>${r.by?`<span>angenommen von ${esc(r.by)}</span>`:''}${r.ls?`<span>LS ${esc(r.ls)}</span>`:''}${r.note?`<span>${esc(r.note)}</span>`:''}${(r.lines||[]).filter(l=>l.st!=='da').length?`<span class="overdue">fehlt: ${esc(r.lines.filter(l=>l.st!=='da').map(l=>l.art).join(', '))}</span>`:''}</div></div></div>`).join('')||'<div class="empty">Noch keine Warenannahme erfasst.</div>'}</div></div>`;
 }
@@ -3825,7 +3848,7 @@ function resizeRef(ref,date){
 let DRAG=null, SUPPRESS_CLICK=false;
 // Ein To-Do auf ein anderes To-Do ziehen → wird dort als Update übernommen
 function dropTargetAt(x,y){ const el=document.elementFromPoint(x,y); if(!el) return null;
-  if(DRAG&&String(DRAG.ref).startsWith('task:')){ const tk=el.closest('[data-drop-task]'); if(tk&&'task:'+tk.dataset.dropTask!==DRAG.ref) return tk; }
+  if(DRAG&&String(DRAG.ref).startsWith('task:')){ const tk=el.closest('[data-drop-task],[data-drop-note]'); if(tk&&(tk.dataset.dropNote||'task:'+tk.dataset.dropTask!==DRAG.ref)) return tk; }
   return el.closest('[data-drop-d],[data-drop-who]'); }
 function mergeTask(srcId,dstId){
   const a=S.tasks[srcId], b=S.tasks[dstId]; if(!a||!b||a.id===b.id) return; if(!mayWrite('tasks')) return toast('Keine Berechtigung, To-Dos zu ändern.');
@@ -3869,7 +3892,8 @@ document.addEventListener('touchmove',e=>{ if(DRAG&&DRAG.started) e.preventDefau
 document.addEventListener('pointerup',e=>{
   if(!DRAG) return; const d=DRAG; if(!d.started){ endDrag(); return; }
   const t=dropTargetAt(e.clientX,e.clientY); endDrag(); SUPPRESS_CLICK=true; setTimeout(()=>{ SUPPRESS_CLICK=false; },60);
-  if(!t) return; if(t.dataset.dropTask){ mergeTask(String(d.ref).slice(5),t.dataset.dropTask); return; }
+  if(!t) return; if(t.dataset.dropNote){ linkTaskNote(t.dataset.pid,String(d.ref).slice(5),t.dataset.dropNote); return; }
+  if(t.dataset.dropTask){ mergeTask(String(d.ref).slice(5),t.dataset.dropTask); return; }
   if(d.mode==='resize'){ if(t.dataset.dropD) resizeRef(d.ref,t.dataset.dropD); } else moveRef(d.ref,t.dataset.dropD||'',t.dataset.dropWho);
 });
 document.addEventListener('pointercancel',()=>endDrag());
@@ -4399,8 +4423,18 @@ function gsearchHtml(q){
   const groups={}; ['Projekte','To-Dos','Notizen','Bestellungen','Dateien','Lager','Termine','Wochenplanung','Tagesrapporte','Kommissionierung','Private To-Dos'].forEach(g=>groups[g]=[]); res.forEach(r=>{ (groups[r.g]=groups[r.g]||[]).push(r); });
   return Object.entries(groups).filter(([,l])=>l.length).map(([g,l])=>`<div class="gs-g"><div class="gs-h">${esc(g)} <span class="mono">${l.length}</span></div>${l.slice(0,8).map(r=>`<button type="button" class="gs-r" data-act="${r.act}" data-id="${esc(r.id||'')}" ${r.at?`data-at="${r.at}"`:''} ${r.v?`data-v="${r.v}"`:''}><b>${esc(r.t)}</b><span>${esc(r.m||'')}</span></button>`).join('')}${l.length>8?`<div class="small muted" style="padding:4px 10px">+ ${l.length-8} weitere – Suche genauer eingeben</div>`:''}</div>`).join('');
 }
-function gsearchBox(){ return `<div class="gs-wrap"><div class="gs-in">${ic('search')}<input id="gSearch" type="search" autocomplete="off" placeholder="Alles durchsuchen: Projekte, Notizen, To-Dos, Bestellungen, Dateien (auch Inhalt), Lager …" value="${esc(UI.gq||'')}" aria-label="Gesamtes Programm durchsuchen"><kbd>Strg K</kbd></div><div id="gResults" class="gs-res" role="region" aria-live="polite">${gsearchHtml(UI.gq)}</div></div>`; }
+function gsearchBox(){ return `<div class="gs-wrap"><div class="gs-in">${ic('search')}<input id="gSearch" type="search" autocomplete="off" placeholder="Alles durchsuchen: Projekte, Notizen, To-Dos, Bestellungen, Dateien (auch Inhalt), Lager …" value="${esc(UI.gq||'')}" aria-label="Gesamtes Programm durchsuchen">${SRec?`<button type="button" class="gs-mic" data-act="gsVoice" title="Per Sprache suchen" aria-label="Per Sprache suchen">🎙</button>`:''}<kbd>Strg K</kbd></div><div id="gResults" class="gs-res" role="region" aria-live="polite">${gsearchHtml(UI.gq)}</div></div>`; }
 let gT; document.addEventListener('input',e=>{ if(e.target.id!=='gSearch') return; UI.gq=e.target.value; clearTimeout(gT); gT=setTimeout(()=>{ const r=$('#gResults'); if(r) r.innerHTML=gsearchHtml(UI.gq); },150); });
+// Suche per Sprache: gesprochener Suchbegriff landet im Suchfeld (Namen wie Marc korrigiert)
+let GS_REC=null;
+A.gsVoice=(d,el)=>{ if(GS_REC){ try{ GS_REC.stop(); }catch(e){} return; } if(!SRec) return; if(MEET_ON) return toast('Während einer Meeting-Mitschrift ist das Mikrofon belegt.');
+  const r=new SRec(); r.lang='de-DE'; r.continuous=false; r.interimResults=true; GS_REC=r; const btn=()=>$('.gs-mic'), inp=()=>$('#gSearch');
+  const set=v=>{ const i=inp(); if(!i) return; i.value=v.replace(/[.!?]+$/,''); i.dispatchEvent(new Event('input',{bubbles:true})); };
+  r.onresult=e=>{ let s=''; for(let i=0;i<e.results.length;i++) s+=e.results[i][0].transcript; set(fixNames(s.trim())); };
+  r.onerror=e=>{ if(['not-allowed','service-not-allowed'].includes(e.error)) toast('Kein Zugriff aufs Mikrofon – bitte im Browser erlauben.'); };
+  r.onend=()=>{ GS_REC=null; const b=btn(); if(b){ b.classList.remove('on'); b.textContent='🎙'; } };
+  try{ r.start(); }catch(e){ GS_REC=null; return toast('Mikrofon konnte nicht gestartet werden.'); }
+  const b=btn(); if(b){ b.classList.add('on'); b.textContent='■'; } toast('Sag, wonach du suchst …'); };
 document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); if(UI.view!=='dash'){ go('dash'); } setTimeout(()=>{ const i=$('#gSearch'); if(i){ i.focus(); i.select(); } },60); } });
 
 /* ========== Checklisten ausfüllen, speichern, drucken ========== */
@@ -4924,107 +4958,81 @@ Mach daraus sauberen, sinnvollen Text: Satzzeichen und Groß-/Kleinschreibung, o
   VOICE_EL=t; voicePlace();
 }
 
-/* ========== Projektverlauf: Notizen mit angehängten Updates und Themen-Wörtern ========== */
-// Einträge bleiben Text in p.notes / p.updates. Zusätzlich je Eintrag (am Text-Hash):
-//   p.threads[kind]=eltern   (Update hängt an einer Notiz)      p.threadsMan[kind]=1  (von Hand gesetzt → Claude ändert nicht)
-//   p.noteTopics[h]=[Wörter] (von Claude)                       p.topicsMan[h]={add:[],del:[]} (von Hand)
-//   p.vlDone[h]=1            (Claude hat den Eintrag ausgewertet)
-const VL_NEW=new Set(); // in dieser Sitzung neu geschrieben → Claude schlägt Zuordnung vor statt sie selbst zu setzen
-function vlEntries(p){
-  const key=np=>{ const m=String(np.d||'').match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})?/); if(!m) return ''; const y=m[3]?(m[3].length===2?'20'+m[3]:m[3]):TODAY().slice(0,4); return y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0')+' '+(np.tm||'00:00'); };
-  return ['notes','updates'].flatMap(k=>noteBlocks(p[k]).map((b,i)=>{ const np=noteParts(b); return {k,i,b,np,h:strHash(np.text),key:key(np)}; })).filter(e=>e.np.text);
+/* ========== Projekt-Tagebuch: eine Notiz pro Tag, fortlaufend wie in der Excel ========== */
+// Der Text bleibt in p.notes / p.updates. Dazu kommen automatisch die To-Dos des Projekts an ihrem Tag (neu angelegt, Updates, erledigt).
+//   p.noteLinks[taskId]='JJJJ-MM-TT'  To-Do per Ziehen mit der Tages-Notiz verknüpft → erscheint dort mit allen Updates
+//   p.dayHeads[tag]={t,h}             Überschrift von Claude (h = Prüfsumme des Tagesinhalts; ändert sich der Tag, kommt eine neue)
+const dIso=s=>{ const m=String(s||'').match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})?/); if(!m) return ''; const y=m[3]?(m[3].length===2?'20'+m[3]:m[3]):TODAY().slice(0,4); return y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'); };
+const tmOfIso=a=>{ if(String(a||'').length<=10) return ''; const x=new Date(a); return isNaN(x)?'':String(x.getHours()).padStart(2,'0')+':'+String(x.getMinutes()).padStart(2,'0'); };
+function diaryDays(p){
+  const days={}, day=d=>(days[d]=days[d]||{d,items:[],links:[]}), add=(d,e)=>day(d).items.push(e);
+  ['notes','updates'].forEach(k=>noteBlocks(p[k]).forEach((b,i)=>{ const np=noteParts(b); if(np.text) add(dIso(np.d),{kind:'note',k,i,tm:np.tm,by:np.by,text:np.text}); }));
+  arr('tasks').filter(t=>t.pid===p.id).forEach(t=>{
+    const cd=t.created||String(t.at||'').slice(0,10);
+    if(cd) add(cd,{kind:'new',task:t,tm:String(t.at||'').slice(0,10)===cd?tmOfIso(t.at):'',by:t.by||''});
+    (t.upd2||[]).forEach(u=>{ if(u.d) add(u.d,{kind:'upd',task:t,tm:updTime(u),by:u.by||'',text:u.t}); });
+    // Abhaken über das Projekt schreibt schon eine Notiz – dann nicht doppelt
+    if(t.done&&t.doneAt){ const dd=String(t.doneAt).slice(0,10); if(!(days[dd]?days[dd].items:[]).some(e=>e.kind==='note'&&e.text.includes(t.title))) add(dd,{kind:'done',task:t,tm:tmOfIso(t.doneAt),by:t.doneBy||'',text:t.doneNote||''}); }
+  });
+  Object.entries(p.noteLinks||{}).forEach(([id,d])=>{ const t=S.tasks[id]; if(t&&d) day(d).links.push(t); });
+  const out=Object.values(days); out.forEach(x=>x.items.sort((a,b)=>(a.tm||'').localeCompare(b.tm||'')));
+  return out.sort((a,b)=>!a.d?1:!b.d?-1:b.d.localeCompare(a.d));
 }
-function vlTopics(p,h){ const ai=(p.noteTopics||{})[h]||[], man=(p.topicsMan||{})[h]||{}; return [...new Set(ai.filter(w=>!(man.del||[]).includes(w)).concat(man.add||[]))].filter(Boolean); }
-// Baum: Wurzeln (eigene Notizen) mit ihren Updates; Ketten werden auf die oberste Notiz zusammengezogen
-function vlTree(p){
-  const es=vlEntries(p), byH={}; es.forEach(e=>{ if(!byH[e.h]) byH[e.h]=e; });
-  const th=p.threads||{}, root=e=>{ let x=e, seen=0; while(th[x.h]&&byH[th[x.h]]&&byH[th[x.h]]!==x&&seen++<10) x=byH[th[x.h]]; return x; };
-  const roots=[], kids={};
-  es.forEach(e=>{ const r=root(e); if(r===e) roots.push(e); else (kids[r.h]=kids[r.h]||[]).push(e); });
-  roots.forEach(r=>{ r.kids=(kids[r.h]||[]).sort((a,b)=>b.key.localeCompare(a.key)); r.last=[r.key,...r.kids.map(k=>k.key)].sort().pop(); });
-  return roots.sort((a,b)=>b.last.localeCompare(a.last));
+const dyDate=d=>{ if(!d) return 'Ohne Datum'; const x=new Date(d+'T12:00'); return WD[x.getDay()]+' '+d.slice(8)+'.'+d.slice(5,7)+'.'+d.slice(2,4); };
+const dyPlain=e=>e.kind==='note'?shortMailRefs(e.text):e.kind==='new'?'Neues To-Do: '+e.task.title:e.kind==='upd'?'Update zu „'+e.task.title+'“: '+e.text:'Erledigt: '+e.task.title+(e.text?' – '+e.text:'');
+const dyHash=x=>strHash(x.items.map(dyPlain).join('|'));
+const dyTask=t=>`<button class="lnk" data-act="editTask" data-id="${t.id}">${esc(t.title)}</button>`;
+function dyItem(p,e,adm){
+  const meta=`<span class="dy-m">${esc([e.tm,e.by].filter(Boolean).join(' '))}</span>`;
+  if(e.kind==='note') return `<div class="dy-e">${meta}<div class="dy-t">${esc(shortMailRefs(e.text))}</div>${adm?`<span class="dy-a"><button class="icon-btn" title="Bearbeiten" data-act="editNoteBlock" data-pid="${p.id}" data-k="${e.k}" data-i="${e.i}">${ic('edit')}</button><button class="icon-btn" title="Löschen" data-act="delNoteBlock" data-pid="${p.id}" data-k="${e.k}" data-i="${e.i}">${ic('x')}</button></span>`:''}</div>`;
+  const t=e.task, who=t.ext?'extern: '+t.ext:t.who?shortWho(t.who):'';
+  const body=e.kind==='new'?`☐ Neues To-Do: ${dyTask(t)}${who?' · '+esc(who):''}${t.due?' · fällig '+esc(fmtD(t.due)):''}`
+    :e.kind==='upd'?`↳ To-Do ${dyTask(t)}: ${esc(e.text)}`:`✓ Erledigt: ${dyTask(t)}${e.text?' – '+esc(e.text):''}`;
+  return `<div class="dy-e dy-task">${meta}<div class="dy-t">${body}</div></div>`;
 }
-// Themen-Wörter im Text unterstreichen (anklickbar → Pop-up mit der Geschichte des Themas)
-function vlMark(text,words){ let s=esc(shortMailRefs(text)); const ws=[...words].sort((a,b)=>b.length-a.length);
-  ws.forEach(w=>{ const e=esc(w).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); s=s.replace(new RegExp('(^|[^\\wäöüÄÖÜß>])('+e+')(?![\\wäöüÄÖÜß])','i'),(m,a,b)=>a+`<span class="tw" data-act="vlTopic" data-w="${esc(w)}" title="Alles zum Thema „${esc(w)}“">${b}</span>`); });
-  return s; }
-function vlCard(p,e,adm,child){
-  const hd=noteHead(p,e.b), np=e.np, meta=[np.d,np.tm,np.by].filter(Boolean).join(' · '), tp=vlTopics(p,e.h);
-  const acts=`<span class="vl-acts">${child?'':`<button class="lnk" data-act="vlAdd" data-pid="${p.id}" data-h="${e.h}">Update dazu</button>`}<button class="lnk" data-act="vlLink" data-pid="${p.id}" data-h="${e.h}">Zuordnen</button><button class="lnk" data-act="vlTopicsEdit" data-pid="${p.id}" data-h="${e.h}">Themen</button>${adm?`<button class="icon-btn" title="Bearbeiten" data-act="editNoteBlock" data-pid="${p.id}" data-k="${e.k}" data-i="${e.i}">${ic('edit')}</button><button class="icon-btn" title="Löschen" data-act="delNoteBlock" data-pid="${p.id}" data-k="${e.k}" data-i="${e.i}">${ic('x')}</button>`:''}</span>`;
-  if(child) return `<div class="vl-up"><div class="vl-um"><span class="nb-meta">${esc(meta)}</span>${acts}</div><div class="vl-ut">${vlMark(np.text,tp)}</div></div>`;
-  const n=(e.kids||[]).length, open=UI.vlOpen&&UI.vlOpen[e.h];
-  return `<div class="nb vl-nb"><div class="nb-h"><b class="${hd.ai?'':'nb-auto'}">${esc(hd.t)}</b><span class="nb-meta">${esc(meta)}${e.k==='notes'?' · Notiz':''}</span></div>
-    <div class="nb-t">${vlMark(np.text,tp)}</div>
-    <div class="vl-bar">${n?`<button class="lnk vl-tog" data-act="vlToggle" data-h="${e.h}">${open?'▾ ':'▸ '}${n} Update${n>1?'s':''} · zuletzt ${esc(e.kids[0].np.d.slice(0,6))}</button>`:''}${acts}</div>
-    ${n&&open?`<div class="vl-ups">${e.kids.map(k=>vlCard(p,k,adm,true)).join('')}</div>`:''}</div>`;
+function dyLink(p,t){
+  const ups=[...(t.upd2||[])].sort((a,b)=>updKey(b).localeCompare(updKey(a)));
+  return `<div class="dy-link"><div class="dy-lh">🔗 ${dyTask(t)} <span class="small muted">${t.done?'✓ erledigt':'offen'}${t.who?' · '+esc(shortWho(t.who)):''}</span><button class="icon-btn" title="Verknüpfung lösen" data-act="dyUnlink" data-pid="${p.id}" data-id="${t.id}">${ic('x')}</button></div>
+    ${ups.map(u=>`<div class="dy-lu"><span class="dy-m">${esc(fmtD(u.d)+' '+(updTime(u)||'')+' '+(u.by||''))}</span> ${esc(u.t)}</div>`).join('')||'<div class="small muted">Noch keine Updates.</div>'}</div>`;
+}
+function dyCard(p,x,adm){
+  const hd=(p.dayHeads||{})[x.d];
+  return `<div class="nb dy" ${x.d?`data-drop-note="${x.d}" data-pid="${p.id}"`:''}><div class="dy-h"><span class="dy-d">${esc(dyDate(x.d))}</span>${hd&&hd.t?`<b>${esc(hd.t)}</b>`:''}</div>
+    <div class="dy-list">${x.items.map(e=>dyItem(p,e,adm)).join('')}</div>${x.links.map(t=>dyLink(p,t)).join('')}</div>`;
 }
 function projVerlauf(p,adm){
-  if(SAMPLE) setTimeout(()=>vlFill(p.id),400);
-  const roots=vlTree(p), top=roots.slice(0,3), rest=roots.slice(3), sg=UI.vlSug&&UI.vlSug.pid===p.id?UI.vlSug:null;
-  return `${sg?`<div class="vl-sug">✨ Gehört das zu „<b>${esc(sg.title)}</b>“ vom ${esc(sg.date)}? <button class="btn sm pri" data-act="vlSugYes" data-pid="${p.id}">Als Update anhängen</button><button class="btn sm" data-act="vlSugNo">Eigene Notiz</button></div>`:''}
-    <div class="nb-list">${top.map(e=>vlCard(p,e,adm,false)).join('')||'<div class="empty">Noch keine Notizen.</div>'}</div>
-    ${rest.length||p.questions||p.scope?`<details class="nb-more" ${UI.nbAll?'open':''} data-nball="1"><summary>${rest.length?`Ältere Notizen (${rest.length})`:'Weitere Einträge'}${p.questions?' · offene Fragen':''}${p.scope?' · Auftrag':''} anzeigen</summary>
-      <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px"><div class="nb-list">${rest.map(e=>vlCard(p,e,adm,false)).join('')}</div>
+  if(SAMPLE) setTimeout(()=>diaryHeads(p.id),400);
+  const days=diaryDays(p), top=days.slice(0,5), rest=days.slice(5);
+  return `<div class="nb-list">${top.map(x=>dyCard(p,x,adm)).join('')||'<div class="empty">Noch keine Notizen.</div>'}</div>
+    ${rest.length||p.questions||p.scope?`<details class="nb-more" ${UI.nbAll?'open':''} data-nball="1"><summary>${rest.length?`Ältere Notizen (${rest.length} Tage)`:'Weitere Einträge'}${p.questions?' · offene Fragen':''}${p.scope?' · Auftrag':''} anzeigen</summary>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px"><div class="nb-list">${rest.map(x=>dyCard(p,x,adm)).join('')}</div>
       ${p.questions?`<div><div class="eyebrow nb-eb"><span>Zu klärende Fragen</span></div><div class="longtext">${esc(p.questions)}</div></div>`:''}${p.scope?`<div><div class="eyebrow nb-eb"><span>Auftrag Inhalt</span></div><div class="longtext">${esc(p.scope)}</div></div>`:''}</div></details>`:''}`;
 }
-// Claude: Überschrift, Zuordnung (Update zu welcher Notiz?) und Themen-Wörter je Eintrag – einmal pro Eintrag
-const VL_RUN={}, VL_TRIED={};
-async function vlFill(pid){
-  const p=S.projects[pid]; if(!p||!SAMPLE||VL_RUN[pid]) return;
-  const es=vlEntries(p).sort((a,b)=>a.key.localeCompare(b.key)), done=p.vlDone||{}, heads=p.noteHeads||{};
-  const todo=es.map((e,i)=>({e,i})).filter(({e})=>(!done[e.h]||!heads[e.h])&&!VL_TRIED[e.h]).slice(-30); if(!todo.length) return;
-  VL_RUN[pid]=true; todo.forEach(({e})=>VL_TRIED[e.h]=1);
-  const list=es.map((e,i)=>(i+1)+'. ['+e.key.slice(0,10)+'] '+e.np.text.slice(0,400)).join('\n').slice(-14000);
-  try{ const r=await SAMPLE.json(`Projekt „${p.name}“ eines Solar-Installationsbetriebs. Alle Notizen/Updates, älteste zuerst:\n${list}
-Für die Einträge Nr. ${todo.map(x=>x.i+1).join(', ')}:
-- h: kurze Überschrift (2–5 Wörter, keine Personennamen)
-- p: Nummer eines FRÜHEREN Eintrags, zu dem dieser Eintrag ein Update/Fortschritt/Erledigung ist (gleiche Sache) – sonst 0. Nur bei klarem Bezug.
-- t: 1–3 Themen-Wörter, die GENAU so im Text vorkommen (z. B. „Westnetz“, „Kran-Firma“, „Zählerschrank“) – Firmen, Bauteile, Vorgänge; keine Personen, keine Allerweltswörter.
-Antworte nur mit JSON: {"items":[{"n":Nummer,"h":"…","p":0,"t":["…"]}]}`,{modelTier:'quick',bg:true});
-    const cur=clone(S.projects[pid]); if(!cur) return; const th={...(cur.threads||{})}, man=cur.threadsMan||{}, tp={...(cur.noteTopics||{})}, hd={...(cur.noteHeads||{})}, dn={...(cur.vlDone||{})};
-    let sug=null;
-    (r&&Array.isArray(r.items)?r.items:[]).forEach(it=>{ const e=es[(+it.n||0)-1]; if(!e) return; dn[e.h]=1;
-      if(String(it.h||'').trim()) hd[e.h]=String(it.h).trim().slice(0,60);
-      tp[e.h]=(Array.isArray(it.t)?it.t:[]).map(w=>String(w).trim()).filter(w=>w&&e.np.text.toLowerCase().includes(w.toLowerCase())).slice(0,3);
-      const par=es[(+it.p||0)-1];
-      if(par&&par.key<=e.key&&par.h!==e.h&&!man[e.h]){ if(VL_NEW.has(e.h)) sug={pid,h:e.h,parent:par.h,title:hd[par.h]||noteHead(cur,par.b).t,date:par.np.d}; else th[e.h]=par.h; } });
-    const upd={threads:th,noteTopics:tp,noteHeads:hd,vlDone:dn}; Object.assign(S.projects[pid],upd);
-    if(MODE==='cloud'&&DB&&mayWrite('projects')) DB.collection('projects').doc(pid).update(upd).catch(()=>{});
-    if(sug) UI.vlSug=sug; scheduleRender(); }
-  catch(e){} finally{ VL_RUN[pid]=false; }
+// Claude: kurze Überschrift je Tag (im Hintergrund, ohne Sonne)
+const DY_RUN={}, DY_TRIED={};
+async function diaryHeads(pid){
+  const p=S.projects[pid]; if(!p||!SAMPLE||DY_RUN[pid]) return; const hd=p.dayHeads||{};
+  const todo=diaryDays(p).filter(x=>x.d&&x.items.length).map(x=>({x,h:dyHash(x)})).filter(({x,h})=>(hd[x.d]||{}).h!==h&&!DY_TRIED[pid+x.d+h]).slice(0,20); if(!todo.length) return;
+  DY_RUN[pid]=true; todo.forEach(({x,h})=>DY_TRIED[pid+x.d+h]=1);
+  try{ const r=await SAMPLE.json(`Projekt „${p.name}“ eines Solar-Installationsbetriebs. Tagebuch, Einträge je Tag:\n${todo.map(({x},i)=>(i+1)+'. ['+x.d+'] '+x.items.map(dyPlain).join(' | ').slice(0,800)).join('\n')}
+Gib jedem Tag eine kurze, zusammenfassende Überschrift (2–6 Wörter, keine Personennamen, kein Datum), z. B. „Zählerschrank verdrahtet, Kran geklärt“. Antworte nur mit JSON in derselben Reihenfolge: {"h":["…"]}`,{modelTier:'quick',bg:true});
+    const cur=S.projects[pid]; if(!cur) return; const nh={...(cur.dayHeads||{})};
+    (r&&Array.isArray(r.h)?r.h:[]).forEach((t,i)=>{ const it=todo[i]; if(it&&String(t||'').trim()) nh[it.x.d]={t:String(t).trim().slice(0,70),h:it.h}; });
+    cur.dayHeads=nh; if(MODE==='cloud'&&DB&&mayWrite('projects')) DB.collection('projects').doc(pid).update({dayHeads:nh}).catch(()=>{}); scheduleRender(); }
+  catch(e){} finally{ DY_RUN[pid]=false; }
 }
 function vlSet(pid,fn,msg){ const p=clone(S.projects[pid]); if(!p) return; fn(p); put('projects',p); if(msg) toast(msg); }
+// To-Do auf eine Tages-Notiz gezogen → verknüpfen
+function linkTaskNote(pid,id,d){ const t=S.tasks[id]; if(!t||!S.projects[pid]) return; vlSet(pid,p=>{ p.noteLinks={...(p.noteLinks||{}),[id]:d}; },'„'+t.title.slice(0,40)+'“ mit der Notiz vom '+dyDate(d)+' verknüpft.'); }
 Object.assign(A,{
- vlToggle:d=>{ UI.vlOpen={...(UI.vlOpen||{}),[d.h]:!(UI.vlOpen||{})[d.h]}; render(); },
- vlSugYes:d=>{ const s=UI.vlSug; UI.vlSug=null; if(!s) return render(); vlSet(s.pid,p=>{ p.threads={...(p.threads||{}),[s.h]:s.parent}; p.threadsMan={...(p.threadsMan||{}),[s.h]:1}; },'Als Update angehängt.'); UI.vlOpen={...(UI.vlOpen||{}),[s.parent]:true}; },
- vlSugNo:()=>{ const s=UI.vlSug; UI.vlSug=null; if(s) vlSet(s.pid,p=>{ p.threadsMan={...(p.threadsMan||{}),[s.h]:1}; }); else render(); },
- vlAdd:d=>{ const p=S.projects[d.pid], par=vlEntries(p).find(e=>e.h===d.h); if(!par) return;
-   openSheet({title:'Update zu „'+noteHead(p,par.b).t+'“',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:6px">${esc(par.np.d)} · ${esc(shortMailRefs(par.np.text).slice(0,200))}</div><textarea id="vl_t" class="inp" rows="4" style="width:100%" placeholder="Was ist neu? (Datum, Uhrzeit und Kürzel kommen automatisch dazu)"></textarea></div>`,saveLabel:'Update speichern',
-     onSave:()=>{ const t=fixNames(($('#vl_t').value||'').trim()); if(t.length<3){ toast('Bitte kurz beschreiben, was neu ist.'); return false; }
-       vlSet(d.pid,pp=>{ pp.updates=(pp.updates?pp.updates.replace(/\s+$/,'')+'\n':'')+nowStamp()+' ('+meK()+'): '+t; delete pp.now; delete pp.nowD; const h=strHash(t); pp.threads={...(pp.threads||{}),[h]:d.h}; pp.threadsMan={...(pp.threadsMan||{}),[h]:1}; },'Update angehängt.');
-       UI.vlOpen={...(UI.vlOpen||{}),[d.h]:true}; }}); },
- vlLink:d=>{ const p=S.projects[d.pid], es=vlEntries(p), me=es.find(e=>e.h===d.h); if(!me) return; const cur=(p.threads||{})[d.h]||'';
-   const opts=vlTree(p).filter(r=>r.h!==d.h).map(r=>`<option value="${r.h}" ${r.h===cur?'selected':''}>${esc(r.np.d)} · ${esc(noteHead(p,r.b).t)}</option>`).join('');
-   openSheet({title:'Eintrag zuordnen',html:`<div class="fld full"><div class="small muted" style="margin-bottom:6px">${esc(me.np.d)} · ${esc(shortMailRefs(me.np.text).slice(0,160))}</div><label for="vl_p">Gehört als Update zu</label><select id="vl_p" class="inp"><option value="">– eigene Notiz (keinem Eintrag zugeordnet) –</option>${opts}</select></div>`,saveLabel:'Übernehmen',
-     onSave:()=>{ const v=$('#vl_p').value; vlSet(d.pid,pp=>{ const th={...(pp.threads||{})}; if(v) th[d.h]=v; else delete th[d.h]; pp.threads=th; pp.threadsMan={...(pp.threadsMan||{}),[d.h]:1}; },v?'Zugeordnet.':'Als eigene Notiz geführt.'); if(v) UI.vlOpen={...(UI.vlOpen||{}),[v]:true}; }}); },
- vlTopicsEdit:d=>{ const p=S.projects[d.pid], tp=vlTopics(p,d.h);
-   openSheet({title:'Themen-Wörter',html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Unterstrichene Wörter öffnen beim Anklicken alles zu diesem Thema. Das Wort muss so im Text stehen.</div>
-     <div id="vl_tp">${tp.map(w=>`<label class="mt-opt" style="padding:3px 0"><input type="checkbox" class="ck vl-keep" value="${esc(w)}" checked><span>${esc(w)}</span></label>`).join('')||'<div class="small muted">Noch keine Themen.</div>'}</div>
-     <label for="vl_add" style="margin-top:10px;display:block">Weitere Wörter (mit Komma trennen)</label><input id="vl_add" class="inp" placeholder="z. B. Westnetz, Zählerschrank"></div>`,saveLabel:'Speichern',
-     onSave:()=>{ const keep=[...document.querySelectorAll('.vl-keep')].filter(c=>c.checked).map(c=>c.value), drop=[...document.querySelectorAll('.vl-keep')].filter(c=>!c.checked).map(c=>c.value), add=($('#vl_add').value||'').split(',').map(s=>s.trim()).filter(Boolean);
-       vlSet(d.pid,pp=>{ const m={...(pp.topicsMan||{})}, o=m[d.h]||{add:[],del:[]}; m[d.h]={add:[...new Set([...(o.add||[]).filter(w=>!drop.includes(w)),...add])],del:[...new Set([...(o.del||[]).filter(w=>!add.includes(w)),...drop])]}; pp.topicsMan=m; },'Themen gespeichert.'); }}); },
- vlTopic:d=>{ const p=S.projects[UI.pid], w=String(d.w||''), lw=w.toLowerCase(); if(!p||!w) return;
-   const items=vlEntries(p).filter(e=>e.np.text.toLowerCase().includes(lw)).map(e=>({key:e.key,lbl:e.np.d+(e.np.by?' '+e.np.by:''),t:shortMailRefs(e.np.text)}));
-   arr('tasks').filter(t=>t.pid===p.id).forEach(t=>{ if([t.title,t.notes].join(' ').toLowerCase().includes(lw)) items.push({key:String(t.at||'').slice(0,10)+' 99',lbl:'To-Do'+(t.done?' ✓':''),t:t.title+(t.who?' · '+shortWho(t.who):'')+(t.due?' · fällig '+fmtD(t.due):''),task:t.id});
-     (t.upd2||[]).forEach(u=>{ if(String(u.t).toLowerCase().includes(lw)||[t.title].join(' ').toLowerCase().includes(lw)) items.push({key:u.d+' '+(updTime(u)||''),lbl:fmtD(u.d)+' '+(u.by||''),t:'To-Do-Update: '+u.t}); }); });
-   items.sort((a,b)=>a.key.localeCompare(b.key));
-   openSheet({title:'Thema: '+w,wide:1,html:`<div class="fld full"><div class="vl-tl">${items.map(x=>`<div>${x.task?`<button class="lnk" data-act="editTask" data-id="${x.task}">`:''}<span class="nb-meta">${esc(x.lbl)}</span> ${esc(x.t)}${x.task?'</button>':''}</div>`).join('')||'<div class="small muted">Nichts gefunden.</div>'}</div></div>`,saveLabel:'Schließen',onSave:()=>{}}); },
+ dyUnlink:d=>vlSet(d.pid,p=>{ const l={...(p.noteLinks||{})}; delete l[d.id]; p.noteLinks=l; },'Verknüpfung gelöst.'),
 });
 // Aufklappen der Updates am To-Do öffnet nicht gleich das To-Do
 document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('.tu-inl')) e.stopPropagation(); },true);
 Object.assign(CHG,{ prioSelCls:(d,el)=>{ el.className='inp prio-sel p-'+el.value; }, mtAllP:(d,el)=>{ if(el.value==='__keep') return; document.querySelectorAll('#mt_list .mt-p').forEach(s=>{ s.value=el.value; s.classList.toggle('none',!el.value); }); }, mtRowP:(d,el)=>el.classList.toggle('none',!el.value), todoSort:(d,el)=>{ UI.todoSort=el.value; saveUI(); render(); } });
 Object.assign(A,{
  rdCat:d=>{ UI.rdCat=d.v; saveUI(); render(); },
+ orderBuyer:d=>{ UI.orderBuyer=d.v||''; render(); },
  stockFirm:d=>{ UI.sfirm=d.v||''; render(); },
  mtPick:()=>{ const f=$('#mtIn'); if(f){ f.value=''; f.click(); } },
  mtAddRow:()=>{ const l=$('#mt_list'); if(!l) return; const i=l.children.length+100; const all=$('#mt_pid'); const dp=all&&all.value!=='__keep'?all.value:''; l.insertAdjacentHTML('beforeend',mtRow(i,{title:'',projectId:dp})); l.lastElementChild.querySelector('[id^=mt_t]').focus(); },
