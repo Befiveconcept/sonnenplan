@@ -755,6 +755,7 @@ details.pf:not([open])>summary{border-bottom:0}
 .nb.dy{display:block;padding:8px 4px 9px}
 .dy-tk{margin-top:4px}
 .dy-sum{font-size:14.5px;line-height:1.5;margin:2px 0 2px}
+.dy-sum ul{margin:2px 0;padding-left:18px}
 .ps-drop{margin-bottom:12px}.ps-drop .dropz.slim{padding:6px 12px;min-height:0}
 .dy-tog{font-size:12.5px;font-weight:600;color:#7a6a00;padding:0}
 .dy-link{margin-top:4px!important;padding:2px 0 2px 10px!important}
@@ -5321,7 +5322,7 @@ function dyCard(p,x,adm){
     const kd='d'+p.id+x.d, cnt=[notes.length?notes.length+' Notiz'+(notes.length>1?'en':''):'',sum?'To-Dos: '+sum:'',x.links.length?x.links.length+' verknüpft':''].filter(Boolean).join(' · ');
     const s=hd&&hd.s||''; // bis die neue Fassung da ist, bleibt die letzte stehen
     return `<div class="nb dy" ${drop}>${head}
-      <div class="dy-sum">${s?esc(s):`<span class="muted">${SAMPLE&&DY_RUN[p.id]?'✨ Zusammenfassung wird erstellt …':esc(x.items.map(dyPlain).join(' · ').slice(0,220))}</span>`}</div>
+      <div class="dy-sum">${s?aicMd(s):`<span class="muted">${SAMPLE&&DY_RUN[p.id]?'✨ Zusammenfassung wird erstellt …':esc(x.items.map(dyPlain).join(' · ').slice(0,220))}</span>`}</div>
       <div class="dy-tk">${dyTog(kd,'Details: '+cnt)}${dyIsOpen(kd)?`<div class="dy-list" style="margin-top:6px">${x.items.map(e=>dyItem(p,e,adm)).join('')}</div>${x.links.map(t=>dyLink(p,t,x.d)).join('')}`:''}</div></div>`;
   }
   return `<div class="nb dy" ${drop}>${head}
@@ -5339,20 +5340,28 @@ function projVerlauf(p,adm){
 }
 // Claude: kurze Überschrift je Tag (im Hintergrund, ohne Sonne)
 var DY_RUN={}, DY_TRIED={}; // var: wird schon beim ersten Zeichnen gelesen
+const DY_SUM_V=2; // Version der Zusammenfassung: höher setzen → neue Tage werden neu zusammengefasst
 async function diaryHeads(pid){
   const p=S.projects[pid]; if(!p||!SAMPLE||DY_RUN[pid]) return; const hd=p.dayHeads||{};
   // neue Tage (mit Zusammenfassung) zuerst und allein – kleine Anfrage, schnelle Antwort; alte Überschriften danach
-  const need=diaryDays(p).filter(x=>x.d&&x.items.length).map(x=>({x,h:dyHash(x)})).filter(({x,h})=>((hd[x.d]||{}).h!==h||(x.d>=DY_SUM_FROM&&!(hd[x.d]||{}).s))&&!DY_TRIED[pid+x.d+h]);
-  const fresh=need.filter(({x})=>x.d>=DY_SUM_FROM), todo=fresh.length?fresh.slice(0,5):need.slice(0,20); if(!todo.length) return;
-  DY_RUN[pid]=true; todo.forEach(({x,h})=>DY_TRIED[pid+x.d+h]=1);
-  const wantS=todo.some(({x})=>x.d>=DY_SUM_FROM);
-  try{ const r=await SAMPLE.json(`Projekt „${p.name}“ eines Solar-Installationsbetriebs. Tagebuch, Einträge je Tag (Notizen, neue To-Dos, To-Do-Updates, Erledigtes):\n${todo.map(({x},i)=>(i+1)+'. ['+x.d+']'+(x.d>=DY_SUM_FROM?' [S]':'')+' '+x.items.map(e=>(e.by?e.by+': ':'')+dyPlain(e)).join(' | ').slice(0,1500)).join('\n')}
-Gib jedem Tag eine kurze Überschrift (2–6 Wörter, keine Personennamen, kein Datum), z. B. „Zählerschrank verdrahtet, Kran geklärt“.${wantS?`
-Für Tage mit [S] zusätzlich eine Tageszusammenfassung s: so knapp wie möglich (1–2 kurze Sätze, max. 220 Zeichen), nur das Wesentliche aus Notiz, neuen To-Dos und Updates zusammengeführt – was ist passiert, was ist offen/als Nächstes, wer (Kürzel) ist dran. Keine Wiederholung der Überschrift, nichts erfinden, Fachbegriffe beibehalten.`:''}
-Antworte nur mit JSON in derselben Reihenfolge: {"items":[{"h":"…"${wantS?',"s":"… (nur bei [S], sonst leer)"':''}}]}`,{modelTier:'quick',bg:true});
+  const need=diaryDays(p).filter(x=>x.d&&x.items.length).map(x=>({x,h:dyHash(x)})).filter(({x,h})=>{ const o=hd[x.d]||{}; return (o.h!==h||(x.d>=DY_SUM_FROM&&(!o.s||(o.v||1)<DY_SUM_V)))&&!DY_TRIED[pid+x.d+h+DY_SUM_V]; });
+  const fresh=need.filter(({x})=>x.d>=DY_SUM_FROM), todo=fresh.length?fresh.slice(0,3):need.slice(0,20); if(!todo.length) return;
+  DY_RUN[pid]=true; todo.forEach(({x,h})=>DY_TRIED[pid+x.d+h+DY_SUM_V]=1);
+  const wantS=!!fresh.length;
+  // Inhalt des Tages vollständig: Notizen ganz, To-Dos mit allen Updates des Tages
+  const dayText=x=>x.items.map(e=>(e.tm?e.tm+' ':'')+(e.by?e.by+': ':'')+dyPlain(e)).join('\n').slice(0,wantS?6000:1500);
+  try{ const r=await SAMPLE.json(`Projekt „${p.name}“ eines Solar-Installationsbetriebs (PV-Anlagen, Speicher, Netzanschluss). Tagebuch je Tag (Notizen, neue To-Dos, To-Do-Updates, Erledigtes):
+${todo.map(({x},i)=>`### ${i+1}. Tag ${x.d}${x.d>=DY_SUM_FROM?' [S]':''}\n${dayText(x)}`).join('\n\n')}
+
+Gib jedem Tag eine kurze Überschrift h (2–6 Wörter, keine Personennamen, kein Datum), z. B. „Zählerschrank verdrahtet, Kran geklärt“.${wantS?`
+Für Tage mit [S] zusätzlich eine Tageszusammenfassung s – präzise und VOLLSTÄNDIG im Inhalt, knapp in der Form:
+- Alle Erkenntnisse und neuen Fakten des Tages (z. B. wer Eigentümer/Ansprechpartner ist, Zusagen, Absagen, Termine, Fristen, Zahlen, technische Ergebnisse, Entscheidungen, Probleme) – nichts Wichtiges weglassen.
+- Danach, was offen ist / als Nächstes kommt und wer (Kürzel) dran ist.
+- Form: 2–5 kurze Sätze oder Stichpunkte mit „- “, keine Füllwörter, Namen/Firmen/Zahlen/Daten exakt übernehmen, nichts erfinden, Überschrift nicht wiederholen.`:''}
+Antworte nur mit JSON in derselben Reihenfolge: {"items":[{"h":"…"${wantS?',"s":"… (nur bei [S], sonst leer)"':''}}]}`,{modelTier:wantS?'default':'quick',bg:true});
     const cur=S.projects[pid]; if(!cur) return; const nh={...(cur.dayHeads||{})};
     (r&&Array.isArray(r.items)?r.items:[]).forEach((o,i)=>{ const it=todo[i]; if(!it||!o) return; const t=String(o.h||'').trim(), s=String(o.s||'').trim();
-      if(t||s) nh[it.x.d]={t:(t||(nh[it.x.d]||{}).t||'').slice(0,70),h:it.h,...(it.x.d>=DY_SUM_FROM&&s?{s:s.slice(0,300)}:{})}; });
+      if(t||s) nh[it.x.d]={t:(t||(nh[it.x.d]||{}).t||'').slice(0,70),h:it.h,...(it.x.d>=DY_SUM_FROM&&s?{s:s.slice(0,900),v:DY_SUM_V}:{})}; });
     cur.dayHeads=nh; if(MODE==='cloud'&&DB&&mayWrite('projects')) DB.collection('projects').doc(pid).update({dayHeads:nh}).catch(()=>{}); scheduleRender(); }
   catch(e){} finally{ DY_RUN[pid]=false; }
 }
