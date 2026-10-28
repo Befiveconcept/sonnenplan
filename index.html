@@ -262,6 +262,23 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 @media (max-width:900px){.dash-grid{grid-template-columns:minmax(0,1fr)}}
 .cnt-b{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 7px;border-radius:999px;background:var(--sun);color:#111;font-size:13px;font-family:var(--f-mono);vertical-align:3px;margin-left:4px}
 .dcols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:0 14px 14px}
+.dcols.week{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media (max-width:1100px){.dcols.week{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:700px){.dcols.week{grid-template-columns:minmax(0,1fr)}}
+.dcol.today{box-shadow:0 0 0 2px var(--sun) inset}
+.dcol.past{opacity:.6}
+.dash-week{margin-top:14px}
+.dash-car2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
+@media (max-width:900px){.dash-car2{grid-template-columns:minmax(0,1fr)}}
+.car-sel{max-width:220px;margin-left:auto}
+.car-body{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:8px;align-items:center;padding:0 10px 4px}
+.car-nav{width:44px;height:64px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer}
+.car-nav:hover{background:var(--sun)}.car-nav[disabled]{opacity:.3;cursor:default}
+.car-nav svg{width:22px;height:22px}
+.car-card .pcard{box-shadow:none;margin:0}
+.car-pos{text-align:center;padding:2px 0 12px}
+.nd-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 14px;border-top:1px solid var(--line)}
+.nd-its{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:520px){.dcols{grid-template-columns:minmax(0,1fr)}}
 .dcol{background:var(--sunken);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px;min-width:0}
 .dcol-h{display:flex;justify-content:space-between;align-items:baseline;padding:0 2px 4px}
@@ -710,6 +727,8 @@ body.stock-dragging .pick{outline:2px dashed rgba(244,219,2,.8);outline-offset:2
 @keyframes nxp{0%,100%{box-shadow:0 0 0 0 rgba(244,219,2,0)}50%{box-shadow:0 0 0 4px rgba(244,219,2,.7)}}
 .rd-next{font-size:12.5px;color:#333;min-width:0}
 .rd-next>span{font-family:var(--f-mono);font-size:10px;letter-spacing:.14em;color:#7a6a00;display:block}
+.rd-next>.rd-nt{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rd-next>.rd-nw{font-family:var(--f-body);letter-spacing:0;font-size:11.5px;color:#666}
 .rd-who{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
 .rd-foot{margin-top:12px;font-size:12px;color:#777}
 .rd-lg{display:inline-flex;align-items:center;gap:5px;margin-right:12px}
@@ -1704,15 +1723,32 @@ function dashHero(t){
     <div class="hero-a"><button class="btn sun" data-act="newMenu">${ic('plus')}Neu</button>${ME&&mine?`<button class="btn ghost-l" data-act="myTasks">Meine Aufgaben</button>`:''}</div>
   </div></section>`;
 }
+// Startseite: je eine Projektkarte für „laufend“ und „in Planung“, mit Pfeilen durchblättern
+function dashCarousel(k,title,cat){
+  const list=arr('projects').filter(p=>catOf(p)===cat).sort(SORTS.az[1]); UI.car=UI.car||{};
+  if(!list.length) return `<section class="card dash-car"><div class="card-h"><h2>${title} <span class="cnt-b">0</span></h2></div><div class="empty">Keine Projekte.</div></section>`;
+  let i=list.findIndex(p=>p.id===UI.car[k]); if(i<0) i=0; const p=list[i], prev=list[(i-1+list.length)%list.length], next=list[(i+1)%list.length];
+  return `<section class="card dash-car"><div class="card-h"><h2>${title} <span class="cnt-b">${list.length}</span></h2>
+      <select class="inp car-sel" data-chg="carSel" data-k="${k}" aria-label="${title}: Projekt wählen">${list.map(x=>`<option value="${x.id}" ${x.id===p.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></div>
+    <div class="car-body"><button class="car-nav" data-act="carGo" data-k="${k}" data-id="${prev.id}" aria-label="Vorheriges Projekt: ${esc(prev.name)}" ${list.length<2?'disabled':''}>${ic('left')}</button>
+      <div class="car-card">${projCard(p)}</div>
+      <button class="car-nav" data-act="carGo" data-k="${k}" data-id="${next.id}" aria-label="Nächstes Projekt: ${esc(next.name)}" ${list.length<2?'disabled':''}>${ic('right')}</button></div>
+    <div class="car-pos mono small muted">${i+1} / ${list.length}</div></section>`;
+}
+// Noch zu bestellen: eigener Bedarf je Projekt + „zusätzlich benötigtes Material“ aus Tagesrapporten
+function needAll(){ const out=[];
+  arr('projects').forEach(p=>(p.need||[]).filter(n=>!n.done).forEach(n=>out.push({pid:p.id,art:n.art,qty:n.qty,unit:n.unit,src:'Bedarf'+(n.by?' '+n.by:'')})));
+  arr('reports').filter(r=>r.pid&&r.status!=='vorbereitet').forEach(r=>(r.need||[]).forEach(n=>{ if(String(n.art||'').trim()&&!n.ordered) out.push({pid:r.pid,art:n.art,qty:n.qty,unit:n.unit||'Stk',src:'Rapport '+fmtD(r.date)}); }));
+  return out; }
 function vDash(){
-  const t=TODAY(), tm=addDays(t,1);
+  const t=TODAY(), mon=mondayOf(t), days=[0,1,2,3,4].map(i=>addDays(mon,i));
   if(!arr('projects').length) return dashHero(t)+smartDropHtml()+emptyStart();
-  // 1) Kalender heute & morgen (eigene Einträge zuerst)
-  const items=calItems(t,tm).filter(x=>x.k!=='todo');
+  // 1) Wochenplanung Mo–Fr (eigene Einträge zuerst)
+  const items=calItems(mon,days[4]).filter(x=>x.k!=='todo');
   const tim=x=>(x.e&&x.e.time)||'';
   const srt=(a,b)=>((b.who===ME)-(a.who===ME))||tim(a).localeCompare(tim(b));
   const dayCol=(d,l)=>{ const its=items.filter(x=>x.d===d).sort(srt);
-    return `<div class="dcol"><div class="dcol-h"><b>${l}</b><span>${fmtD(d)}</span></div>
+    return `<div class="dcol ${d===t?'today':''} ${d<t?'past':''}"><div class="dcol-h"><b>${l}</b><span>${fmtD(d).slice(3)}</span></div>
       ${its.map(x=>`<div class="dev k-${x.k} ${ME&&x.who===ME?'me':''}" data-act="${x.act}" data-id="${x.id}"><span class="dev-bar"></span><div style="min-width:0"><div class="dev-t">${tim(x)?`<b class="mono">${esc(tim(x))}</b> `:''}${x.multi&&!x.first?'↳ ':''}${esc(x.t)}</div><div class="dev-m">${esc([x.who?shortWho(x.who):'',x.e&&x.e.pid?projName(x.e.pid):'',x.lbl||(x.k==='lief'?'Lieferung':x.k==='proj'?'Projekt':EV_KINDS[x.k]||'')].filter(Boolean).join(' · '))}</div></div>${ME&&x.who===ME?'<span class="me-tag">Du</span>':''}</div>`).join('')||'<div class="dev-empty">Nichts eingetragen</div>'}
       <button class="btn ghost sm" data-act="newPlan" data-date="${d}" data-who="${esc(ME||'')}">${ic('plus')}Eintrag</button></div>`; };
   // 2) Meine To-Dos
@@ -1724,13 +1760,19 @@ function vDash(){
     return `<div class="dl-row ${due?'due':''}" data-act="editOrder" data-id="${o.id}"><div class="dl-date"><b>${o.delivery?esc(fmtD(o.delivery).slice(3,9)):'–'}</b><span>${o.delivery?esc(relDay(o.delivery)):'ohne Termin'}</span></div>
       <div style="min-width:0"><div class="tt">${esc(o.supplier||'Lieferant')}</div><div class="small muted">${esc(projName(o.pid)||'ohne Projekt')} · ${(o.items||[]).length} Pos.</div></div>
       ${due?`<button class="btn sun sm" data-act="dlvYes" data-id="${o.id}">Angekommen?</button>`:`<span class="pill ${st.cls}">${esc(st.k)}</span>`}</div>`; };
+  // 4) Noch zu bestellen, je Projekt gebündelt
+  const nd=needAll(), ndP=[...new Set(nd.map(n=>n.pid))].map(pid=>({pid,its:nd.filter(n=>n.pid===pid)})).sort((a,b)=>b.its.length-a.its.length);
+  const ndRow=g=>`<div class="nd-row"><div style="min-width:0" class="clickable" data-act="openAt" data-id="${g.pid}" data-at="material"><div class="tt">${esc(projName(g.pid)||'ohne Projekt')}</div><div class="small muted nd-its">${g.its.slice(0,3).map(n=>esc((n.qty?qn(n.qty)+' '+(n.unit||'')+' ':'')+n.art)).join(' · ')}${g.its.length>3?' · +'+(g.its.length-3):''}</div></div><button class="btn sun sm" data-act="needOrder" data-pid="${g.pid}">Bestellen</button></div>`;
   return dashHero(t)+gsearchBox()+smartDropHtml()+`<div class="dash-grid">
-    <section class="card dash-cal"><div class="card-h"><h2>Heute & morgen</h2><button class="btn ghost sm" data-act="nav" data-v="week">Wochenplanung</button></div><div class="dcols">${dayCol(t,'Heute')}${dayCol(tm,'Morgen')}</div></section>
     <section class="card dash-todo"><div class="card-h"><h2>Meine offenen To-Dos <span class="cnt-b">${my.length}</span></h2>${myLate?`<span class="pill bad">${myLate} überfällig</span>`:''}<button class="btn ghost sm" data-act="myTasks">Alle</button></div>
       ${ME?`<div class="list">${my.slice(0,7).map(taskLi).join('')||'<div class="empty"><b>Alles erledigt</b>Du hast keine offenen Aufgaben.</div>'}</div>${my.length>7?`<button class="btn ghost sm more-b" data-act="myTasks">+ ${my.length-7} weitere anzeigen</button>`:''}`:'<div class="empty">Unten links „Wer bist du?“ wählen, dann erscheinen hier deine Aufgaben.</div>'}</section>
     <section class="card dash-dl"><div class="card-h"><h2>Offene Lieferungen <span class="cnt-b">${dl.length}</span></h2><button class="btn ghost sm" data-act="nav" data-v="orders">Alle</button></div>
       <div class="dl-list">${dl.slice(0,7).map(dlRow).join('')||'<div class="empty">Keine offenen Lieferungen.</div>'}</div>${dl.length>7?`<button class="btn ghost sm more-b" data-act="nav" data-v="orders">+ ${dl.length-7} weitere</button>`:''}</section>
-  </div>`+radarHtml(t);
+    <section class="card dash-nd"><div class="card-h"><h2>Noch zu bestellen <span class="cnt-b">${nd.length}</span></h2><button class="btn ghost sm" data-act="newOrder">${ic('plus')}Bestellung</button></div>
+      <div class="dl-list">${ndP.slice(0,7).map(ndRow).join('')||'<div class="empty">Nichts offen. Bedarf entsteht im Projekt unter Material („Noch zu bestellen“) oder aus Tagesrapporten.</div>'}</div>${ndP.length>7?`<div class="small muted" style="padding:0 16px 12px">+ ${ndP.length-7} weitere Projekte</div>`:''}</section>
+  </div>
+  <div class="dash-car2">${dashCarousel('lauf','Laufende Projekte','laufend')}${dashCarousel('plan','In Planung','planung')}</div>
+  <section class="card dash-week"><div class="card-h"><h2>Wochenplanung · KW ${kwOf(mon)}</h2><button class="btn ghost sm" data-act="nav" data-v="week">Zur Wochenplanung</button></div><div class="dcols week">${days.map(d=>dayCol(d,d===t?'Heute':new Date(d+'T12:00').toLocaleDateString('de-DE',{weekday:'long'}))).join('')}</div></section>`+radarHtml(t);
 }
 // Statusleiste der Projektakte: 29 Schritte, Bezeichnungen schräg nach oben, Klick springt zum Schritt
 function stepRail(p){
@@ -1741,7 +1783,16 @@ function stepRail(p){
   return `<div class="rail" role="list" aria-label="Statusschritte" style="--n:${pp.seq.length}">${h}</div>`;
 }
 // Laufende Projekte als „Radar“: jeder Statusschritt ein Segment, aktueller Next Step pulsiert
-function radarHtml(t){
+// Radar „NEXT“: offenes To-Do als Stichwort (2–3 Wörter). Claude kürzt lange Titel einmal, Ergebnis bleibt im Browser gespeichert
+let SHORT={}, SHORT_RUN=false, RD_TITLES=[]; try{ SHORT=JSON.parse(localStorage.getItem('sonnenplan-short')||'{}')||{}; }catch(e){}
+function shortTitle(s){ s=String(s||''); if(SHORT[s]) return SHORT[s]; const w=s.replace(/\([^)]*\)/g,'').split(/\s+/).filter(Boolean); return w.length<=4?w.join(' '):w.slice(0,4).join(' ')+' …'; }
+function shortenTitles(titles){
+  if(!SAMPLE||SHORT_RUN) return; const need=[...new Set(titles)].filter(x=>!SHORT[x]&&x.replace(/\([^)]*\)/g,'').split(/\s+/).filter(Boolean).length>4).slice(0,40); if(!need.length) return; SHORT_RUN=true;
+  SAMPLE.json(`Fasse jede Aufgabe eines Solar-Installationsbetriebs in 2 bis 3 Wörtern als Stichwort zusammen (z. B. „Kran klären“, „Angebot nachfassen“, „Zähler anmelden“). Keine Namen, kein Satz.\n${need.map((x,i)=>(i+1)+'. '+x).join('\n')}\nAntworte nur mit JSON in derselben Reihenfolge: {"k":["…","…"]}`,{modelTier:'quick'})
+    .then(r=>{ (r&&Array.isArray(r.k)?r.k:[]).forEach((x,i)=>{ if(need[i]&&String(x||'').trim()) SHORT[need[i]]=String(x).trim().slice(0,40); }); try{ localStorage.setItem('sonnenplan-short',JSON.stringify(SHORT)); }catch(e){} scheduleRender(); })
+    .catch(()=>{}).finally(()=>{ SHORT_RUN=false; });
+}
+function radarHtml(t){ RD_TITLES=[]; setTimeout(()=>shortenTitles(RD_TITLES),300);
   const lauf=arr('projects').filter(p=>catOf(p)==='laufend').sort(byPipe);
   if(!lauf.length) return '';
   const wk=addDays(t,-7);
@@ -1753,7 +1804,8 @@ function radarHtml(t){
     let seg=''; pp.seq.forEach((i,k)=>{ seg+=`<i class="${ms['m'+i]?'d':k<pp.li?'im':''} ${i===pp.next?'nx':''} ${k&&starts.has(i)?'gap':''}" title="${esc(PIPE[i-1])}${ms['m'+i]?' · '+esc(msVal(ms['m'+i])):''}"></i>`; });    return `<div class="rd-grid rd-row" data-act="openAt" data-id="${p.id}" data-at="status">
       <div class="rd-name"><span class="rd-pct">${pp.pct}<small>%</small></span><div style="min-width:0"><b>${esc(p.name)}</b><span>${esc(pp.last?pp.label:'Start')}${nw&&nw.d?' · '+esc(fmtD(nw.d).slice(3)):''}</span></div></div>
       <div class="rd-track" style="--n:${pp.seq.length}">${seg}</div>
-      <div class="rd-next">${pp.next?`<span>NEXT</span>${esc(pp.nextLabel)}`:'<span>FERTIG</span>'+(pp.opt?'<span class="small muted" style="letter-spacing:0">optional: Wartungsvertrag</span>':'')}<div class="rd-who">${whoChips(p.id)}</div></div></div>`; };
+      <div class="rd-next">${(()=>{ const ot=openTasks(p.id).sort(byPrio), nt=ot[0]; if(nt) RD_TITLES.push(nt.title);
+        return nt?`<span>NEXT</span><b class="rd-nt" title="${esc(nt.title)}">${esc(shortTitle(nt.title))}</b><span class="small muted rd-nw">${esc(nt.ext?'extern: '+nt.ext:nt.who?shortWho(nt.who):'offen')}${ot.length>1?' · +'+(ot.length-1)+' weitere':''}</span>`:'<span>NEXT</span><span class="small muted" style="letter-spacing:0">kein offenes To-Do</span>'; })()}</div></div>`; };
   // Anstehende Projekttermine (21 Tage): Termine, Lieferungen, Baubeginn/-ende, Teamplanung mit Projektbezug
   const aktiv=new Set(arr('projects').filter(p=>['planung','laufend'].includes(catOf(p))).map(p=>p.id));
   const pidOf=x=>x.ref.startsWith('event:')?S.events[x.id]?.pid:x.ref.startsWith('order:')?S.orders[x.id]?.pid:x.k==='proj'?x.id:x.e&&x.e.pid;
@@ -4475,7 +4527,9 @@ document.addEventListener('paste',e=>{ if(UI.view!=='dash'||SHEET) return; const
 // Aufklappen der Updates am To-Do öffnet nicht gleich das To-Do
 document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('.tu-inl')) e.stopPropagation(); },true);
 Object.assign(CHG,{ prioSelCls:(d,el)=>{ el.className='inp prio-sel p-'+el.value; }, mtAllP:(d,el)=>{ if(el.value==='__keep') return; document.querySelectorAll('#mt_list .mt-p').forEach(s=>{ s.value=el.value; s.classList.toggle('none',!el.value); }); }, mtRowP:(d,el)=>el.classList.toggle('none',!el.value), todoSort:(d,el)=>{ UI.todoSort=el.value; saveUI(); render(); } });
+Object.assign(CHG,{ carSel:(d,el)=>{ UI.car={...(UI.car||{}),[d.k]:el.value}; render(); } });
 Object.assign(A,{
+ carGo:d=>{ UI.car={...(UI.car||{}),[d.k]:d.id}; render(); },
  stockFirm:d=>{ UI.sfirm=d.v||''; render(); },
  mtPick:()=>{ const f=$('#mtIn'); if(f){ f.value=''; f.click(); } },
  mtAddRow:()=>{ const l=$('#mt_list'); if(!l) return; const i=l.children.length+100; const all=$('#mt_pid'); const dp=all&&all.value!=='__keep'?all.value:''; l.insertAdjacentHTML('beforeend',mtRow(i,{title:'',projectId:dp})); l.lastElementChild.querySelector('[id^=mt_t]').focus(); },
