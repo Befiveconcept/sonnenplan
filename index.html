@@ -534,9 +534,11 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 /* To-Do-Updates */
 .tu-box{display:flex;flex-direction:column;gap:8px}
 #tu_list{display:flex;flex-direction:column;gap:4px;max-height:220px;overflow:auto}
-.tu{font-size:13px;line-height:1.4}
-.tu-new{display:grid;grid-template-columns:150px 100px minmax(0,1fr) auto;gap:6px}
-@media (max-width:640px){ .tu-new{grid-template-columns:1fr} }
+.tu{font-size:13px;line-height:1.4;white-space:pre-wrap}
+.tu-new{display:grid;grid-template-columns:150px 110px minmax(0,1fr) auto;gap:6px}
+.tu-new textarea{grid-column:1/-1;width:100%;min-height:96px;resize:vertical;font-size:14px;line-height:1.5}
+.tu-new .btn{grid-column:4}
+@media (max-width:640px){ .tu-new{grid-template-columns:1fr 1fr} .tu-new .btn{grid-column:1/-1} }
 .tu-d{border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin-bottom:6px;background:var(--surface)}
 .tu-d summary{display:flex;justify-content:space-between;gap:10px;cursor:pointer;font-weight:600;flex-wrap:wrap}
 .tu-d[open] summary{margin-bottom:6px}
@@ -4160,7 +4162,7 @@ const taskActKey=t=>{ const u=(t.upd2||[]).map(x=>(x.d||'')+' '+(updTime(x)||'00
 function taskUpdList(t){ const u=(t&&t.upd2)||[]; return u.length?u.slice().sort((a,b)=>updKey(b).localeCompare(updKey(a))).map(x=>`<div class="tu"><b class="mono">${esc(updStamp(x))}</b> <span class="who-chip">${esc(x.by||'?')}</span> ${esc(x.t)}</div>`).join(''):'<div class="small muted">Noch keine Updates.</div>'; }
 function taskUpdHtml(t){
   return `<div class="tu-box"><div id="tu_list">${taskUpdList(S.tasks[t.id]||t)}</div>
-    <div class="tu-new"><input type="date" class="inp" id="tu_d" value="${TODAY()}" aria-label="Datum"><input type="time" class="inp" id="tu_h" value="${nowStamp().slice(9)}" aria-label="Uhrzeit"><input class="inp" id="tu_t" placeholder="Was ist passiert? z. B. Westnetz angerufen, Rückruf Freitag" aria-label="Update"><button type="button" class="btn sm pri" data-act="taskUpdAdd" data-id="${t.id}">Update hinzufügen</button></div>
+    <div class="tu-new"><textarea class="inp" id="tu_t" rows="4" placeholder="Was ist passiert? z. B. Westnetz angerufen, Rückruf Freitag zugesagt, Unterlagen per Mail geschickt … (Strg+Enter fügt hinzu)" aria-label="Update"></textarea><input type="date" class="inp" id="tu_d" value="${TODAY()}" aria-label="Datum"><input type="time" class="inp" id="tu_h" value="${nowStamp().slice(9)}" aria-label="Uhrzeit"><button type="button" class="btn sm pri" data-act="taskUpdAdd" data-id="${t.id}">Update hinzufügen</button></div>
     ${t.pid&&S.projects[t.pid]?'<div class="small muted">Erscheint in den Projekt-Notizen unter „Updates zu To-Dos“.</div>':''}</div>`;
 }
 function todoUpdBlock(p){
@@ -4751,6 +4753,8 @@ Object.assign(CHG,{
  meetWho:(d,el)=>{ const m=clone(S.meetings[d.id]); if(!m) return; const s=new Set(m.who||[]); el.checked?s.add(d.n):s.delete(d.n); m.who=[...s]; m.tx=meetTx(S.meetings[d.id]); put('meetings',m); },
 });
 // Tippen in der Mitschrift: im Speicher halten, nach kurzer Pause speichern
+// Update am To-Do: Strg+Enter fügt hinzu (statt das ganze To-Do zu speichern)
+document.addEventListener('keydown',e=>{ if(e.target&&e.target.id==='tu_t'&&e.key==='Enter'&&(e.ctrlKey||e.metaKey)){ e.preventDefault(); e.stopImmediatePropagation(); const b=document.querySelector('[data-act=taskUpdAdd]'); if(b) b.click(); } },true);
 let MEET_T; document.addEventListener('input',e=>{ if(e.target.id!=='mt_tx') return; const id=e.target.dataset.id; MEET_TX[id]=e.target.value; clearTimeout(MEET_T); MEET_T=setTimeout(()=>meetSave(id,true),2500); });
 window.addEventListener('beforeunload',()=>{ if(MEET_ON) meetSave(MEET_ON,true); });
 // Aufklappen der Updates am To-Do öffnet nicht gleich das To-Do
