@@ -342,6 +342,10 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .radar::before{content:"";position:absolute;inset:0;z-index:-1;opacity:.7;background:repeating-linear-gradient(90deg,rgba(0,0,0,.035) 0 1px,transparent 1px 40px),repeating-linear-gradient(0deg,rgba(0,0,0,.035) 0 1px,transparent 1px 40px);-webkit-mask-image:linear-gradient(180deg,#000,transparent 260px);mask-image:linear-gradient(180deg,#000,transparent 260px)}
 .rd-top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:14px}
 .rd-ey{font-family:var(--f-mono);font-size:11px;letter-spacing:.18em;color:var(--sun);display:flex;align-items:center;gap:8px}
+.rd-sw{display:inline-flex;gap:4px;margin-top:10px;background:rgba(0,0,0,.05);border-radius:999px;padding:3px}
+.rd-sw button{border:0;background:transparent;border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer;color:inherit}
+.rd-sw button.on{background:var(--sun);color:#111;font-weight:600}
+.rd-sw .mono{font-size:11px;opacity:.7;margin-left:2px}
 .radar .rd-ey{color:#7a6a00}
 .rd-panels{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:4px 0 16px}
 .rd-panel{background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-width:0;backdrop-filter:blur(4px)}
@@ -1723,18 +1727,6 @@ function dashHero(t){
     <div class="hero-a"><button class="btn sun" data-act="newMenu">${ic('plus')}Neu</button>${ME&&mine?`<button class="btn ghost-l" data-act="myTasks">Meine Aufgaben</button>`:''}</div>
   </div></section>`;
 }
-// Startseite: je eine Projektkarte für „laufend“ und „in Planung“, mit Pfeilen durchblättern
-function dashCarousel(k,title,cat){
-  const list=arr('projects').filter(p=>catOf(p)===cat).sort(SORTS.az[1]); UI.car=UI.car||{};
-  if(!list.length) return `<section class="card dash-car"><div class="card-h"><h2>${title} <span class="cnt-b">0</span></h2></div><div class="empty">Keine Projekte.</div></section>`;
-  let i=list.findIndex(p=>p.id===UI.car[k]); if(i<0) i=0; const p=list[i], prev=list[(i-1+list.length)%list.length], next=list[(i+1)%list.length];
-  return `<section class="card dash-car"><div class="card-h"><h2>${title} <span class="cnt-b">${list.length}</span></h2>
-      <select class="inp car-sel" data-chg="carSel" data-k="${k}" aria-label="${title}: Projekt wählen">${list.map(x=>`<option value="${x.id}" ${x.id===p.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></div>
-    <div class="car-body"><button class="car-nav" data-act="carGo" data-k="${k}" data-id="${prev.id}" aria-label="Vorheriges Projekt: ${esc(prev.name)}" ${list.length<2?'disabled':''}>${ic('left')}</button>
-      <div class="car-card">${projCard(p)}</div>
-      <button class="car-nav" data-act="carGo" data-k="${k}" data-id="${next.id}" aria-label="Nächstes Projekt: ${esc(next.name)}" ${list.length<2?'disabled':''}>${ic('right')}</button></div>
-    <div class="car-pos mono small muted">${i+1} / ${list.length}</div></section>`;
-}
 // Noch zu bestellen: eigener Bedarf je Projekt + „zusätzlich benötigtes Material“ aus Tagesrapporten
 function needAll(){ const out=[];
   arr('projects').forEach(p=>(p.need||[]).filter(n=>!n.done).forEach(n=>out.push({pid:p.id,art:n.art,qty:n.qty,unit:n.unit,src:'Bedarf'+(n.by?' '+n.by:'')})));
@@ -1771,7 +1763,6 @@ function vDash(){
     <section class="card dash-nd"><div class="card-h"><h2>Noch zu bestellen <span class="cnt-b">${nd.length}</span></h2><button class="btn ghost sm" data-act="newOrder">${ic('plus')}Bestellung</button></div>
       <div class="dl-list">${ndP.slice(0,7).map(ndRow).join('')||'<div class="empty">Nichts offen. Bedarf entsteht im Projekt unter Material („Noch zu bestellen“) oder aus Tagesrapporten.</div>'}</div>${ndP.length>7?`<div class="small muted" style="padding:0 16px 12px">+ ${ndP.length-7} weitere Projekte</div>`:''}</section>
   </div>
-  <div class="dash-car2">${dashCarousel('lauf','Laufende Projekte','laufend')}${dashCarousel('plan','In Planung','planung')}</div>
   <section class="card dash-week"><div class="card-h"><h2>Wochenplanung · KW ${kwOf(mon)}</h2><button class="btn ghost sm" data-act="nav" data-v="week">Zur Wochenplanung</button></div><div class="dcols week">${days.map(d=>dayCol(d,d===t?'Heute':new Date(d+'T12:00').toLocaleDateString('de-DE',{weekday:'long'}))).join('')}</div></section>`+radarHtml(t);
 }
 // Statusleiste der Projektakte: 29 Schritte, Bezeichnungen schräg nach oben, Klick springt zum Schritt
@@ -1793,11 +1784,13 @@ function shortenTitles(titles){
     .catch(()=>{}).finally(()=>{ SHORT_RUN=false; });
 }
 function radarHtml(t){ RD_TITLES=[]; setTimeout(()=>shortenTitles(RD_TITLES),300);
-  const lauf=arr('projects').filter(p=>catOf(p)==='laufend').sort(byPipe);
-  if(!lauf.length) return '';
+  // Auswahl im Radar: laufend (Standard), in Planung oder beides
+  const rc=['laufend','planung','beide'].includes(UI.rdCat)?UI.rdCat:'laufend', RC_L={laufend:'laufend',planung:'in Planung',beide:'laufend + in Planung'};
+  const lauf=arr('projects').filter(p=>rc==='beide'?['laufend','planung'].includes(catOf(p)):catOf(p)===rc).sort(byPipe);
+  if(!arr('projects').some(p=>['laufend','planung'].includes(catOf(p)))) return '';
   const wk=addDays(t,-7);
   const steps7=lauf.reduce((a,p)=>a+Object.values(p.ms||{}).filter(v=>/^\d{4}-\d{2}-\d{2}$/.test(v)&&v>=wk&&v<=t).length,0);
-  const avg=Math.round(lauf.reduce((a,p)=>a+pipe(p).pct/100,0)/lauf.length*100);
+  const avg=lauf.length?Math.round(lauf.reduce((a,p)=>a+pipe(p).pct/100,0)/lauf.length*100):0;
   const openT=lauf.reduce((a,p)=>a+openTasks(p.id).length,0);
   const head='';
   const row=p=>{ const pp=pipe(p), ms=p.ms||{}; const nw=nowOf(p), starts=stageStarts(p);
@@ -1832,9 +1825,10 @@ function radarHtml(t){ RD_TITLES=[]; setTimeout(()=>shortenTitles(RD_TITLES),300
     <div class="rd-panel"><h3>${ic('cal')}Anstehende Projekttermine <span class="cnt-b">${evs.length}</span></h3>${evs.slice(0,7).map(evRow).join('')||'<div class="rd-none">Keine Projekttermine in den nächsten 3 Wochen.</div>'}${evs.length>7?`<div class="rd-more">+ ${evs.length-7} weitere · <button class="rd-link" data-act="nav" data-v="calendar">Kalender</button></div>`:''}</div>
     <div class="rd-panel crit"><h3>⚠ Kritische Punkte <span class="cnt-b">${crit.length}</span></h3>${crit.slice(0,7).map(crRow).join('')||'<div class="rd-none">Nichts Kritisches, alles im Plan.</div>'}${crit.length>7?`<div class="rd-more">+ ${crit.length-7} weitere${UI.critAll?'':` · <button class="rd-link" data-act="critAll">alle anzeigen</button>`}</div>${UI.critAll?crit.slice(7).map(crRow).join(''):''}`:''}</div></div>`;
   return `<section class="radar">
-    <div class="rd-top"><div><div class="rd-ey"><span class="live"></span>LIVE · LAUFENDE PROJEKTE</div><h2>Projekt-Radar</h2></div>
-      <div class="rd-stats"><div><b>${lauf.length}</b><span>laufend</span></div><div><b>${avg}<small>%</small></b><span>Ø Fortschritt</span></div><div><b>${steps7}</b><span>Schritte in 7 Tagen</span></div><div><b>${openT}</b><span>offene Aufgaben</span></div><div class="${hi?'warn':''}"><b>${hi}</b><span>akut kritisch</span></div></div></div>
-    ${panels}${head}${lauf.map(row).join('')}
+    <div class="rd-top"><div><div class="rd-ey"><span class="live"></span>LIVE · ${esc(RC_L[rc].toUpperCase())}</div><h2>Projekt-Radar</h2>
+        <div class="rd-sw" role="tablist" aria-label="Projekte im Radar">${[['laufend','Laufend'],['planung','In Planung'],['beide','Beide']].map(([k,l])=>`<button role="tab" class="${rc===k?'on':''}" data-act="rdCat" data-v="${k}">${l} <span class="mono">${k==='beide'?arr('projects').filter(p=>['laufend','planung'].includes(catOf(p))).length:arr('projects').filter(p=>catOf(p)===k).length}</span></button>`).join('')}</div></div>
+      <div class="rd-stats"><div><b>${lauf.length}</b><span>${esc(RC_L[rc])}</span></div><div><b>${avg}<small>%</small></b><span>Ø Fortschritt</span></div><div><b>${steps7}</b><span>Schritte in 7 Tagen</span></div><div><b>${openT}</b><span>offene Aufgaben</span></div><div class="${hi?'warn':''}"><b>${hi}</b><span>akut kritisch</span></div></div></div>
+    ${panels}${head}${lauf.map(row).join('')||`<div class="rd-none">Keine Projekte ${esc(RC_L[rc])}.</div>`}
     <div class="rd-foot"><span class="rd-lg"><i class="d"></i>erledigt (mit Datum)</span><span class="rd-lg"><i class="im"></i>übersprungen / nicht eingetragen</span><span class="rd-lg"><i class="nx"></i>Next Step</span> · Projekt anklicken öffnet den Statusverlauf ·<button class="rd-link" data-act="projFilter" data-v="aktiv">Alle laufenden & geplanten Projekte</button></div>
   </section>`;
 }
@@ -4527,9 +4521,8 @@ document.addEventListener('paste',e=>{ if(UI.view!=='dash'||SHEET) return; const
 // Aufklappen der Updates am To-Do öffnet nicht gleich das To-Do
 document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('.tu-inl')) e.stopPropagation(); },true);
 Object.assign(CHG,{ prioSelCls:(d,el)=>{ el.className='inp prio-sel p-'+el.value; }, mtAllP:(d,el)=>{ if(el.value==='__keep') return; document.querySelectorAll('#mt_list .mt-p').forEach(s=>{ s.value=el.value; s.classList.toggle('none',!el.value); }); }, mtRowP:(d,el)=>el.classList.toggle('none',!el.value), todoSort:(d,el)=>{ UI.todoSort=el.value; saveUI(); render(); } });
-Object.assign(CHG,{ carSel:(d,el)=>{ UI.car={...(UI.car||{}),[d.k]:el.value}; render(); } });
 Object.assign(A,{
- carGo:d=>{ UI.car={...(UI.car||{}),[d.k]:d.id}; render(); },
+ rdCat:d=>{ UI.rdCat=d.v; saveUI(); render(); },
  stockFirm:d=>{ UI.sfirm=d.v||''; render(); },
  mtPick:()=>{ const f=$('#mtIn'); if(f){ f.value=''; f.click(); } },
  mtAddRow:()=>{ const l=$('#mt_list'); if(!l) return; const i=l.children.length+100; const all=$('#mt_pid'); const dp=all&&all.value!=='__keep'?all.value:''; l.insertAdjacentHTML('beforeend',mtRow(i,{title:'',projectId:dp})); l.lastElementChild.querySelector('[id^=mt_t]').focus(); },
