@@ -616,12 +616,34 @@ details.pf:not([open])>summary{border-bottom:0}
 .sm-rel-row{background:var(--sun-soft);border-left:3px solid var(--sun);border-radius:0 10px 10px 0;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
 .sm-rel-a{display:grid;grid-template-columns:220px minmax(0,1fr);gap:6px;padding-left:28px}
 @media (max-width:640px){ .sm-rel-a{grid-template-columns:1fr;padding-left:0} }
+/* Meetings */
+.meet-layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:900px){ .meet-layout{grid-template-columns:minmax(0,1fr)} }
+.meet-list .li.sel{background:var(--sun-soft);border-radius:10px}
+.meet-title{flex:1;font-weight:600;font-size:16px}
+.meet-meta{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:12px}
+@media (max-width:900px){ .meet-meta{grid-template-columns:minmax(0,1fr)} }
+.meet-meta .chips{max-height:120px;overflow:auto}
+.meet-rec{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rec-dot{width:12px;height:12px;border-radius:50%;background:var(--bad);animation:recp 1s infinite}
+@keyframes recp{50%{opacity:.25}}
+.meet-live{min-height:1.4em;font-style:italic;color:var(--muted);font-size:13px}
+.meet-tx{width:100%;font-size:14px;line-height:1.5;resize:vertical}
+.mt-note{grid-template-columns:22px 220px minmax(0,1fr);align-items:start}
+@media (max-width:640px){ .mt-note{grid-template-columns:22px minmax(0,1fr)} .mt-note textarea{grid-column:2} }
 #printArea{display:none}
 @media print{
   .pr-land{page:land}
   .pr-land .pw td{font-size:8.5pt;vertical-align:top}
 }
 @page land{size:A4 landscape;margin:10mm}
+.pr-doc+.pr-doc{break-before:page;page-break-before:always}
+.mp-week td{vertical-align:top}
+.mp-day{width:17%;white-space:nowrap}
+.mp-it{padding:3px 0;border-bottom:1px dotted #ccc}.mp-it:last-child{border-bottom:0}
+.mp-sub{font-size:9pt;color:#444;margin-top:1px}
+.mp-free{color:#777;font-style:italic}
+.mp-box{font-size:13pt}
 .pr-foot{margin-top:14px;font-size:8pt;color:#777;text-align:right}
 .pw td,.pw th{vertical-align:top}
 .pw-e{padding:2px 0;border-bottom:1px dotted #ccc;font-size:9pt}
@@ -1473,7 +1495,7 @@ const ICONS = {
 const ic = (n,extra='')=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ${extra}>${ICONS[n]}</svg>`;
 
 /* ========== Datenhaltung (gemeinsame Datenbank, sonst lokal) ========== */
-const COLLS = ['projects','tasks','orders','offers','events','reports','plan','log','files','stock','picks','chat'];
+const COLLS = ['projects','tasks','orders','offers','events','reports','plan','log','files','stock','picks','chat','meetings'];
 const S = {projects:{},tasks:{},orders:{},offers:{},events:{},reports:{},plan:{},log:{},config:{staff:[]}};
 let DB=null, MODE='init', READONLY=false;
 const LS_KEY='sonnenplan-v1';
@@ -1503,7 +1525,7 @@ const viewsOf=n=>{ const p=permOf(n); return p&&Array.isArray(p.views)?p.views:d
 const editsOf=n=>{ const p=permOf(n); return p&&Array.isArray(p.edit)?p.edit:viewsOf(n); };
 const canEdit=a=>isAdmin()||(!!ME&&editsOf(ME).includes(a)&&viewsOf(ME).includes(a));
 function canSee(v){ if(v==='rights') return isBaseAdmin(); if(String(v).startsWith('f:')) v='files'; if(v==='dash') return true; if(!ME) return v!=='activity'; const vs=viewsOf(ME);
-  if(v==='project') return vs.includes('projects'); if(v==='pool') return vs.includes('todos'); if(v==='calendar') return vs.includes('week'); return vs.includes(v); }
+  if(v==='project') return vs.includes('projects'); if(v==='pool'||v==='meetings') return vs.includes('todos'); if(v==='calendar') return vs.includes('week'); return vs.includes(v); }
 const canSeeActivity=()=>canSee('activity');
 const META=['upd','updBy','hist','at','by'];
 const strip=o=>{ const c={}; Object.keys(o||{}).forEach(k=>{ if(!META.includes(k)) c[k]=o[k]; }); return JSON.stringify(c); };
@@ -1556,7 +1578,7 @@ function describeChange(coll,prev,o){
   return out.join(' · ');
 }
 // Schreibrecht je Rubrik (Admin-Bereich „Rechte“): ohne Häkchen „bearbeiten“ wird nichts gespeichert
-const COLL_AREA={projects:'projects',tasks:'todos',orders:'orders',offers:'offers',events:'week',plan:'week',reports:'reports',files:'files',stock:'stock',picks:'stock',chat:'chat'};
+const COLL_AREA={projects:'projects',tasks:'todos',orders:'orders',offers:'offers',events:'week',plan:'week',reports:'reports',files:'files',stock:'stock',picks:'stock',chat:'chat',meetings:'todos'};
 function mayWrite(coll){ const a=COLL_AREA[coll]; if(!a||!ME||isAdmin()) return true; return canEdit(a); }
 function put(coll,obj){
   if(!mayWrite(coll)){ toast('Keine Bearbeitungsrechte für „'+((AREAS.find(a=>a[0]===COLL_AREA[coll])||[])[1]||coll)+'“. Bitte EP oder AvE fragen.'); scheduleRender(); return; }
@@ -1627,7 +1649,7 @@ async function initStore(){
   if(!db){ MODE='local'; loadLocal(); scheduleRender(); return; }
   DB=db; MODE='cloud'; initCaps(); initMe();
   COLLS.forEach(k=>{
-    db.collection(k).onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); }); S[k]=o; scheduleRender(); },
+    db.collection(k).onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); }); S[k]=o; scheduleRender(); if(k==='projects') setTimeout(ensureIntern,1500); },
       err=>{ toast('Verbindung unterbrochen ('+err.code+'). Seite neu laden.'); });
   });
   db.doc('config/main').onSnapshot(s=>{ S.config = s.exists? s.data() : {staff:[]}; applyTplConfig(); applyUserMap(); scheduleRender(); }, ()=>{});
@@ -1646,7 +1668,10 @@ const arr = c=>Object.values(S[c]||{});
 const INTERN='intern'; // Bestellungen ohne Kundenprojekt (Lager, Büro, Werkstatt)
 const projName = id=>{ if(id===INTERN) return 'Haus intern'; const p=S.projects[id]; return p? p.name : '' };
 const staff = ()=>(S.config&&S.config.staff)||[];
-function activeProjects(){ return arr('projects').filter(p=>['planung','laufend'].includes(catOf(p))); }
+function activeProjects(){ return arr('projects').filter(p=>!isIntern(p)&&['planung','laufend'].includes(catOf(p))); }
+// „Haus intern“: echtes Projekt für Lager, Büro, Werkstatt, Fahrzeuge – ohne Statusablauf, nicht im Radar / in den Kennzahlen
+const isIntern=p=>!!p&&(p.id===INTERN||p.internal);
+function ensureIntern(){ if(MODE!=='cloud'||!mayWrite('projects')||S.projects[INTERN]) return; put('projects',{id:INTERN,name:'Haus intern',internal:true,cat:'laufend',status:'aktiv',type:'sonst',flow:'service',scope:'Allgemeines Projekt für alles ohne Kundenbezug: Lager, Büro, Werkstatt, Fahrzeuge, Material fürs Haus, interne Korrespondenz.'}); }
 function orderState(o){
   const items=(o.items||[]).filter(i=>!i.extra); const tot=items.reduce((a,i)=>a+(+i.qty||0),0), rec=items.reduce((a,i)=>a+Math.min(+i.recv||0,+i.qty||0),0);
   if(items.length && rec>=tot && tot>0) return {k:'geliefert',cls:'ok',open:false};
@@ -1672,8 +1697,8 @@ function calItems(from,to){
 
 /* ========== Shell ========== */
 // „private“ ist Unterpunkt von To-Dos (aufklappbar); welche Rubriken jemand sieht, regelt canSee() (Admin-Bereich „Rechte“)
-const NAV = [['dash','Übersicht','dash'],['projects','Projekte','proj'],['todos','To-Dos','todo'],['private','Meine privaten To-Dos','lock','todos'],['pool','Allgemeine Aufgaben','todo','todos'],['chat','Chat','chat'],['week','Kalender & Wochenplanung','cal'],['orders','Bestellungen & Wareneingänge','box'],['stock','Lagerverwaltung','stock'],['files','Datenablage','files'],['f:mail','Korrespondenz','chat','files'],['f:angebot','Angebote','offer','files'],['f:rechnung','Rechnungen','offer','files'],['f:lieferschein','Lieferscheine','truck','files'],['f:rapport','Tagesrapporte','report','files'],['f:kommi','Kommissionierung','stock','files'],['f:sonst','Sonstiges','files','files'],['templates','Vorlagen','tpl'],['settings','Team & Einstellungen','gear'],['activity','Aktivität','form'],['rights','Admin: Rechte','lock']];
-const VIEW_T = {dash:'Übersicht',projects:'Projekte',project:'Projekt',todos:'To-Dos',pool:'Allgemeine Aufgaben',week:'Wochenplanung Team',calendar:'Kalender',files:'Datenablage',stock:'Lagerverwaltung',chat:'Chat',private:'Privat',activity:'Aktivität',orders:'Bestellungen & Wareneingänge',offers:'Angebote',reports:'Tagesrapporte',templates:'Vorlagen',settings:'Team & Einstellungen',rights:'Rechte'};
+const NAV = [['dash','Übersicht','dash'],['projects','Projekte','proj'],['todos','To-Dos','todo'],['private','Meine privaten To-Dos','lock','todos'],['pool','Allgemeine Aufgaben','todo','todos'],['meetings','Meetings','form'],['chat','Chat','chat'],['week','Kalender & Wochenplanung','cal'],['orders','Bestellungen & Wareneingänge','box'],['stock','Lagerverwaltung','stock'],['files','Datenablage','files'],['f:mail','Korrespondenz','chat','files'],['f:angebot','Angebote','offer','files'],['f:rechnung','Rechnungen','offer','files'],['f:lieferschein','Lieferscheine','truck','files'],['f:rapport','Tagesrapporte','report','files'],['f:kommi','Kommissionierung','stock','files'],['f:sonst','Sonstiges','files','files'],['templates','Vorlagen','tpl'],['settings','Team & Einstellungen','gear'],['activity','Aktivität','form'],['rights','Admin: Rechte','lock']];
+const VIEW_T = {dash:'Übersicht',projects:'Projekte',project:'Projekt',todos:'To-Dos',pool:'Allgemeine Aufgaben',meetings:'Meetings',week:'Wochenplanung Team',calendar:'Kalender',files:'Datenablage',stock:'Lagerverwaltung',chat:'Chat',private:'Privat',activity:'Aktivität',orders:'Bestellungen & Wareneingänge',offers:'Angebote',reports:'Tagesrapporte',templates:'Vorlagen',settings:'Team & Einstellungen',rights:'Rechte'};
 function sunMark(){ return `<svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="2" y="15" width="26" height="12" rx="2" fill="var(--primary)"/><path d="M2 21h26M10.7 15v12M19.3 15v12" stroke="var(--surface)" stroke-width="1.3"/><circle cx="15" cy="9" r="5" fill="var(--sun)"/></svg>` }
 function renderShell(){
   const openTodos=arr('tasks').filter(t=>!t.done&&!(t.pool&&!t.who)).length, openOrders=arr('orders').filter(o=>orderState(o).open).length;
@@ -1708,7 +1733,7 @@ function banner(){
 function render(){
   renderShell();
   const v = canSee(UI.view)?UI.view:'dash';
-  const fn0 = {rights:vRights,dash:vDash,projects:vProjects,project:vProject,todos:vTodos,pool:vPool,week:vTeamWeek,calendar:vCalendar,activity:vActivity,files:vFiles,stock:vStock,chat:vChat,private:vPrivate,orders:vOrders,offers:vOffers,reports:vReports,templates:vTemplates,settings:vSettings}[v]||vDash;
+  const fn0 = {rights:vRights,dash:vDash,projects:vProjects,project:vProject,todos:vTodos,pool:vPool,meetings:vMeetings,week:vTeamWeek,calendar:vCalendar,activity:vActivity,files:vFiles,stock:vStock,chat:vChat,private:vPrivate,orders:vOrders,offers:vOffers,reports:vReports,templates:vTemplates,settings:vSettings}[v]||vDash;
   // Kalender und Wochenplanung Team: eine Rubrik mit Umschalter
   const fn = v==='week'||v==='calendar' ? ()=>`<div class="cal-sw" role="tablist"><button role="tab" class="${v==='week'?'on':''}" data-act="nav" data-v="week">${ic('truck')}Wochenplanung Team</button><button role="tab" class="${v==='calendar'?'on':''}" data-act="nav" data-v="calendar">${ic('cal')}Monatskalender</button></div>`+fn0() : fn0;
   const y=window.scrollY, ae=document.activeElement, aid=ae&&ae.id&&$('#view').contains(ae)?ae.id:null;
@@ -1786,7 +1811,7 @@ function shortenTitles(titles){
 function radarHtml(t){ RD_TITLES=[]; setTimeout(()=>shortenTitles(RD_TITLES),300);
   // Auswahl im Radar: laufend (Standard), in Planung oder beides
   const rc=['laufend','planung','beide'].includes(UI.rdCat)?UI.rdCat:'laufend', RC_L={laufend:'laufend',planung:'in Planung',beide:'laufend + in Planung'};
-  const lauf=arr('projects').filter(p=>rc==='beide'?['laufend','planung'].includes(catOf(p)):catOf(p)===rc).sort(byPipe);
+  const lauf=arr('projects').filter(p=>!isIntern(p)).filter(p=>rc==='beide'?['laufend','planung'].includes(catOf(p)):catOf(p)===rc).sort(byPipe);
   if(!arr('projects').some(p=>['laufend','planung'].includes(catOf(p)))) return '';
   const wk=addDays(t,-7);
   const steps7=lauf.reduce((a,p)=>a+Object.values(p.ms||{}).filter(v=>/^\d{4}-\d{2}-\d{2}$/.test(v)&&v>=wk&&v<=t).length,0);
@@ -1800,7 +1825,7 @@ function radarHtml(t){ RD_TITLES=[]; setTimeout(()=>shortenTitles(RD_TITLES),300
       <div class="rd-next">${(()=>{ const ot=openTasks(p.id).sort(byPrio), nt=ot[0]; if(nt) RD_TITLES.push(nt.title);
         return nt?`<span>NEXT</span><b class="rd-nt" title="${esc(nt.title)}">${esc(shortTitle(nt.title))}</b><span class="small muted rd-nw">${esc(nt.ext?'extern: '+nt.ext:nt.who?shortWho(nt.who):'offen')}${ot.length>1?' · +'+(ot.length-1)+' weitere':''}</span>`:'<span>NEXT</span><span class="small muted" style="letter-spacing:0">kein offenes To-Do</span>'; })()}</div></div>`; };
   // Anstehende Projekttermine (21 Tage): Termine, Lieferungen, Baubeginn/-ende, Teamplanung mit Projektbezug
-  const aktiv=new Set(arr('projects').filter(p=>['planung','laufend'].includes(catOf(p))).map(p=>p.id));
+  const aktiv=new Set(arr('projects').filter(p=>!isIntern(p)&&['planung','laufend'].includes(catOf(p))).map(p=>p.id));
   const pidOf=x=>x.ref.startsWith('event:')?S.events[x.id]?.pid:x.ref.startsWith('order:')?S.orders[x.id]?.pid:x.k==='proj'?x.id:x.e&&x.e.pid;
   const seen=new Set();
   const evs=calItems(t,addDays(t,21)).filter(x=>x.k!=='todo'&&x.k!=='abw'&&x.first!==false&&aktiv.has(pidOf(x))).filter(x=>{ const k=x.ref.replace(/\|.*/,'')+x.d+x.t; if(seen.has(k)) return false; seen.add(k); return true; });
@@ -2109,7 +2134,7 @@ function vProjects(){
   const f=UI.projFilter, cnt=k=>filterProjects(k).length;
   const chips=[['alle','Alle'],['aktiv','Alle laufenden'],...Object.entries(CATS),['wartung','Wartungsverträge']];
   const hideOn=['alle','aktiv'].includes(f);
-  const all=arr('projects'), cc=k=>all.filter(p=>catOf(p)===k).length, openT=arr('tasks').filter(t=>!t.done).length;
+  const all=arr('projects').filter(p=>!isIntern(p)), cc=k=>all.filter(p=>catOf(p)===k).length, openT=arr('tasks').filter(t=>!t.done).length;
   const mwp=all.filter(p=>['planung','laufend'].includes(catOf(p))&&PV.includes(p.type)).reduce((a,p)=>a+(+p.kwp||0),0)/1000;
   const kpi=(v,l,k,hi)=>`<button class="hk ${hi?'hi':''}" ${k?`data-act="projFilter" data-v="${k}"`:''}><span class="hv">${v}</span><span class="hl">${l}</span></button>`;
   const hero=`<section class="hero"><div class="hero-in">
@@ -2161,7 +2186,7 @@ function vProject(){
   return bigNav+pnav+`<div class="topbar"><div class="t"><div class="eyebrow"><a href="#" data-act="nav" data-v="projects" style="color:inherit">Projekte</a> / ${esc(p.nr||'')}</div><h1>${esc(p.name)}</h1>
      <div class="row small" style="margin-top:6px"><select class="catsel" data-chg="setCat" data-pid="${p.id}" aria-label="Kategorie">${Object.entries(CATS).map(([k,l])=>`<option value="${k}" ${cat===k?'selected':''}>${l}</option>`).join('')}</select><span class="type t-${p.type}">${TYPES[p.type]||''}</span><span class="muted">${esc([p.customer,p.place,sizeLbl(p)].filter(Boolean).join(' · '))}</span>${p.pl?`<span class="role">PL ${esc(p.pl)}</span>`:''}${p.wartung?'<span class="pill ok">Wartungsvertrag</span>':''}${p.example?'<span class="pill">Beispiel</span>':''}</div></div>
      <div class="row"><button class="btn" data-act="editProject" data-id="${p.id}">${ic('edit')}Bearbeiten</button><button class="btn sun desk" data-act="newMenu">${ic('plus')}Neu</button></div></div>
-    <section class="rail-wrap">
+    ${isIntern(p)?'<div class="hint" style="margin-bottom:12px">Allgemeines Projekt ohne Statusablauf: Notizen, To-Dos, Bestellungen, Material und Dateien für alles ohne Kundenbezug (Lager, Büro, Werkstatt, Fahrzeuge).</div>':''}<section class="rail-wrap" ${isIntern(p)?'hidden':''}>
       <div class="rail-top"><div><div class="rd-ey"><span class="live"></span>STATUS</div><b>${pp.last?esc(pp.label):'noch kein Status'}</b>${pp.val?` <span class="rail-d">${esc(msVal(pp.val))}</span>`:''}</div>
         ${pp.next&&['planung','laufend'].includes(cat)?`<div class="rail-nx"><span>NEXT STEP</span>${esc(pp.nextLabel)}</div>`:''}
         <div class="rail-pct">${pp.pct}<small>%</small></div></div>
@@ -2376,7 +2401,7 @@ function vTeamWeek(){
   const dayList=dd.map(d=>{ const its=all.filter(x=>x.d===d&&(!sel||whoOf(x)===sel)).sort(byTime);
     return `<div class="day-blk ${d===t?'today':''}" data-drop-d="${d}"><div class="day-h"><b>${fmtD(d)}</b><button class="btn ghost sm" data-act="newPlan" data-date="${d}" data-who="${esc(sel)}">${ic('plus')}Eintrag</button></div>${its.map(x=>`<div class="day-it"><span class="small muted">${esc(whoOf(x)===GEN?'':shortWho(whoOf(x)))}</span>${planCard(x)}</div>`).join('')||'<div class="small muted">Nichts geplant.</div>'}</div>`; }).join('');
   const whoOpts=names;
-  return head('KW '+kw+' · '+fmtD(ws)+' – '+fmtD(days[4]),'Wochenplanung Team',`<button class="icon-btn" data-act="weekNav" data-v="-1" aria-label="Vorwoche">${ic('left')}</button><button class="btn sm" data-act="weekNav" data-v="0">Diese Woche</button><button class="icon-btn" data-act="weekNav" data-v="1" aria-label="Folgewoche">${ic('right')}</button><button class="btn" data-act="copyWeek">Vorwoche übernehmen</button><button class="btn sun" data-act="weekPrint" title="Wochenansicht als PDF / auf Papier">${ic('report')}Woche drucken</button>`)+
+  return head('KW '+kw+' · '+fmtD(ws)+' – '+fmtD(days[4]),'Wochenplanung Team',`<button class="icon-btn" data-act="weekNav" data-v="-1" aria-label="Vorwoche">${ic('left')}</button><button class="btn sm" data-act="weekNav" data-v="0">Diese Woche</button><button class="icon-btn" data-act="weekNav" data-v="1" aria-label="Folgewoche">${ic('right')}</button><button class="btn" data-act="copyWeek">Vorwoche übernehmen</button><button class="btn sun" data-act="weekPrint" title="Wochenansicht als PDF / auf Papier">${ic('report')}Woche drucken</button><button class="btn sun" data-act="monteurSheet" title="Persönlicher Wochenplan je Monteur: Termine, Material, Lückenfüller">${ic('report')}Monteur-Pläne</button>`)+
    `<div class="chips"><button class="chip ${!sel?'on':''}" data-act="weekWho" data-v="">Alle</button>${whoOpts.map(n=>`<button class="chip ${sel===n?'on':''}" data-act="weekWho" data-v="${esc(n)}">${esc(shortWho(n))}</button>`).join('')}<button class="chip" data-act="nav" data-v="calendar">Monatskalender</button></div>
    <div class="card week-grid"><div class="tbl-wrap"><div class="team" style="grid-template-columns:170px repeat(${dd.length},minmax(140px,1fr))">${g}</div></div></div>
    <div class="week-days">${dayList}</div>
@@ -3212,7 +3237,7 @@ function addToPick(pid,items,meta){ let pk=arr('picks').find(x=>x.pid===pid&&x.s
   if(meta&&meta.who&&!pk.who) pk.who=meta.who; if(meta&&meta.date) pk.date=meta.date;
   items.forEach(it=>{ const same=pk.items.find(x=>!x.ok&&(normNr(x.artNr)&&normNr(x.artNr)===normNr(it.artNr)||x.art===it.art)&&x.src===it.src); if(same) same.qty=(+same.qty||0)+(+it.qty||0); else pk.items.push({art:it.art,artNr:it.artNr||'',unit:it.unit||'Stk',qty:+it.qty||0,ok:false,src:it.src||'',note:it.note||''}); });
   put('picks',pk); return pk; }
-function projSelOpts(cur,withIntern){ return `<option value="">– Projekt wählen –</option>${withIntern?`<option value="${INTERN}" ${cur===INTERN?'selected':''}>Haus intern</option>`:''}`+arr('projects').filter(p=>catOf(p)==='laufend'||p.id===cur).sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${p.id}" ${p.id===cur?'selected':''}>${esc(p.name)}</option>`).join(''); }
+function projSelOpts(cur,withIntern){ return `<option value="">– Projekt wählen –</option>${withIntern?`<option value="${INTERN}" ${cur===INTERN?'selected':''}>Haus intern</option>`:''}`+arr('projects').filter(p=>!isIntern(p)).filter(p=>catOf(p)==='laufend'||p.id===cur).sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${p.id}" ${p.id===cur?'selected':''}>${esc(p.name)}</option>`).join(''); }
 function staffOpts(cur){ return `<option value="">– offen –</option>`+staff().map(s=>`<option value="${esc(s.name)}" ${s.name===cur?'selected':''}>${esc(s.name)}</option>`).join(''); }
 // Angenommene, aber noch nicht verteilte Mengen einer Bestellung
 function unrouted(o){ return (o.items||[]).map((it,i)=>({i,art:it.art,artNr:it.artNr||'',unit:it.unit||'Stk',qty:Math.round(((+it.recv||0)-(+it.routed||0))*1000)/1000,extra:it.extra})).filter(g=>!g.extra&&g.qty>0&&String(g.art||'').trim()); }
@@ -3463,7 +3488,10 @@ async function ingestFiles(files,text,pidHint){
       else m=parseEml(ab);
       const ctx=[m.subject,m.from,m.text].join('\n');
       const mail=mk({name:m.subject||f.name,subject:m.subject||'',from:m.from||'',mime:'message/rfc822',text:String(m.text||'').slice(0,8000),kind:'mail',atts:(m.att||[]).map(a=>a.name)});
-      const mm=matchProject(ctx+'\n'+(m.att||[]).map(a=>a.name).join(' ')); mail.pid=mm.pid; mail.why=mm.why; recs.push(mail);
+      const mm=matchProject(ctx+'\n'+(m.att||[]).map(a=>a.name).join(' ')); mail.pid=mm.pid; mail.why=mm.why; mail.date=isoLocal(m.date||'').slice(0,10)||mail.date; recs.push(mail);
+      // Original-Mail mit ablegen, damit jeder sie in Outlook öffnen kann
+      const upM=await upload(new File([ab],f.name||'mail'+(n.endsWith('.eml')?'.eml':'.msg'),{type:n.endsWith('.eml')?'message/rfc822':'application/vnd.ms-outlook'}));
+      if(upM&&upM.asset){ mail.orig=f.name; mail.origAsset=upM.asset; }
       for(const a of (m.att||[])){ if(/^image\/(gif|png)$/i.test(a.type)&&a.blob.size<15000) continue; // Logos/Signaturen überspringen
         const r=await addFile(new File([a.blob],a.name,{type:a.type}),mail.id,ctx); if(!r.pid){ r.pid=mail.pid; r.why=mail.why?'aus der Mail':''; } }
     } else await addFile(f,'','');
@@ -3492,7 +3520,7 @@ function allFiles(){
   arr('reports').forEach(r=>od.push({id:'rp_'+r.id,name:stdName(r.date,'rapport',projName(r.pid)||'Baustelle'),kind:'rapport',pid:r.pid,date:r.date,at:r.upd,virtual:true,src:r.status==='vorbereitet'?'vorbereitet':'ausgefüllt',vact:'editReport',vid:r.id}));
   return own.concat(od).sort((a,b)=>(b.at||b.date||'').localeCompare(a.at||a.date||''));
 }
-function fileProjOpts(cur){ return `<option value="">– nicht zugeordnet –</option><option value="${INTERN}" ${cur===INTERN?'selected':''}>Haus intern</option>`+arr('projects').filter(p=>catOf(p)!=='abgesagt'||p.id===cur).sort((a,b)=>(catOf(a)==='laufend'?0:1)-(catOf(b)==='laufend'?0:1)||a.name.localeCompare(b.name)).map(p=>`<option value="${p.id}" ${p.id===cur?'selected':''}>${esc(p.name)}${catOf(p)==='laufend'?'':' ('+CATS[catOf(p)]+')'}</option>`).join(''); }
+function fileProjOpts(cur){ return `<option value="">– nicht zugeordnet –</option><option value="${INTERN}" ${cur===INTERN?'selected':''}>Haus intern</option>`+arr('projects').filter(p=>!isIntern(p)).filter(p=>catOf(p)!=='abgesagt'||p.id===cur).sort((a,b)=>(catOf(a)==='laufend'?0:1)-(catOf(b)==='laufend'?0:1)||a.name.localeCompare(b.name)).map(p=>`<option value="${p.id}" ${p.id===cur?'selected':''}>${esc(p.name)}${catOf(p)==='laufend'?'':' ('+CATS[catOf(p)]+')'}</option>`).join(''); }
 function filesTable(list,inProject){
   if(!list.length) return '<div class="empty">Noch keine Dateien. Einfach Dateien oder Mails hier ablegen.</div>';
   return `<div class="fl-list">${list.map(f=>{ const link=f.asset?`<a href="/_blob/${esc(f.asset)}" target="_blank" rel="noopener">${esc(f.name)}</a>`:f.virtual?`<button type="button" class="linkish" data-act="${f.vact}" data-id="${esc(f.vid)}">${esc(f.name)}</button>`:`<button type="button" class="linkish" data-act="fileOpen" data-id="${esc(f.id)}">${esc(f.name)}</button>`;
@@ -3899,7 +3927,10 @@ const A = {
    openSheet({title:'Aufgabe löschen?',html:`<div class="fld full"><b>${esc(t.title)}</b><div class="small muted" style="margin-top:4px">${esc([t.who,projName(t.pid)].filter(Boolean).join(' · '))}</div><div class="small muted" style="margin-top:8px">Die Löschung wird mit deinem Kürzel im Verlauf festgehalten.</div></div>`,saveLabel:'Ja, löschen',onSave:()=>{ del('tasks',d.id); toast('Aufgabe gelöscht.'); }}); },
  fdPick:d=>{ const f=$('#fdIn'); f.value=''; f.dataset.pid=d.pid||''; f.click(); },
  fileKindF:d=>{ UI.fkind=d.v; render(); },
- fileOpen:d=>{ const f=S.files[d.id]; if(!f) return; openSheet({title:f.name,wide:1,html:`<div class="fld full"><div class="small muted">${esc([f.from,fmtD(f.date),FILE_KINDS[f.kind]].filter(Boolean).join(' · '))}</div>${f.atts&&f.atts.length?`<div class="small" style="margin-top:6px">Anhänge: ${esc(f.atts.join(', '))}</div>`:''}<div class="longtext" style="margin-top:10px;max-height:60vh">${esc(f.text||'(kein Text)')}</div></div>`,saveLabel:'Schließen',onSave:()=>{}}); },
+ fileOpen:d=>{ const f=S.files[d.id]; if(!f) return; const kids=arr('files').filter(x=>x.parent===f.id&&x.asset);
+   openSheet({title:f.name,wide:1,html:`<div class="fld full"><div class="small muted">${esc([f.from,fmtD(f.date),FILE_KINDS[f.kind],projName(f.pid)].filter(Boolean).join(' · '))}</div>
+     ${f.origAsset?`<div style="margin-top:8px"><a class="btn sm" href="/_blob/${esc(f.origAsset)}" target="_blank" rel="noopener" download="${esc(f.orig||'mail.msg')}">${ic('files')}Original-Mail öffnen (Outlook)</a></div>`:''}
+     ${kids.length?`<div class="small" style="margin-top:8px">Anhänge: ${kids.map(k=>`<a href="/_blob/${esc(k.asset)}" target="_blank" rel="noopener">${esc(k.orig||k.name)}</a>`).join(' · ')}</div>`:f.atts&&f.atts.length?`<div class="small" style="margin-top:6px">Anhänge: ${esc(f.atts.join(', '))}</div>`:''}<div class="longtext" style="margin-top:10px;max-height:60vh">${esc(f.text||'(kein Text)')}</div></div>`,saveLabel:'Schließen',onSave:()=>{}}); },
  fileRename:d=>{ const f=S.files[d.id]; if(!f) return; const m=String(f.name).match(STD_RX)||[];
    const dd=m[1]?m[1].slice(0,4)+'-'+m[1].slice(4,6)+'-'+m[1].slice(6,8):(f.date||TODAY());
    openSheet({title:'Datei benennen',html:'',fields:[{k:'date',label:'Datum',type:'date',req:1},{k:'thema',label:'Thema',req:1,list:'kindList'},{k:'detail',label:'Detail',req:1,full:1}],value:{date:dd,thema:m[2]?m[2].replace(/-/g,' '):FILE_KINDS[f.kind]||'',detail:m[3]?m[3].replace(/-/g,' '):stemOf(f.name)},saveLabel:'Umbenennen',
@@ -4014,8 +4045,10 @@ const CHG = {
 
 /* ========== Drucken: gemeinsamer Rahmen (A4, Kopf mit Logo) ========== */
 ICONS.search='<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>';
-function printDoc(title,sub,body,landscape){
-  const html=`<div class="pr-doc ${landscape?'pr-land':''}"><div class="pr-head"><div><div class="pr-brand"><span>NUTZ DIE</span> SONNE</div><div class="pr-sub">nutz die Sonne GmbH</div></div><div class="pr-title">${esc(title)}<div class="pr-date">${esc(sub||'')}</div></div></div>${body}<div class="pr-foot">Gedruckt ${esc(fmtD(TODAY()))}${ME?' · '+esc(meK()):''}</div></div>`;
+const prPage=(title,sub,body,landscape)=>`<div class="pr-doc ${landscape?'pr-land':''}"><div class="pr-head"><div><div class="pr-brand"><span>NUTZ DIE</span> SONNE</div><div class="pr-sub">nutz die Sonne GmbH</div></div><div class="pr-title">${esc(title)}<div class="pr-date">${esc(sub||'')}</div></div></div>${body}<div class="pr-foot">Gedruckt ${esc(fmtD(TODAY()))}${ME?' · '+esc(meK()):''}</div></div>`;
+// pages: [[title,sub,body], …] → je Seite ein eigenes Blatt
+function printDoc(title,sub,body,landscape,pages){
+  const html=(pages||[[title,sub,body]]).map(([t,s,b])=>prPage(t,s,b,landscape)).join('');
   let el=$('#printArea'); if(!el){ el=document.createElement('div'); el.id='printArea'; document.body.appendChild(el); }
   el.innerHTML=html; document.body.classList.add('printing'); document.body.classList.toggle('print-land',!!landscape);
   const done=()=>{ document.body.classList.remove('printing','print-land'); window.removeEventListener('afterprint',done); };
@@ -4104,10 +4137,52 @@ let WK_ASKED=false;
 function checkWeekPrint(){
   if(WK_ASKED||MODE==='init'||SHEET||!isBaseAdmin()) return; const dow=new Date().getDay(); const target=dow>=5||dow===0?addDays(mondayOf(TODAY()),7):mondayOf(TODAY()); const kw=kwOf(target);
   let last=''; try{ last=localStorage.getItem('sonnenplan-wkprint')||''; }catch(e){} if(last===String(kw)) return; WK_ASKED=true;
-  openSheet({title:'Wochenplan KW '+kw+' drucken?',html:`<div class="fld full">Die ausgedruckte Wochenansicht für <b>KW ${kw}</b> (${esc(fmtD(target))} – ${esc(fmtD(addDays(target,4)))}) mit Einsätzen je Mitarbeiter, fälligen To-Dos und Lieferungen.</div>`,saveLabel:'Jetzt drucken',
+  openSheet({title:'Wochenplan KW '+kw+' drucken?',html:`<div class="fld full">Die ausgedruckte Wochenansicht für <b>KW ${kw}</b> (${esc(fmtD(target))} – ${esc(fmtD(addDays(target,4)))}) mit Einsätzen je Mitarbeiter, fälligen To-Dos und Lieferungen.<div class="small muted" style="margin-top:8px">Dazu gibt es die persönlichen Pläne für die Monteure (Termine, Material, Lückenfüller).</div></div>`,saveLabel:'Team-Plan drucken',extraBtn:`<button type="button" class="btn sun" data-act="monteurSheet" data-ws="${target}">Monteur-Pläne drucken</button>`,
     onSave:()=>{ setTimeout(()=>{ const prev=UI.week; UI.week=target; printWeek(); UI.week=prev; },300); },onDelete:()=>{ try{ localStorage.setItem('sonnenplan-wkprint',String(kw)); }catch(e){} closeSheet(); },deleteLabel:'Diese Woche nicht'});
 }
 setTimeout(()=>checkWeekPrint(),15000);
+
+/* ========== Persönlicher Wochenplan für Monteure (Druck, eine Seite je Person) ========== */
+// Woher kommt das Material? Lagerartikel → Lagerort (+ Firma), sonst Herkunft der Kommissionierliste
+function matSource(it){ const s=stockFind(it.art,it.artNr); if(s) return [s.loc||'Lager',firmOf(s)!==FIRMS()[0]?firmShort(firmOf(s)):''].filter(Boolean).join(' · ');
+  return it.src||''; }
+function monteurPage(name,ws){
+  const days=[0,1,2,3,4,5].map(i=>addDays(ws,i)), end=days[5], all=calItems(ws,end).filter(x=>x.who===name&&x.k!=='todo');
+  const dd=all.some(x=>x.d===days[5])?days:days.slice(0,5);
+  const pids=new Set(all.map(x=>x.e&&x.e.pid).filter(Boolean));
+  const dayBlock=d=>{ const its=all.filter(x=>x.d===d).sort((a,b)=>((a.e&&a.e.time)||'').localeCompare((b.e&&b.e.time)||''));
+    const label=new Date(d+'T12:00').toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'2-digit'});
+    return `<tr><td class="mp-day"><b>${esc(label)}</b></td><td>${its.map(x=>{ const e=x.e||{}, p=e.pid&&S.projects[e.pid];
+      return `<div class="mp-it"><b>${e.time&&!(x.multi&&!x.first)?esc(e.time)+' · ':''}${x.multi&&!x.first?'↳ ':''}${esc(p?p.name:(x.t||''))}</b>${p?' – '+esc(x.t||''):''}${e.kind==='abw'?' <i>(abwesend)</i>':''}
+        ${p&&p.place?`<div class="mp-sub">📍 ${esc(String(p.place).replace(/\n/g,', '))}${p.contact?' · '+esc(p.contact):''}${p.phone?' · '+esc(p.phone):''}</div>`:''}
+        ${e.note&&(!x.multi||x.first)?`<div class="mp-sub">${esc(e.note)}</div>`:''}
+        ${(e.mat||[]).length&&(!x.multi||x.first)?`<div class="mp-sub">Mitnehmen: ${e.mat.map(m=>esc([m.qty?qn(m.qty):'',m.unit||'',m.art].filter(Boolean).join(' '))).join(', ')}</div>`:''}</div>`; }).join('')||'<span class="mp-free">frei – Lückenfüller (siehe unten)</span>'}</td></tr>`; };
+  // Material: offene Kommissionierlisten der Projekte dieser Woche bzw. für diese Person
+  const picks=arr('picks').filter(k=>k.status!=='uebergeben'&&(k.who===name||pids.has(k.pid)));
+  const matRows=picks.flatMap(k=>(k.items||[]).map(it=>({...it,pid:k.pid,date:k.date,packed:it.ok})));
+  const tasks=arr('tasks').filter(t=>!t.done&&t.who===name&&!t.pool&&(!t.due||t.due<=end)).sort(byPrio);
+  const pool=arr('tasks').filter(t=>t.pool&&!t.done&&(!t.who||t.who===name)).sort((a,b)=>(a.who?0:1)-(b.who?0:1)||String(a.pcat||'').localeCompare(String(b.pcat||'')));
+  const box='<span class="mp-box">☐</span>';
+  const body=`<table class="pr-tbl mp-week">${dd.map(dayBlock).join('')}</table>
+    <h3>Material – was von wo mitnehmen</h3>${matRows.length?`<table class="pr-tbl"><tr><th style="width:5%"></th><th style="width:12%">Menge</th><th>Material</th><th style="width:24%">Projekt</th><th style="width:22%">Woher</th></tr>${matRows.map(m=>`<tr><td>${m.packed?'☑':box}</td><td>${esc(qn(m.qty)+' '+(m.unit||''))}</td><td>${esc(m.art)}${m.artNr?' <small>'+esc(m.artNr)+'</small>':''}</td><td>${esc(projName(m.pid)||'')}</td><td>${esc(matSource(m))}</td></tr>`).join('')}</table>`:'<p class="mp-free">Keine offenen Kommissionierlisten. Material steht ggf. bei den Einsätzen oben.</p>'}
+    ${tasks.length?`<h3>Deine To-Dos</h3><table class="pr-tbl">${tasks.slice(0,15).map(t=>`<tr><td style="width:5%">${box}</td><td>${esc(t.title)}${t.pid?' <small>· '+esc(projName(t.pid))+'</small>':''}</td><td style="width:16%">${t.due?esc(fmtD(t.due)):''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?' <b>'+esc(PRIO[t.prio][0])+'</b>':''}</td></tr>`).join('')}</table>`:''}
+    <h3>Lückenfüller – wenn nichts ansteht</h3>${pool.length?`<table class="pr-tbl">${pool.slice(0,14).map(t=>`<tr><td style="width:5%">${box}</td><td>${esc(t.title)}${t.notes?' <small>· '+esc(String(t.notes).slice(0,80))+'</small>':''}</td><td style="width:20%">${esc((POOL_CATS[t.pcat]||'')+(t.dur?' · '+t.dur:''))}</td></tr>`).join('')}</table>`:'<p class="mp-free">Keine allgemeinen Aufgaben im Pool.</p>'}
+    <h3>Notizen / Rückmeldung</h3><div class="pr-line"></div><div class="pr-line"></div><div class="pr-line"></div>`;
+  return ['Wochenplan '+name.replace(/\s*\([^)]*\)$/,''),'KW '+kwOf(ws)+' · '+fmtD(ws)+' – '+fmtD(dd[dd.length-1]),body];
+}
+function monteurSheet(ws){
+  ws=ws||(()=>{ const dow=new Date().getDay(); return dow>=5||dow===0?addDays(mondayOf(TODAY()),7):mondayOf(TODAY()); })();
+  let saved=null; try{ saved=JSON.parse(localStorage.getItem('sonnenplan-mpsel')||'null'); }catch(e){}
+  const def=n=>saved?saved.includes(n):/moji|abou|abow|\(as\)/i.test(n);
+  const thisW=mondayOf(TODAY()), nextW=addDays(thisW,7);
+  closeSheet();
+  openSheet({title:'Monteur-Wochenpläne drucken',html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Je Person eine Seite: Einsätze pro Tag mit Adresse, Material mit Herkunft (Lagerort / Kommissionierliste), eigene To-Dos und Lückenfüller-Aufgaben.</div>
+    <div class="sec-t" style="margin:0 0 6px">Für wen?</div>${staff().map(s=>`<label class="mt-opt" style="padding:3px 0"><input type="checkbox" class="ck mp-who" value="${esc(s.name)}" ${def(s.name)?'checked':''}><span>${esc(s.name)} <span class="small muted">${esc(ROLES[s.role]||s.role||'')}</span></span></label>`).join('')}
+    <div class="sec-t" style="margin:12px 0 6px">Welche Woche?</div><select class="inp" id="mp_ws">${[[thisW,'Diese Woche'],[nextW,'Nächste Woche']].map(([w,l])=>`<option value="${w}" ${w===ws?'selected':''}>${l} · KW ${kwOf(w)} (${fmtD(w)} – ${fmtD(addDays(w,4))})</option>`).join('')}</select></div>`,saveLabel:'Drucken',
+    onSave:()=>{ const who=[...document.querySelectorAll('.mp-who:checked')].map(i=>i.value); if(!who.length){ toast('Bitte mindestens eine Person wählen.'); return false; }
+      try{ localStorage.setItem('sonnenplan-mpsel',JSON.stringify(who)); localStorage.setItem('sonnenplan-wkprint',String(kwOf($('#mp_ws').value))); }catch(e){}
+      const w=$('#mp_ws').value; setTimeout(()=>printDoc('','','',false,who.map(n=>monteurPage(n,w))),200); }});
+}
 
 /* ========== Timeline: Texte änderbar ========== */
 function tlLaneName(k,def){ return ((S.config||{}).tlLaneNames||{})[k]||def; }
@@ -4224,6 +4299,7 @@ Object.assign(A,{
    const t=clone(S.tasks[d.id]); if(!t){ toast('Bitte das To-Do zuerst speichern.'); return; } t.upd2=[...(t.upd2||[]),{d:dd,tm:($('#tu_h')||{}).value||'',by:meK(),t:tx.trim(),at:new Date().toISOString()}]; put('tasks',t);
    $('#tu_t').value=''; const l=$('#tu_list'); if(l) l.innerHTML=taskUpdList(t); toast('Update gespeichert.'); },
  weekPrint:()=>printWeek(),
+ monteurSheet:d=>monteurSheet(d.ws||(UI.view==='week'?weekStart():'')),
  tlEditMs:d=>tlEditMs(d.pid,d.key), tlAddMs:d=>tlAddMs(d.pid),
  tlLaneRename:d=>{ if(!isAdmin()) return toast('Spurnamen ändern nur EP und AvE.'); const def=(TL_LANES.find(l=>l[0]===d.v)||[])[1]; openSheet({title:'Spur umbenennen',value:{n:tlLaneName(d.v,def)},fields:[{k:'n',label:'Überschrift',req:1,full:1}],onSave:v=>{ putConfig({...(S.config||{}),tlLaneNames:{...((S.config||{}).tlLaneNames||{}),[d.v]:v.n.trim()}}); toast('Überschrift geändert.'); }}); },
  aiNext:d=>aiNextSteps(d.pid),
@@ -4491,6 +4567,7 @@ function smartSheet(c){
     ${rel.length?`<div class="sec-t" style="margin:6px 0">Passt zu bestehendem To-Do</div><div class="sm-rel">${rel.map((x,i)=>{ const t=S.tasks[x.id]; return `<div class="sm-rel-row"><label class="mt-opt"><input type="checkbox" class="ck" id="smr_c${i}" ${x.weak?'':'checked'}><span><b>${esc(t.title)}</b> <span class="small muted">· ${esc([projName(t.pid),t.who?shortWho(t.who):'niemand',t.due?'fällig '+fmtD(t.due):''].filter(Boolean).join(' · '))} · erkannt per ${esc(x.by)}${x.weak?' (unsicher)':''}</span></span></label>
       <div class="sm-rel-a"><select class="inp" id="smr_a${i}" aria-label="Was tun?"><option value="update" ${x.relation==='update'?'selected':''}>Update eintragen</option><option value="erledigt" ${x.relation==='erledigt'?'selected':''}>Update + als erledigt abhaken</option></select><input class="inp" id="smr_t${i}" value="${esc(x.update)}" placeholder="Was ist neu?" aria-label="Update-Text"></div></div>`; }).join('')}</div>`:''}
     <div class="sec-t" style="margin:6px 0">Was soll passieren?</div>
+    ${c.mail?`<label class="mt-opt" style="margin:0 0 8px"><input type="checkbox" class="ck" id="sm_keep" checked><span>E-Mail zusätzlich in den Projekt-Dateien ablegen (Korrespondenz, für alle zum Öffnen)</span></label>`:''}
     <div class="smart-acts">${acts.map(k=>`<label class="smart-act ${k===rec?'rec':''}"><input type="radio" name="sm_act" value="${k}" ${k===rec?'checked':''}><span><b>${SMART_ACTS[k].l}</b>${k===rec?' <span class="pill ok">Vorschlag</span>':''}<span class="small muted">${SMART_ACTS[k].d}</span>
       ${k==='delivery'?`<select class="inp" id="sm_order" aria-label="Bestellung"><option value="">– offene Bestellung wählen –</option>${openOrders.map(o=>`<option value="${o.id}" ${o.id===c.orderId?'selected':''}>${esc((o.supplier||'Lieferant')+(o.no?' · '+o.no:'')+' · '+(projName(o.pid)||'ohne Projekt'))}</option>`).join('')}</select>`:''}</span></label>`).join('')}</div></div>`,saveLabel:'Los',
     onSave:()=>{ const act=(document.querySelector('input[name=sm_act]:checked')||{}).value, pid=$('#sm_pid').value;
@@ -4501,6 +4578,8 @@ function smartSheet(c){
           if(t.pid&&S.projects[t.pid]){ const p=clone(S.projects[t.pid]), d0=new Date(), stamp=nowStamp(); p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+stamp+' ('+meK()+'): ✓ Erledigt: '+t.title+' – '+txt; delete p.now; delete p.nowD; put('projects',p); } }
         put('tasks',t); nu++; });
       if(nu) toast(nu+' To-Do'+(nu>1?'s':'')+' aktualisiert.');
+      // E-Mails landen immer auch in den Projekt-Dateien (Korrespondenz), außer der Weg legt sie ohnehin ab
+      if(c.mail&&($('#sm_keep')||{}).checked&&!['file','todos'].includes(act)){ const mf=c.files.filter(f=>/\.(msg|eml)$/i.test(f.name||'')||f.type==='message/rfc822'); setTimeout(()=>ingestFiles(mf,mf.length?'':c.text,pid),80); }
       if(act==='none'){ if(!nu){ toast('Kein To-Do markiert.'); return false; } return; }
       if(act==='note'){ if(!pid||!S.projects[pid]){ toast('Bitte ein Projekt wählen.'); return false; } saveNote(pid,'updates',c.text); return; }
       if(act==='delivery'){ const oid=($('#sm_order')||{}).value; if(!oid){ toast('Bitte die offene Bestellung wählen.'); return false; } const file=c.files[0];
@@ -4518,6 +4597,105 @@ document.addEventListener('change',e=>{ if(e.target.id==='smartIn'){ const fl=[.
 document.addEventListener('drop',e=>{ const z=e.target.closest&&e.target.closest('.smart-drop'); if(!z) return; e.preventDefault(); e.stopImmediatePropagation(); z.classList.remove('over'); smartDrop(e.dataTransfer.files,e.dataTransfer.getData('text/plain')); },true);
 document.addEventListener('paste',e=>{ if(UI.view!=='dash'||SHEET) return; const tg=e.target; if(tg&&(tg.tagName==='TEXTAREA'||tg.tagName==='INPUT')) return;
   const files=[...(e.clipboardData.files||[])], text=e.clipboardData.getData('text/plain')||''; if(!files.length&&text.trim().length<3) return; e.preventDefault(); e.stopImmediatePropagation(); smartDrop(files,text); },true);
+
+/* ========== Meetings: Mitschrift per Mikrofon, Claude macht daraus Projekt-Notizen und To-Dos ========== */
+// Spracherkennung des Browsers (Chrome/Edge). Text liegt im Speicher (MEET_TX), damit ein Neuzeichnen nichts löscht.
+const SRec=window.SpeechRecognition||window.webkitSpeechRecognition;
+const MEET_TX={}; let MEET_REC=null, MEET_ON='', MEET_INT='', MEET_SAVE=null;
+const meetTx=m=>MEET_TX[m.id]!==undefined?MEET_TX[m.id]:(m.tx||'');
+function meetSave(id,silent){ const m=S.meetings&&S.meetings[id]; if(!m) return; const tx=meetTx(m); if(tx===m.tx) return; put('meetings',{...clone(m),tx}); if(!silent) toast('Mitschrift gespeichert.'); }
+function meetNew(){ const m={id:uid(),title:'Meeting '+fmtD(TODAY()),date:TODAY(),time:nowStamp().slice(9),who:ME?[ME]:[],pids:[],tx:'',status:'offen'}; put('meetings',m); UI.mid=m.id; go('meetings'); }
+function meetStart(id){
+  if(!SRec){ toast('Dieser Browser kann nicht mitschreiben. Bitte Chrome oder Edge verwenden – oder Text eintippen/einfügen.'); return; }
+  if(MEET_ON) meetStop();
+  const r=new SRec(); r.lang='de-DE'; r.continuous=true; r.interimResults=true; MEET_REC=r; MEET_ON=id; MEET_INT='';
+  let lastStamp='';
+  r.onresult=e=>{ let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ const res=e.results[i], t=res[0].transcript.trim(); if(!t) continue;
+      if(res.isFinal){ const st=nowStamp().slice(9); const pre=st!==lastStamp?'\n['+st+'] ':' '; lastStamp=st; MEET_TX[id]=(meetTx(S.meetings[id]||{id})+pre+t.charAt(0).toUpperCase()+t.slice(1)+'.').replace(/^\n/,''); }
+      else interim+=t+' '; }
+    MEET_INT=interim; const ta=$('#mt_tx'); if(ta&&ta.dataset.id===id){ ta.value=meetTx(S.meetings[id]||{id}); ta.scrollTop=ta.scrollHeight; } const li=$('#mt_live'); if(li) li.textContent=interim; };
+  r.onerror=e=>{ if(e.error==='not-allowed'||e.error==='service-not-allowed'){ toast('Kein Zugriff aufs Mikrofon – bitte im Browser erlauben.'); meetStop(); } };
+  r.onend=()=>{ if(MEET_ON===id) try{ r.start(); }catch(e){} }; // Chrome beendet nach Pausen – weiter mitschreiben
+  try{ r.start(); }catch(e){ toast('Mikrofon konnte nicht gestartet werden.'); MEET_ON=''; return; }
+  clearInterval(MEET_SAVE); MEET_SAVE=setInterval(()=>meetSave(id,true),30000);
+  toast('Mitschrift läuft – Mikrofon ist an.'); render();
+}
+function meetStop(){ const id=MEET_ON; MEET_ON=''; MEET_INT=''; clearInterval(MEET_SAVE); try{ MEET_REC&&MEET_REC.stop(); }catch(e){} MEET_REC=null; if(id) meetSave(id); render(); }
+function vMeetings(){
+  const list=arr('meetings').sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||'')));
+  const m=UI.mid&&S.meetings&&S.meetings[UI.mid];
+  const row=x=>`<div class="li clickable ${m&&m.id===x.id?'sel':''}" data-act="meetOpen" data-id="${x.id}"><div class="body"><div class="tt">${esc(x.title||'Meeting')}</div><div class="mt"><span>${esc(fmtD(x.date))}${x.time?' · '+esc(x.time):''}</span>${(x.pids||[]).map(p=>`<span>${esc(projName(p))}</span>`).join('')}<span class="pill ${x.status==='ausgewertet'?'ok':MEET_ON===x.id?'bad':''}">${MEET_ON===x.id?'● nimmt auf':x.status==='ausgewertet'?'ausgewertet':'offen'}</span>${(x.todoIds||[]).length?`<span>${x.todoIds.length} To-Dos</span>`:''}</div></div></div>`;
+  return head('Meetings',list.length+' Meetings · mitschreiben per Mikrofon, Claude macht Projekt-Notizen und To-Dos daraus',`<button class="btn pri" data-act="meetNew">${ic('plus')}Neues Meeting</button>`)+
+    `<div class="meet-layout"><div class="card meet-list"><div class="list">${list.map(row).join('')||'<div class="empty"><b>Noch keine Meetings</b>„Neues Meeting“ anlegen, Mikrofon starten, am Ende „Auswerten“.</div>'}</div></div>
+    <div>${m?meetEditor(m):'<div class="card"><div class="empty">Links ein Meeting wählen oder ein neues anlegen.</div></div>'}</div></div>`;
+}
+function meetEditor(m){
+  const rec=MEET_ON===m.id;
+  return `<div class="card meet-ed"><div class="card-h"><input class="inp meet-title" value="${esc(m.title||'')}" data-chg="meetField" data-id="${m.id}" data-k="title" aria-label="Titel"><input class="inp" type="date" value="${esc(m.date||'')}" data-chg="meetField" data-id="${m.id}" data-k="date" aria-label="Datum"></div>
+    <div class="card-b" style="display:flex;flex-direction:column;gap:12px">
+      <div class="meet-meta"><div><div class="eyebrow">Projekte (optional – hilft Claude beim Zuordnen)</div><div class="chips">${arr('projects').filter(p=>['laufend','planung'].includes(catOf(p))).sort((a,b)=>(isIntern(a)?-1:0)-(isIntern(b)?-1:0)||a.name.localeCompare(b.name,'de')).map(p=>`<label class="chip ${(m.pids||[]).includes(p.id)?'on':''}"><input type="checkbox" hidden data-chg="meetPid" data-id="${m.id}" data-pid="${p.id}" ${(m.pids||[]).includes(p.id)?'checked':''}>${esc(p.name)}</label>`).join('')}</div></div>
+        <div><div class="eyebrow">Teilnehmer</div><div class="chips">${staff().map(s=>`<label class="chip ${(m.who||[]).includes(s.name)?'on':''}"><input type="checkbox" hidden data-chg="meetWho" data-id="${m.id}" data-n="${esc(s.name)}" ${(m.who||[]).includes(s.name)?'checked':''}>${esc(shortWho(s.name))}</label>`).join('')}</div></div></div>
+      <div class="meet-rec ${rec?'on':''}">${rec?`<button class="btn danger" data-act="meetStop">■ Aufnahme stoppen</button><span class="rec-dot"></span><span class="small">Mitschrift läuft …</span>`:`<button class="btn sun" data-act="meetStart" data-id="${m.id}" ${SRec?'':'disabled'}>🎙 Mitschrift starten</button><span class="small muted">${SRec?'Spricht man deutlich, schreibt der Browser mit (Chrome/Edge). Alle Teilnehmer vorher informieren.':'Dieser Browser kann nicht mitschreiben – Text eintippen oder einfügen.'}</span>`}</div>
+      <div id="mt_live" class="meet-live">${esc(rec?MEET_INT:'')}</div>
+      <textarea id="mt_tx" data-id="${m.id}" class="inp meet-tx" rows="14" placeholder="Hier erscheint die Mitschrift. Du kannst auch tippen oder einen vorhandenen Text einfügen.">${esc(meetTx(m))}</textarea>
+      <div class="row"><button class="btn sun" data-act="meetEval" data-id="${m.id}" ${SAMPLE?'':'disabled'}>✨ Auswerten: Notizen & To-Dos</button><button class="btn" data-act="meetPrint" data-id="${m.id}">${ic('report')}Protokoll drucken</button><span class="spacer"></span><button class="icon-btn" title="Meeting löschen" data-act="meetDel" data-id="${m.id}">${ic('x')}</button></div>
+      ${m.summary?`<div class="hint"><b>Zusammenfassung</b><br>${esc(m.summary).replace(/\n/g,'<br>')}</div>`:''}
+      ${(m.todoIds||[]).length?`<div><div class="eyebrow">To-Dos aus diesem Meeting</div><div class="list">${m.todoIds.map(id=>S.tasks[id]).filter(Boolean).map(taskLi).join('')}</div></div>`:''}
+    </div></div>`;
+}
+async function meetEval(id){
+  const m=S.meetings[id]; if(!m||!SAMPLE) return; if(MEET_ON===id) meetStop(); const tx=meetTx(S.meetings[id]).trim(); if(tx.length<20) return toast('Die Mitschrift ist noch zu kurz.');
+  toast('Claude wertet das Meeting aus …');
+  const plist=arr('projects').filter(p=>['laufend','planung','onhold'].includes(catOf(p))).map(p=>`${p.id} | ${p.name} | ${p.nr||''} | ${String(p.place||'').replace(/\n/g,' ')} | ${p.customer||''}`).join('\n');
+  const roster=staff().map(s=>`${shortWho(s.name)} = ${s.name.replace(/\s*\([^)]*\)$/,'')} (${ROLES[s.role]||s.role})`).join('\n');
+  const prompt=`Heute ist ${TODAY()}. Mitschrift (automatische Spracherkennung, daher Tippfehler möglich) eines internen Meetings bei nutz die Sonne GmbH (PV, Speicher, Ladesäulen) vom ${m.date}.
+Teilnehmer: ${(m.who||[]).map(shortWho).join(', ')||'-'}${(m.pids||[]).length?'\nThemen-Projekte: '+m.pids.map(projName).join(', '):''}
+"""${tx.slice(0,24000)}"""
+Projekte (ID | Name | Nummer | Ort | Kunde):\n${plist}
+Mitarbeiter (Kürzel = Name, Rolle):\n${roster}
+1) summary: kurze Zusammenfassung in 3–6 Stichpunkten (je Zeile ein „- “).
+2) notes: Für JEDES besprochene Projekt eine sachliche Notiz (Stand, Entscheidungen, Probleme) in 1–3 Sätzen. projectId aus der Liste, allgemeine Themen (Lager, Büro, Fahrzeuge, Personal) → "intern".
+3) todos: alle vereinbarten Aufgaben, kurz im Imperativ, je mit projectId, zuständigem Kürzel (nur wenn genannt/klar), Frist (nur wenn genannt), prio dringend|hoch|normal|niedrig.
+Antworte nur mit JSON: {"summary":"","notes":[{"projectId":"","note":""}],"todos":[{"title":"","projectId":"","who":"","due":"","prio":"normal"}]}`;
+  let r; try{ r=await SAMPLE.json(prompt,{modelTier:'default'}); }catch(e){ return toast(SAMPLE_ERR[e&&e.code]||'Auswertung nicht möglich.'); }
+  const okP=x=>x&&(S.projects[x]||x===INTERN)?x:'';
+  const notes=(r&&Array.isArray(r.notes)?r.notes:[]).filter(n=>n&&String(n.note||'').trim()).map(n=>({pid:okP(n.projectId),note:String(n.note).trim()}));
+  const todos=(r&&Array.isArray(r.todos)?r.todos:[]).filter(t=>t&&String(t.title||'').trim()).slice(0,40).map(t=>({...t,projectId:okP(t.projectId)}));
+  todos.forEach(t=>{ const fr=findRelated(t); if(fr&&fr.strong){ t.rel=fr.id; t.relation='update'; t.relBy='Wortvergleich'; } });
+  const nrow=(n,i)=>`<div class="sug mt-note"><input type="checkbox" class="ck" id="mn_c${i}" checked aria-label="übernehmen"><select class="inp" id="mn_p${i}" aria-label="Projekt">${mtProjOpts(n.pid)}</select><textarea class="inp" id="mn_t${i}" rows="2" aria-label="Notiz">${esc(n.note)}</textarea></div>`;
+  openSheet({title:'Auswertung · '+(m.title||'Meeting'),wide:1,html:`<div class="fld full">${r.summary?`<div class="hint" style="margin-bottom:10px">${esc(r.summary).replace(/\n/g,'<br>')}</div>`:''}
+    <div class="sec-t" style="margin:0 0 6px">Notizen für die Projekte (${notes.length})</div><div class="sug-list">${notes.map(nrow).join('')||'<div class="small muted">Keine Projekt-Notizen erkannt.</div>'}</div>
+    <div class="sec-t" style="margin:14px 0 6px">To-Dos (${todos.length})</div><div class="mt-head"><span></span><span>Aufgabe</span><span>Projekt</span><span>Wer</span><span>Fällig</span><span>Dringlichkeit</span><span>extern</span></div>
+    <div class="sug-list" id="mt_list">${todos.map((t,i)=>mtRow(i,t)).join('')}</div><button type="button" class="btn ghost sm" data-act="mtAddRow" style="margin-top:6px">${ic('plus')}Weiteres To-Do</button></div>`,saveLabel:'Übernehmen',
+    onSave:()=>{ let nn=0; const ids=[];
+      notes.forEach((n,i)=>{ if(!$('#mn_c'+i).checked) return; const pid=$('#mn_p'+i).value, txt=$('#mn_t'+i).value.trim(); if(!pid||!txt) return; const pidR=pid===INTERN&&!S.projects[INTERN]?'':pid; if(!pidR||!S.projects[pidR]) return;
+        const p=clone(S.projects[pidR]); p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+nowStamp()+' ('+meK()+'): Meeting „'+(m.title||'')+'“: '+txt; delete p.now; delete p.nowD; put('projects',p); nn++; });
+      document.querySelectorAll('#mt_list .mt-row').forEach(row=>{ const g=s=>row.querySelector('[id^="mt_'+s+'"]'); if(!g('c').checked) return; const title=g('t').value.trim(); if(!title) return; const p=g('p').value;
+        const relBox=row.querySelector('.mt-rel'), act=relBox?g('a').value:'neu';
+        if(relBox&&act!=='neu'&&S.tasks[relBox.dataset.rel]){ const x=clone(S.tasks[relBox.dataset.rel]); x.upd2=[...(x.upd2||[]),{d:TODAY(),tm:nowStamp().slice(9),by:meK(),t:'Meeting „'+(m.title||'')+'“: '+title,at:new Date().toISOString()}]; if(act==='erledigt'){ x.done=true; x.doneAt=new Date().toISOString(); x.doneBy=meK(); x.doneNote=title; } put('tasks',x); ids.push(x.id); return; }
+        const t={id:uid(),title,who:g('w').value,due:g('d').value,ext:g('e').value.trim(),pid:p===INTERN&&!S.projects[INTERN]?'':p,done:false,prio:(g('r')||{}).value||'normal',src:'meeting',notes:'Aus Meeting „'+(m.title||'')+'“ vom '+fmtD(m.date)};
+        ['due','ext'].forEach(k=>{ if(!t[k]) delete t[k]; }); put('tasks',t); ids.push(t.id); });
+      put('meetings',{...clone(S.meetings[id]),tx:meetTx(S.meetings[id]),summary:String(r.summary||''),status:'ausgewertet',todoIds:[...new Set([...(S.meetings[id].todoIds||[]),...ids])]});
+      toast(nn+' Notiz'+(nn===1?'':'en')+' · '+ids.length+' To-Do'+(ids.length===1?'':'s')+' übernommen.'); }});
+}
+function meetPrint(id){ const m=S.meetings[id]; if(!m) return; const tasks=(m.todoIds||[]).map(x=>S.tasks[x]).filter(Boolean);
+  printDoc('Protokoll · '+(m.title||'Meeting'),fmtD(m.date)+(m.time?' · '+m.time:''),`<table class="pr-meta"><tr><th>Teilnehmer</th><td>${esc((m.who||[]).map(n=>n.replace(/\s*\([^)]*\)$/,'')).join(', '))}</td></tr><tr><th>Projekte</th><td>${esc((m.pids||[]).map(projName).join(', '))}</td></tr></table>
+    ${m.summary?`<h3>Zusammenfassung</h3><div class="pr-box">${esc(m.summary).replace(/\n/g,'<br>')}</div>`:''}
+    ${tasks.length?`<h3>To-Dos</h3><table class="pr-tbl"><tr><th>Aufgabe</th><th style="width:22%">Projekt</th><th style="width:10%">Wer</th><th style="width:12%">Fällig</th></tr>${tasks.map(t=>`<tr><td>${esc(t.title)}</td><td>${esc(projName(t.pid)||'')}</td><td>${esc(t.who?shortWho(t.who):'')}</td><td>${esc(t.due?fmtD(t.due):'')}</td></tr>`).join('')}</table>`:''}
+    <h3>Mitschrift</h3><div class="pr-box" style="font-size:9pt">${esc(meetTx(m)).replace(/\n/g,'<br>')}</div>`); }
+Object.assign(A,{
+ meetNew:()=>meetNew(), meetOpen:d=>{ if(MEET_ON&&MEET_ON!==d.id) meetSave(MEET_ON,true); UI.mid=d.id; render(); },
+ meetStart:d=>meetStart(d.id), meetStop:()=>meetStop(), meetEval:d=>meetEval(d.id), meetPrint:d=>meetPrint(d.id),
+ meetDel:d=>confirmSheet('Meeting „'+((S.meetings[d.id]||{}).title||'')+'“ mit Mitschrift löschen? Angelegte To-Dos und Notizen bleiben.',()=>{ if(MEET_ON===d.id) meetStop(); del('meetings',d.id); delete MEET_TX[d.id]; UI.mid=''; render(); }),
+});
+Object.assign(CHG,{
+ meetField:(d,el)=>{ const m=clone(S.meetings[d.id]); if(!m) return; m[d.k]=el.value; m.tx=meetTx(S.meetings[d.id]); put('meetings',m); },
+ meetPid:(d,el)=>{ const m=clone(S.meetings[d.id]); if(!m) return; const s=new Set(m.pids||[]); el.checked?s.add(d.pid):s.delete(d.pid); m.pids=[...s]; m.tx=meetTx(S.meetings[d.id]); put('meetings',m); },
+ meetWho:(d,el)=>{ const m=clone(S.meetings[d.id]); if(!m) return; const s=new Set(m.who||[]); el.checked?s.add(d.n):s.delete(d.n); m.who=[...s]; m.tx=meetTx(S.meetings[d.id]); put('meetings',m); },
+});
+// Tippen in der Mitschrift: im Speicher halten, nach kurzer Pause speichern
+let MEET_T; document.addEventListener('input',e=>{ if(e.target.id!=='mt_tx') return; const id=e.target.dataset.id; MEET_TX[id]=e.target.value; clearTimeout(MEET_T); MEET_T=setTimeout(()=>meetSave(id,true),2500); });
+window.addEventListener('beforeunload',()=>{ if(MEET_ON) meetSave(MEET_ON,true); });
 // Aufklappen der Updates am To-Do öffnet nicht gleich das To-Do
 document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('.tu-inl')) e.stopPropagation(); },true);
 Object.assign(CHG,{ prioSelCls:(d,el)=>{ el.className='inp prio-sel p-'+el.value; }, mtAllP:(d,el)=>{ if(el.value==='__keep') return; document.querySelectorAll('#mt_list .mt-p').forEach(s=>{ s.value=el.value; s.classList.toggle('none',!el.value); }); }, mtRowP:(d,el)=>el.classList.toggle('none',!el.value), todoSort:(d,el)=>{ UI.todoSort=el.value; saveUI(); render(); } });
