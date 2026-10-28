@@ -715,6 +715,7 @@ details.pf:not([open])>summary{border-bottom:0}
 .vl-tl>div{position:relative;font-size:14px;line-height:1.5}
 .nb.dy{display:block;padding:8px 4px 9px}
 .dy-tk{margin-top:4px}
+.dy-sum{font-size:14.5px;line-height:1.5;margin:2px 0 2px}
 .ps-drop{margin-bottom:12px}.ps-drop .dropz.slim{padding:6px 12px;min-height:0}
 .dy-tog{font-size:12.5px;font-weight:600;color:#7a6a00;padding:0}
 .dy-link{margin-top:4px!important;padding:2px 0 2px 10px!important}
@@ -5077,7 +5078,8 @@ function diaryDays(p){
 const dyDate=d=>{ if(!d) return 'Ohne Datum'; const x=new Date(d+'T12:00'); return WD[x.getDay()]+' '+d.slice(8)+'.'+d.slice(5,7)+'.'+d.slice(2,4); };
 const dyPlain=e=>e.kind==='note'?shortMailRefs(e.text):e.kind==='new'?'Neues To-Do: '+e.task.title:e.kind==='upd'?'Update zu „'+e.task.title+'“: '+e.text:'Erledigt: '+e.task.title+(e.text?' – '+e.text:'');
 const dyHash=x=>strHash(x.items.map(dyPlain).join('|'));
-const dyTask=t=>`<button class="lnk" data-act="editTask" data-id="${t.id}">${esc(t.title)}</button>`;
+// als Text-Link (ein <button> bricht nicht wie Fließtext um)
+const dyTask=t=>`<span class="lnk" role="button" tabindex="0" data-act="editTask" data-id="${t.id}">${esc(t.title)}</span>`;
 function dyItem(p,e,adm){
   const mt=[e.tm,e.by].filter(Boolean).join(' '), meta=mt?`<span class="dy-m">${esc(mt)}</span>`:'';
   if(e.kind==='note') return `<div class="dy-e">${meta}<div class="dy-t">${esc(shortMailRefs(e.text))}</div>${adm?`<span class="dy-a"><button class="icon-btn" title="Bearbeiten" data-act="editNoteBlock" data-pid="${p.id}" data-k="${e.k}" data-i="${e.i}">${ic('edit')}</button><button class="icon-btn" title="Löschen" data-act="delNoteBlock" data-pid="${p.id}" data-k="${e.k}" data-i="${e.i}">${ic('x')}</button></span>`:''}</div>`;
@@ -5094,10 +5096,20 @@ function dyLink(p,t,d){
   return `<div class="dy-link"><div class="dy-lh">🔗 ${dyTask(t)} <span class="small muted">${t.done?'✓ erledigt':'offen'}${t.who?' · '+esc(shortWho(t.who)):''}</span>${ups.length?dyTog(k,ups.length+' Update'+(ups.length>1?'s':'')):''}<button class="icon-btn" title="Verknüpfung lösen" data-act="dyUnlink" data-pid="${p.id}" data-id="${t.id}">${ic('x')}</button></div>
     ${ups.length&&dyIsOpen(k)?ups.map(u=>`<div class="dy-lu"><span class="dy-m">${esc(fmtD(u.d)+' '+(updTime(u)||'')+' '+(u.by||''))}</span> ${esc(u.t)}</div>`).join(''):''}</div>`;
 }
+// Ab diesem Tag: oben die KI-Zusammenfassung des Tages, Notiz + To-Dos + Updates darunter zum Aufklappen (ältere Tage bleiben wie sie sind)
+const DY_SUM_FROM='2026-10-28';
 function dyCard(p,x,adm){
   const hd=(p.dayHeads||{})[x.d], notes=x.items.filter(e=>e.kind==='note'), tk=x.items.filter(e=>e.kind!=='note'), k='t'+p.id+x.d;
   const n=c=>tk.filter(e=>e.kind===c).length, sum=[n('new')?n('new')+' neu':'',n('upd')?n('upd')+' Update'+(n('upd')>1?'s':''):'',n('done')?n('done')+' erledigt':''].filter(Boolean).join(' · ');
-  return `<div class="nb dy" ${x.d?`data-drop-note="${x.d}" data-pid="${p.id}"`:''}><div class="dy-h"><span class="dy-d">${esc(dyDate(x.d))}</span>${hd&&hd.t?`<b>${esc(hd.t)}</b>`:''}</div>
+  const head=`<div class="dy-h"><span class="dy-d">${esc(dyDate(x.d))}</span>${hd&&hd.t?`<b>${esc(hd.t)}</b>`:''}</div>`, drop=x.d?`data-drop-note="${x.d}" data-pid="${p.id}"`:'';
+  if(x.d>=DY_SUM_FROM){
+    const kd='d'+p.id+x.d, cnt=[notes.length?notes.length+' Notiz'+(notes.length>1?'en':''):'',sum?'To-Dos: '+sum:'',x.links.length?x.links.length+' verknüpft':''].filter(Boolean).join(' · ');
+    const s=hd&&hd.s||''; // bis die neue Fassung da ist, bleibt die letzte stehen
+    return `<div class="nb dy" ${drop}>${head}
+      <div class="dy-sum">${s?esc(s):`<span class="muted">${SAMPLE?'✨ Zusammenfassung wird erstellt …':esc(x.items.map(dyPlain).join(' · ').slice(0,220))}</span>`}</div>
+      <div class="dy-tk">${dyTog(kd,'Details: '+cnt)}${dyIsOpen(kd)?`<div class="dy-list" style="margin-top:6px">${x.items.map(e=>dyItem(p,e,adm)).join('')}</div>${x.links.map(t=>dyLink(p,t,x.d)).join('')}`:''}</div></div>`;
+  }
+  return `<div class="nb dy" ${drop}>${head}
     ${notes.length?`<div class="dy-list">${notes.map(e=>dyItem(p,e,adm)).join('')}</div>`:''}
     ${tk.length?`<div class="dy-tk">${dyTog(k,'To-Dos: '+sum)}${dyIsOpen(k)?`<div class="dy-list" style="margin-top:4px">${tk.map(e=>dyItem(p,e,adm)).join('')}</div>`:''}</div>`:''}
     ${x.links.map(t=>dyLink(p,t,x.d)).join('')}</div>`;
@@ -5116,10 +5128,14 @@ async function diaryHeads(pid){
   const p=S.projects[pid]; if(!p||!SAMPLE||DY_RUN[pid]) return; const hd=p.dayHeads||{};
   const todo=diaryDays(p).filter(x=>x.d&&x.items.length).map(x=>({x,h:dyHash(x)})).filter(({x,h})=>(hd[x.d]||{}).h!==h&&!DY_TRIED[pid+x.d+h]).slice(0,20); if(!todo.length) return;
   DY_RUN[pid]=true; todo.forEach(({x,h})=>DY_TRIED[pid+x.d+h]=1);
-  try{ const r=await SAMPLE.json(`Projekt „${p.name}“ eines Solar-Installationsbetriebs. Tagebuch, Einträge je Tag:\n${todo.map(({x},i)=>(i+1)+'. ['+x.d+'] '+x.items.map(dyPlain).join(' | ').slice(0,800)).join('\n')}
-Gib jedem Tag eine kurze, zusammenfassende Überschrift (2–6 Wörter, keine Personennamen, kein Datum), z. B. „Zählerschrank verdrahtet, Kran geklärt“. Antworte nur mit JSON in derselben Reihenfolge: {"h":["…"]}`,{modelTier:'quick',bg:true});
+  const wantS=todo.some(({x})=>x.d>=DY_SUM_FROM);
+  try{ const r=await SAMPLE.json(`Projekt „${p.name}“ eines Solar-Installationsbetriebs. Tagebuch, Einträge je Tag (Notizen, neue To-Dos, To-Do-Updates, Erledigtes):\n${todo.map(({x},i)=>(i+1)+'. ['+x.d+']'+(x.d>=DY_SUM_FROM?' [S]':'')+' '+x.items.map(e=>(e.by?e.by+': ':'')+dyPlain(e)).join(' | ').slice(0,1500)).join('\n')}
+Gib jedem Tag eine kurze Überschrift (2–6 Wörter, keine Personennamen, kein Datum), z. B. „Zählerschrank verdrahtet, Kran geklärt“.${wantS?`
+Für Tage mit [S] zusätzlich eine Tageszusammenfassung s: so knapp wie möglich (1–2 kurze Sätze, max. 220 Zeichen), nur das Wesentliche aus Notiz, neuen To-Dos und Updates zusammengeführt – was ist passiert, was ist offen/als Nächstes, wer (Kürzel) ist dran. Keine Wiederholung der Überschrift, nichts erfinden, Fachbegriffe beibehalten.`:''}
+Antworte nur mit JSON in derselben Reihenfolge: {"items":[{"h":"…"${wantS?',"s":"… (nur bei [S], sonst leer)"':''}}]}`,{modelTier:'quick',bg:true});
     const cur=S.projects[pid]; if(!cur) return; const nh={...(cur.dayHeads||{})};
-    (r&&Array.isArray(r.h)?r.h:[]).forEach((t,i)=>{ const it=todo[i]; if(it&&String(t||'').trim()) nh[it.x.d]={t:String(t).trim().slice(0,70),h:it.h}; });
+    (r&&Array.isArray(r.items)?r.items:[]).forEach((o,i)=>{ const it=todo[i]; if(!it||!o) return; const t=String(o.h||'').trim(), s=String(o.s||'').trim();
+      if(t||s) nh[it.x.d]={t:(t||(nh[it.x.d]||{}).t||'').slice(0,70),h:it.h,...(it.x.d>=DY_SUM_FROM&&s?{s:s.slice(0,300)}:{})}; });
     cur.dayHeads=nh; if(MODE==='cloud'&&DB&&mayWrite('projects')) DB.collection('projects').doc(pid).update({dayHeads:nh}).catch(()=>{}); scheduleRender(); }
   catch(e){} finally{ DY_RUN[pid]=false; }
 }
