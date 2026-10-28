@@ -5137,7 +5137,7 @@ function meetEditor(m){
       <div class="meet-rec ${rec?'on':''}">${rec?`<button class="btn danger" data-act="meetStop">■ Aufnahme stoppen</button><span class="rec-dot"></span><span class="small">Mitschrift läuft …</span>`:`<button class="btn sun" data-act="meetStart" data-id="${m.id}" ${SRec?'':'disabled'}>🎙 Mitschrift starten</button><span class="small muted">${SRec?'Spricht man deutlich, schreibt der Browser mit (Chrome/Edge). Alle Teilnehmer vorher informieren.':'Dieser Browser kann nicht mitschreiben – Text eintippen oder einfügen.'}</span>`}</div>
       <div id="mt_live" class="meet-live">${esc(rec?MEET_INT:'')}</div>
       <textarea id="mt_tx" data-id="${m.id}" class="inp meet-tx" rows="14" placeholder="Hier erscheint die Mitschrift. Du kannst auch tippen oder einen vorhandenen Text einfügen.">${esc(meetTx(m))}</textarea>
-      <div class="row"><button class="btn sun" data-act="meetEval" data-id="${m.id}" ${SAMPLE?'':'disabled'}>✨ Auswerten: Notizen & To-Dos</button><button class="btn" data-act="meetPrint" data-id="${m.id}">${ic('report')}Protokoll drucken</button><span class="spacer"></span><button class="icon-btn" title="Meeting löschen" data-act="meetDel" data-id="${m.id}">${ic('x')}</button></div>
+      <div class="row"><button class="btn sun" data-act="meetEval" data-id="${m.id}" ${SAMPLE?'':'disabled'}>✨ Auswerten: Notizen & To-Dos</button><button class="btn" data-act="meetPrint" data-id="${m.id}">${ic('report')}Protokoll drucken</button><span class="spacer"></span>${m.status!=='ausgewertet'||isAdmin()?`<button class="btn ghost sm" title="${m.status==='ausgewertet'?'Abgeschlossenen Meetingbericht löschen (nur Admins)':'Meeting löschen'}" data-act="meetDel" data-id="${m.id}">${ic('x')}Löschen</button>`:''}</div>
       ${m.summary?`<div class="hint"><b>Zusammenfassung</b><br>${esc(m.summary).replace(/\n/g,'<br>')}</div>`:''}
       ${(m.todoIds||[]).length?`<div><div class="eyebrow">To-Dos aus diesem Meeting</div><div class="list">${m.todoIds.map(id=>S.tasks[id]).filter(Boolean).map(taskLi).join('')}</div></div>`:''}
     </div></div>`;
@@ -5185,7 +5185,9 @@ function meetPrint(id){ const m=S.meetings[id]; if(!m) return; const tasks=(m.to
 Object.assign(A,{
  meetNew:()=>meetNew(), meetOpen:d=>{ if(MEET_ON&&MEET_ON!==d.id) meetSave(MEET_ON,true); UI.mid=d.id; render(); },
  meetStart:d=>meetStart(d.id), meetStop:()=>meetStop(), meetEval:d=>meetEval(d.id), meetPrint:d=>meetPrint(d.id),
- meetDel:d=>confirmSheet('Meeting „'+((S.meetings[d.id]||{}).title||'')+'“ mit Mitschrift löschen? Angelegte To-Dos und Notizen bleiben.',()=>{ if(MEET_ON===d.id) meetStop(); del('meetings',d.id); delete MEET_TX[d.id]; UI.mid=''; render(); }),
+ // Abgeschlossene (ausgewertete) Meetingberichte dürfen nur Admins löschen
+ meetDel:d=>{ const m=S.meetings[d.id]; if(!m) return; if(m.status==='ausgewertet'&&!isAdmin()) return toast('Abgeschlossene Meetingberichte können nur Admins (EP, AvE) löschen.');
+   confirmSheet('Meeting „'+(m.title||'')+'“ mit Mitschrift'+(m.status==='ausgewertet'?' und Bericht':'')+' löschen? Angelegte To-Dos und Notizen bleiben.',()=>{ if(MEET_ON===d.id) meetStop(); del('meetings',d.id); delete MEET_TX[d.id]; UI.mid=''; render(); }); },
 });
 Object.assign(CHG,{
  meetField:(d,el)=>{ const m=clone(S.meetings[d.id]); if(!m) return; m[d.k]=el.value; m.tx=meetTx(S.meetings[d.id]); put('meetings',m); },
