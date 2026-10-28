@@ -490,6 +490,7 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .big-nav:hover .bn-t{opacity:1}
 @media (max-width:900px){ .big-nav{width:40px;height:64px;top:auto;bottom:84px;transform:none} .big-nav.l{left:6px} .big-nav svg{width:24px;height:24px} }
 .ext-pill{background:#EDE6FA;color:#5a3596}
+.firm-pill{background:var(--sunken);color:var(--ink);white-space:nowrap}
 /* Globale Suche */
 .gs-wrap{position:relative;margin:0 0 18px}
 .gs-in{display:flex;align-items:center;gap:10px;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:0 14px;box-shadow:var(--shadow)}
@@ -1668,7 +1669,7 @@ function renderShell(){
   $('#staffList').innerHTML = staff().map(s=>`<option value="${esc(s.name)}">`).join('');
   const sup=[...new Set(arr('orders').map(o=>o.supplier).filter(Boolean))];
   $('#supplierList').innerHTML = sup.map(s=>`<option value="${esc(s)}">`).join('');
-  const buy=[...new Set(['nutz die Sonne GmbH','Flexvolt GmbH & Co. KG',...arr('orders').map(o=>o.buyer).filter(Boolean)])];
+  const buy=[...new Set([...FIRMS(),...arr('orders').map(o=>o.buyer).filter(Boolean)])];
   $('#buyerList').innerHTML = buy.map(s=>`<option value="${esc(s)}">`).join('');
   $('#stockArtList').innerHTML = arr('stock').map(s=>`<option value="${esc(s.art)}">`).join('');
   $('#locList').innerHTML =[...new Set(['Lager','Container',...arr('stock').map(s=>s.loc).filter(Boolean)])].map(s=>`<option value="${esc(s)}">`).join('');
@@ -1895,7 +1896,7 @@ const dDiff=(a,b)=>Math.round((new Date(b+'T12:00')-new Date(a+'T12:00'))/864e5)
 function targetInfo(p){ if(!p.target) return null; const pp=pipe(p), days=dDiff(TODAY(),p.target), left=pp.total-pp.work; return {days,left,late:days<0&&left>0,soon:days>=0&&days<=21&&left>0}; }
 function targetBadge(p,big){ const ti=targetInfo(p); if(!ti) return '';
   const cls=ti.late?'bad':ti.soon?'warn':'ok', txt=ti.left?(ti.days<0?Math.abs(ti.days)+' Tage überfällig':ti.days===0?'heute':'noch '+ti.days+' Tage'):'erreicht';
-  return `<span class="tgt ${cls} ${big?'big':''}" data-act="openAt" data-id="${p.id}" data-at="timeline" title="Geplanter Fertigstellungstermin">⚑ Fertigstellung ${fmtD(p.target)} · ${txt}${ti.left?' · '+ti.left+' Schritte offen':''}</span>`; }
+  return `<span class="tgt ${cls} ${big?'big':''}" data-act="openAt" data-id="${p.id}" data-at="timeline" title="Geplanter Fertigstellungstermin">⚑ Fertigstellung ${fmtD(p.target)} · ${txt}</span>`; }
 function projTimeline(p){
   if(SAMPLE&&!tlAIData(p)&&!TL_RUN[p.id]&&noteEntries(p).length) setTimeout(()=>tlAI(p.id,true),50); // automatisch zusammenfassen
   const z=TL_ZOOM[UI.tlZoom]?UI.tlZoom:'woche', Z=TL_ZOOM[z], t0=TODAY(), items=tlItems(p), lanesOn=UI.tlLanes||{};
@@ -1918,7 +1919,6 @@ function projTimeline(p){
     <div class="tl-top"><div class="tl-target"><label for="tgt_${p.id}">⚑ Geplanter Fertigstellungstermin</label><input type="date" id="tgt_${p.id}" class="inp" data-chg="projTarget" data-pid="${p.id}" value="${esc(p.target||'')}">${targetBadge(p,true)}</div>
       <div class="cal-sw sm">${Object.entries(TL_ZOOM).map(([k,v])=>`<button class="${k===z?'on':''}" data-act="tlZoom" data-v="${k}">${v.lbl}</button>`).join('')}</div>
       <div class="row" style="gap:6px"><button class="btn sm" data-act="tlToday">Heute</button><button class="btn sm" data-act="tlAddMs" data-pid="${p.id}">${ic('plus')}Meilenstein</button>${SAMPLE?`<button class="btn sm" data-act="aiNext" data-pid="${p.id}" title="Claude schlägt die nächsten sinnvollen Schritte vor">✨ Nächste Schritte</button>`:''}${SAMPLE?`<button class="btn sm" data-act="tlAI" data-pid="${p.id}" title="Claude fasst jede Notiz neu in 2–3 Überbegriffe zusammen">✨ ${TL_RUN[p.id]?'fasst zusammen …':'Neu zusammenfassen'}</button><button class="btn sun sm" data-act="tlPlan" data-pid="${p.id}">✨ Plan bis Fertigstellung</button>`:''}</div></div>
-    ${p.target?`<div class="tl-todo ${ti&&ti.late?'bad':ti&&ti.soon?'warn':''}"><b>Bis ${fmtD(p.target)} noch zu tun (${rest.length} Schritte):</b> ${rest.slice(0,6).map(n=>esc(PIPE_DO[n-1])).join(' → ')}${rest.length>6?' → …':''}${openTasks(p.id).length?` · <span class="small">${openTasks(p.id).length} offene Aufgaben</span>`:''}</div>`:'<div class="tl-todo">Trage oben den geplanten Fertigstellungstermin ein – dann erinnert die App daran und zeigt, was bis dahin zu tun ist.</div>'}
     <div class="tl-lanes-sw">${TL_LANES.map(([k,l])=>`<label class="chip ${lanesOn[k]===false?'':'on'}"><input type="checkbox" data-chg="tlLane" data-v="${k}" ${lanesOn[k]===false?'':'checked'} hidden>${esc(tlLaneName(k,l))}</label>`).join('')}</div>
     <div class="tl-scroll" id="tlScroll"><div class="tl-canvas" style="width:${W}px">
       <div class="tl-head">${head}</div>
@@ -2088,8 +2088,8 @@ function vProject(){
   const p=S.projects[UI.pid]; if(!p) return head('Projekt nicht gefunden','')+'<div class="card"><div class="empty">Dieses Projekt existiert nicht mehr. <button class="btn" data-act="nav" data-v="projects">Zur Liste</button></div></div>';
   const pr=progress(p), tasks=arr('tasks').filter(t=>t.pid===p.id), orders=arr('orders').filter(o=>o.pid===p.id), evs=arr('events').filter(e=>e.pid===p.id), offers=arr('offers').filter(o=>o.pid===p.id), reps=arr('reports').filter(r=>r.pid===p.id);
   const pp=pipe(p), cat=catOf(p);
-  const tabs=[['status','Status',pp.work+'/'+pp.total],['timeline','Timeline',''],['ablauf','Checklisten',pr.done+'/'+pr.tot],['formulare','Formulare',''],['todos','To-Dos',tasks.filter(t=>!t.done).length],['material','Material',orders.length],['angebote','Angebote',offers.length],['rapporte','Tagesrapporte',reps.length],['dateien','Dateien',allFiles().filter(f=>f.pid===p.id).length],['verlauf','Verlauf',''],['infos','Infos','']];
-  let body='';
+  const tabs=[['status','Status',pp.work+'/'+pp.total],['timeline','Timeline',''],['ablauf','Checklisten',pr.done+'/'+pr.tot],['formulare','Formulare',''],['todos','To-Dos',tasks.filter(t=>!t.done).length],['material','Material',orders.length],['rapporte','Tagesrapporte',reps.length],['dateien','Dateien',allFiles().filter(f=>f.pid===p.id).length],['verlauf','Verlauf',''],['infos','Infos','']];
+  let body=''; if(UI.ptab==='angebote') UI.ptab='dateien';
   if(UI.ptab==='status') body=projStatus(p);
   else if(UI.ptab==='ablauf') body=`<div class="row ck-bar"><span class="small muted">Haken setzen und Bemerkungen eintragen wird sofort gespeichert. Drucken öffnet den Druckdialog, dort „Als PDF speichern“ wählen.</span><span class="spacer"></span><button class="btn sun sm" data-act="ckPrint" data-pid="${p.id}">${ic('report')}Alle Checklisten drucken / PDF</button></div>`+projPhaseNav(pr)+projAblauf(p,pr);
   else if(UI.ptab==='formulare') body=projForms(p);
@@ -2099,7 +2099,8 @@ function vProject(){
   else if(UI.ptab==='angebote') body=`<div class="card"><div class="card-h"><h3>Angebote</h3><button class="btn sm" data-act="newOffer" data-pid="${p.id}">${ic('plus')}Angebot</button></div>${offersTable(offers)}</div>`;
   else if(UI.ptab==='rapporte') body=`<div class="card"><div class="card-h"><h3>Tagesrapporte</h3><button class="btn sm" data-act="newReport" data-pid="${p.id}">${ic('plus')}Rapport</button></div>${reportsTable(reps)}</div>`;
   else if(UI.ptab==='timeline') body=projTimeline(p);
-  else if(UI.ptab==='dateien') body=fileDropHtml(p.id)+projFilesHtml(p);
+  // Angebote haben keinen eigenen Reiter mehr: sie stehen unter „Dateien“ im Ordner Angebote
+  else if(UI.ptab==='dateien') body=`<div class="row" style="justify-content:flex-end;margin-bottom:10px"><button class="btn sm" data-act="newOffer" data-pid="${p.id}">${ic('plus')}Angebot anlegen</button></div>`+fileDropHtml(p.id)+projFilesHtml(p);
   else if(UI.ptab==='verlauf') body=`<div class="card"><div class="card-h"><h3>Verlauf</h3><span class="small muted">Jede Änderung an Projekt, Aufgaben, Bestellungen, Terminen und Angeboten mit Kürzel und Zeitpunkt</span></div><div class="card-b">${histList(allHist().filter(h=>h.pid===p.id),true)}</div></div>`;
   else body=projInfos(p);
   const nl=navList(); let ix=nl.findIndex(x=>x.id===p.id); const list=ix<0?arr('projects').sort(SORTS.az[1]):nl; if(ix<0) ix=list.findIndex(x=>x.id===p.id);
@@ -2135,7 +2136,8 @@ function projStatus(p){
     const blocks=noteBlocks(v);
     return `<div><div class="eyebrow" style="margin-bottom:4px;display:flex;justify-content:space-between;align-items:center"><span>${l}</span><button class="btn ghost sm" data-act="editNoteAll" data-pid="${p.id}" data-k="${k}">${ic('edit')}Ganzen Text bearbeiten</button></div>
       <div class="longtext nb-list">${blocks.map((b,i)=>`<div class="nb"><div class="nb-t">${esc(b)}</div><div class="nb-a"><button class="icon-btn" title="Eintrag bearbeiten" data-act="editNoteBlock" data-pid="${p.id}" data-k="${k}" data-i="${i}">${ic('edit')}</button><button class="icon-btn" title="Eintrag löschen" data-act="delNoteBlock" data-pid="${p.id}" data-k="${k}" data-i="${i}">${ic('x')}</button></div></div>`).join('')}</div></div>`; };
-  const nw=nowOf(p), tasks=openTasks(p.id), active=['planung','laufend'].includes(catOf(p));
+  // „Wer macht gerade was“: To-Do mit dem neuesten Update (oder zuletzt angelegt) oben
+  const nw=nowOf(p), tasks=openTasks(p.id).sort((a,b)=>taskActKey(b).localeCompare(taskActKey(a))), active=['planung','laufend'].includes(catOf(p));
   const nxTask=pp.next&&arr('tasks').find(t=>t.pid===p.id&&t.ms===pp.next&&!t.done);
   return `<div class="card now-card">
     <div><div class="eyebrow"><span>Aktueller Stand${nw&&nw.d?' · '+esc(fmtD(nw.d))+(nw.tm?' · '+esc(nw.tm):''):''}</span><button class="btn ghost sm" data-act="editNow" data-pid="${p.id}">${ic('plus')}Neuer Stand</button></div>
@@ -3149,9 +3151,15 @@ document.addEventListener('drop',e=>{ const z=e.target.closest&&e.target.closest
 /* ========== Lagerverwaltung: Bestand, Entnahme, Kommissionierlisten ========== */
 const UNITS=['Stk','m','Pal','Rolle','kg','VE','Set','psch'];
 const PICK_ST={offen:'offen',gepackt:'gepackt',uebergeben:'an Baustelle übergeben'};
-function stockFind(art,artNr){ const nr=normNr(artNr), a=String(art||'').trim().toLowerCase(); return arr('stock').find(s=>(nr&&normNr(s.artNr)===nr)||(!nr&&String(s.art||'').trim().toLowerCase()===a)||(String(s.art||'').trim().toLowerCase()===a&&(!s.artNr||!nr))); }
+// Lagerware kann verschiedenen Firmen gehören (gleicher Artikel je Firma getrennt geführt)
+const FIRMS=()=>(S.config&&Array.isArray(S.config.firms)&&S.config.firms.length?S.config.firms:['nutz die Sonne GmbH','Flexvolt GmbH & Co. KG','VE Immobilien-Verwaltungs-GmbH']);
+const firmOf=s=>(s&&s.firm)||FIRMS()[0];
+const firmShort=f=>String(f||'').replace(/\s*(GmbH|&|-Verwaltungs).*$/,'').trim()||f;
+const firmFromBuyer=b=>{ const x=String(b||'').toLowerCase(); return FIRMS().find(f=>x&&(x.includes(firmShort(f).toLowerCase())||firmShort(f).toLowerCase().includes(x.split(' ')[0])))||FIRMS()[0]; };
+const firmOpts=cur=>FIRMS().map(f=>`<option value="${esc(f)}" ${f===cur?'selected':''}>${esc(f)}</option>`).join('');
+function stockFind(art,artNr,firm){ const nr=normNr(artNr), a=String(art||'').trim().toLowerCase(); return arr('stock').filter(s=>!firm||firmOf(s)===firm).find(s=>(nr&&normNr(s.artNr)===nr)||(!nr&&String(s.art||'').trim().toLowerCase()===a)||(String(s.art||'').trim().toLowerCase()===a&&(!s.artNr||!nr))); }
 function stockMove(s,d,note,pid,oid){ s.qty=Math.round(((+s.qty||0)+d)*1000)/1000; s.moves=(s.moves||[]).concat([{at:new Date().toISOString(),by:meK(),d,note:note||'',pid:pid||'',oid:oid||''}]).slice(-300); }
-function stockAdd(it,n,loc,note,oid){ const ex=stockFind(it.art,it.artNr); const s=ex?clone(ex):{id:uid(),art:it.art,artNr:it.artNr||'',unit:it.unit||'Stk',qty:0,loc:loc||'Lager',min:0};
+function stockAdd(it,n,loc,note,oid,firm){ firm=firm||FIRMS()[0]; const ex=stockFind(it.art,it.artNr,firm); const s=ex?clone(ex):{id:uid(),art:it.art,artNr:it.artNr||'',unit:it.unit||'Stk',qty:0,loc:loc||'Lager',min:0,firm};
   if(loc&&!ex) s.loc=loc; stockMove(s,+n,note,'',oid); put('stock',s); return s; }
 // Offene Kommissionierliste je Projekt sammeln, neue Positionen gleicher Art zusammenfassen
 function addToPick(pid,items,meta){ let pk=arr('picks').find(x=>x.pid===pid&&x.status==='offen'); pk=pk?clone(pk):{id:uid(),pid,status:'offen',date:meta&&meta.date||TODAY(),who:meta&&meta.who||'',items:[],title:'Material für '+projName(pid)};
@@ -3172,10 +3180,11 @@ function routeSheet(oid,got){
     <div class="fld"><label for="rt_pid">Baustelle / Projekt (oder Haus intern)</label><select id="rt_pid">${projSelOpts(o.pid||'',true)}</select></div>
     <div class="fld"><label for="rt_who">Für Monteur</label><select id="rt_who">${staffOpts('')}</select></div>
     <div class="fld"><label for="rt_date">Benötigt am</label><input id="rt_date" type="date" value="${TODAY()}"></div>
-    <div class="fld"><label for="rt_loc">Lagerort (fürs Lager)</label><input id="rt_loc" value="Lager" list="locList"></div>`,saveLabel:'Übernehmen',
+    <div class="fld"><label for="rt_loc">Lagerort (fürs Lager)</label><input id="rt_loc" value="Lager" list="locList"></div>
+    <div class="fld"><label for="rt_firm">Ware gehört (fürs Lager)</label><select id="rt_firm">${firmOpts(firmFromBuyer(o.buyer))}</select></div>`,saveLabel:'Übernehmen',
     onSave:()=>{ const site=[], lager=[]; got.forEach((g,i)=>{ const v=(document.querySelector(`input[name="rt_${i}"]:checked`)||{}).value; (v==='site'?site:lager).push(g); });
       const pid=$('#rt_pid').value; if(site.length&&!pid){ toast('Bitte die Baustelle wählen.'); return false; }
-      lager.forEach(g=>stockAdd(g,g.qty,$('#rt_loc').value.trim()||'Lager','Wareneingang '+(o.supplier||''),oid));
+      lager.forEach(g=>stockAdd(g,g.qty,$('#rt_loc').value.trim()||'Lager','Wareneingang '+(o.supplier||''),oid,$('#rt_firm').value));
       // verteilte Mengen an der Bestellung merken, damit nichts doppelt verteilt wird
       const oo=clone(S.orders[oid]); got.forEach(g=>{ const it=oo.items&&oo.items[g.i]; if(it) it.routed=(+it.routed||0)+g.qty; }); put('orders',oo);
       if(site.length) addToPick(pid,site.map(g=>({...g,src:'Wareneingang '+(o.supplier||'')})),{who:$('#rt_who').value,date:$('#rt_date').value});
@@ -3195,8 +3204,8 @@ function stockTakeSheet(id,pre){
       toast(qn(n)+' '+(s.unit||'')+' '+s.art+' entnommen für '+projName(pid)+'.'+(ss.min&&ss.qty<=ss.min?' Mindestbestand erreicht!':'')); }});
 }
 function stockForm(s){
-  const isNew=!s; s=s?clone(s):{id:uid(),unit:'Stk',qty:0,loc:'Lager',min:0};
-  openSheet({title:isNew?'Lagerartikel anlegen':'Lagerartikel bearbeiten',value:s,fields:[{k:'art',label:'Artikel',req:1,full:1},{k:'artNr',label:'Art.-Nr.'},{k:'unit',label:'Einheit',type:'select',options:UNITS.map(u=>[u,u])},
+  const isNew=!s; s=s?clone(s):{id:uid(),unit:'Stk',qty:0,loc:'Lager',min:0,firm:UI.sfirm||FIRMS()[0]}; if(!s.firm) s.firm=FIRMS()[0];
+  openSheet({title:isNew?'Lagerartikel anlegen':'Lagerartikel bearbeiten',value:s,fields:[{k:'art',label:'Artikel',req:1,full:1},{k:'firm',label:'Ware gehört',type:'select',options:FIRMS().map(f=>[f,f])},{k:'artNr',label:'Art.-Nr.'},{k:'unit',label:'Einheit',type:'select',options:UNITS.map(u=>[u,u])},
     ...(isNew?[{k:'qty',label:'Anfangsbestand',type:'number',step:'any'}]:isAdmin()?[{k:'qty',label:'Bestand (Korrektur, nur EP/AvE)',type:'number',step:'any'}]:[]),{k:'loc',label:'Lagerort',list:'locList'},{k:'min',label:'Mindestbestand (Warnung)',type:'number',step:'any'},{k:'notes',label:'Notiz',type:'textarea'}],
     onSave:v=>{ const q=v.qty===''||v.qty==null?null:+v.qty, old=+s.qty||0; delete v.qty; Object.assign(s,v);
       if(isNew){ s.qty=0; s.moves=[]; if(q) stockMove(s,q,'Anfangsbestand'); } else if(q!=null&&q!==old&&isAdmin()) stockMove(s,q-old,'Bestandskorrektur');
@@ -3235,14 +3244,15 @@ function stockSide(){
   const list=q?st.filter(s=>[s.art,s.artNr,s.loc].join(' ').toLowerCase().includes(q)):st;
   return `<aside class="card stock-side"><div class="card-h"><h3>Lager</h3><span class="small muted">auf eine Liste ziehen</span></div>
     <div style="padding:0 12px 8px"><input class="inp" type="search" placeholder="Artikel suchen" value="${esc(UI.ssq||'')}" data-chg="stockSideQ" aria-label="Lagerartikel suchen" style="width:100%"></div>
-    <div class="ss-list">${list.map(s=>`<div class="ss-it" draggable="true" data-sdrag="${s.id}" title="Auf eine Kommissionierliste ziehen"><span class="ss-grip" aria-hidden="true">⋮⋮</span><span class="ss-a">${esc(s.art)}<span class="pk-m">${esc([s.loc,qn(s.qty)+' '+(s.unit||'')].join(' · '))}</span></span></div>`).join('')||'<div class="empty">Nichts auf Lager.</div>'}</div></aside>`;
+    <div class="ss-list">${list.map(s=>`<div class="ss-it" draggable="true" data-sdrag="${s.id}" title="Auf eine Kommissionierliste ziehen"><span class="ss-grip" aria-hidden="true">⋮⋮</span><span class="ss-a">${esc(s.art)}<span class="pk-m">${esc([firmShort(firmOf(s)),s.loc,qn(s.qty)+' '+(s.unit||'')].join(' · '))}</span></span></div>`).join('')||'<div class="empty">Nichts auf Lager.</div>'}</div></aside>`;
 }
 function vStockList(st,q,low,sw){
-  const list=q?st.filter(s=>[s.art,s.artNr,s.loc].join(' ').toLowerCase().includes(q)):st;
+  const fr=UI.sfirm||''; let list=q?st.filter(s=>[s.art,s.artNr,s.loc,firmOf(s)].join(' ').toLowerCase().includes(q)):st; if(fr) list=list.filter(s=>firmOf(s)===fr);
+  const chips=`<div class="chips" style="padding:0 16px 10px"><button class="chip ${!fr?'on':''}" data-act="stockFirm" data-v="">Alle Firmen <span class="mono small">${st.length}</span></button>${FIRMS().map(f=>`<button class="chip ${fr===f?'on':''}" data-act="stockFirm" data-v="${esc(f)}">${esc(firmShort(f))} <span class="mono small">${st.filter(s=>firmOf(s)===f).length}</span></button>`).join('')}</div>`;
   return head('Lagerverwaltung',st.length+' Artikel'+(low?' · '+low+' unter Mindestbestand':''),`<button class="btn" data-act="stockNew">${ic('plus')}Lagerartikel</button>`)+sw+
-   `<div class="card"><div class="card-h"><input class="inp" type="search" style="flex:1" placeholder="Artikel, Art.-Nr. oder Lagerort suchen" value="${esc(UI.sq||'')}" data-chg="stockQ" aria-label="Suchen"></div>
-    ${list.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Artikel</th><th>Art.-Nr.</th><th style="text-align:right">Bestand</th><th>Lagerort</th><th></th></tr></thead><tbody>${list.map(s=>{ const lw=s.min&&(+s.qty||0)<=s.min;
-      return `<tr class="${lw?'low':''}"><td><button class="linkish" data-act="stockHist" data-id="${s.id}">${esc(s.art)}</button></td><td class="mono small">${esc(s.artNr||'')}</td><td style="text-align:right"><b>${qn(s.qty)}</b> ${esc(s.unit||'')}${lw?' <span class="pill bad">min. '+qn(s.min)+'</span>':''}</td><td>${esc(s.loc||'')}</td>
+   `<div class="card"><div class="card-h"><input class="inp" type="search" style="flex:1" placeholder="Artikel, Art.-Nr., Lagerort oder Firma suchen" value="${esc(UI.sq||'')}" data-chg="stockQ" aria-label="Suchen"></div>${chips}
+    ${list.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Artikel</th><th>Firma</th><th>Art.-Nr.</th><th style="text-align:right">Bestand</th><th>Lagerort</th><th></th></tr></thead><tbody>${list.map(s=>{ const lw=s.min&&(+s.qty||0)<=s.min;
+      return `<tr class="${lw?'low':''}"><td><button class="linkish" data-act="stockHist" data-id="${s.id}">${esc(s.art)}</button></td><td><span class="pill firm-pill" title="${esc(firmOf(s))}">${esc(firmShort(firmOf(s)))}</span></td><td class="mono small">${esc(s.artNr||'')}</td><td style="text-align:right"><b>${qn(s.qty)}</b> ${esc(s.unit||'')}${lw?' <span class="pill bad">min. '+qn(s.min)+'</span>':''}</td><td>${esc(s.loc||'')}</td>
        <td class="row" style="justify-content:flex-end;flex-wrap:nowrap"><button class="btn sm" data-act="stockIn" data-id="${s.id}">+ Zugang</button><button class="btn sun sm" data-act="stockTake" data-id="${s.id}" ${(+s.qty||0)>0?'':'disabled'}>Entnehmen</button>${isAdmin()?`<button class="icon-btn" title="Bearbeiten" data-act="stockEdit" data-id="${s.id}">${ic('edit')}</button><button class="icon-btn" title="Löschen" data-act="stockDel" data-id="${s.id}">${ic('x')}</button>`:''}</td></tr>`; }).join('')}</tbody></table></div>`
     :'<div class="empty">Noch nichts im Lager. Ware kommt beim Wareneingang über „Ins Lager“ hinein oder über „Lagerartikel“.</div>'}</div>`;
 }
@@ -4008,6 +4018,9 @@ Antworte nur mit JSON: {"todos":[{"title":"kurz, Imperativ","pcat":"${Object.key
 const updTime=x=>{ if(x.tm) return x.tm; if(!x.at) return ''; const a=new Date(x.at); if(isNaN(a)||iso(a)!==x.d) return ''; return String(a.getHours()).padStart(2,'0')+':'+String(a.getMinutes()).padStart(2,'0'); };
 const updStamp=x=>fmtD(x.d)+(updTime(x)?' · '+updTime(x):'');
 const updKey=x=>(x.d||'')+' '+(updTime(x)||'00:00')+(x.at||'');
+// Letzte Aktivität eines To-Dos: neuestes Update, sonst Anlagezeitpunkt (Format JJJJ-MM-TT HH:MM)
+const isoLocal=s=>{ const a=new Date(s); return isNaN(a)?'':iso(a)+' '+String(a.getHours()).padStart(2,'0')+':'+String(a.getMinutes()).padStart(2,'0'); };
+const taskActKey=t=>{ const u=(t.upd2||[]).map(x=>(x.d||'')+' '+(updTime(x)||'00:00')).sort().pop()||''; const c=t.at?isoLocal(t.at):''; return u>c?u:c; };
 function taskUpdList(t){ const u=(t&&t.upd2)||[]; return u.length?u.slice().sort((a,b)=>updKey(b).localeCompare(updKey(a))).map(x=>`<div class="tu"><b class="mono">${esc(updStamp(x))}</b> <span class="who-chip">${esc(x.by||'?')}</span> ${esc(x.t)}</div>`).join(''):'<div class="small muted">Noch keine Updates.</div>'; }
 function taskUpdHtml(t){
   return `<div class="tu-box"><div id="tu_list">${taskUpdList(S.tasks[t.id]||t)}</div>
@@ -4463,6 +4476,7 @@ document.addEventListener('paste',e=>{ if(UI.view!=='dash'||SHEET) return; const
 document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('.tu-inl')) e.stopPropagation(); },true);
 Object.assign(CHG,{ prioSelCls:(d,el)=>{ el.className='inp prio-sel p-'+el.value; }, mtAllP:(d,el)=>{ if(el.value==='__keep') return; document.querySelectorAll('#mt_list .mt-p').forEach(s=>{ s.value=el.value; s.classList.toggle('none',!el.value); }); }, mtRowP:(d,el)=>el.classList.toggle('none',!el.value), todoSort:(d,el)=>{ UI.todoSort=el.value; saveUI(); render(); } });
 Object.assign(A,{
+ stockFirm:d=>{ UI.sfirm=d.v||''; render(); },
  mtPick:()=>{ const f=$('#mtIn'); if(f){ f.value=''; f.click(); } },
  mtAddRow:()=>{ const l=$('#mt_list'); if(!l) return; const i=l.children.length+100; const all=$('#mt_pid'); const dp=all&&all.value!=='__keep'?all.value:''; l.insertAdjacentHTML('beforeend',mtRow(i,{title:'',projectId:dp})); l.lastElementChild.querySelector('[id^=mt_t]').focus(); },
  bulkTodo:()=>bulkTodoSheet(),
