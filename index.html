@@ -256,6 +256,7 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .who-sel.none{background:var(--sunken);color:var(--muted);font-weight:500}
 .who-sel:hover{border-color:var(--muted)}
 .tcol .who-sel{max-width:110px}
+.li .who-sel{width:auto;min-width:0;max-width:92px}
 /* Übersicht */
 .dash-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
 @media (max-width:1250px){.dash-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.dash-cal{grid-column:1/-1}}
@@ -660,6 +661,12 @@ details.pf:not([open])>summary{border-bottom:0}
 .nb-more>summary{cursor:pointer;font-weight:600;color:var(--ink);padding:8px 12px;border:1px dashed var(--line);border-radius:10px;list-style:none}
 .nb-more>summary::-webkit-details-marker{display:none}
 .nb-more>summary::before{content:'▸ ';color:var(--muted)}.nb-more[open]>summary::before{content:'▾ '}
+/* Diktier-Knopf am aktiven Textfeld */
+.vm-btn{position:fixed;z-index:100000;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:var(--surface);box-shadow:0 2px 8px rgba(0,0,0,.15);font-size:14px;line-height:1;display:grid;place-items:center;cursor:pointer;padding:0}
+.vm-btn:hover{background:var(--sun)}
+.vm-btn.on{background:var(--bad);color:#fff;border-color:var(--bad);animation:recp 1s infinite}
+.vm-busy{opacity:.6}
+.sv-rec{display:flex;align-items:center;gap:8px}
 #printArea{display:none}
 @media print{
   .pr-land{page:land}
@@ -2109,7 +2116,7 @@ function taskUpdInline(t){ const u=(t.upd2||[]).slice().sort((a,b)=>updKey(b).lo
 function taskLi(t){  const late=t.due&&t.due<TODAY()&&!t.done;
   const bsel=UI.bulk&&['todos','pool'].includes(UI.view);
   return `<div class="li ${t.done?'done':''} ${bsel&&SEL.has(t.id)?'sel':''}" data-drag="task:${t.id}">${bsel?`<input type="checkbox" class="sel-ck" data-chg="selTask" data-id="${t.id}" ${SEL.has(t.id)?'checked':''} aria-label="Auswählen: ${esc(t.title)}" title="Für Mehrfachbearbeitung auswählen">`:''}<input type="checkbox" class="ck" data-chg="toggleTask" data-id="${t.id}" ${t.done?'checked':''} aria-label="Erledigt"><div class="body clickable" data-act="editTask" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="mt">${t.ext?`<span class="pill ext-pill" title="Liegt extern">extern: ${esc(t.ext)}</span>`:''}${t.pid?`<span>${esc(projName(t.pid))}</span>`:''}${t.due?`<span class="${late?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?`<span class="pill ${PRIO[t.prio][2]}">${PRIO[t.prio][0]}</span>`:''}${t.pool?'<span class="pill">allgemein</span>':''}${t.by&&t.by!=='?'?`<span class="by-line">angelegt ${esc(t.by)} ${esc(fmtD((t.at||'').slice(0,10)).slice(3))}</span>`:''}${t.done?`<span class="done-by">✓ erledigt von <b>${esc(t.doneBy||t.updBy||'?')}</b>${t.doneAt?' · '+esc(stampTxt(t.doneAt)):''}${t.doneNote?' – '+esc(t.doneNote):''}</span>`:''}</div>${taskUpdInline(t)}</div>
-    <select class="who-sel ${t.who?'':'none'}" data-chg="taskWho" data-id="${t.id}" aria-label="Zuständig für: ${esc(t.title)}" title="Zuständigkeit ändern"><option value="">– niemand –</option>${[...new Set([...staff().map(s=>s.name),...(t.who?[t.who]:[])])].map(n=>`<option value="${esc(n)}" ${n===t.who?'selected':''}>${esc(n.replace(/\s*\(([^)]*)\)$/,' · $1'))}</option>`).join('')}<option value="__ext">→ liegt extern …</option>${t.ext?'<option value="__int">→ wieder intern</option>':''}</select>${isAdmin()?`<button type="button" class="icon-btn task-del" title="Aufgabe löschen" aria-label="Aufgabe löschen: ${esc(t.title)}" data-act="taskDel" data-id="${t.id}">${ic('x')}</button>`:''}</div>`;
+    <select class="who-sel ${t.who?'':'none'}" data-chg="taskWho" data-id="${t.id}" aria-label="Zuständig für: ${esc(t.title)}" title="Zuständigkeit ändern"><option value="">offen</option>${[...new Set([...staff().map(s=>s.name),...(t.who?[t.who]:[])])].map(n=>`<option value="${esc(n)}" ${n===t.who?'selected':''}>${esc(shortWho(n))}</option>`).join('')}<option value="__ext">→ liegt extern …</option>${t.ext?'<option value="__int">→ wieder intern</option>':''}</select>${isAdmin()?`<button type="button" class="icon-btn task-del" title="Aufgabe löschen" aria-label="Aufgabe löschen: ${esc(t.title)}" data-act="taskDel" data-id="${t.id}">${ic('x')}</button>`:''}</div>`;
 }
 
 /* ========== Projekte ========== */
@@ -2418,10 +2425,10 @@ function vTodos(){  const t=TODAY(), who=UI.todoWho;
     const cols=[...staff().map(s=>s.name),'']; const all=arr('tasks').filter(x=>(UI.todoShowDone||!x.done)&&!(x.pool&&!x.who)); VIS_TASKS=all.filter(x=>!x.done).map(x=>x.id);
     return head('To-Dos', arr('tasks').filter(x=>!x.done).length+' offen · Aufgabe auf eine Person ziehen, um sie neu zuzuweisen', modeSw)+mailTodoDropHtml()+
       `<div class="row"><label class="tog-sw"><input type="checkbox" data-chg="toggleDoneSw" ${UI.todoShowDone?'checked':''}><span class="sw" aria-hidden="true"></span><span>Erledigte einblenden</span></label><span class="spacer"></span>${todoSortSel()}</div>
-      <div class="tboard">${cols.map(n=>{ const its=all.filter(x=>(x.who||'')===n).sort((TODO_SORTS[UI.todoSort]||TODO_SORTS.due)[1]); return `<div class="tcol" data-drop-who="${n?esc(n):'__none'}"><h4><span>${n?esc(n.replace(/\s*\([^)]*\)$/,'')):'Nicht zugewiesen'}</span><span class="who-chip ${n?'':'open'}">${n?esc(shortWho(n)):'–'} ${its.filter(x=>!x.done).length}</span></h4><div class="list">${its.map(taskLi).join('')||'<div class="small muted tc-empty">Hierher ziehen</div>'}</div></div>`; }).join('')}</div>`+(UI.bulk?bulkBar():'');
+      <div class="tboard">${cols.map(n=>{ const its=all.filter(x=>(x.who||'')===n).sort((TODO_SORTS[UI.todoSort]||TODO_SORTS.due)[1]); return `<div class="tcol" data-drop-who="${n?esc(n):'__none'}"><h4><span>${n?esc(shortWho(n)):'Nicht zugewiesen'}</span><span class="who-chip ${n?'':'open'}">${n?esc(shortWho(n)):'–'} ${its.filter(x=>!x.done).length}</span></h4><div class="list">${its.map(taskLi).join('')||'<div class="small muted tc-empty">Hierher ziehen</div>'}</div></div>`; }).join('')}</div>`+(UI.bulk?bulkBar():'');
   }
   return head('To-Dos', open.length+' offen'+(who?' · '+(who==='-'?'nicht zugewiesen':who):''), modeSw)+mailTodoDropHtml()+
-  `<div class="chips"><button class="chip ${!who?'on':''}" data-act="todoWho" data-v="">Alle</button>${byPerson.map(([n,c])=>`<button class="chip ${who===n?'on':''}" data-act="todoWho" data-v="${esc(n)}" data-drop-who="${esc(n)}" title="Aufgabe hierher ziehen, um sie ${esc(n)} zuzuweisen">${esc(n)} <span class="mono small">${c}</span></button>`).join('')}<button class="chip ${who==='-'?'on':''}" data-act="todoWho" data-v="-" data-drop-who="__none">Nicht zugewiesen</button></div>
+  `<div class="chips"><button class="chip ${!who?'on':''}" data-act="todoWho" data-v="">Alle</button>${byPerson.map(([n,c])=>`<button class="chip ${who===n?'on':''}" data-act="todoWho" data-v="${esc(n)}" data-drop-who="${esc(n)}" title="Aufgabe hierher ziehen, um sie ${esc(n)} zuzuweisen">${esc(shortWho(n))} <span class="mono small">${c}</span></button>`).join('')}<button class="chip ${who==='-'?'on':''}" data-act="todoWho" data-v="-" data-drop-who="__none">Nicht zugewiesen</button></div>
   <div class="small muted">Tipp: Eine Aufgabe auf einen Namen ziehen, um die Zuständigkeit zu ändern.</div>
   <div class="row"><label class="tog-sw"><input type="checkbox" data-chg="toggleDoneSw" ${UI.todoShowDone?'checked':''}><span class="sw" aria-hidden="true"></span><span>Erledigte einblenden${done.length?` <span class="mono small muted">(${done.length})</span>`:''}</span></label><span class="spacer"></span>${todoSortSel()}</div>
   <div class="card">${todoGroups(open,groups).map(([l,f,srt])=>{ const g=open.filter(f).sort(srt); return g.length?`<div class="grp-h">${l} · ${g.length}</div><div class="list">${g.map(taskLi).join('')}</div>`:''; }).join('')||'<div class="empty"><b>Keine offenen To-Dos</b>Neue To-Dos über „Neu“ oder direkt aus einer Projekt-Checkliste zuweisen.</div>'}</div>
@@ -4134,7 +4141,7 @@ function poolForm(t){
 function vPool(){
   const all=arr('tasks').filter(isPool), open=all.filter(t=>!t.done&&!t.who), taken=all.filter(t=>!t.done&&t.who), done=all.filter(t=>t.done).sort((a,b)=>String(b.doneAt||'').localeCompare(String(a.doneAt||''))).slice(0,15);
   const row=t=>`<div class="pool-it"><div style="min-width:0" class="clickable" data-act="poolEdit" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="small muted">${esc([t.dur,t.repeat?'wiederkehrend':'',t.notes].filter(Boolean).join(' · '))}</div></div>
-    <select class="inp sm-sel" data-chg="poolGive" data-id="${t.id}" aria-label="Zuweisen: ${esc(t.title)}"><option value="">Zuweisen an …</option>${staff().map(s=>`<option value="${esc(s.name)}">${esc(shortWho(s.name))} · ${esc(s.name.replace(/\s*\([^)]*\)$/,''))}</option>`).join('')}</select>
+    <select class="inp sm-sel" data-chg="poolGive" data-id="${t.id}" aria-label="Zuweisen: ${esc(t.title)}"><option value="">Zuweisen an …</option>${staff().map(s=>`<option value="${esc(s.name)}">${esc(shortWho(s.name))}</option>`).join('')}</select>
     ${ME?`<button class="btn sun sm" data-act="poolTake" data-id="${t.id}">Mach ich</button>`:''}</div>`;
   const groups=Object.entries(POOL_CATS).map(([k,l])=>{ const g=open.filter(t=>(t.pcat||'sonst')===k); return g.length?`<div class="grp-h">${l} · ${g.length}</div>${g.map(row).join('')}`:''; }).join('');
   return head('Allgemeine Aufgaben',open.length+' im Pool · Lückenfüller, wenn auf der Baustelle oder im Büro gerade nichts ansteht',`${SAMPLE?`<button class="btn" data-act="poolAI">✨ Ideen vorschlagen</button>`:''}<button class="btn pri" data-act="poolNew">${ic('plus')}Aufgabe</button>`)+
@@ -4513,7 +4520,7 @@ function bulkBar(){
     <div class="bb-n"><b>${n}</b> ausgewählt <button type="button" class="rd-link" data-act="bulkAll">alle sichtbaren (${VIS_TASKS.length})</button>${n?` · <button type="button" class="rd-link" data-act="bulkNone">Auswahl aufheben</button>`:''}</div>
     <div class="bb-a">
       <select class="inp" data-chg="bulkPrio" ${n?'':'disabled'} aria-label="Dringlichkeit setzen">${so('Dringlichkeit …')}${Object.entries(PRIO).sort((a,b)=>b[1][1]-a[1][1]).map(([k,x])=>`<option value="${k}">${x[0]}</option>`).join('')}</select>
-      <select class="inp" data-chg="bulkWho" ${n?'':'disabled'} aria-label="Zuständig setzen">${so('Zuständig …')}<option value="__none">– niemand –</option>${staff().map(s=>`<option value="${esc(s.name)}">${esc(s.name.replace(/\s*\(([^)]*)\)$/,' · $1'))}</option>`).join('')}</select>
+      <select class="inp" data-chg="bulkWho" ${n?'':'disabled'} aria-label="Zuständig setzen">${so('Zuständig …')}<option value="__none">– niemand –</option>${staff().map(s=>`<option value="${esc(s.name)}">${esc(shortWho(s.name))}</option>`).join('')}</select>
       <label class="bb-due"><span>Fällig</span><input type="date" class="inp" data-chg="bulkDue" ${n?'':'disabled'} aria-label="Fälligkeit setzen"></label>
       <select class="inp" data-chg="bulkPid" ${n?'':'disabled'} aria-label="Projekt setzen">${so('Projekt …')}<option value="__none">– kein Projekt –</option>${arr('projects').filter(p=>['laufend','planung','onhold'].includes(catOf(p))).sort((a,b)=>a.name.localeCompare(b.name,'de')).map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
       <button type="button" class="btn sm" data-act="bulkExt" ${n?'':'disabled'}>Extern …</button>
@@ -4569,7 +4576,7 @@ const SMART_MAP={bestellung:'order',ab:'order',rechnung:'order',lieferschein:'de
 function smartDropHtml(){
   return `<div class="dropz smart-drop" tabindex="0" aria-label="Alles hier ablegen – Claude erkennt, was es ist">
     <div class="dz-ic">✨</div><div><b>Alles hier reinziehen – ${SAMPLE?'Claude erkennt, was es ist':'die App erkennt, was es ist'}</b><div class="small muted">E-Mails (.msg/.eml), PDFs, Fotos, Lieferscheine, Rechnungen, Aufgabenlisten oder kopierter Text (hier klicken, Strg+V). Danach schlägt die App den passenden Weg vor: Bestellung, Wareneingang, To-Dos, Projekt-Notiz oder Datenablage.</div></div>
-    <div class="dz-btns"><button type="button" class="btn sm" data-act="smartPick">Datei wählen</button><button type="button" class="btn sm" data-act="smartText">Text einfügen</button></div></div><input type="file" id="smartIn" multiple hidden>`;
+    <div class="dz-btns"><button type="button" class="btn sm" data-act="smartPick">Datei wählen</button><button type="button" class="btn sm" data-act="smartText">Text einfügen</button>${SRec?`<button type="button" class="btn sun sm" data-act="smartVoice">🎙 Sprechen</button>`:''}</div></div><input type="file" id="smartIn" multiple hidden>`;
 }
 async function smartDrop(files,text){
   files=[...(files||[])]; text=String(text||'');
@@ -4756,10 +4763,73 @@ Object.assign(CHG,{
  meetWho:(d,el)=>{ const m=clone(S.meetings[d.id]); if(!m) return; const s=new Set(m.who||[]); el.checked?s.add(d.n):s.delete(d.n); m.who=[...s]; m.tx=meetTx(S.meetings[d.id]); put('meetings',m); },
 });
 // Tippen in der Mitschrift: im Speicher halten, nach kurzer Pause speichern
+// Startseite: einfach drauflos sprechen – danach ordnet Claude es zu (To-Dos, Projekt-Notiz, Bestellung …)
+let SV_REC=null;
+function smartVoice(){
+  if(!SRec) return toast('Dieser Browser kann nicht mitschreiben – bitte Chrome oder Edge verwenden.'); if(MEET_ON) return toast('Während einer Meeting-Mitschrift ist das Mikrofon belegt.');
+  let fin='';
+  const r=new SRec(); r.lang='de-DE'; r.continuous=true; r.interimResults=true; SV_REC=r;
+  r.onresult=e=>{ let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ const res=e.results[i]; if(res.isFinal) fin+=(fin?' ':'')+res[0].transcript.trim(); else interim+=res[0].transcript; }
+    const ta=$('#sv_tx'); if(!ta){ SV_REC=null; try{ r.stop(); }catch(e){} return; } if(!ta.dataset.edited) ta.value=(fin+(interim?' '+interim:'')).trim(); };
+  r.onerror=e=>{ if(['not-allowed','service-not-allowed'].includes(e.error)) toast('Kein Zugriff aufs Mikrofon – bitte im Browser erlauben.'); };
+  r.onend=()=>{ if(SV_REC!==r) return; if(!$('#sv_tx')){ SV_REC=null; return; } try{ r.start(); }catch(e){} }; // Fenster zu → Mikrofon aus
+  const stop=()=>{ const x=SV_REC; SV_REC=null; try{ x&&x.stop(); }catch(e){} };
+  openSheet({title:'🎙 Sprich einfach drauflos',wide:1,html:`<div class="fld full"><div class="sv-rec"><span class="rec-dot"></span><span class="small">Mikrofon ist an – z. B. „Bei Apollo muss MK bis Freitag Stork anrufen, und für Heimatblick brauchen wir noch 300 Meter Solarkabel.“</span></div>
+    <textarea id="sv_tx" class="inp" rows="6" style="width:100%;margin-top:8px" placeholder="Hier erscheint, was du sagst – du kannst es auch korrigieren." oninput="this.dataset.edited=1"></textarea></div>`,saveLabel:'Fertig – zuordnen',
+    onSave:()=>{ const t=($('#sv_tx').value||'').trim(); stop(); if(t.length<3){ toast('Es wurde nichts erkannt.'); return; } setTimeout(()=>smartDrop([],t),60); }});
+  const cl=()=>stop(); setTimeout(()=>{ const sc=$('#scrim'); if(sc) sc.querySelectorAll('[data-act=closeSheet]').forEach(b=>b.addEventListener('click',cl)); },50);
+  try{ r.start(); }catch(e){ SV_REC=null; toast('Mikrofon konnte nicht gestartet werden.'); }
+}
+A.smartVoice=()=>smartVoice();
 // Update am To-Do: Strg+Enter fügt hinzu (statt das ganze To-Do zu speichern)
 document.addEventListener('keydown',e=>{ if(e.target&&e.target.id==='tu_t'&&e.key==='Enter'&&(e.ctrlKey||e.metaKey)){ e.preventDefault(); e.stopImmediatePropagation(); const b=document.querySelector('[data-act=taskUpdAdd]'); if(b) b.click(); } },true);
 let MEET_T; document.addEventListener('input',e=>{ if(e.target.id!=='mt_tx') return; const id=e.target.dataset.id; MEET_TX[id]=e.target.value; clearTimeout(MEET_T); MEET_T=setTimeout(()=>meetSave(id,true),2500); });
 window.addEventListener('beforeunload',()=>{ if(MEET_ON) meetSave(MEET_ON,true); });
+
+/* ========== Diktieren in jedes Textfeld: Mikrofon-Knopf am aktiven Feld, Claude macht den Text sauber ========== */
+// Ein schwebender Knopf folgt dem Feld mit Fokus (statt in jedes Formular einen eigenen einzubauen).
+const VOICE_OK=t=>t&&(t.tagName==='TEXTAREA'||(t.tagName==='INPUT'&&['text','search',''].includes((t.getAttribute('type')||'').toLowerCase())))&&!t.readOnly&&!t.disabled&&t.id!=='mt_tx'&&t.id!=='gSearch'&&t.id!=='sv_tx';
+let VOICE_EL=null, VOICE_REC=null, VOICE_BUF='', VOICE_BASE='', VOICE_POS=0;
+const voiceBtn=(()=>{ const b=document.createElement('button'); b.type='button'; b.className='vm-btn'; b.title='Diktieren (Mikrofon)'; b.setAttribute('aria-label','Diktieren'); b.textContent='🎙'; b.hidden=true; document.body.appendChild(b); return b; })();
+function voicePlace(){ const t=VOICE_EL; if(!t||!document.body.contains(t)||!SRec){ if(!VOICE_REC) voiceBtn.hidden=true; return; }
+  const r=t.getBoundingClientRect(); if(!r.width||r.bottom<0||r.top>innerHeight){ voiceBtn.hidden=true; return; }
+  voiceBtn.hidden=false; const tall=t.tagName==='TEXTAREA'&&r.height>48; voiceBtn.style.top=(tall?r.bottom-34:r.top+(r.height-28)/2)+'px'; voiceBtn.style.left=(r.right-34)+'px'; }
+document.addEventListener('focusin',e=>{ if(VOICE_REC) return; if(VOICE_OK(e.target)){ VOICE_EL=e.target; voicePlace(); } else if(e.target!==voiceBtn){ VOICE_EL=null; voiceBtn.hidden=true; } });
+document.addEventListener('focusout',e=>{ setTimeout(()=>{ if(!VOICE_REC&&document.activeElement!==VOICE_EL&&document.activeElement!==voiceBtn){ voiceBtn.hidden=true; } },150); });
+window.addEventListener('scroll',()=>voicePlace(),true); window.addEventListener('resize',()=>voicePlace());
+voiceBtn.addEventListener('mousedown',e=>e.preventDefault()); // Fokus im Feld lassen
+voiceBtn.addEventListener('click',()=>{ VOICE_REC?voiceStop():voiceStart(); });
+function voiceLabel(t){ const f=t.closest('.fld,.info-f,label'); const l=f&&f.querySelector('label,span,.eyebrow'); return ((l&&l.textContent)||t.getAttribute('aria-label')||t.placeholder||'Text').trim().slice(0,80); }
+function voiceStart(){
+  const t=VOICE_EL; if(!t||!SRec) return; if(MEET_ON) return toast('Während einer Meeting-Mitschrift ist das Mikrofon belegt.');
+  const r=new SRec(); r.lang='de-DE'; r.continuous=true; r.interimResults=true; VOICE_REC=r; VOICE_BUF='';
+  VOICE_BASE=t.value; VOICE_POS=typeof t.selectionStart==='number'?t.selectionStart:t.value.length;
+  r.onresult=e=>{ let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ const res=e.results[i]; if(res.isFinal) VOICE_BUF+=(VOICE_BUF?' ':'')+res[0].transcript.trim(); else interim+=res[0].transcript; }
+    const live=(VOICE_BUF+(interim?' '+interim:'')).trim(); t.value=voiceJoin(VOICE_BASE,VOICE_POS,live); voicePlace(); };
+  r.onerror=e=>{ if(['not-allowed','service-not-allowed'].includes(e.error)) toast('Kein Zugriff aufs Mikrofon – bitte im Browser erlauben.'); };
+  r.onend=()=>{ if(VOICE_REC===r) voiceStop(); };
+  try{ r.start(); }catch(e){ VOICE_REC=null; return toast('Mikrofon konnte nicht gestartet werden.'); }
+  voiceBtn.classList.add('on'); voiceBtn.textContent='■'; voiceBtn.title='Diktat beenden'; toast('Sprich jetzt – nochmal tippen zum Beenden.');
+}
+const voiceJoin=(base,pos,ins)=>{ if(!ins) return base; const a=base.slice(0,pos), b=base.slice(pos); return a+(a&&!/\s$/.test(a)?' ':'')+ins+(b&&!/^\s/.test(b)?' ':'')+b; };
+async function voiceStop(){
+  const r=VOICE_REC, t=VOICE_EL; VOICE_REC=null; try{ r&&r.stop(); }catch(e){} voiceBtn.classList.remove('on'); voiceBtn.textContent='🎙'; voiceBtn.title='Diktieren (Mikrofon)';
+  const raw=VOICE_BUF.trim(); if(!t) return; if(!raw){ t.value=VOICE_BASE; return; }
+  let out=raw;
+  if(SAMPLE){ voiceBtn.textContent='…'; t.classList.add('vm-busy');
+    const single=t.tagName!=='TEXTAREA';
+    try{ const res=await SAMPLE(`Diktierte Spracheingabe für das Feld „${voiceLabel(t)}“ in der Projekt-App eines Solar-Installationsbetriebs (nutz die Sonne GmbH: PV-Anlagen, Speicher, Ladesäulen, Netzbetreiber wie Westnetz, Begriffe wie Wechselrichter, kWp, Zählerschrank, DC/AC, Inbetriebnahme, MaStR).
+Mitarbeiter-Kürzel: ${staff().map(s=>shortWho(s.name)+' = '+s.name.replace(/\s*\([^)]*\)$/,'')).join(', ')}. Projekte: ${arr('projects').filter(p=>['laufend','planung'].includes(catOf(p))).map(p=>p.name).slice(0,60).join('; ')}.
+Rohtext (Spracherkennung, ohne Satzzeichen, evtl. Hörfehler): """${raw.slice(0,4000)}"""
+Mach daraus sauberen, sinnvollen Text: Satzzeichen und Groß-/Kleinschreibung, offensichtliche Hörfehler und Fachbegriffe/Namen/Projekte korrigieren, Füllwörter („äh“, „also“) weg, Zahlen, Daten und Uhrzeiten als Ziffern, Mitarbeiter als Kürzel wenn genannt. Nichts dazuerfinden, Inhalt nicht weglassen.${single?' Es ist ein einzeiliges Feld: kurz und knapp, eine Zeile.':' Mehrere Gedanken gern als kurze Sätze oder Stichpunkte.'} Antworte nur mit dem fertigen Text.`,{modelTier:'quick',cache:false});
+      const c=String(res&&res.text||'').trim().replace(/^["„]|["“]$/g,''); if(c) out=c; }
+    catch(e){} t.classList.remove('vm-busy'); voiceBtn.textContent='🎙'; }
+  if(t.tagName!=='TEXTAREA') out=out.replace(/\s*\n+\s*/g,' ');
+  t.value=voiceJoin(VOICE_BASE,VOICE_POS,out); const end=VOICE_POS+(t.value.length-VOICE_BASE.length);
+  try{ t.focus(); t.setSelectionRange(end,end); }catch(e){}
+  t.dispatchEvent(new Event('input',{bubbles:true})); t.dispatchEvent(new Event('change',{bubbles:true}));
+  VOICE_EL=t; voicePlace();
+}
 // Aufklappen der Updates am To-Do öffnet nicht gleich das To-Do
 document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('.tu-inl')) e.stopPropagation(); },true);
 Object.assign(CHG,{ prioSelCls:(d,el)=>{ el.className='inp prio-sel p-'+el.value; }, mtAllP:(d,el)=>{ if(el.value==='__keep') return; document.querySelectorAll('#mt_list .mt-p').forEach(s=>{ s.value=el.value; s.classList.toggle('none',!el.value); }); }, mtRowP:(d,el)=>el.classList.toggle('none',!el.value), todoSort:(d,el)=>{ UI.todoSort=el.value; saveUI(); render(); } });
