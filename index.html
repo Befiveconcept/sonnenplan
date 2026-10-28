@@ -4720,22 +4720,29 @@ Regeln:
     if(m.open) aicDo(m.open,false);
   }catch(e){ AIC.busy=false; AIC.msgs.push({role:'a',err:1,text:SAMPLE_ERR[e&&e.code]||'Die KI ist gerade nicht erreichbar. Bitte gleich nochmal versuchen.'}); aicPaint(); }
 }
-// Sprechen im Chat
-let AIC_REC=null;
-function aicMic(btn){ if(AIC_REC){ try{ AIC_REC.stop(); }catch(e){} return; } if(!SRec) return; const r=new SRec(); r.lang='de-DE'; r.continuous=false; r.interimResults=true; AIC_REC=r; let said=''; const t=$('#aic_tx');
-  r.onresult=e=>{ let s=''; for(let i=0;i<e.results.length;i++) s+=e.results[i][0].transcript; said=fixNames(s.trim()); if(t) t.value=said; };
-  r.onend=()=>{ AIC_REC=null; btn.classList.remove('on'); btn.textContent='🎙'; if(said){ if(t) t.value=''; aiChat(said); } };
-  r.onerror=e=>{ if(['not-allowed','service-not-allowed'].includes(e.error)) toast('Kein Zugriff aufs Mikrofon – bitte im Browser erlauben.'); };
-  try{ r.start(); btn.classList.add('on'); btn.textContent='■'; }catch(e){ AIC_REC=null; } }
-// Sprechen: Gesprochenes landet im Feld, danach wird es wie Enter ausgeführt (Claude fragen)
-let GS_REC=null;
-A.gsVoice=(d,el)=>{ if(GS_REC){ try{ GS_REC.stop(); }catch(e){} return; } if(!SRec) return; if(MEET_ON) return toast('Während einer Meeting-Mitschrift ist das Mikrofon belegt.');
-  const r=new SRec(); r.lang='de-DE'; r.continuous=false; r.interimResults=true; GS_REC=r; let said=''; const btn=()=>$('.gs-mic'), inp=()=>$('#gSearch');
-  r.onresult=e=>{ let s=''; for(let i=0;i<e.results.length;i++) s+=e.results[i][0].transcript; said=fixNames(s.trim()); const i=inp(); if(i){ i.value=said; UI.gq=said; } };
-  r.onerror=e=>{ if(['not-allowed','service-not-allowed'].includes(e.error)) toast('Kein Zugriff aufs Mikrofon – bitte im Browser erlauben.'); };
-  r.onend=()=>{ GS_REC=null; const b=btn(); if(b){ b.classList.remove('on'); b.textContent='🎙'; } if(said) askRun(said); };
-  try{ r.start(); }catch(e){ GS_REC=null; return toast('Mikrofon konnte nicht gestartet werden.'); }
-  const b=btn(); if(b){ b.classList.add('on'); b.textContent='■'; } toast(SAMPLE?'Sprich – z. B. „Zeig mir das neueste Update zum Energiepark“':'Sag, wonach du suchst …'); };
+// Diktat für Suche und Chat: läuft auch über Sprechpausen weiter – Ende erst mit ■ (Knopf) oder dem Wort „Fertig“ / „Abschicken“
+let DICT=null;
+const DICT_END=/\s*\b(fertig|abschicken)\s*[.!]?\s*$/i;
+function dictate(btn,onLive,onDone){
+  if(!SRec) return null; if(MEET_ON){ toast('Während einer Meeting-Mitschrift ist das Mikrofon belegt.'); return null; }
+  let stop=false, ended=false, buf='', rec=null;
+  const finish=send=>{ if(ended) return; ended=true; stop=true; try{ rec&&rec.stop(); }catch(e){} DICT=null; if(btn){ btn.classList.remove('on'); btn.textContent='🎙'; }
+    const t=fixNames(buf.replace(DICT_END,'').trim()); onLive(t); if(send&&t) onDone(t); };
+  const run=()=>{ rec=new SRec(); rec.lang='de-DE'; rec.continuous=true; rec.interimResults=true;
+    rec.onresult=e=>{ let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ const r=e.results[i]; if(r.isFinal) buf+=(buf?' ':'')+r[0].transcript.trim(); else interim+=r[0].transcript; }
+      const all=(buf+(interim?' '+interim:'')).trim(); if(DICT_END.test(all)){ buf=all; finish(true); return; } onLive(fixNames(all)); };
+    rec.onerror=e=>{ if(['not-allowed','service-not-allowed'].includes(e.error)){ toast('Kein Zugriff aufs Mikrofon – bitte im Browser erlauben.'); finish(false); } };
+    rec.onend=()=>{ if(!stop){ try{ run(); }catch(e){ finish(true); } } }; // Browser beendet nach Pausen von selbst → einfach weiter zuhören
+    rec.start(); };
+  try{ run(); }catch(e){ toast('Mikrofon konnte nicht gestartet werden.'); return null; }
+  if(btn){ btn.classList.add('on'); btn.textContent='■'; }
+  DICT={finish,btn}; return DICT; }
+// Chat-Mikrofon
+function aicMic(btn){ if(DICT){ DICT.finish(true); return; } const t=$('#aic_tx');
+  if(dictate(btn,s=>{ if(t) t.value=s; },s=>{ if(t) t.value=''; aiChat(s); })) toast('Ich höre zu – zum Abschicken „Fertig“ sagen oder ■ tippen.'); }
+// Suchfeld-Mikrofon: Gesprochenes landet im Feld, mit „Fertig“ / ■ wird es wie Enter ausgeführt
+A.gsVoice=(d,el)=>{ if(DICT){ DICT.finish(true); return; } const btn=$('.gs-mic');
+  if(dictate(btn,s=>{ const i=$('#gSearch'); if(i){ i.value=s; UI.gq=s; } },s=>askRun(s))) toast((SAMPLE?'Sprich – z. B. „Zeig mir alle To-Dos zum Energiepark“. ':'')+'Zum Abschicken „Fertig“ sagen oder ■ tippen.'); };
 document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); if(UI.view!=='dash'){ go('dash'); } setTimeout(()=>{ const i=$('#gSearch'); if(i){ i.focus(); i.select(); } },60); } });
 
 /* ========== Checklisten ausfüllen, speichern, drucken ========== */
@@ -5192,7 +5199,9 @@ function smartVoice(){
   let fin='';
   const r=new SRec(); r.lang='de-DE'; r.continuous=true; r.interimResults=true; SV_REC=r;
   r.onresult=e=>{ let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ const res=e.results[i]; if(res.isFinal) fin+=(fin?' ':'')+res[0].transcript.trim(); else interim+=res[0].transcript; }
-    const ta=$('#sv_tx'); if(!ta){ SV_REC=null; try{ r.stop(); }catch(e){} return; } if(!ta.dataset.edited) ta.value=(fin+(interim?' '+interim:'')).trim(); };
+    const ta=$('#sv_tx'); if(!ta){ SV_REC=null; try{ r.stop(); }catch(e){} return; } const all=(fin+(interim?' '+interim:'')).trim();
+    if(DICT_END.test(all)){ if(!ta.dataset.edited) ta.value=all.replace(DICT_END,''); const b=document.querySelector('#scrim button[type=submit]'); if(b) b.click(); return; } // „Fertig“ = abschicken
+    if(!ta.dataset.edited) ta.value=all; };
   r.onerror=e=>{ if(['not-allowed','service-not-allowed'].includes(e.error)) toast('Kein Zugriff aufs Mikrofon – bitte im Browser erlauben.'); };
   r.onend=()=>{ if(SV_REC!==r) return; if(!$('#sv_tx')){ SV_REC=null; return; } try{ r.start(); }catch(e){} }; // Fenster zu → Mikrofon aus
   const stop=()=>{ const x=SV_REC; SV_REC=null; try{ x&&x.stop(); }catch(e){} };
@@ -5233,11 +5242,13 @@ function voiceStart(){
   const r=new SRec(); r.lang='de-DE'; r.continuous=true; r.interimResults=true; VOICE_REC=r; VOICE_BUF='';
   VOICE_BASE=t.value; VOICE_POS=typeof t.selectionStart==='number'?t.selectionStart:t.value.length;
   r.onresult=e=>{ let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ const res=e.results[i]; if(res.isFinal) VOICE_BUF+=(VOICE_BUF?' ':'')+res[0].transcript.trim(); else interim+=res[0].transcript; }
-    const live=(VOICE_BUF+(interim?' '+interim:'')).trim(); t.value=voiceJoin(VOICE_BASE,VOICE_POS,live); voicePlace(); };
-  r.onerror=e=>{ if(['not-allowed','service-not-allowed'].includes(e.error)) toast('Kein Zugriff aufs Mikrofon – bitte im Browser erlauben.'); };
-  r.onend=()=>{ if(VOICE_REC===r) voiceStop(); };
+    const live=(VOICE_BUF+(interim?' '+interim:'')).trim();
+    if(DICT_END.test(live)){ VOICE_BUF=live.replace(DICT_END,''); t.value=voiceJoin(VOICE_BASE,VOICE_POS,VOICE_BUF); voiceStop(); return; } // „Fertig“ beendet das Diktat
+    t.value=voiceJoin(VOICE_BASE,VOICE_POS,live); voicePlace(); };
+  r.onerror=e=>{ if(['not-allowed','service-not-allowed'].includes(e.error)){ toast('Kein Zugriff aufs Mikrofon – bitte im Browser erlauben.'); voiceStop(); } };
+  r.onend=()=>{ if(VOICE_REC===r){ try{ r.start(); }catch(e){ voiceStop(); } } }; // Pause ≠ Ende: weiter zuhören bis ■ oder „Fertig“
   try{ r.start(); }catch(e){ VOICE_REC=null; return toast('Mikrofon konnte nicht gestartet werden.'); }
-  voiceBtn.classList.add('on'); voiceBtn.textContent='■'; voiceBtn.title='Diktat beenden'; toast('Sprich jetzt – nochmal tippen zum Beenden.');
+  voiceBtn.classList.add('on'); voiceBtn.textContent='■'; voiceBtn.title='Diktat beenden'; toast('Sprich jetzt – zum Beenden „Fertig“ sagen oder ■ tippen.');
 }
 const voiceJoin=(base,pos,ins)=>{ if(!ins) return base; const a=base.slice(0,pos), b=base.slice(pos); return a+(a&&!/\s$/.test(a)?' ':'')+ins+(b&&!/^\s/.test(b)?' ':'')+b; };
 async function voiceStop(){
