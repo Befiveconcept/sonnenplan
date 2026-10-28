@@ -513,7 +513,7 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .tu-box{display:flex;flex-direction:column;gap:8px}
 #tu_list{display:flex;flex-direction:column;gap:4px;max-height:220px;overflow:auto}
 .tu{font-size:13px;line-height:1.4}
-.tu-new{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:6px}
+.tu-new{display:grid;grid-template-columns:150px 100px minmax(0,1fr) auto;gap:6px}
 @media (max-width:640px){ .tu-new{grid-template-columns:1fr} }
 .tu-d{border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin-bottom:6px;background:var(--surface)}
 .tu-d summary{display:flex;justify-content:space-between;gap:10px;cursor:pointer;font-weight:600;flex-wrap:wrap}
@@ -1843,8 +1843,8 @@ function lastNote(p){
     if(!m){ lastPlain={d:'',t:b.trim(),by:''}; return; }
     let y=m[3]?(m[3].length===2?'20'+m[3]:m[3]):t0.slice(0,4); let d=y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
     if(!m[3]&&d>t0) d=(+y-1)+d.slice(4); // Datum ohne Jahr in der Zukunft → Vorjahr
-    const by=(m[4].match(/^\(([^)]{1,12})\)\s*:?\s*/)||[])[1]||''; const t=m[4].replace(/^\([^)]{1,12}\)\s*:?\s*/,'').replace(/\s*\n\s*/g,' ').trim();
-    if(t&&(!best||d>=best.d)) best={d,t,by}; }));
+    const nt=noteTime(m[4]), by=(nt.rest.match(/^\(([^)]{1,12})\)\s*:?\s*/)||[])[1]||''; const t=nt.rest.replace(/^\([^)]{1,12}\)\s*:?\s*/,'').replace(/\s*\n\s*/g,' ').trim();
+    if(t&&(!best||d+nt.tm>=best.d+(best.tm||''))) best={d,tm:nt.tm,t,by}; }));
   return best||lastPlain;
 }
 // Alle datierten Einträge aus Updates/Notizen (für die Timeline)
@@ -1852,8 +1852,8 @@ function noteEntries(p){ const out=[], t0=TODAY();
   [['notes','Notiz'],['updates','Update']].forEach(([k,src])=>noteBlocks(p[k]).forEach(b=>{
     const m=b.match(/^\s*(\d{1,2})\.(\d{1,2})\.(\d{2,4})?\s*:?\s*([\s\S]*)$/); if(!m) return;
     const y=m[3]?(m[3].length===2?'20'+m[3]:m[3]):t0.slice(0,4); let d=y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'); if(!m[3]&&d>addDays(t0,60)) d=(+y-1)+d.slice(4);
-    const by=(m[4].match(/^\(([^)]{1,12})\)\s*:?\s*/)||[])[1]||''; const t=m[4].replace(/^\([^)]{1,12}\)\s*:?\s*/,'').replace(/\s*\n\s*/g,' ').trim();
-    if(t) out.push({d,by,t,kind:/^✓ Erledigt/.test(t)?'done':'note',src}); }));
+    const nt=noteTime(m[4]), by=(nt.rest.match(/^\(([^)]{1,12})\)\s*:?\s*/)||[])[1]||''; const t=nt.rest.replace(/^\([^)]{1,12}\)\s*:?\s*/,'').replace(/\s*\n\s*/g,' ').trim();
+    if(t) out.push({d,tm:nt.tm,by,t,kind:/^✓ Erledigt/.test(t)?'done':'note',src}); }));
   return out; }
 // Timeline: Notizen (auch mit Datum in der Zukunft), Statusschritte, Termine, Lieferungen, fällige Aufgaben
 // Meilensteine aus Notiztexten (Regeln); KI-erkannte liegen zusätzlich in p.tlAI
@@ -1979,7 +1979,7 @@ function checkTargets(){
 }
 setTimeout(()=>checkTargets(),12000);
 // Aktueller Stand = immer der neueste Eintrag aus Updates/Notizen (gelöscht → vorheriger Eintrag); p.now nur ohne jede Notiz
-function nowOf(p){ const l=lastNote(p); if(l) return {t:l.t,d:l.d,by:l.by,own:false}; return p.now&&!(p.updates||p.notes||'').trim()?{t:p.now,d:p.nowD||'',own:true}:null; }
+function nowOf(p){ const l=lastNote(p); if(l) return {t:l.t,d:l.d,tm:l.tm||'',by:l.by,own:false}; return p.now&&!(p.updates||p.notes||'').trim()?{t:p.now,d:p.nowD||'',own:true}:null; }
 const shortWho = w=>{ const m=String(w||'').match(/\(([^)]+)\)\s*$/); return m?m[1]:String(w||'').split(' ')[0]; };
 function openTasks(pid){ return arr('tasks').filter(t=>t.pid===pid&&!t.done).sort(byDue); }
 function whoChips(pid){
@@ -2003,11 +2003,11 @@ function agenda(items){
 }
 // Updates direkt am To-Do: letztes Update sichtbar, alle per Klick aufklappbar
 function taskUpdInline(t){ const u=(t.upd2||[]).slice().sort((a,b)=>b.d.localeCompare(a.d)); if(!u.length) return '';
-  const line=x=>`<div class="tu"><b class="mono">${esc(fmtD(x.d))}</b> <span class="who-chip">${esc(x.by||'?')}</span> ${esc(x.t)}</div>`;
+  const line=x=>`<div class="tu"><b class="mono">${esc(updStamp(x))}</b> <span class="who-chip">${esc(x.by||'?')}</span> ${esc(x.t)}</div>`;
   return u.length===1?`<div class="tu-inl">${line(u[0])}</div>`:`<details class="tu-inl" data-stop="1"><summary>${line(u[0])}<span class="small muted">+ ${u.length-1} ältere Update${u.length>2?'s':''}</span></summary>${u.slice(1).map(line).join('')}</details>`; }
 function taskLi(t){  const late=t.due&&t.due<TODAY()&&!t.done;
   const bsel=UI.bulk&&['todos','pool'].includes(UI.view);
-  return `<div class="li ${t.done?'done':''} ${bsel&&SEL.has(t.id)?'sel':''}" data-drag="task:${t.id}">${bsel?`<input type="checkbox" class="sel-ck" data-chg="selTask" data-id="${t.id}" ${SEL.has(t.id)?'checked':''} aria-label="Auswählen: ${esc(t.title)}" title="Für Mehrfachbearbeitung auswählen">`:''}<input type="checkbox" class="ck" data-chg="toggleTask" data-id="${t.id}" ${t.done?'checked':''} aria-label="Erledigt"><div class="body clickable" data-act="editTask" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="mt">${t.ext?`<span class="pill ext-pill" title="Liegt extern">extern: ${esc(t.ext)}</span>`:''}${t.pid?`<span>${esc(projName(t.pid))}</span>`:''}${t.due?`<span class="${late?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?`<span class="pill ${PRIO[t.prio][2]}">${PRIO[t.prio][0]}</span>`:''}${t.pool?'<span class="pill">allgemein</span>':''}${(t.upd2||[]).length?`<span class="pill upd-pill" title="Letztes Update: ${esc(t.upd2[t.upd2.length-1].t)}">💬 ${t.upd2.length} · ${esc(fmtD(t.upd2.slice().sort((a,b)=>b.d.localeCompare(a.d))[0].d).slice(0,6))}</span>`:''}${t.by&&t.by!=='?'?`<span class="by-line">angelegt ${esc(t.by)} ${esc(fmtD((t.at||'').slice(0,10)).slice(3))}</span>`:''}${t.done?`<span class="done-by">✓ erledigt von <b>${esc(t.doneBy||t.updBy||'?')}</b>${t.doneAt?' · '+esc(stampTxt(t.doneAt)):''}${t.doneNote?' – '+esc(t.doneNote):''}</span>`:''}</div>${taskUpdInline(t)}</div>
+  return `<div class="li ${t.done?'done':''} ${bsel&&SEL.has(t.id)?'sel':''}" data-drag="task:${t.id}">${bsel?`<input type="checkbox" class="sel-ck" data-chg="selTask" data-id="${t.id}" ${SEL.has(t.id)?'checked':''} aria-label="Auswählen: ${esc(t.title)}" title="Für Mehrfachbearbeitung auswählen">`:''}<input type="checkbox" class="ck" data-chg="toggleTask" data-id="${t.id}" ${t.done?'checked':''} aria-label="Erledigt"><div class="body clickable" data-act="editTask" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="mt">${t.ext?`<span class="pill ext-pill" title="Liegt extern">extern: ${esc(t.ext)}</span>`:''}${t.pid?`<span>${esc(projName(t.pid))}</span>`:''}${t.due?`<span class="${late?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?`<span class="pill ${PRIO[t.prio][2]}">${PRIO[t.prio][0]}</span>`:''}${t.pool?'<span class="pill">allgemein</span>':''}${(t.upd2||[]).length?`<span class="pill upd-pill" title="Letztes Update: ${esc(t.upd2[t.upd2.length-1].t)}">💬 ${t.upd2.length} · ${esc(fmtD(t.upd2.slice().sort((a,b)=>updKey(b).localeCompare(updKey(a)))[0].d).slice(0,6))}</span>`:''}${t.by&&t.by!=='?'?`<span class="by-line">angelegt ${esc(t.by)} ${esc(fmtD((t.at||'').slice(0,10)).slice(3))}</span>`:''}${t.done?`<span class="done-by">✓ erledigt von <b>${esc(t.doneBy||t.updBy||'?')}</b>${t.doneAt?' · '+esc(stampTxt(t.doneAt)):''}${t.doneNote?' – '+esc(t.doneNote):''}</span>`:''}</div>${taskUpdInline(t)}</div>
     <select class="who-sel ${t.who?'':'none'}" data-chg="taskWho" data-id="${t.id}" aria-label="Zuständig für: ${esc(t.title)}" title="Zuständigkeit ändern"><option value="">– niemand –</option>${[...new Set([...staff().map(s=>s.name),...(t.who?[t.who]:[])])].map(n=>`<option value="${esc(n)}" ${n===t.who?'selected':''}>${esc(n.replace(/\s*\(([^)]*)\)$/,' · $1'))}</option>`).join('')}<option value="__ext">→ liegt extern …</option>${t.ext?'<option value="__int">→ wieder intern</option>':''}</select>${isAdmin()?`<button type="button" class="icon-btn task-del" title="Aufgabe löschen" aria-label="Aufgabe löschen: ${esc(t.title)}" data-act="taskDel" data-id="${t.id}">${ic('x')}</button>`:''}</div>`;
 }
 
@@ -2138,7 +2138,7 @@ function projStatus(p){
   const nw=nowOf(p), tasks=openTasks(p.id), active=['planung','laufend'].includes(catOf(p));
   const nxTask=pp.next&&arr('tasks').find(t=>t.pid===p.id&&t.ms===pp.next&&!t.done);
   return `<div class="card now-card">
-    <div><div class="eyebrow"><span>Aktueller Stand${nw&&nw.d?' · '+esc(fmtD(nw.d)):''}</span><button class="btn ghost sm" data-act="editNow" data-pid="${p.id}">${ic('plus')}Neuer Stand</button></div>
+    <div><div class="eyebrow"><span>Aktueller Stand${nw&&nw.d?' · '+esc(fmtD(nw.d))+(nw.tm?' · '+esc(nw.tm):''):''}</span><button class="btn ghost sm" data-act="editNow" data-pid="${p.id}">${ic('plus')}Neuer Stand</button></div>
       ${nw?`<div>${esc(nw.t)}</div>${nw.own?'':'<div class="small muted" style="margin-top:4px">neuester Eintrag in den Updates'+(nw.by?' · von '+esc(nw.by):'')+'</div>'}`:'<div class="muted">Noch kein Stand notiert.</div>'}</div>
     <div><div class="eyebrow"><span>Wer macht gerade was · ${tasks.length} offen</span><button class="btn ghost sm" data-act="newTask" data-pid="${p.id}">${ic('assign')}Aufgabe zuweisen</button></div>
       <div class="list">${tasks.map(taskLi).join('')||'<div class="small muted">Keine offenen Aufgaben.</div>'}</div>
@@ -2176,7 +2176,7 @@ function completeProjTask(id){
     saveLabel:'Erledigt & in Notizen eintragen',
     onSave:v=>{ const x=(v.x||'').trim(); if(x.length<5){ toast('Bitte kurz beschreiben, was gemacht wurde.'); return false; }
       const t=clone(S.tasks[id]); t.done=true; t.doneAt=new Date().toISOString(); t.doneBy=meK(); t.doneNote=x; put('tasks',t);
-      const p=clone(S.projects[t.pid]); const d0=new Date(), stamp=String(d0.getDate()).padStart(2,'0')+'.'+String(d0.getMonth()+1).padStart(2,'0')+'.'+String(d0.getFullYear()).slice(2);
+      const p=clone(S.projects[t.pid]); const d0=new Date(), stamp=nowStamp();
       const line=stamp+' ('+meK()+'): ✓ Erledigt: '+t.title+(t.who&&shortWho(t.who)!==meK()?' (zuständig '+shortWho(t.who)+')':'')+' – '+x;
       p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+line; delete p.now; delete p.nowD; put('projects',p);
       if(t.ms&&!(S.projects[t.pid].ms||{})['m'+t.ms]) setMs(t.pid,+t.ms,TODAY());
@@ -2187,10 +2187,13 @@ function completeProjTask(id){
 const QN={};
 function saveNote(pid,f,text){
   text=String(text||'').trim(); if(!text) return false;
-  const p=clone(S.projects[pid]); const d0=new Date(), stamp=String(d0.getDate()).padStart(2,'0')+'.'+String(d0.getMonth()+1).padStart(2,'0')+'.'+String(d0.getFullYear()).slice(2);
+  const p=clone(S.projects[pid]); const d0=new Date(), stamp=nowStamp();
   p[f]=(p[f]?p[f].replace(/\s+$/,'')+'\n':'')+stamp+' ('+meK()+'): '+text; delete p.now; delete p.nowD; put('projects',p); toast('Notiz gespeichert.'); suggestTodos(pid,text);
 }
 // Notiztext in Einträge zerlegen: ein Eintrag beginnt mit einem Datum (z. B. „22.10.26:“), Folgezeilen gehören dazu
+// Zeitstempel fuer neue Eintraege: TT.MM.JJ HH:MM
+const nowStamp=()=>{ const d=new Date(), p=n=>String(n).padStart(2,'0'); return p(d.getDate())+'.'+p(d.getMonth()+1)+'.'+String(d.getFullYear()).slice(2)+' '+p(d.getHours())+':'+p(d.getMinutes()); };
+const noteTime=s=>{ const m=String(s).match(/^(\d{1,2}:\d{2})\s*/); return m?{tm:m[1].padStart(5,'0'),rest:s.slice(m[0].length)}:{tm:'',rest:s}; };
 function noteBlocks(v){
   const out=[]; String(v||'').split('\n').forEach(line=>{ if(/^\s*\d{1,2}\.\d{1,2}\.(\d{2,4})?/.test(line)||!out.length) out.push(line); else out[out.length-1]+='\n'+line; });
   return out.map(b=>b.replace(/\s+$/,'')).filter(b=>b.trim());
@@ -3930,7 +3933,7 @@ const CHG = {
    openSheet({title:'Projekt auf „'+CATS[nv]+'“ setzen',fields:[{k:'why',label:nv==='onhold'?'Grund für Onhold':'Bemerkung (optional)',type:'textarea',req:nv==='onhold'||nv==='abgesagt',ph:nv==='onhold'?'z. B. Kunde wartet auf Förderzusage':''},...(nv==='onhold'?[{k:'wvl',label:'Wiedervorlage am (Erinnerung)',type:'date',req:1}]:[])],
      value:{wvl:addDays(TODAY(),28)},saveLabel:'Übernehmen',onSave:v=>{ const p=clone(S.projects[d.pid]); p.cat=nv; p.status={erledigt:'abgeschlossen',abgesagt:'abgeschlossen',onhold:'pausiert'}[nv]||'aktiv';
        if(nv==='onhold') p.wvl=v.wvl; else delete p.wvl;
-       const d0=new Date(), stamp=String(d0.getDate()).padStart(2,'0')+'.'+String(d0.getMonth()+1).padStart(2,'0')+'.'+String(d0.getFullYear()).slice(2);
+       const d0=new Date(), stamp=nowStamp();
        const line=stamp+' ('+meK()+'): Projekt '+(nv==='onhold'?'auf Onhold gesetzt':'von „'+CATS[old]+'“ auf „'+CATS[nv]+'“ gesetzt')+(v.why?' – '+v.why.trim():'')+(nv==='onhold'?' · Wiedervorlage '+fmtD(v.wvl):'');
        p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+line; delete p.now; delete p.nowD; put('projects',p);
        toast('Kategorie: '+CATS[nv]+(nv==='onhold'?' · Erinnerung am '+fmtD(v.wvl):'')+'.'); }}); },
@@ -4001,17 +4004,21 @@ Antworte nur mit JSON: {"todos":[{"title":"kurz, Imperativ","pcat":"${Object.key
 }
 
 /* ========== To-Do-Updates mit Datum ========== */
-function taskUpdList(t){ const u=(t&&t.upd2)||[]; return u.length?u.slice().sort((a,b)=>b.d.localeCompare(a.d)).map(x=>`<div class="tu"><b class="mono">${esc(fmtD(x.d))}</b> <span class="who-chip">${esc(x.by||'?')}</span> ${esc(x.t)}</div>`).join(''):'<div class="small muted">Noch keine Updates.</div>'; }
+// Update-Zeitpunkt: gewaehltes Datum + Uhrzeit (eingegeben oder Zeitpunkt des Eintragens, wenn am selben Tag)
+const updTime=x=>{ if(x.tm) return x.tm; if(!x.at) return ''; const a=new Date(x.at); if(isNaN(a)||iso(a)!==x.d) return ''; return String(a.getHours()).padStart(2,'0')+':'+String(a.getMinutes()).padStart(2,'0'); };
+const updStamp=x=>fmtD(x.d)+(updTime(x)?' · '+updTime(x):'');
+const updKey=x=>(x.d||'')+' '+(updTime(x)||'00:00')+(x.at||'');
+function taskUpdList(t){ const u=(t&&t.upd2)||[]; return u.length?u.slice().sort((a,b)=>updKey(b).localeCompare(updKey(a))).map(x=>`<div class="tu"><b class="mono">${esc(updStamp(x))}</b> <span class="who-chip">${esc(x.by||'?')}</span> ${esc(x.t)}</div>`).join(''):'<div class="small muted">Noch keine Updates.</div>'; }
 function taskUpdHtml(t){
   return `<div class="tu-box"><div id="tu_list">${taskUpdList(S.tasks[t.id]||t)}</div>
-    <div class="tu-new"><input type="date" class="inp" id="tu_d" value="${TODAY()}" aria-label="Datum"><input class="inp" id="tu_t" placeholder="Was ist passiert? z. B. Westnetz angerufen, Rückruf Freitag" aria-label="Update"><button type="button" class="btn sm pri" data-act="taskUpdAdd" data-id="${t.id}">Update hinzufügen</button></div>
+    <div class="tu-new"><input type="date" class="inp" id="tu_d" value="${TODAY()}" aria-label="Datum"><input type="time" class="inp" id="tu_h" value="${nowStamp().slice(9)}" aria-label="Uhrzeit"><input class="inp" id="tu_t" placeholder="Was ist passiert? z. B. Westnetz angerufen, Rückruf Freitag" aria-label="Update"><button type="button" class="btn sm pri" data-act="taskUpdAdd" data-id="${t.id}">Update hinzufügen</button></div>
     ${t.pid&&S.projects[t.pid]?'<div class="small muted">Erscheint in den Projekt-Notizen unter „Updates zu To-Dos“.</div>':''}</div>`;
 }
 function todoUpdBlock(p){
   const ts=arr('tasks').filter(t=>t.pid===p.id&&(t.upd2||[]).length).sort((a,b)=>(a.done-b.done)||String(((b.upd2||[]).slice(-1)[0]||{}).d||'').localeCompare(String(((a.upd2||[]).slice(-1)[0]||{}).d||'')));
   if(!ts.length) return '';
-  return `<div><div class="eyebrow" style="margin-bottom:4px"><span>Updates zu To-Dos</span></div>${ts.map(t=>{ const u=t.upd2.slice().sort((a,b)=>b.d.localeCompare(a.d));
-    return `<details class="tu-d"><summary><span>${t.done?'✓':'☐'} ${esc(t.title)}</span><span class="small muted">${u.length} Update${u.length>1?'s':''} · zuletzt ${esc(fmtD(u[0].d))}${t.who?' · '+esc(shortWho(t.who)):''}</span></summary>${u.map(x=>`<div class="tu"><b class="mono">${esc(fmtD(x.d))}</b> <span class="who-chip">${esc(x.by||'?')}</span> ${esc(x.t)}</div>`).join('')}<button type="button" class="btn ghost sm" data-act="editTask" data-id="${t.id}">To-Do öffnen</button></details>`; }).join('')}</div>`;
+  return `<div><div class="eyebrow" style="margin-bottom:4px"><span>Updates zu To-Dos</span></div>${ts.map(t=>{ const u=t.upd2.slice().sort((a,b)=>updKey(b).localeCompare(updKey(a)));
+    return `<details class="tu-d"><summary><span>${t.done?'✓':'☐'} ${esc(t.title)}</span><span class="small muted">${u.length} Update${u.length>1?'s':''} · zuletzt ${esc(updStamp(u[0]))}${t.who?' · '+esc(shortWho(t.who)):''}</span></summary>${u.map(x=>`<div class="tu"><b class="mono">${esc(updStamp(x))}</b> <span class="who-chip">${esc(x.by||'?')}</span> ${esc(x.t)}</div>`).join('')}<button type="button" class="btn ghost sm" data-act="editTask" data-id="${t.id}">To-Do öffnen</button></details>`; }).join('')}</div>`;
 }
 
 /* ========== Wochenansicht drucken ========== */
@@ -4155,7 +4162,7 @@ Object.assign(A,{
  poolNew:()=>poolForm(null), poolEdit:d=>S.tasks[d.id]&&poolForm(S.tasks[d.id]), poolAI:()=>poolAI(),
  poolTake:d=>{ const t=clone(S.tasks[d.id]); if(!t||!ME) return; t.who=ME; t.takenAt=TODAY(); put('tasks',t); toast('Übernommen: '+t.title); },
  taskUpdAdd:d=>{ const tx=($('#tu_t')||{}).value||'', dd=($('#tu_d')||{}).value||TODAY(); if(tx.trim().length<3) return toast('Bitte kurz schreiben, was passiert ist.');
-   const t=clone(S.tasks[d.id]); if(!t){ toast('Bitte das To-Do zuerst speichern.'); return; } t.upd2=[...(t.upd2||[]),{d:dd,by:meK(),t:tx.trim(),at:new Date().toISOString()}]; put('tasks',t);
+   const t=clone(S.tasks[d.id]); if(!t){ toast('Bitte das To-Do zuerst speichern.'); return; } t.upd2=[...(t.upd2||[]),{d:dd,tm:($('#tu_h')||{}).value||'',by:meK(),t:tx.trim(),at:new Date().toISOString()}]; put('tasks',t);
    $('#tu_t').value=''; const l=$('#tu_list'); if(l) l.innerHTML=taskUpdList(t); toast('Update gespeichert.'); },
  weekPrint:()=>printWeek(),
  tlEditMs:d=>tlEditMs(d.pid,d.key), tlAddMs:d=>tlAddMs(d.pid),
@@ -4288,7 +4295,7 @@ function showMailTodos(m,pid,why,todos,summary,files,text){
         ['due','ext','notes'].forEach(k=>{ if(!t[k]) delete t[k]; }); put('tasks',t); made.push(t); });
       const mailPid=isMail?($('#mt_pid').value||(made.find(t=>t.pid)||{}).pid||''):'';
       if(isMail&&$('#mt_file').checked) ingestFiles(m.file?[m.file]:[],m.file?'':text,mailPid);
-      if($('#mt_note').checked){ const d0=new Date(), stamp=String(d0.getDate()).padStart(2,'0')+'.'+String(d0.getMonth()+1).padStart(2,'0')+'.'+String(d0.getFullYear()).slice(2);
+      if($('#mt_note').checked){ const d0=new Date(), stamp=nowStamp();
         [...new Set(made.concat(upd).map(t=>t.pid).filter(Boolean))].forEach(pp=>{ if(!S.projects[pp]) return; const p=clone(S.projects[pp]), mine=made.filter(t=>t.pid===pp), mu=upd.filter(t=>t.pid===pp);
           p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+stamp+' ('+meK()+'): '+(isMail?'Mail'+(m.from?' von '+m.from.replace(/\s*<[^>]*>/,''):'')+': '+(m.subject||'')+' → ':'')+[mine.length?'To-Do: '+mine.map(t=>t.title+(t.who?' ('+shortWho(t.who)+')':'')).join('; '):'',mu.length?'Update zu: '+mu.map(t=>t.title+(t._act==='erledigt'?' ✓ erledigt':'')).join('; '):''].filter(Boolean).join(' · '); delete p.now; delete p.nowD; put('projects',p); }); }
       const np=new Set(made.concat(upd).map(t=>t.pid).filter(Boolean)).size;
@@ -4335,7 +4342,7 @@ Object.assign(A,{
    openSheet({title:ids.length+' To-Do'+(ids.length>1?'s':'')+' erledigen',fields:[{k:'info',label:'',type:'html',html:`<div class="small">${ids.map(id=>'• '+esc(S.tasks[id].title)).slice(0,12).join('<br>')}${ids.length>12?'<br>…':''}</div>`},
      {k:'x',label:withP.length?'Was wurde gemacht? (Pflicht – kommt in die Projekt-Notizen)':'Bemerkung (optional)',type:'textarea',req:withP.length?1:0}],saveLabel:'Alle erledigt',
      onSave:v=>{ const x=(v.x||'').trim(); if(withP.length&&x.length<5){ toast('Bitte kurz beschreiben, was gemacht wurde.'); return false; }
-       const d0=new Date(), stamp=String(d0.getDate()).padStart(2,'0')+'.'+String(d0.getMonth()+1).padStart(2,'0')+'.'+String(d0.getFullYear()).slice(2), byP={};
+       const d0=new Date(), stamp=nowStamp(), byP={};
        ids.forEach(id=>{ const t=clone(S.tasks[id]); t.done=true; t.doneAt=new Date().toISOString(); t.doneBy=meK(); if(x) t.doneNote=x; put('tasks',t); if(t.pid&&S.projects[t.pid]) (byP[t.pid]=byP[t.pid]||[]).push(t);
          if(t.pool&&t.repeat) put('tasks',{id:uid(),pool:true,done:false,prio:t.prio||'normal',title:t.title,pcat:t.pcat||'sonst',dur:t.dur||'',repeat:'ja',notes:t.notes||''}); });
        Object.entries(byP).forEach(([pid,ts])=>{ const p=clone(S.projects[pid]); p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+stamp+' ('+meK()+'): ✓ Erledigt: '+ts.map(t=>t.title).join('; ')+' – '+x; delete p.now; delete p.nowD; put('projects',p);
@@ -4432,7 +4439,7 @@ function smartSheet(c){
       let nu=0; rel.forEach((x,i)=>{ if(!$('#smr_c'+i).checked||!S.tasks[x.id]) return; const how=$('#smr_a'+i).value, txt=($('#smr_t'+i).value||'').trim()||'Neue Info'+(c.mail&&c.mail.subject?' (Mail: '+c.mail.subject+')':'');
         const t=clone(S.tasks[x.id]); t.upd2=[...(t.upd2||[]),{d:TODAY(),by:meK(),t:txt.slice(0,400),at:new Date().toISOString()}];
         if(how==='erledigt'){ t.done=true; t.doneAt=new Date().toISOString(); t.doneBy=meK(); t.doneNote=txt.slice(0,300);
-          if(t.pid&&S.projects[t.pid]){ const p=clone(S.projects[t.pid]), d0=new Date(), stamp=String(d0.getDate()).padStart(2,'0')+'.'+String(d0.getMonth()+1).padStart(2,'0')+'.'+String(d0.getFullYear()).slice(2); p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+stamp+' ('+meK()+'): ✓ Erledigt: '+t.title+' – '+txt; delete p.now; delete p.nowD; put('projects',p); } }
+          if(t.pid&&S.projects[t.pid]){ const p=clone(S.projects[t.pid]), d0=new Date(), stamp=nowStamp(); p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+stamp+' ('+meK()+'): ✓ Erledigt: '+t.title+' – '+txt; delete p.now; delete p.nowD; put('projects',p); } }
         put('tasks',t); nu++; });
       if(nu) toast(nu+' To-Do'+(nu>1?'s':'')+' aktualisiert.');
       if(act==='none'){ if(!nu){ toast('Kein To-Do markiert.'); return false; } return; }
