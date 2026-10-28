@@ -7,6 +7,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Sonnenplan">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script>if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Crect width='30' height='30' rx='6' fill='%230B0B0B'/%3E%3Ccircle cx='15' cy='13' r='6' fill='%23F4DB02'/%3E%3Crect x='5' y='20' width='20' height='5' rx='1' fill='%23fff'/%3E%3C/svg%3E">
 <style>html,body{margin:0;padding:0}</style>
 </head>
@@ -673,6 +677,9 @@ details.pf:not([open])>summary{border-bottom:0}
 #sunLoader svg{width:130px;height:130px;opacity:.55;filter:drop-shadow(0 4px 18px rgba(244,219,2,.45));animation:sunspin 3.2s linear infinite}
 @keyframes sunspin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){ #sunLoader svg{animation-duration:12s} }
+.ch-last{display:block;font-size:11.5px;color:var(--muted);font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px}
+.ch-newteam{margin:0 0 8px;flex:none;justify-content:center}
+.who-chip.team{background:var(--sun)}
 #printArea{display:none}
 @media print{
   .pr-land{page:land}
@@ -1790,6 +1797,7 @@ function render(){
   $('#view').innerHTML = banner()+fn();
   window.scrollTo(0,y);
   if(aid){ const el=document.getElementById(aid); if(el){ el.focus({preventScroll:true}); if(sel&&el.setSelectionRange) try{ el.setSelectionRange(sel[0],sel[1]); }catch(e){} } }
+  voiceAfterRender();
 }
 
 /* ========== Übersicht ========== */
@@ -2017,7 +2025,10 @@ function targetInfo(p){ if(!p.target) return null; const pp=pipe(p), days=dDiff(
 function targetBadge(p,big){ const ti=targetInfo(p); if(!ti) return '';
   const cls=ti.late?'bad':ti.soon?'warn':'ok', txt=ti.left?(ti.days<0?Math.abs(ti.days)+' Tage überfällig':ti.days===0?'heute':'noch '+ti.days+' Tage'):'erreicht';
   return `<span class="tgt ${cls} ${big?'big':''}" data-act="openAt" data-id="${p.id}" data-at="timeline" title="Geplanter Fertigstellungstermin">⚑ Fertigstellung ${fmtD(p.target)} · ${txt}</span>`; }
+// Startansicht beim Öffnen der Timeline: nur Meilensteine, Wochenansicht, bei „Heute“
+let TL_INIT='';
 function projTimeline(p){
+  if(TL_INIT!==p.id){ TL_INIT=p.id; UI.tlZoom='woche'; UI.tlLanes={ms:true,status:false,mat:false,term:false,task:false,note:false}; setTimeout(tlScrollToday,60); }
   if(SAMPLE&&!tlAIData(p)&&!TL_RUN[p.id]&&noteEntries(p).length) setTimeout(()=>tlAI(p.id,true),50); // automatisch zusammenfassen
   const z=TL_ZOOM[UI.tlZoom]?UI.tlZoom:'woche', Z=TL_ZOOM[z], t0=TODAY(), items=tlItems(p), lanesOn=UI.tlLanes||{};
   const ds=items.map(i=>i.d).concat([t0,p.created||t0]).concat(p.target?[p.target]:[]).sort();
@@ -2224,6 +2235,7 @@ function vProject(){
   else if(UI.ptab==='dateien') body=`<div class="row" style="justify-content:flex-end;margin-bottom:10px"><button class="btn sm" data-act="newOffer" data-pid="${p.id}">${ic('plus')}Angebot anlegen</button></div>`+fileDropHtml(p.id)+projFilesHtml(p);
   else if(UI.ptab==='verlauf') body=`<div class="card"><div class="card-h"><h3>Verlauf</h3><span class="small muted">Jede Änderung an Projekt, Aufgaben, Bestellungen, Terminen und Angeboten mit Kürzel und Zeitpunkt</span></div><div class="card-b">${histList(allHist().filter(h=>h.pid===p.id),true)}</div></div>`;
   else body=projInfos(p);
+  if(UI.ptab!=='timeline') TL_INIT=''; // beim nächsten Öffnen der Timeline wieder mit der Startansicht beginnen
   const nl=navList(); let ix=nl.findIndex(x=>x.id===p.id); const list=ix<0?arr('projects').sort(SORTS.az[1]):nl; if(ix<0) ix=list.findIndex(x=>x.id===p.id);
   const prev=list[ix-1], next=list[ix+1];
   const allAz=arr('projects').sort(SORTS.az[1]);
@@ -3464,22 +3476,36 @@ function vRights(){
 /* ========== Chat: Team-Raum und Direktnachrichten ========== */
 const chatKey=n=>shortWho(n);
 const roomOf=other=>other==='team'?'team':'dm:'+[chatKey(ME),chatKey(other)].sort().join('|');
-const roomTitle=r=>r==='team'?'Team (alle)':(r.slice(3).split('|').find(k=>k!==chatKey(ME))||'');
-const myRooms=()=>['team',...staff().filter(s=>s.name!==ME).map(s=>roomOf(s.name))];
+// Eigene Teams (Gruppenchats): config.chatTeams = [{id,name,members:[Namen],by}] – Raum „g:<id>“, sichtbar nur für Mitglieder
+const chatTeams=()=>((S.config||{}).chatTeams||[]);
+const teamOf=r=>String(r).startsWith('g:')?chatTeams().find(t=>'g:'+t.id===r):null;
+const roomTitle=r=>r==='team'?'Team (alle)':teamOf(r)?teamOf(r).name:(r.slice(3).split('|').find(k=>k!==chatKey(ME))||'');
+const myRooms=()=>['team',...chatTeams().filter(t=>(t.members||[]).includes(ME)||isBaseAdmin()&&t.by===meK()).map(t=>'g:'+t.id),...staff().filter(s=>s.name!==ME).map(s=>roomOf(s.name))];
+function chatTeamForm(t){
+  const isNew=!t; t=t?clone(t):{id:uid(),name:'',members:ME?[ME]:[],by:meK()};
+  openSheet({title:isNew?'Neues Team':'Team bearbeiten',html:`<div class="fld full"><label for="ct_name">Name</label><input id="ct_name" class="inp" value="${esc(t.name)}" placeholder="z. B. Monteure, Büro, Heimatblick-Team"></div>
+    <div class="fld full"><div class="sec-t" style="margin:4px 0 6px">Mitglieder</div>${staff().map(s=>`<label class="mt-opt" style="padding:3px 0"><input type="checkbox" class="ck ct-m" value="${esc(s.name)}" ${(t.members||[]).includes(s.name)?'checked':''}><span>${esc(shortWho(s.name))} <span class="small muted">${esc(s.name.replace(/\s*\([^)]*\)$/,''))}</span></span></label>`).join('')}</div>`,saveLabel:isNew?'Team anlegen':'Speichern',
+    onSave:()=>{ const name=$('#ct_name').value.trim(), members=[...document.querySelectorAll('.ct-m:checked')].map(i=>i.value); if(!name){ toast('Bitte einen Namen eingeben.'); return false; } if(members.length<2){ toast('Bitte mindestens 2 Mitglieder wählen.'); return false; }
+      const list=chatTeams().filter(x=>x.id!==t.id).concat([{...t,name,members}]); putConfig({...(S.config||{}),chatTeams:list}); UI.room='g:'+t.id; toast(isNew?'Team „'+name+'“ angelegt.':'Gespeichert.'); },
+    onDelete:isNew||!(isAdmin()||t.by===meK())?null:()=>{ putConfig({...(S.config||{}),chatTeams:chatTeams().filter(x=>x.id!==t.id)}); UI.room='team'; closeSheet(); toast('Team gelöscht.'); }});
+}
 function lastRead(r){ try{ return (JSON.parse(lsGet('sonnenplan-chatread')||'{}'))[r]||''; }catch(e){ return ''; } }
 function markRead(r){ let m={}; try{ m=JSON.parse(lsGet('sonnenplan-chatread')||'{}')||{}; }catch(e){} m[r]=new Date().toISOString(); lsSet('sonnenplan-chatread',JSON.stringify(m)); }
 function chatUnread(r){ return arr('chat').filter(m=>m.room===r&&m.from!==ME&&String(m.at)>lastRead(r)).length; }
 function chatUnreadAll(){ return ME?myRooms().reduce((a,r)=>a+chatUnread(r),0):0; }
 function vChat(){
   if(!ME) return head('Chat','')+'<div class="card"><div class="empty">Bitte zuerst unten links anmelden („Wer bist du?“).</div></div>';
-  const rooms=myRooms(); if(!UI.room||!rooms.includes(UI.room)) UI.room='team';
+  // Chats mit der neuesten Nachricht oben
+  const lastAt={}, lastMsg={}; arr('chat').forEach(m=>{ if(!lastAt[m.room]||String(m.at)>lastAt[m.room]){ lastAt[m.room]=String(m.at); lastMsg[m.room]=m; } });
+  const rooms=myRooms().slice().sort((a,b)=>(lastAt[b]||'').localeCompare(lastAt[a]||'')); if(!UI.room||!rooms.includes(UI.room)) UI.room=rooms[0]||'team';
   const r=UI.room, msgs=arr('chat').filter(m=>m.room===r).sort((a,b)=>String(a.at).localeCompare(String(b.at))).slice(-300);
   setTimeout(()=>{ markRead(r); const b=$('#chatBox'); if(b) b.scrollTop=b.scrollHeight; renderShellBadges(); },30);
   let lastDay='';
   const body=msgs.map(m=>{ const d=String(m.at).slice(0,10), mine=m.from===ME; let h=''; if(d!==lastDay){ h+=`<div class="ch-day">${fmtD(d)} · ${relDay(d)}</div>`; lastDay=d; }
     return h+`<div class="ch-msg ${mine?'me':''}"><div class="ch-b">${mine?'':`<div class="ch-from">${esc(shortWho(m.from))}</div>`}${esc(m.text).replace(/\n/g,'<br>')}${m.pid?`<div class="ch-pid"><button class="linkish" data-act="openProject" data-id="${m.pid}">${esc(projName(m.pid))}</button></div>`:''}<div class="ch-t">${esc(stampTxt(m.at).slice(-5))}${mine||isAdmin()?` <button class="ch-del" data-act="chatDel" data-id="${m.id}" title="Nachricht löschen" aria-label="Nachricht löschen">✕</button>`:''}</div></div></div>`; }).join('');
-  return head('Chat',roomTitle(r))+`<div class="chat">
-    <aside class="ch-rooms">${rooms.map(x=>{ const u=chatUnread(x); return `<button class="ch-room ${x===r?'on':''}" data-act="chatRoom" data-v="${esc(x)}"><span class="who-chip">${x==='team'?'Alle':esc(roomTitle(x))}</span><span class="ch-rn">${x==='team'?'Team':esc((staff().find(s=>chatKey(s.name)===roomTitle(x))||{}).name||roomTitle(x))}</span>${u?`<span class="cnt">${u}</span>`:''}</button>`; }).join('')}</aside>
+  const tmR=teamOf(r);
+  return head('Chat',roomTitle(r)+(tmR?' · '+(tmR.members||[]).map(shortWho).join(', '):''),tmR&&(isAdmin()||tmR.by===meK()||(tmR.members||[]).includes(ME))?`<button class="btn" data-act="chatTeamEdit" data-id="${tmR.id}">${ic('edit')}Team bearbeiten</button>`:'')+`<div class="chat">
+    <aside class="ch-rooms"><button class="btn sm ch-newteam" data-act="chatTeamNew">${ic('plus')}Neues Team</button>${rooms.map(x=>{ const u=chatUnread(x), tm=teamOf(x); return `<button class="ch-room ${x===r?'on':''}" data-act="chatRoom" data-v="${esc(x)}"><span class="who-chip ${tm?'team':''}">${x==='team'?'Alle':tm?'👥':esc(roomTitle(x))}</span><span class="ch-rn">${x==='team'?'Team':tm?esc(tm.name)+` <span class="small muted">· ${(tm.members||[]).map(shortWho).join(', ')}</span>`:esc((staff().find(s=>chatKey(s.name)===roomTitle(x))||{}).name||roomTitle(x))}${lastMsg[x]?`<span class="ch-last">${esc(stampTxt(lastMsg[x].at).replace(/^\S+\s/,''))} · ${esc(String(lastMsg[x].text||'').slice(0,40))}</span>`:''}</span>${u?`<span class="cnt">${u}</span>`:''}</button>`; }).join('')}</aside>
     <section class="ch-main"><div class="ch-box" id="chatBox">${body||'<div class="empty">Noch keine Nachrichten. Schreib die erste!</div>'}</div>
       <div class="ch-in"><textarea id="chatIn" class="inp" rows="1" placeholder="Nachricht an ${esc(r==='team'?'alle':roomTitle(r))} … (Enter senden, Shift+Enter neue Zeile)" aria-label="Nachricht"></textarea><select id="chatPid" class="inp" aria-label="Projekt verknüpfen"><option value="">Projekt …</option>${arr('projects').filter(p=>['laufend','planung'].includes(catOf(p))).sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select><button class="btn pri" data-act="chatSend">Senden</button></div>
       <div class="small muted" style="padding:4px 2px">Hinweis: Direktnachrichten sieht nur ihr beide in der App. Nichts Vertrauliches wie Passwörter schreiben.</div></section></div>`;
@@ -3981,6 +4007,7 @@ const A = {
  navToggle:d=>{ UI.navOpen={...(UI.navOpen||{}),[d.v]:!(UI.navOpen&&UI.navOpen[d.v])}; render(); },
  privDel:d=>privDel(d.id),
  chatRoom:d=>{ UI.room=d.v; render(); },
+ chatTeamNew:()=>chatTeamForm(null), chatTeamEdit:d=>{ const t=chatTeams().find(x=>x.id===d.id); if(t) chatTeamForm(t); },
  chatSend:()=>{ const el=$('#chatIn'); const t=el&&el.value.trim(); if(!t) return; if(!ME) return toast('Bitte zuerst anmelden.'); const m={id:uid(),room:UI.room||'team',from:ME,text:t.slice(0,4000),at:new Date().toISOString()}; const pid=$('#chatPid')&&$('#chatPid').value; if(pid) m.pid=pid; put('chat',m); el.value=''; setTimeout(()=>{ const i=$('#chatIn'); if(i) i.focus(); },40); },
  chatDel:d=>{ const m=S.chat[d.id]; if(!m) return; if(m.from!==ME&&!isAdmin()) return; del('chat',d.id); },
  unlinkUser:d=>{ if(!isAdmin()) return; const map={...((S.config||{}).userMap||{})}; const n=map[d.id]; delete map[d.id]; putConfig({...(S.config||{}),userMap:map}); toast('Verknüpfung mit '+(n||'Konto')+' gelöst. Die Person wählt beim nächsten Öffnen neu.'); },
@@ -4810,9 +4837,15 @@ const voiceBtn=(()=>{ const b=document.createElement('button'); b.type='button';
 function voicePlace(){ const t=VOICE_EL; if(!t||!document.body.contains(t)||!SRec){ if(!VOICE_REC) voiceBtn.hidden=true; return; }
   const r=t.getBoundingClientRect(); if(!r.width||r.bottom<0||r.top>innerHeight){ voiceBtn.hidden=true; return; }
   voiceBtn.hidden=false; const tall=t.tagName==='TEXTAREA'&&r.height>48; voiceBtn.style.top=(tall?r.bottom-34:r.top+(r.height-28)/2)+'px'; voiceBtn.style.left=(r.right-34)+'px'; }
-document.addEventListener('focusin',e=>{ if(VOICE_REC) return; if(VOICE_OK(e.target)){ VOICE_EL=e.target; voicePlace(); } else if(e.target!==voiceBtn){ VOICE_EL=null; voiceBtn.hidden=true; } });
+// Nur zeigen, wenn die Person selbst ins Feld geklickt/getippt hat – nicht, wenn die App den Cursor nach dem Neuzeichnen zurücksetzt
+let VOICE_USER=0; document.addEventListener('pointerdown',()=>{ VOICE_USER=Date.now(); },true); document.addEventListener('keydown',e=>{ if(e.key==='Tab') VOICE_USER=Date.now(); },true);
+document.addEventListener('focusin',e=>{ if(VOICE_REC) return; if(VOICE_OK(e.target)&&Date.now()-VOICE_USER<800){ VOICE_EL=e.target; voicePlace(); } else if(e.target!==voiceBtn&&!(VOICE_OK(e.target)&&!voiceBtn.hidden)){ VOICE_EL=null; voiceBtn.hidden=true; } });
 document.addEventListener('focusout',e=>{ setTimeout(()=>{ if(!VOICE_REC&&document.activeElement!==VOICE_EL&&document.activeElement!==voiceBtn){ voiceBtn.hidden=true; } },150); });
 window.addEventListener('scroll',()=>voicePlace(),true); window.addEventListener('resize',()=>voicePlace());
+// Nach dem Neuzeichnen: Knopf nur am tatsächlich aktiven Textfeld, sonst ausblenden (kein „hängender“ Knopf)
+function voiceAfterRender(){ try{ if(VOICE_REC) return; const a=document.activeElement, wasShown=!voiceBtn.hidden;
+  if(wasShown&&VOICE_OK(a)){ VOICE_EL=a; voicePlace(); } else { VOICE_EL=null; voiceBtn.hidden=true; } }catch(e){} } // vor dem Laden des Diktat-Codes: nichts tun
+setInterval(()=>{ if(typeof voiceBtn==='undefined'||VOICE_REC||voiceBtn.hidden) return; const a=document.activeElement; if(!VOICE_EL||!document.body.contains(VOICE_EL)||a!==VOICE_EL) voiceAfterRender(); },800);
 voiceBtn.addEventListener('mousedown',e=>e.preventDefault()); // Fokus im Feld lassen
 voiceBtn.addEventListener('click',()=>{ VOICE_REC?voiceStop():voiceStart(); });
 function voiceLabel(t){ const f=t.closest('.fld,.info-f,label'); const l=f&&f.querySelector('label,span,.eyebrow'); return ((l&&l.textContent)||t.getAttribute('aria-label')||t.placeholder||'Text').trim().slice(0,80); }
