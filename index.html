@@ -631,6 +631,23 @@ details.pf:not([open])>summary{border-bottom:0}
 .meet-tx{width:100%;font-size:14px;line-height:1.5;resize:vertical}
 .mt-note{grid-template-columns:22px 220px minmax(0,1fr);align-items:start}
 @media (max-width:640px){ .mt-note{grid-template-columns:22px minmax(0,1fr)} .mt-note textarea{grid-column:2} }
+/* Notizen als Karten, Statusverlauf aufklappbar */
+.ps-stack{display:flex;flex-direction:column;gap:14px}
+.ps-notes{order:-1}
+.st-det>summary{cursor:pointer;list-style:none}.st-det>summary::-webkit-details-marker{display:none}
+.st-det>summary h3::before{content:'▸ ';color:var(--muted)}.st-det[open]>summary h3::before{content:'▾ '}
+.st-det:not([open]){padding-bottom:0}
+.st-det .ms{font-size:13px;padding:4px 0}
+.nb-eb{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.nb-list{display:flex;flex-direction:column;gap:10px}
+.nb-list .nb{display:block;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--sun);border-radius:12px;padding:10px 14px}
+.nb-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.nb-h b{font-family:var(--f-display);font-size:16.5px;letter-spacing:-.01em}
+.nb-h b.nb-auto{color:var(--muted);font-weight:500}
+.nb-meta{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.nb-h .nb-a{margin-left:auto;display:inline-flex;gap:2px}
+.nb-list .nb-t{font-size:15px;line-height:1.55;margin-top:4px;white-space:pre-wrap}
+.tu-sum{font-size:12.5px;color:var(--muted)}
 #printArea{display:none}
 @media print{
   .pr-land{page:land}
@@ -2075,10 +2092,11 @@ function agenda(items){
 // Updates direkt am To-Do: letztes Update sichtbar, alle per Klick aufklappbar
 function taskUpdInline(t){ const u=(t.upd2||[]).slice().sort((a,b)=>updKey(b).localeCompare(updKey(a))); if(!u.length) return '';
   const line=x=>`<div class="tu"><b class="mono">${esc(updStamp(x))}</b> <span class="who-chip">${esc(x.by||'?')}</span> ${esc(x.t)}</div>`;
-  return u.length===1?`<div class="tu-inl">${line(u[0])}</div>`:`<details class="tu-inl" data-stop="1"><summary>${line(u[0])}<span class="small muted">+ ${u.length-1} ältere Update${u.length>2?'s':''}</span></summary>${u.slice(1).map(line).join('')}</details>`; }
+  // zugeklappt nur eine kurze Zeile – Updates erst beim Aufklappen (neuestes oben)
+  return `<details class="tu-inl" data-stop="1"><summary><span class="tu-sum">💬 ${u.length} Update${u.length>1?'s':''} · zuletzt ${esc(updStamp(u[0]))} · ${esc(u[0].by||'?')}</span></summary>${u.map(line).join('')}</details>`; }
 function taskLi(t){  const late=t.due&&t.due<TODAY()&&!t.done;
   const bsel=UI.bulk&&['todos','pool'].includes(UI.view);
-  return `<div class="li ${t.done?'done':''} ${bsel&&SEL.has(t.id)?'sel':''}" data-drag="task:${t.id}">${bsel?`<input type="checkbox" class="sel-ck" data-chg="selTask" data-id="${t.id}" ${SEL.has(t.id)?'checked':''} aria-label="Auswählen: ${esc(t.title)}" title="Für Mehrfachbearbeitung auswählen">`:''}<input type="checkbox" class="ck" data-chg="toggleTask" data-id="${t.id}" ${t.done?'checked':''} aria-label="Erledigt"><div class="body clickable" data-act="editTask" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="mt">${t.ext?`<span class="pill ext-pill" title="Liegt extern">extern: ${esc(t.ext)}</span>`:''}${t.pid?`<span>${esc(projName(t.pid))}</span>`:''}${t.due?`<span class="${late?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?`<span class="pill ${PRIO[t.prio][2]}">${PRIO[t.prio][0]}</span>`:''}${t.pool?'<span class="pill">allgemein</span>':''}${(t.upd2||[]).length?`<span class="pill upd-pill" title="Letztes Update: ${esc(t.upd2[t.upd2.length-1].t)}">💬 ${t.upd2.length} · ${esc(fmtD(t.upd2.slice().sort((a,b)=>updKey(b).localeCompare(updKey(a)))[0].d).slice(0,6))}</span>`:''}${t.by&&t.by!=='?'?`<span class="by-line">angelegt ${esc(t.by)} ${esc(fmtD((t.at||'').slice(0,10)).slice(3))}</span>`:''}${t.done?`<span class="done-by">✓ erledigt von <b>${esc(t.doneBy||t.updBy||'?')}</b>${t.doneAt?' · '+esc(stampTxt(t.doneAt)):''}${t.doneNote?' – '+esc(t.doneNote):''}</span>`:''}</div>${taskUpdInline(t)}</div>
+  return `<div class="li ${t.done?'done':''} ${bsel&&SEL.has(t.id)?'sel':''}" data-drag="task:${t.id}">${bsel?`<input type="checkbox" class="sel-ck" data-chg="selTask" data-id="${t.id}" ${SEL.has(t.id)?'checked':''} aria-label="Auswählen: ${esc(t.title)}" title="Für Mehrfachbearbeitung auswählen">`:''}<input type="checkbox" class="ck" data-chg="toggleTask" data-id="${t.id}" ${t.done?'checked':''} aria-label="Erledigt"><div class="body clickable" data-act="editTask" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="mt">${t.ext?`<span class="pill ext-pill" title="Liegt extern">extern: ${esc(t.ext)}</span>`:''}${t.pid?`<span>${esc(projName(t.pid))}</span>`:''}${t.due?`<span class="${late?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?`<span class="pill ${PRIO[t.prio][2]}">${PRIO[t.prio][0]}</span>`:''}${t.pool?'<span class="pill">allgemein</span>':''}${t.by&&t.by!=='?'?`<span class="by-line">angelegt ${esc(t.by)} ${esc(fmtD((t.at||'').slice(0,10)).slice(3))}</span>`:''}${t.done?`<span class="done-by">✓ erledigt von <b>${esc(t.doneBy||t.updBy||'?')}</b>${t.doneAt?' · '+esc(stampTxt(t.doneAt)):''}${t.doneNote?' – '+esc(t.doneNote):''}</span>`:''}</div>${taskUpdInline(t)}</div>
     <select class="who-sel ${t.who?'':'none'}" data-chg="taskWho" data-id="${t.id}" aria-label="Zuständig für: ${esc(t.title)}" title="Zuständigkeit ändern"><option value="">– niemand –</option>${[...new Set([...staff().map(s=>s.name),...(t.who?[t.who]:[])])].map(n=>`<option value="${esc(n)}" ${n===t.who?'selected':''}>${esc(n.replace(/\s*\(([^)]*)\)$/,' · $1'))}</option>`).join('')}<option value="__ext">→ liegt extern …</option>${t.ext?'<option value="__int">→ wieder intern</option>':''}</select>${isAdmin()?`<button type="button" class="icon-btn task-del" title="Aufgabe löschen" aria-label="Aufgabe löschen: ${esc(t.title)}" data-act="taskDel" data-id="${t.id}">${ic('x')}</button>`:''}</div>`;
 }
 
@@ -2202,11 +2220,13 @@ function projPhaseNav(pr){
 function projStatus(p){
   const ms=p.ms||{}, pp=pipe(p);
   const adm=isAdmin();
+  // Notizen als Karten: Überschrift (von Claude), Datum/Uhrzeit/Kürzel, Text – neueste oben
+  if(SAMPLE) setTimeout(()=>noteHeadsFill(p.id),400);
   const txt=(l,v,k)=>{ if(!v) return '';
-    if(!adm) return `<div><div class="eyebrow" style="margin-bottom:4px">${l}</div><div class="longtext">${esc(v)}</div></div>`;
-    const blocks=noteBlocks(v);
-    return `<div><div class="eyebrow" style="margin-bottom:4px;display:flex;justify-content:space-between;align-items:center"><span>${l}</span><button class="btn ghost sm" data-act="editNoteAll" data-pid="${p.id}" data-k="${k}">${ic('edit')}Ganzen Text bearbeiten</button></div>
-      <div class="longtext nb-list">${blocks.map((b,i)=>`<div class="nb"><div class="nb-t">${esc(b)}</div><div class="nb-a"><button class="icon-btn" title="Eintrag bearbeiten" data-act="editNoteBlock" data-pid="${p.id}" data-k="${k}" data-i="${i}">${ic('edit')}</button><button class="icon-btn" title="Eintrag löschen" data-act="delNoteBlock" data-pid="${p.id}" data-k="${k}" data-i="${i}">${ic('x')}</button></div></div>`).join('')}</div></div>`; };
+    const blocks=noteBlocks(v).map((b,i)=>({b,i})).reverse();
+    return `<div><div class="eyebrow nb-eb"><span>${l} · ${blocks.length}</span>${adm?`<button class="btn ghost sm" data-act="editNoteAll" data-pid="${p.id}" data-k="${k}">${ic('edit')}Ganzen Text bearbeiten</button>`:''}</div>
+      <div class="nb-list">${blocks.map(({b,i})=>{ const nb=noteParts(b), hd=noteHead(p,b);
+        return `<div class="nb"><div class="nb-h"><b class="${hd.ai?'':'nb-auto'}">${esc(hd.t)}</b><span class="nb-meta">${esc([nb.d,nb.tm,nb.by].filter(Boolean).join(' · '))}</span>${adm?`<span class="nb-a"><button class="icon-btn" title="Eintrag bearbeiten" data-act="editNoteBlock" data-pid="${p.id}" data-k="${k}" data-i="${i}">${ic('edit')}</button><button class="icon-btn" title="Eintrag löschen" data-act="delNoteBlock" data-pid="${p.id}" data-k="${k}" data-i="${i}">${ic('x')}</button></span>`:''}</div><div class="nb-t">${esc(shortMailRefs(nb.text))}</div></div>`; }).join('')}</div></div>`; };
   // „Wer macht gerade was“: To-Do mit dem neuesten Update (oder zuletzt angelegt) oben
   const nw=nowOf(p), tasks=openTasks(p.id).sort((a,b)=>taskActKey(b).localeCompare(taskActKey(a))), active=['planung','laufend'].includes(catOf(p));
   const nxTask=pp.next&&arr('tasks').find(t=>t.pid===p.id&&t.ms===pp.next&&!t.done);
@@ -2222,8 +2242,8 @@ function projStatus(p){
         <button class="btn sm" data-act="doneNext" data-pid="${p.id}">Als erledigt markieren</button></div>`:`<div class="small muted">${active?'Alle Pflichtschritte erledigt (100 %).'+(pp.opt?' Optional: '+esc(PIPE_DO[pp.optStep-1])+' – im Statusverlauf abhaken, falls vereinbart.':''):'Projekt ist '+esc(CATS[catOf(p)])+'.'}</div>`}</div>
   </div>
   ${slimDrop(p.id)}
-  <div class="grid2" style="align-items:start">
-   <div class="card"><div class="card-h"><h3>Statusverlauf</h3><span class="small muted">Haken setzt das heutige Datum · Datum anpassbar · ⊘ = Schritt entfällt bei diesem Projekt</span></div>
+  <div class="ps-stack">
+   <details class="card st-det" ${UI.stOpen?'open':''} data-stdet="1"><summary class="card-h"><h3>Statusverlauf <span class="mono small muted">${pp.work}/${pp.total}</span></h3><span class="small muted">aufklappen · Haken setzt das heutige Datum · ⊘ = Schritt entfällt</span></summary>
     <div class="flow-pick"><label for="flow_${p.id}">Projektart / Ablauf</label><select id="flow_${p.id}" class="inp" data-chg="projFlow" data-pid="${p.id}">${Object.entries(FLOWS).map(([k,f])=>`<option value="${k}" ${k===flowId(p)?'selected':''}>${esc(f.n)}</option>`).join('')}</select></div>
     ${flowOf(p).st.map(([n,steps])=>{ let h=''; const sk=p.skip||{}; for(const i of steps){ const v=ms['m'+i]||'', isDate=/^\d{4}-\d{2}-\d{2}$/.test(v), isOpt=pp.flow.opt.includes(i);
       if(sk['m'+i]){ h+=`<div class="ms off"><span></span><span class="lb">${esc(PIPE[i-1])} <span class="small muted">· entfällt</span></span><button type="button" class="btn ghost sm" data-act="msSkip" data-pid="${p.id}" data-i="${i}" data-v="0">wieder aufnehmen</button></div>`; continue; }
@@ -2232,8 +2252,8 @@ function projStatus(p){
       return `<div class="stage"><h4><span>${n}</span><span class="mono">${done}/${act.length}</span></h4>${h}</div>`; }).join('')}
     ${(()=>{ const inFlow=new Set(flowOf(p).st.flatMap(s=>s[1])); const extra=Object.keys(ms).map(k=>+k.slice(1)).filter(i=>i&&!inFlow.has(i)&&i<30).sort((a,b)=>a-b);
       return extra.length?`<div class="stage"><h4><span>Aus früherem Ablauf / Excel</span><span class="mono">${extra.length}</span></h4>${extra.map(i=>`<div class="ms"><input type="checkbox" class="ck" data-chg="msCheck" data-pid="${p.id}" data-i="${i}" checked aria-label="${esc(PIPE[i-1])}"><span class="lb">${esc(PIPE[i-1])} <span class="small muted">· zählt nicht zum Ablauf</span></span><span class="small muted">${esc(msVal(ms['m'+i]))}</span></div>`).join('')}</div>`:''; })()}
-   </div>
-   <div class="card"><div class="card-h"><h3>Notizen & Updates</h3></div><div class="card-b" style="display:flex;flex-direction:column;gap:14px">
+   </details>
+   <div class="card ps-notes"><div class="card-h"><h3>Notizen & Updates</h3><span class="small muted">neueste oben · Überschriften fasst Claude automatisch zusammen</span></div><div class="card-b" style="display:flex;flex-direction:column;gap:14px">
     <div class="quick-note"><textarea id="qn_${p.id}" placeholder="Neue Notiz schreiben … (wird mit Datum und Kürzel ${esc(meK())} angehängt, Strg+Enter speichert)" aria-label="Neue Notiz">${esc(QN[p.id]||'')}</textarea>
       <div class="row"><select class="catsel" id="qnf_${p.id}" aria-label="Ablegen unter"><option value="updates">als Update</option><option value="notes">als Notiz</option><option value="questions">als offene Frage</option></select><span class="spacer"></span><button class="btn pri sm" data-act="quickNote" data-pid="${p.id}">Speichern</button></div></div>
     ${txt('Auftrag Inhalt',p.scope,'scope')}${txt('Zu klärende Fragen',p.questions,'questions')}${txt('Notizen',p.notes,'notes')}${txt('Updates',p.updates,'updates')}${todoUpdBlock(p)}${adm?'<div class="small muted">Als Admin (EP, AvE) kannst du jeden Eintrag bearbeiten oder löschen. Jede Änderung steht im Verlauf.</div>':''}
@@ -2267,6 +2287,28 @@ function saveNote(pid,f,text){
 // Zeitstempel fuer neue Eintraege: TT.MM.JJ HH:MM
 const nowStamp=()=>{ const d=new Date(), p=n=>String(n).padStart(2,'0'); return p(d.getDate())+'.'+p(d.getMonth()+1)+'.'+String(d.getFullYear()).slice(2)+' '+p(d.getHours())+':'+p(d.getMinutes()); };
 const noteTime=s=>{ const m=String(s).match(/^(\d{1,2}:\d{2})\s*/); return m?{tm:m[1].padStart(5,'0'),rest:s.slice(m[0].length)}:{tm:'',rest:s}; };
+// Notiz-Eintrag zerlegen: Datum, Uhrzeit, Kürzel, Text
+function noteParts(b){ const m=String(b).match(/^\s*(\d{1,2}\.\d{1,2}\.(?:\d{2,4})?)\s*:?\s*([\s\S]*)$/); if(!m) return {d:'',tm:'',by:'',text:String(b).trim()};
+  const nt=noteTime(m[2]), by=(nt.rest.match(/^\(([^)]{1,12})\)\s*:?\s*/)||[])[1]||''; return {d:m[1],tm:nt.tm,by,text:nt.rest.replace(/^\([^)]{1,12}\)\s*:?\s*/,'').trim()}; }
+const strHash=s=>{ let h=0; s=String(s); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0; return 'h'+(h>>>0).toString(36); };
+// Überschrift je Eintrag: von Claude (p.noteHeads, am Text-Hash), sonst vorläufig die ersten Wörter
+function noteHead(p,b){ const h=(p.noteHeads||{})[strHash(noteParts(b).text)]; if(h) return {t:h,ai:true};
+  const w=shortMailRefs(noteParts(b).text).replace(/^✓ Erledigt:\s*/,'Erledigt: ').split(/\s+/).filter(Boolean); return {t:w.slice(0,5).join(' ')+(w.length>5?' …':''),ai:false}; }
+const NH_RUN={}, NH_TRIED={};
+async function noteHeadsFill(pid){
+  const p=S.projects[pid]; if(!p||!SAMPLE||NH_RUN[pid]) return; const have=p.noteHeads||{};
+  const todo=[...new Set(['updates','notes','questions'].flatMap(k=>noteBlocks(p[k]).map(b=>noteParts(b).text)).filter(t=>t&&t.length>3&&!have[strHash(t)]&&!NH_TRIED[strHash(t)]))].slice(0,40); if(!todo.length) return;
+  NH_RUN[pid]=true; todo.forEach(t=>NH_TRIED[strHash(t)]=1); // pro Sitzung nur einmal versuchen
+  try{ const r=await SAMPLE.json(`Gib jedem Notiz-Eintrag aus einem Solar-Projekt („${p.name}“) eine kurze, aussagekräftige Überschrift mit 2 bis 5 Wörtern (z. B. „Zählerschrank verdrahtet“, „Netzbetreiber-Frist läuft“, „Termin Kran geklärt“). Keine Namen von Personen, kein Datum.\n${todo.map((t,i)=>(i+1)+'. '+t.slice(0,600)).join('\n')}\nAntworte nur mit JSON in derselben Reihenfolge: {"h":["…","…"]}`,{modelTier:'quick'});
+    const heads={...((S.projects[pid]||{}).noteHeads||{})}; (r&&Array.isArray(r.h)?r.h:[]).forEach((h,i)=>{ if(todo[i]&&String(h||'').trim()) heads[strHash(todo[i])]=String(h).trim().slice(0,60); });
+    if(S.projects[pid]) S.projects[pid].noteHeads=heads; if(MODE==='cloud'&&DB&&mayWrite('projects')) DB.collection('projects').doc(pid).update({noteHeads:heads}).catch(()=>{}); scheduleRender(); }
+  catch(e){} finally{ NH_RUN[pid]=false; }
+}
+// Absender kurz: Mitarbeiter als Kürzel („Mail von HH“), sonst nur der Name ohne Firma/Adresse
+function mailFromShort(from){ const s=String(from||''), em=(s.match(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/)||[])[0]||'';
+  const n=staffByEmail(em)||(staff().find(x=>{ const nm=x.name.replace(/\s*\([^)]*\)$/,'').toLowerCase(); return nm&&s.toLowerCase().includes(nm); })||{}).name; if(n) return shortWho(n);
+  return s.replace(/<[^>]*>/g,'').replace(em,'').split('|')[0].replace(/["']/g,'').trim()||em.split('@')[0]; }
+const shortMailRefs=t=>String(t||'').replace(/Mail von ([^:\n]{3,160}?):/g,(m,f)=>'Mail von '+mailFromShort(f)+':');
 function noteBlocks(v){
   const out=[]; String(v||'').split('\n').forEach(line=>{ if(/^\s*\d{1,2}\.\d{1,2}\.(\d{2,4})?/.test(line)||!out.length) out.push(line); else out[out.length-1]+='\n'+line; });
   return out.map(b=>b.replace(/\s+$/,'')).filter(b=>b.trim());
@@ -4322,7 +4364,7 @@ Object.assign(CHG,{
  poolGive:(d,el)=>{ if(!el.value) return; const t=clone(S.tasks[d.id]); if(!t) return; t.who=el.value; put('tasks',t); toast('Zugewiesen an '+shortWho(el.value)+'.'); },
  ckNote:(d,el)=>{ const p=clone(S.projects[d.pid]); if(!p) return; const v=el.value.trim(); p.checkNotes={...(p.checkNotes||{})}; if(v) p.checkNotes[d.iid]=v; else delete p.checkNotes[d.iid]; put('projects',p); },
 });
-document.addEventListener('toggle',e=>{ const d=e.target; if(d&&d.dataset&&d.dataset.pf){ UI.pfOpen={...(UI.pfOpen||{}),[d.dataset.pf]:d.open}; } },true);
+document.addEventListener('toggle',e=>{ const d=e.target; if(d&&d.dataset&&d.dataset.stdet){ UI.stOpen=d.open; } if(d&&d.dataset&&d.dataset.pf){ UI.pfOpen={...(UI.pfOpen||{}),[d.dataset.pf]:d.open}; } },true);
 
 
 /* ========== To-Dos aus E-Mails: Mail ablegen → KI erkennt Projekt, Aufgaben und Zuständige ========== */
@@ -4422,7 +4464,7 @@ function showMailTodos(m,pid,why,todos,summary,files,text){
     onSave:()=>{ const made=[], upd=[];
       document.querySelectorAll('#mt_list .mt-row').forEach(row=>{ const g=s=>row.querySelector('[id^="mt_'+s+'"]'); if(!g('c').checked) return; const title=g('t').value.trim(); if(!title) return; const p=g('p').value;
         const relBox=row.querySelector('.mt-rel'), act=relBox?g('a').value:'neu';
-        if(relBox&&act!=='neu'&&S.tasks[relBox.dataset.rel]){ const x=clone(S.tasks[relBox.dataset.rel]); const info=title+(isMail?' (Mail'+(m.from?' von '+m.from.replace(/\s*<[^>]*>/,''):'')+(m.subject?': '+m.subject:'')+')':'');
+        if(relBox&&act!=='neu'&&S.tasks[relBox.dataset.rel]){ const x=clone(S.tasks[relBox.dataset.rel]); const info=title+(isMail?' (Mail'+(m.from?' von '+mailFromShort(m.from):'')+(m.subject?': '+m.subject:'')+')':'');
           x.upd2=[...(x.upd2||[]),{d:TODAY(),by:meK(),t:info.slice(0,400),at:new Date().toISOString()}]; const pr=(g('r')||{}).value; if(pr&&PRIO[pr]&&PRIO[pr][1]>prioN(x)) x.prio=pr; if(!x.due&&g('d').value) x.due=g('d').value; if(!x.who&&g('w').value) x.who=g('w').value;
           if(act==='erledigt'){ x.done=true; x.doneAt=new Date().toISOString(); x.doneBy=meK(); x.doneNote=info.slice(0,300); }
           put('tasks',x); upd.push({...x,_act:act}); return; }
@@ -4432,7 +4474,7 @@ function showMailTodos(m,pid,why,todos,summary,files,text){
       if(isMail&&$('#mt_file').checked) ingestFiles(m.file?[m.file]:[],m.file?'':text,mailPid);
       if($('#mt_note').checked){ const d0=new Date(), stamp=nowStamp();
         [...new Set(made.concat(upd).map(t=>t.pid).filter(Boolean))].forEach(pp=>{ if(!S.projects[pp]) return; const p=clone(S.projects[pp]), mine=made.filter(t=>t.pid===pp), mu=upd.filter(t=>t.pid===pp);
-          p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+stamp+' ('+meK()+'): '+(isMail?'Mail'+(m.from?' von '+m.from.replace(/\s*<[^>]*>/,''):'')+': '+(m.subject||'')+' → ':'')+[mine.length?'To-Do: '+mine.map(t=>t.title+(t.who?' ('+shortWho(t.who)+')':'')).join('; '):'',mu.length?'Update zu: '+mu.map(t=>t.title+(t._act==='erledigt'?' ✓ erledigt':'')).join('; '):''].filter(Boolean).join(' · '); delete p.now; delete p.nowD; put('projects',p); }); }
+          p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+stamp+' ('+meK()+'): '+(isMail?'Mail'+(m.from?' von '+mailFromShort(m.from):'')+': '+(m.subject||'')+' → ':'')+[mine.length?'To-Do: '+mine.map(t=>t.title+(t.who?' ('+shortWho(t.who)+')':'')).join('; '):'',mu.length?'Update zu: '+mu.map(t=>t.title+(t._act==='erledigt'?' ✓ erledigt':'')).join('; '):''].filter(Boolean).join(' · '); delete p.now; delete p.nowD; put('projects',p); }); }
       const np=new Set(made.concat(upd).map(t=>t.pid).filter(Boolean)).size;
       const parts=[]; if(made.length) parts.push(made.length+' To-Do'+(made.length>1?'s':'')+' angelegt'); if(upd.length) parts.push(upd.length+' bestehende'+(upd.length>1?'':'s')+' aktualisiert'+(upd.some(t=>t._act==='erledigt')?' ('+upd.filter(t=>t._act==='erledigt').length+' erledigt)':'')); toast(parts.length?parts.join(' · ')+(np?' · '+np+' Projekt'+(np>1?'e':''):''):'Nichts übernommen.'); }});
 }
