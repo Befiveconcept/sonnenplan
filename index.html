@@ -1554,11 +1554,18 @@ function del(coll,id){
 // Wer bin ich? (einmal pro Konto, gemerkt in config.userMap und im Browser)
 // Anmeldung: jede Person ist mit ihrem eigenen claude.ai-Konto (E-Mail + Passwort) drin; das Konto wird beim ersten Mal
 // fest mit einem Mitarbeiter verknüpft. Danach kein Wechsel mehr – nur EP/AvE können eine Verknüpfung lösen.
-const locked = ()=>MODE==='cloud'&&!!USER_ID&&!!((S.config||{}).userMap||{})[USER_ID];
+// Eigenständige Version (Supabase): Mitarbeiter ergibt sich direkt aus der Login-E-Mail –
+// eingetragene E-Mail beim Mitarbeiter, sonst Kürzel vor dem @ (ep@… → EP, ave@… → AvE)
+let USER_EMAIL='', NOMATCH_SHOWN=false;
+function staffByEmail(email){ const e=String(email||'').trim().toLowerCase(); if(!e) return null; const local=e.split('@')[0];
+  const s=staff().find(s=>String(s.email||'').trim().toLowerCase()===e)||staff().find(s=>shortWho(s.name).toLowerCase()===local);
+  return s?s.name:null; }
+const locked = ()=>MODE==='cloud'&&!!USER_ID&&(!!USER_EMAIL||!!((S.config||{}).userMap||{})[USER_ID]);
 function askMe(force){
   if((ME_ASKED&&!force)||!staff().length) return; ME_ASKED=true;
   const map=(S.config||{}).userMap||{}, taken=new Set(Object.entries(map).filter(([id])=>id!==USER_ID).map(([,n])=>n));
-  if(locked()){ setTimeout(()=>openSheet({title:'Angemeldet als '+shortWho(ME),html:`<div class="fld full">Dein claude.ai-Konto ist fest mit <b>${esc(ME)}</b> verknüpft. Ein Wechsel auf eine andere Person ist nicht möglich.<div class="small muted" style="margin-top:8px">Falsch zugeordnet? EP oder AvE können die Verknüpfung unter „Team & Einstellungen“ lösen.</div></div>`,saveLabel:'OK',onSave:()=>{}}),SHEET?600:0); return; }
+  if(USER_EMAIL&&!ME) return;
+  if(locked()){ setTimeout(()=>openSheet({title:'Angemeldet als '+shortWho(ME),html:`<div class="fld full">${USER_EMAIL?`Angemeldet mit <b>${esc(USER_EMAIL)}</b> – das ist`:'Dein claude.ai-Konto ist fest mit'} <b>${esc(ME)}</b>${USER_EMAIL?'.':' verknüpft.'} Ein Wechsel auf eine andere Person ist nicht möglich.<div class="small muted" style="margin-top:8px">Falsch zugeordnet? EP oder AvE können die Verknüpfung unter „Team & Einstellungen“ lösen.</div></div>`,saveLabel:'OK',onSave:()=>{}}),SHEET?600:0); return; }
   setTimeout(()=>openSheet({title:'Wer bist du?',html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Einmalig: Dein claude.ai-Konto wird fest mit deinem Namen verknüpft. Danach ist jede Änderung mit deinem Kürzel nachvollziehbar – und niemand kann sich als jemand anderes ausgeben.</div><div class="me-list">${staff().map(s=>{ const t=taken.has(s.name); return `<label class="me-opt ${t?'taken':''}"><input type="radio" name="meSel" value="${esc(s.name)}" ${s.name===ME&&!t?'checked':''} ${t?'disabled':''}><span>${esc(s.name)}${t?' <span class="small muted">· bereits verknüpft</span>':''}</span></label>`; }).join('')}</div></div>`,saveLabel:'Verknüpfen',
     onSave:()=>{ const v=(document.querySelector('input[name=meSel]:checked')||{}).value; if(!v){ toast('Bitte deinen Namen wählen.'); return false; } setMe(v); }}),SHEET?600:0);
 }
@@ -1568,9 +1575,13 @@ function setMe(name){
     if(Object.entries(map).some(([id,n])=>id!==USER_ID&&n===name)){ toast(name+' ist bereits mit einem anderen Konto verknüpft.'); return; }
     if(map[USER_ID]!==name){ map[USER_ID]=name; putConfig({...(S.config||{}),userMap:map}); } }
   ME=name; lsSet('sonnenplan-me',name); toast('Angemeldet als '+shortWho(name)+'.'); scheduleRender(); }
-function applyUserMap(){ if(MODE!=='cloud'||!USER_ID) return; const m=(S.config||{}).userMap||{}; const n=m[USER_ID]||null; if(n!==ME){ ME=n; if(n) lsSet('sonnenplan-me',n); scheduleRender(); } if(!n&&S.config) askMe(); }
+function applyUserMap(){ if(MODE!=='cloud'||!USER_ID) return;
+  if(USER_EMAIL){ if(!S.config) return; const n=staffByEmail(USER_EMAIL); if(n!==ME){ ME=n; if(n) lsSet('sonnenplan-me',n); scheduleRender(); }
+    if(!n&&!NOMATCH_SHOWN&&staff().length){ NOMATCH_SHOWN=true; setTimeout(()=>openSheet({title:'Konto keinem Mitarbeiter zugeordnet',html:`<div class="fld full">Die Anmeldung <b>${esc(USER_EMAIL)}</b> passt zu keinem Mitarbeiter: Das Kürzel vor dem @ stimmt mit keinem Kürzel überein.<div class="small muted" style="margin-top:8px">EP oder AvE tragen die E-Mail unter „Team & Einstellungen“ beim Mitarbeiter ein. Bis dahin werden Änderungen ohne Kürzel gespeichert.</div></div>`,saveLabel:'OK',onSave:()=>{}}),600); }
+    return; }
+  const m=(S.config||{}).userMap||{}; const n=m[USER_ID]||null; if(n!==ME){ ME=n; if(n) lsSet('sonnenplan-me',n); scheduleRender(); } if(!n&&S.config) askMe(); }
 async function initMe(){
-  try{ const u=await window.claude.use('user'); if(u){ const me=await u.me(); USER_ID=me.id||null; } }catch(e){}
+  try{ const u=await window.claude.use('user'); if(u){ const me=await u.me(); USER_ID=me.id||null; USER_EMAIL=me.email||''; } }catch(e){}
   if(MODE==='cloud'&&USER_ID){ ME=null; applyUserMap(); setTimeout(applyUserMap,2500); subscribePriv(); return; }
   setTimeout(()=>{ if(!ME) askMe(); },2500);
 }
@@ -2481,7 +2492,7 @@ function vSettings(){
   const st=staff(), ex=COLLS.some(c=>arr(c).some(x=>x.example));
   return head('Team & Einstellungen','')+
   `<div class="card"><div class="card-h"><h3>Mitarbeiter</h3><button class="btn sm" data-act="addStaff">${ic('plus')}Mitarbeiter</button></div>
-   <div class="list">${st.map((s,i)=>`<div class="li"><div class="body"><div class="tt">${esc(s.name)}</div><div class="mt"><span>${esc(ROLES[s.role]||s.role||'')}</span><span>${arr('tasks').filter(t=>!t.done&&t.who===s.name).length} offene To-Dos</span></div></div><button class="icon-btn" data-act="editStaff" data-i="${i}" aria-label="Bearbeiten">${ic('edit')}</button></div>`).join('')||'<div class="empty">Noch keine Mitarbeiter. Namen erscheinen danach als Auswahl bei To-Dos, Projektleitung und Warenannahme.</div>'}</div></div>
+   <div class="list">${st.map((s,i)=>`<div class="li"><div class="body"><div class="tt">${esc(s.name)}</div><div class="mt"><span>${esc(ROLES[s.role]||s.role||'')}</span><span>${arr('tasks').filter(t=>!t.done&&t.who===s.name).length} offene To-Dos</span>${USER_EMAIL?`<span class="mono small">Login: ${esc(s.email||shortWho(s.name).toLowerCase()+'@…')}</span>`:''}</div></div><button class="icon-btn" data-act="editStaff" data-i="${i}" aria-label="Bearbeiten">${ic('edit')}</button></div>`).join('')||'<div class="empty">Noch keine Mitarbeiter. Namen erscheinen danach als Auswahl bei To-Dos, Projektleitung und Warenannahme.</div>'}</div></div>
   ${isAdmin()?`<div class="card"><div class="card-h"><h3>Anmeldungen (Konto ↔ Mitarbeiter)</h3><span class="small muted">Jedes claude.ai-Konto ist fest einer Person zugeordnet. Lösen, wenn jemand falsch verknüpft ist.</span></div>
     <div class="list">${Object.entries((S.config||{}).userMap||{}).map(([id,n])=>`<div class="li"><div class="body"><div class="tt">${esc(n)}</div><div class="mt"><span class="mono small">Konto …${esc(id.slice(-6))}</span>${id===USER_ID?'<span class="pill sun">du</span>':''}</div></div>${id===USER_ID?'':`<button class="btn sm" data-act="unlinkUser" data-id="${esc(id)}">Verknüpfung lösen</button>`}</div>`).join('')||'<div class="empty">Noch keine Konten verknüpft.</div>'}</div></div>`:''}
   <div class="card"><div class="card-h"><h3>Daten</h3></div><div class="card-b" style="display:flex;flex-direction:column;gap:10px">
@@ -2791,8 +2802,8 @@ function printReport(r){
 }
 function staffForm(i){
   const list=clone(staff()), s=i!=null?list[i]:{name:'',role:'PL'};
-  openSheet({title:i!=null?'Mitarbeiter bearbeiten':'Neuer Mitarbeiter',value:s,fields:[{k:'name',label:'Name',req:1},{k:'role',label:'Rolle',type:'select',options:Object.entries(ROLES)}],
-    onSave:v=>{ if(i!=null) list[i]=v; else list.push(v); putConfig({...(S.config||{}),staff:list}); },
+  openSheet({title:i!=null?'Mitarbeiter bearbeiten':'Neuer Mitarbeiter',value:s,fields:[{k:'name',label:'Name',req:1,ph:'z. B. Pascal Rütt (PR) – Kürzel in Klammern'},{k:'role',label:'Rolle',type:'select',options:Object.entries(ROLES)},{k:'email',label:'Login-E-Mail (nur nötig, wenn sie nicht mit dem Kürzel beginnt)',type:'email',full:1,ph:'z. B. pascal.ruett@nutz-die-sonne.de'}],
+    onSave:v=>{ v.email=String(v.email||'').trim().toLowerCase(); if(!v.email) delete v.email; if(i!=null) list[i]=v; else list.push(v); putConfig({...(S.config||{}),staff:list}); },
     onDelete:i==null?null:()=>{ list.splice(i,1); putConfig({...(S.config||{}),staff:list}); closeSheet(); }});
 }
 function formSheet(pid,k){
