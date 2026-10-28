@@ -756,6 +756,12 @@ details.pf:not([open])>summary{border-bottom:0}
 .dy-tk{margin-top:4px}
 .dy-sum{font-size:14.5px;line-height:1.5;margin:2px 0 2px}
 .dy-sum ul{margin:2px 0;padding-left:18px}
+.dy-st{margin-left:auto;display:inline-flex;align-items:center;gap:4px}
+.dy-st .icon-btn{width:26px;height:26px;opacity:.55}.dy:hover .dy-st .icon-btn,.dy-st .icon-btn:focus-visible{opacity:1}
+.dy-ai{font-size:13px}
+.dy-ok{color:#2e9e4f;font-weight:800;font-size:15px}
+.dy-spin{display:inline-block;width:13px;height:13px;border:2px solid var(--line);border-top-color:var(--sun);border-radius:50%;animation:dyspin .8s linear infinite}
+@keyframes dyspin{to{transform:rotate(360deg)}}
 .ps-drop{margin-bottom:12px}.ps-drop .dropz.slim{padding:6px 12px;min-height:0}
 .dy-tog{font-size:12.5px;font-weight:600;color:#7a6a00;padding:0}
 .dy-link{margin-top:4px!important;padding:2px 0 2px 10px!important}
@@ -5323,8 +5329,11 @@ function dyCard(p,x,adm){
   if(x.d>=DY_SUM_FROM){
     const kd='d'+p.id+x.d, cnt=[notes.length?notes.length+' Notiz'+(notes.length>1?'en':''):'',sum?'To-Dos: '+sum:'',x.links.length?x.links.length+' verknüpft':''].filter(Boolean).join(' · ');
     const s=hd&&hd.s||''; // bis die neue Fassung da ist, bleibt die letzte stehen
-    return `<div class="nb dy" ${drop}>${head}
-      <div class="dy-sum">${s?aicMd(s):`<span class="muted">${SAMPLE&&DY_RUN[p.id]?'✨ Zusammenfassung wird erstellt …':esc(x.items.map(dyPlain).join(' · ').slice(0,220))}</span>`}</div>
+    // Status: Rädchen = KI arbeitet, grüner Haken = fertig; ✎ = selbst bearbeiten, ✨ = KI fasst den Tag neu zusammen
+    const busy=!!(DY_BUSY&&DY_BUSY.has(p.id+'|'+x.d)), st=`<span class="dy-st">${busy?'<span class="dy-spin" title="KI erstellt die Zusammenfassung …"></span>':s?`<span class="dy-ok" title="${hd.man?'Von Hand bearbeitet':'KI-Zusammenfassung fertig'}">✓</span>${hd.man?'<span class="small muted">bearbeitet</span>':''}`:''}
+      <button type="button" class="icon-btn" title="Zusammenfassung selbst bearbeiten" data-act="dySumEdit" data-pid="${p.id}" data-d="${x.d}">${ic('edit')}</button>${SAMPLE?`<button type="button" class="icon-btn dy-ai" title="KI: Tag neu zusammenfassen" data-act="dySumAi" data-pid="${p.id}" data-d="${x.d}" ${busy?'disabled':''}>✨</button>`:''}</span>`;
+    return `<div class="nb dy" ${drop}>${head.replace(/<\/div>$/,st+'</div>')}
+      <div class="dy-sum">${s?aicMd(s):`<span class="muted">${busy?'Zusammenfassung wird erstellt …':esc(x.items.map(dyPlain).join(' · ').slice(0,220))}</span>`}</div>
       <div class="dy-tk">${dyTog(kd,'Details: '+cnt)}${dyIsOpen(kd)?`<div class="dy-list" style="margin-top:6px">${x.items.map(e=>dyItem(p,e,adm)).join('')}</div>${x.links.map(t=>dyLink(p,t,x.d)).join('')}`:''}</div></div>`;
   }
   return `<div class="nb dy" ${drop}>${head}
@@ -5341,15 +5350,21 @@ function projVerlauf(p,adm){
       ${p.questions?`<div><div class="eyebrow nb-eb"><span>Zu klärende Fragen</span></div><div class="longtext">${esc(p.questions)}</div></div>`:''}${p.scope?`<div><div class="eyebrow nb-eb"><span>Auftrag Inhalt</span></div><div class="longtext">${esc(p.scope)}</div></div>`:''}</div></details>`:''}`;
 }
 // Claude: kurze Überschrift je Tag (im Hintergrund, ohne Sonne)
-var DY_RUN={}, DY_TRIED={}; // var: wird schon beim ersten Zeichnen gelesen
+var DY_RUN={}, DY_TRIED={}, DY_BUSY=new Set(); // var: wird schon beim ersten Zeichnen gelesen; DY_BUSY = Tage, die gerade zusammengefasst werden
 const DY_SUM_V=2; // Version der Zusammenfassung: höher setzen → neue Tage werden neu zusammengefasst
-async function diaryHeads(pid){
+async function diaryHeads(pid,forceD){
   const p=S.projects[pid]; if(!p||!SAMPLE||DY_RUN[pid]) return; const hd=p.dayHeads||{};
-  // neue Tage (mit Zusammenfassung) zuerst und allein – kleine Anfrage, schnelle Antwort; alte Überschriften danach
-  const need=diaryDays(p).filter(x=>x.d&&x.items.length).map(x=>({x,h:dyHash(x)})).filter(({x,h})=>{ const o=hd[x.d]||{}; return (o.h!==h||(x.d>=DY_SUM_FROM&&(!o.s||(o.v||1)<DY_SUM_V)))&&!DY_TRIED[pid+x.d+h+DY_SUM_V]; });
+  if(forceD){ const x=diaryDays(p).find(y=>y.d===forceD); if(x&&x.items.length) return diaryRun(p,[{x,h:dyHash(x)}]); return; }
+  // neue Tage (mit Zusammenfassung) zuerst und allein – kleine Anfrage, schnelle Antwort; alte Überschriften danach.
+  // Von Hand bearbeitete Tage (man) fasst die KI nur auf Knopfdruck (✨) neu zusammen.
+  const need=diaryDays(p).filter(x=>x.d&&x.items.length).map(x=>({x,h:dyHash(x)})).filter(({x,h})=>{ const o=hd[x.d]||{}; return !o.man&&(o.h!==h||(x.d>=DY_SUM_FROM&&(!o.s||(o.v||1)<DY_SUM_V)))&&!DY_TRIED[pid+x.d+h+DY_SUM_V]; });
   const fresh=need.filter(({x})=>x.d>=DY_SUM_FROM), todo=fresh.length?fresh.slice(0,3):need.slice(0,20); if(!todo.length) return;
-  DY_RUN[pid]=true; todo.forEach(({x,h})=>DY_TRIED[pid+x.d+h+DY_SUM_V]=1);
-  const wantS=!!fresh.length;
+  todo.forEach(({x,h})=>DY_TRIED[pid+x.d+h+DY_SUM_V]=1);
+  return diaryRun(p,todo);
+}
+async function diaryRun(p,todo){
+  const pid=p.id; DY_RUN[pid]=true;
+  const wantS=todo.some(({x})=>x.d>=DY_SUM_FROM); if(wantS){ todo.forEach(({x})=>{ if(x.d>=DY_SUM_FROM) DY_BUSY.add(pid+'|'+x.d); }); scheduleRender(); }
   // Inhalt des Tages vollständig: Notizen ganz, To-Dos mit allen Updates des Tages
   const dayText=x=>x.items.map(e=>(e.tm?e.tm+' ':'')+(e.by?e.by+': ':'')+dyPlain(e)).join('\n').slice(0,wantS?6000:1500);
   try{ const r=await SAMPLE.json(`Projekt „${p.name}“ eines Solar-Installationsbetriebs (PV-Anlagen, Speicher, Netzanschluss). Tagebuch je Tag (Notizen, neue To-Dos, To-Do-Updates, Erledigtes):
@@ -5364,9 +5379,19 @@ Antworte nur mit JSON in derselben Reihenfolge: {"items":[{"h":"…"${wantS?',"s
     const cur=S.projects[pid]; if(!cur) return; const nh={...(cur.dayHeads||{})};
     (r&&Array.isArray(r.items)?r.items:[]).forEach((o,i)=>{ const it=todo[i]; if(!it||!o) return; const t=String(o.h||'').trim(), s=String(o.s||'').trim();
       if(t||s) nh[it.x.d]={t:(t||(nh[it.x.d]||{}).t||'').slice(0,70),h:it.h,...(it.x.d>=DY_SUM_FROM&&s?{s:s.slice(0,900),v:DY_SUM_V}:{})}; });
-    cur.dayHeads=nh; if(MODE==='cloud'&&DB&&mayWrite('projects')) DB.collection('projects').doc(pid).update({dayHeads:nh}).catch(()=>{}); scheduleRender(); }
-  catch(e){} finally{ DY_RUN[pid]=false; }
+    cur.dayHeads=nh; if(MODE==='cloud'&&DB&&mayWrite('projects')) DB.collection('projects').doc(pid).update({dayHeads:nh}).catch(()=>{}); }
+  catch(e){ if(wantS) toast('Zusammenfassung konnte gerade nicht erstellt werden – mit ✨ nochmal versuchen.'); }
+  finally{ DY_RUN[pid]=false; todo.forEach(({x})=>DY_BUSY.delete(pid+'|'+x.d)); scheduleRender(); }
 }
+// ✎ Zusammenfassung selbst schreiben/ändern (bleibt dann stehen, bis ✨ gedrückt wird) · ✨ KI fasst den Tag neu zusammen
+Object.assign(A,{
+ dySumEdit:d=>{ const p=S.projects[d.pid]; if(!p) return; const o=(p.dayHeads||{})[d.d]||{}, x=diaryDays(p).find(y=>y.d===d.d);
+   openSheet({title:'Zusammenfassung '+dyDate(d.d),wide:1,fields:[{k:'t',label:'Überschrift',full:1},{k:'s',label:'Zusammenfassung des Tages',type:'textarea',full:1,ph:'Stichpunkte mit „- “ am Zeilenanfang werden als Liste angezeigt'}],value:{t:o.t||'',s:o.s||''},saveLabel:'Speichern',
+     onSave:v=>{ vlSet(d.pid,pp=>{ pp.dayHeads={...(pp.dayHeads||{}),[d.d]:{...o,t:String(v.t||'').trim().slice(0,70),s:fixNames(String(v.s||'').trim()).slice(0,1500),man:true,h:x?dyHash(x):o.h,v:DY_SUM_V}}; },'Zusammenfassung gespeichert.'); }}); },
+ dySumAi:d=>{ const p=S.projects[d.pid]; if(!p||!SAMPLE) return; if(DY_RUN[d.pid]) return toast('Die KI arbeitet gerade – gleich nochmal versuchen.');
+   const o=(p.dayHeads||{})[d.d]; if(o&&o.man){ const nh={...p.dayHeads,[d.d]:{...o,man:false}}; p.dayHeads=nh; }
+   diaryHeads(d.pid,d.d); },
+});
 function vlSet(pid,fn,msg){ const p=clone(S.projects[pid]); if(!p) return; fn(p); put('projects',p); if(msg) toast(msg); }
 // To-Do auf eine Tages-Notiz gezogen → verknüpfen
 function linkTaskNote(pid,id,d){ const t=S.tasks[id]; if(!t||!S.projects[pid]) return; vlSet(pid,p=>{ p.noteLinks={...(p.noteLinks||{}),[id]:d}; },'„'+t.title.slice(0,40)+'“ mit der Notiz vom '+dyDate(d)+' verknüpft.'); }
