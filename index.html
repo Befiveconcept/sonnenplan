@@ -1018,6 +1018,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
   const SB_KEY = 'sb_publishable_CmTadUEZl37K3x9jJuyJOg_qfuiigrk';
   const AI_ON  = true;          // true = KI über die Supabase-Funktion „claude“
   const BUCKET = 'files';
+  const AI_FN  = 'hyper-handler';       // Name der KI-Funktion in Supabase (Edge Functions)
 
   const sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
   window.SB = sb;
@@ -1130,7 +1131,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
   async function ask(input,opts){ opts=opts||{};
     const messages=typeof input==='string'?[{role:'user',content:input}]:input;
     const images=[]; for(const b of (opts.images||[]).slice(0,8)) images.push({type:b.type||'image/jpeg',data:await b64(b)});
-    const {data,error}=await sb.functions.invoke('claude',{body:{messages,tier:opts.modelTier||'default',images}});
+    const {data,error}=await sb.functions.invoke(AI_FN,{body:{messages,tier:opts.modelTier||'default',images}});
     if(error){ const st=error.context&&error.context.status; throw Object.assign(new Error(error.message),{code:st===429?'rate_limited':st===401?'not_granted':'unavailable'}); }
     const text=String(data&&data.text||''); if(opts.onText) try{ opts.onText({text,delta:text}); }catch(e){}
     return { text, truncated: !!(data&&data.truncated) }; }
