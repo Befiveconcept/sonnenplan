@@ -4588,8 +4588,25 @@ function askPop(html,say){ const old=$('.ask-pop'); if(old) old.remove(); if(!ht
 const CAN_SPEAK='speechSynthesis' in window;
 let ASK_SPEAK=false; try{ ASK_SPEAK=localStorage.getItem('sonnenplan-speak')==='1'; }catch(e){}
 let ASK_LAST='';
-function speakVoice(){ const vs=speechSynthesis.getVoices().filter(v=>/^de/i.test(v.lang)); return vs.find(v=>/natural/i.test(v.name))||vs.find(v=>/online|google/i.test(v.name))||vs.find(v=>v.localService===false)||vs[0]||null; }
-function speak(t){ if(!CAN_SPEAK||!t) return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(String(t).replace(/[„“"]/g,'').replace(/\bz\. ?B\./g,'zum Beispiel')); u.lang='de-DE'; const v=speakVoice(); if(v) u.voice=v; u.rate=1.03; speechSynthesis.speak(u); }
+// Beste deutsche Stimme: die neuronalen „Natural“-Stimmen (Edge), dann Google, dann Online-Stimmen
+function speakVoice(){ const vs=speechSynthesis.getVoices().filter(v=>/^de/i.test(v.lang)); return vs.find(v=>/natural/i.test(v.name)&&/seraphina|katja|amala|florian|conrad/i.test(v.name))||vs.find(v=>/natural/i.test(v.name))||vs.find(v=>/google/i.test(v.name))||vs.find(v=>/online/i.test(v.name)||v.localService===false)||vs.find(v=>/katja|anna|petra|helena/i.test(v.name))||vs[0]||null; }
+// Text sprechbar machen: keine Zeichen/Emojis, Daten ausgeschrieben, Abkürzungen aufgelöst, Aufzählungen als ruhiger Satzfluss
+const SPK_MON=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+function speakPrep(t){
+  return String(t).replace(/\*\*/g,'').replace(/[„“"»«]/g,'').replace(/[\u{1F300}-\u{1FAFF}☀-➿️↗☐✓✕■]/gu,'')
+    .replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g,(m,y,mo,d)=>+d+'. '+SPK_MON[+mo-1])
+    .replace(/\b(?:Mo|Di|Mi|Do|Fr|Sa|So)\.?\s+(?=\d{1,2}\.\d{1,2}\.)/g,'')
+    .replace(/\b(\d{1,2})\.(\d{1,2})\.(?:\d{2,4})?(?!\d)/g,(m,d,mo)=>+mo>=1&&+mo<=12?+d+'. '+SPK_MON[+mo-1]:m)
+    .replace(/\bz\.\s?B\./g,'zum Beispiel').replace(/\bca\./g,'circa').replace(/\bggf\./g,'gegebenenfalls').replace(/\bbzw\./g,'beziehungsweise').replace(/\bu\.\s?a\./g,'unter anderem').replace(/\binkl\./g,'inklusive').replace(/\bNr\./g,'Nummer')
+    .replace(/\bkWp\b/g,'Kilowatt-Peak').replace(/\bkWh\b/g,'Kilowattstunden').replace(/\bkW\b/g,'Kilowatt').replace(/\bMWp\b/g,'Megawatt-Peak').replace(/\bPV\b/g,'Photovoltaik').replace(/\bWR\b/g,'Wechselrichter')
+    .replace(/(\d)\s*%/g,'$1 Prozent').replace(/(\d)\s*€/g,'$1 Euro').replace(/\s*\/\s*/g,', ').replace(/\s*[–—]\s*/g,', ').replace(/\s*·\s*/g,', ')
+    .split('\n').map(l=>l.replace(/^\s*[-•*]\s+/,'').trim()).filter(Boolean).map(l=>/[.!?:;,]$/.test(l)?l:l+'.').join(' ')
+    .replace(/:\s*\./g,':').replace(/\s{2,}/g,' ').trim(); }
+// In Satz-Stücke teilen (Chrome bricht lange Texte sonst nach ~15 s ab) und ohne Pause nacheinander sprechen
+function speak(t){ if(!CAN_SPEAK||!t) return; speechSynthesis.cancel();
+  const go=()=>{ const v=speakVoice(), parts=[]; let cur=''; speakPrep(t).split(/(?<=[.!?;:])\s+/).forEach(s=>{ if((cur+' '+s).length>230&&cur){ parts.push(cur); cur=s; } else cur=cur?cur+' '+s:s; }); if(cur) parts.push(cur);
+    parts.forEach(p=>{ const u=new SpeechSynthesisUtterance(p); u.lang='de-DE'; if(v) u.voice=v; u.rate=v&&/natural|google/i.test(v.name)?1.08:1.12; u.pitch=1; speechSynthesis.speak(u); }); };
+  if(speechSynthesis.getVoices().length) go(); else { let done=false; const once=()=>{ if(done) return; done=true; go(); }; speechSynthesis.addEventListener('voiceschanged',once,{once:true}); setTimeout(once,600); } }
 function speakStop(){ try{ CAN_SPEAK&&speechSynthesis.cancel(); }catch(e){} }
 if(CAN_SPEAK) try{ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged=()=>{}; }catch(e){}
 A.askSpkTog=()=>{ ASK_SPEAK=!ASK_SPEAK; try{ localStorage.setItem('sonnenplan-speak',ASK_SPEAK?'1':'0'); }catch(e){} if(!ASK_SPEAK) speakStop(); toast(ASK_SPEAK?'Antworten werden laut vorgelesen.':'Vorlesen aus.'); render(); };
@@ -4699,7 +4716,7 @@ Regeln:
     AIC.busy=false;
     if(r&&r.capture){ AIC.msgs.push({role:'a',text:'Das halte ich fest – bitte im Fenster prüfen und zuordnen.'}); aicPaint(); smartDrop([],q); return; }
     const o=r&&r.open&&typeof r.open==='object'?r.open:null, m={role:'a',text:String(r&&r.say||'').trim()||'Dazu habe ich in den Daten nichts gefunden.',chart:r&&r.chart,table:r&&r.table,open:o&&(o.pid||o.task||o.view)?o:null};
-    AIC.msgs.push(m); aicPaint(); askSay(m.text.replace(/\*\*/g,'').replace(/^\s*-\s+/gm,''));
+    AIC.msgs.push(m); aicPaint(); askSay(m.text);
     if(m.open) aicDo(m.open,false);
   }catch(e){ AIC.busy=false; AIC.msgs.push({role:'a',err:1,text:SAMPLE_ERR[e&&e.code]||'Die KI ist gerade nicht erreichbar. Bitte gleich nochmal versuchen.'}); aicPaint(); }
 }
