@@ -2937,7 +2937,8 @@ async function scanDeliveryNote(id,file){
   if(!SAMPLE){ toast('Auslesen geht nur in der veröffentlichten App mit Claude-Zugriff.'); return; }
   const st=$('#lsStatus'); if(st) st.textContent='Lieferschein wird gelesen … meist 20–60 Sekunden.';
   let doc=null;
-  if(ASSETS){ try{ const type=file.type||(/\.pdf$/i.test(file.name)?'application/pdf':''); const r=await ASSETS.upload(file,type?{type}:undefined); doc={id:r.id,name:file.name||'Lieferschein',type:r.contentType,date:TODAY(),kind:'Lieferschein'}; }catch(e){ doc=null; } }
+  const fp=await fileFp(file), dup=findDup(fp,file.name,file.size); if(dup) dupWarn(file.name||'Lieferschein',dup);
+  if(ASSETS){ try{ const type=file.type||(/\.pdf$/i.test(file.name)?'application/pdf':''); const r=await ASSETS.upload(file,type?{type}:undefined); doc={id:r.id,name:file.name||'Lieferschein',type:r.contentType,date:TODAY(),kind:'Lieferschein',fp,size:file.size||0}; }catch(e){ doc=null; } }
   let r; try{ r=await extractInvoice(file,''); }catch(e){ if(st) st.textContent=''; toast(SAMPLE_ERR[e&&e.code]||'Lieferschein konnte nicht gelesen werden.'); return; }
   if(doc){ doc.docNo=r.docNo||''; const so=clone(S.orders[id]); so.docs=(so.docs||[]).concat([doc]); put('orders',so); }
   const m=matchDelivery(S.orders[id],r.items||[]);
@@ -3189,10 +3190,11 @@ async function handleInvoice(file,mail){
   Object.assign(o, readSheet());
   if(mail){ o.mail={subject:mail.subject||'',from:mail.from||'',date:mail.date||'',text:String(mail.text||'').slice(0,20000)}; }
   if(file&&file.size>20*1024*1024){ toast('Datei ist größer als 20 MB.'); return; }
+  const fp=file?await fileFp(file):''; if(file){ const dup=findDup(fp,file.name,file.size); if(dup) dupWarn(file.name,dup); }
   if(file&&ASSETS){
     st('Wird hochgeladen …');
     try{ const type=file.type||(/\.pdf$/i.test(file.name)?'application/pdf':''); const r=await ASSETS.upload(file, type?{type}:undefined);
-      o.docs=(o.docs||[]).concat([{id:r.id,name:file.name,type:r.contentType,date:TODAY()}]); }
+      o.docs=(o.docs||[]).concat([{id:r.id,name:file.name,type:r.contentType,date:TODAY(),fp,size:file.size||0}]); }
     catch(e){ toast(e&&e.code==='unsupported_type'?'Nur PDF, JPG, PNG oder WebP hochladen.':e&&e.code==='quota_or_state'?'Speicher voll: alte Belege löschen.':'Hochladen fehlgeschlagen ('+(e&&e.code||'Fehler')+').'); st(''); return; }
   }
   let found=0, info='';
@@ -3655,12 +3657,30 @@ Nur zuordnen, wenn Kommission, Projektname, Projektnummer, Adresse oder Kunde ei
 Antworte nur mit JSON: {"projectId":"","kind":"angebot|rechnung|ab|bestellung|lieferschein|mail|vertrag|plan|foto|sonst","why":"kurz"}`;
   try{ return await SAMPLE.json(prompt,{modelTier:'quick'}); }catch(e){ return null; }
 }
+// Doppelt hochgeladen? Fingerabdruck je Datei (SHA-256 des Inhalts) als fp am Datei-Eintrag bzw. Beleg;
+// ältere Einträge ohne fp: gleicher Dateiname + gleiche Größe
+async function fileFp(x){ try{ const buf=typeof x==='string'?new TextEncoder().encode(x.replace(/\s+/g,' ').trim()):await x.arrayBuffer(); const h=await crypto.subtle.digest('SHA-256',buf); return [...new Uint8Array(h)].slice(0,16).map(b=>b.toString(16).padStart(2,'0')).join(''); }catch(e){ return ''; } }
+function findDup(fp,name,size){
+  const where=(f,src)=>src+(f.pid?' · '+projName(f.pid):'')+' · „'+f.name+'“'+(f.date?' vom '+fmtD(f.date):'')+(f.by?' ('+f.by+')':'');
+  const f=arr('files').find(x=>fp&&x.fp===fp)||(name&&size?arr('files').find(x=>!x.fp&&x.size===size&&(x.orig===name||x.name===name)):null); if(f) return where(f,'Datenablage');
+  for(const o of arr('orders')) for(const d of (o.docs||[])) if((fp&&d.fp===fp)||(name&&d.name===name&&!d.fp&&size&&d.size===size)) return where({...d,pid:o.pid},'Bestellung '+(o.supplier||''));
+  return null; }
+function dupWarn(name,where){ askPop('⚠️ <b>Schon einmal hochgeladen:</b> '+esc(name)+'<br><span style="opacity:.8">'+esc(where)+'</span>'); }
+// Vor dem Ablegen nachfragen: doppelte überspringen oder trotzdem ablegen (Abbrechen = nichts ablegen)
+function dupAsk(list,total){ return new Promise(res=>{ A.dupAll=()=>{ closeSheet(); res('all'); };
+  openSheet({title:list.length>1?list.length+' Dateien gibt es schon':'Diese Datei gibt es schon',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Diese Datei${list.length>1?'en wurden':' wurde'} bereits hochgeladen:</div>${list.map(d=>`<div class="sug"><div style="min-width:0"><b>${esc(d.name)}</b><div class="small muted">liegt schon in: ${esc(d.hit)}</div></div></div>`).join('')}</div>`,
+    saveLabel:list.length<total?'Doppelte überspringen':'Nicht nochmal ablegen',extraBtn:`<button type="button" class="btn" data-act="dupAll">Trotzdem ablegen</button>`,onSave:()=>res('skip')}); }); }
 async function ingestFiles(files,text,pidHint){
+  const fl0=[...(files||[])], fps=await Promise.all(fl0.map(f=>fileFp(f)));
+  const dups=fl0.map((f,i)=>({f,name:f.name||'Datei',hit:findDup(fps[i],f.name,f.size)})).filter(x=>x.hit);
+  if(!fl0.length&&text&&text.trim().length>20){ const h=findDup(await fileFp(text)); if(h){ const ch=await dupAsk([{name:'Eingefügter Text',hit:h}],1); if(ch!=='all') return; } }
+  if(dups.length){ const ch=await dupAsk(dups,fl0.length); if(ch!=='all'){ files=fl0.filter(f=>!dups.some(d=>d.f===f)); if(!files.length) return; } }
   const recs=[], stamp=new Date().toISOString();
   const mk=(o)=>({id:uid(),date:TODAY(),at:stamp,...o});
   const upload=async f=>{ if(!ASSETS) return null; try{ const type=f.type||(/\.pdf$/i.test(f.name)?'application/pdf':''); const r=await ASSETS.upload(f,type?{type}:undefined); return {asset:r.id,mime:r.contentType}; }catch(e){ return {err:e&&e.code||'Fehler'}; } };
   const addFile=async(f,parent,ctx)=>{ const up=await upload(f); const isPdf=/pdf/.test(f.type)||/\.pdf$/i.test(f.name); const txt=isPdf?await pdfText(f):'';
-    const rec=mk({name:f.name||'Datei',mime:f.type||'',size:f.size||0,text:txt.slice(0,6000),parent:parent||'',kind:guessKind(f.name||'',txt,false,f.type)});
+    const rec=mk({name:f.name||'Datei',mime:f.type||'',size:f.size||0,text:txt.slice(0,6000),parent:parent||'',kind:guessKind(f.name||'',txt,false,f.type),fp:await fileFp(f)});
+    if(parent){ const h=findDup(rec.fp,f.name,f.size); if(h) dupWarn('Anhang „'+(f.name||'Datei')+'“',h); }
     if(up&&up.asset){ rec.asset=up.asset; rec.mime=up.mime||rec.mime; } else if(up&&up.err) rec.note='Datei nicht hochgeladen ('+up.err+'), nur Eintrag';
     const m=matchProject([f.name,txt,ctx].join('\n')); rec.pid=m.pid; rec.why=m.why; recs.push(rec); return rec; };
   for(const f of [...(files||[])]){ const n=(f.name||'').toLowerCase();
@@ -3669,7 +3689,10 @@ async function ingestFiles(files,text,pidHint){
       if(n.endsWith('.msg')){ try{ m=parseMsg(ab); }catch(e){} if(!m){ const l=parseMsgLoose(ab); m={...l,att:l.pdf?[{name:f.name.replace(/\.msg$/i,'')+'.pdf',type:'application/pdf',blob:l.pdf}]:[]}; } }
       else m=parseEml(ab);
       const ctx=[m.subject,m.from,m.text].join('\n');
-      const mail=mk({name:m.subject||f.name,subject:m.subject||'',from:m.from||'',mime:'message/rfc822',text:String(m.text||'').slice(0,8000),kind:'mail',atts:(m.att||[]).map(a=>a.name)});
+      const mail=mk({name:m.subject||f.name,subject:m.subject||'',from:m.from||'',mime:'message/rfc822',text:String(m.text||'').slice(0,8000),kind:'mail',atts:(m.att||[]).map(a=>a.name),fp:await fileFp(f),size:f.size||0});
+      // dieselbe Mail evtl. neu exportiert (andere Bytes): gleicher Betreff + Absender + Text
+      const same=arr('files').find(x=>x.kind==='mail'&&x.fp!==mail.fp&&x.subject&&x.subject===mail.subject&&x.from===mail.from&&String(x.text||'').slice(0,300)===mail.text.slice(0,300));
+      if(same) dupWarn('Mail „'+(mail.subject||f.name)+'“','Datenablage'+(same.pid?' · '+projName(same.pid):'')+' · „'+same.name+'“ vom '+fmtD(same.date));
       const mm=matchProject(ctx+'\n'+(m.att||[]).map(a=>a.name).join(' ')); mail.pid=mm.pid; mail.why=mm.why; mail.date=isoLocal(m.date||'').slice(0,10)||mail.date; recs.push(mail);
       // Original-Mail mit ablegen, damit jeder sie in Outlook öffnen kann
       const upM=await upload(new File([ab],f.name||'mail'+(n.endsWith('.eml')?'.eml':'.msg'),{type:n.endsWith('.eml')?'message/rfc822':'application/vnd.ms-outlook'}));
@@ -3679,7 +3702,7 @@ async function ingestFiles(files,text,pidHint){
     } else await addFile(f,'','');
   }
   if(!recs.length&&text&&text.trim().length>20){ const lines=text.trim().split('\n'); const subj=(lines.find(l=>/^(Betreff|Subject)\s*:/i.test(l))||'').replace(/^[^:]+:\s*/,'')||lines[0].slice(0,90);
-    const r=mk({name:subj,subject:subj,from:(lines.find(l=>/^(Von|From)\s*:/i.test(l))||'').replace(/^[^:]+:\s*/,''),mime:'text/plain',text:text.slice(0,8000),kind:'mail'}); const m=matchProject(text); r.pid=m.pid; r.why=m.why; recs.push(r); }
+    const r=mk({name:subj,subject:subj,from:(lines.find(l=>/^(Von|From)\s*:/i.test(l))||'').replace(/^[^:]+:\s*/,''),mime:'text/plain',text:text.slice(0,8000),kind:'mail',fp:await fileFp(text)}); const m=matchProject(text); r.pid=m.pid; r.why=m.why; recs.push(r); }
   if(!recs.length){ toast('Bitte Dateien, E-Mails (.msg/.eml) oder kopierten Mailtext ablegen.'); return; }
   if(pidHint) recs.forEach(r=>{ r.pid=pidHint; r.why='in der Projektakte abgelegt'; });
   recs.forEach(r=>{ if(!STD_RX.test(r.name)){ r.orig=r.name; const isMail=r.mime==='message/rfc822'||r.mime==='text/plain'; r.name=stdName(r.date,r.kind,isMail?(r.subject||r.from||r.name):stemOf(r.name),isMail?'':extOf(r.name)); } });
@@ -4611,7 +4634,7 @@ function projFilesHtml(p){
   return PFOLDERS.map(([k,l])=>{ const g=fl.filter(f=>(FILE_KINDS[f.kind]?f.kind:'sonst')===k); if(!g.length) return ''; const open=UI.pfOpen&&UI.pfOpen[p.id+k]!==undefined?UI.pfOpen[p.id+k]:k==='mail';
     return `<details class="card pf" ${open?'open':''} data-pf="${p.id+k}"><summary class="card-h"><h3>📁 ${l}</h3><span class="cnt-b">${g.length}</span></summary>${filesTable(g,true)}</details>`; }).join('');
 }
-function slimDrop(pid){ return `<div class="dropz fdrop slim" data-fdrop="${esc(pid)}" tabindex="0" aria-label="Dateien in dieses Projekt ablegen">${ic('files')}<span><b>Dateien & Mails hier ablegen</b> <span class="small muted">landen in der Datenablage dieses Projekts (Mails unter Korrespondenz)</span></span><button type="button" class="btn sm" data-act="fdPick" data-pid="${esc(pid)}">Wählen</button></div>`; }
+function slimDrop(pid){ return `<div class="dropz fdrop slim" data-fdrop="${esc(pid)}" tabindex="0" aria-label="Dateien in dieses Projekt ablegen">${ic('files')}<span><b>Alles fürs Projekt hier hochladen</b> <span class="small muted">Mails, PDFs, Fotos, Pläne – ${SAMPLE?'die KI schlägt vor: in die Notizen, als To-Do / Update oder nur in die Ablage':'landet in der Datenablage dieses Projekts (Mails unter Korrespondenz)'}</span></span><button type="button" class="btn sm" data-act="fdPick" data-pid="${esc(pid)}">Wählen</button></div>`; }
 
 /* ========== Aktionen ========== */
 Object.assign(A,{
