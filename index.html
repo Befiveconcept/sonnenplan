@@ -3686,11 +3686,46 @@ async function ingestFiles(files,text,pidHint){
   recs.forEach(r=>{ r.auto=r.pid?'regel':''; put('files',r); });
   const n=recs.filter(r=>r.pid).length;
   toast(recs.length+' Eintr'+(recs.length===1?'ag':'äge')+' abgelegt · '+n+' einem Projekt zugeordnet'+(recs.length-n&&SAMPLE?' · Claude prüft den Rest …':''));
+  if(pidHint&&pidHint!==INTERN&&SAMPLE) setTimeout(()=>fileCheck(pidHint,recs),300);
   // Rest mit Claude zuordnen
   for(const r of recs.filter(r=>!r.pid)){ const a=await aiClassify(r); if(!a) continue; const cur=S.files[r.id]; if(!cur||cur.pid) continue; const nu=clone(cur);
     if(a.projectId&&(S.projects[a.projectId]||a.projectId===INTERN)){ nu.pid=a.projectId; nu.why='Claude: '+String(a.why||'').slice(0,120); nu.auto='claude'; }
     if(FILE_KINDS[a.kind]&&nu.kind==='sonst') nu.kind=a.kind;
     if(nu.pid!==cur.pid||nu.kind!==cur.kind){ put('files',nu); if(nu.pid) toast('„'+nu.name.slice(0,40)+'“ → '+projName(nu.pid)); } }
+}
+// Im Projekt abgelegte Dateien/Mails: Claude prüft, ob etwas davon in die Notizen gehört, ein neues To-Do ist
+// oder ein Update zu einem offenen To-Do – sonst bleibt es nur in der Datenablage
+async function fileCheck(pid,recs){
+  const p=S.projects[pid]; if(!p) return;
+  const docs=recs.map(r=>[r.mime==='message/rfc822'||r.kind==='mail'?'E-Mail „'+(r.subject||r.name)+'“ von '+(r.from||'?'):(r.parent?'Anhang':'Datei')+' „'+(r.orig||r.name)+'“ ('+(FILE_KINDS[r.kind]||'Datei')+')',String(r.text||'').trim().slice(0,3000)].filter(Boolean).join('\n')).join('\n\n').slice(0,9000);
+  if(!recs.some(r=>String(r.text||'').trim().length>30)) return; // nur Fotos/Pläne ohne Text: einfach ablegen
+  const ot=openTasks(pid), roster=staff().map(s=>shortWho(s.name)+' = '+s.name.replace(/\s*\([^)]*\)$/,'')).join(', ');
+  toast('Claude prüft, ob das für Notizen oder To-Dos wichtig ist …');
+  let r; try{ r=await SAMPLE.json(`Heute ist ${TODAY()}. Ins Projekt „${p.name}“ eines Solar-Installationsbetriebs wurde abgelegt:
+"""${docs}"""
+Offene To-Dos des Projekts (id: Titel):
+${ot.map(t=>t.id+': '+t.title+(t.who?' ('+shortWho(t.who)+')':'')).join('\n')||'(keine)'}
+Mitarbeiter: ${roster}
+Entscheide, was davon über die reine Ablage hinaus wichtig ist:
+- note: eine knappe Notiz fürs Projekt-Tagebuch (1–2 Sätze: wer/was/Termin/Zahl), nur wenn es inhaltlich relevant ist (Zusage, Absage, Termin, Frist, Problem, Entscheidung, Freigabe, Änderung). Bei Routine (Rechnung ohne Auffälligkeit, Werbung, Lesebestätigung, reine Datei ohne Neuigkeit) leer lassen. Mails als „Mail von Absender: …“.
+- updates: Neuigkeiten zu einem der offenen To-Dos oben (task = id, t = kurzer Satz).
+- todos: neue Aufgaben, die sich daraus ergeben (Imperativ; who nur wenn genannt; due nur wenn Termin genannt) – keine Doppelung zu offenen To-Dos.
+Lieber nichts als Unwichtiges. Antworte nur mit JSON: {"note":"","updates":[{"task":"","t":""}],"todos":[{"title":"","who":"","due":""}]}`,{modelTier:'default'}); }catch(e){ return; }
+  const note=fixNames(String(r&&r.note||'').trim()), ups=(r&&Array.isArray(r.updates)?r.updates:[]).filter(u=>u&&S.tasks[u.task]&&String(u.t||'').trim()).slice(0,6), todos=(r&&Array.isArray(r.todos)?r.todos:[]).filter(t=>t&&String(t.title||'').trim()).slice(0,6);
+  if(!note&&!ups.length&&!todos.length){ toast('Nur in der Datenablage abgelegt – nichts für Notizen oder To-Dos.'); return; }
+  const byK={}; staff().forEach(s=>byK[shortWho(s.name).toLowerCase()]=s.name);
+  const show=()=>openSheet({title:'Wichtig fürs Projekt?',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:10px">Abgelegt in „${esc(p.name)}“. Claude schlägt zusätzlich vor – prüfen, ändern, übernehmen:</div>
+    ${note?`<div class="sec-t" style="margin:0 0 6px">Notiz</div><div class="sug"><input type="checkbox" class="ck" id="fc_nc" checked aria-label="Notiz übernehmen"><textarea class="inp" id="fc_n" rows="2" style="flex:1">${esc(note)}</textarea></div>`:''}
+    ${ups.length?`<div class="sec-t" style="margin:12px 0 6px">Update zu offenem To-Do</div><div class="sug-list">${ups.map((u,i)=>`<div class="sug"><input type="checkbox" class="ck" id="fc_uc${i}" checked aria-label="Update übernehmen"><div style="flex:1;min-width:0"><div class="small muted">${esc(S.tasks[u.task].title)}</div><input class="inp" id="fc_u${i}" value="${esc(String(u.t).slice(0,300))}" style="width:100%"></div></div>`).join('')}</div>`:''}
+    ${todos.length?`<div class="sec-t" style="margin:12px 0 6px">Neue To-Dos</div><div class="sug-list">${todos.map((t,i)=>{ const who=byK[String(t.who||'').toLowerCase()]||'', due=/^\d{4}-\d{2}-\d{2}$/.test(t.due||'')?t.due:'';
+      return `<div class="sug"><input type="checkbox" class="ck" id="fc_tc${i}" checked aria-label="übernehmen"><input class="inp" id="fc_t${i}" value="${esc(String(t.title).slice(0,160))}" aria-label="Aufgabe"><select class="inp" id="fc_w${i}" aria-label="Mitarbeiter"><option value="">– niemand –</option>${staff().map(s=>`<option value="${esc(s.name)}" ${s.name===who?'selected':''}>${esc(shortWho(s.name))}</option>`).join('')}</select><input class="inp" type="date" id="fc_d${i}" value="${due}" aria-label="Fällig">${prioSel('fc_r'+i,'normal')}</div>`; }).join('')}</div>`:''}</div>`,
+    saveLabel:'Ausgewählte übernehmen',
+    onSave:()=>{ let a=0;
+      if(note&&$('#fc_nc').checked){ const t=fixNames($('#fc_n').value.trim()); if(t){ const pp=clone(S.projects[pid]); pp.notes=(pp.notes?pp.notes.replace(/\s+$/,'')+'\n':'')+nowStamp()+' ('+meK()+'): '+t; delete pp.now; delete pp.nowD; put('projects',pp); a++; } }
+      ups.forEach((u,i)=>{ if(!$('#fc_uc'+i).checked) return; const k=clone(S.tasks[u.task]); const t=$('#fc_u'+i).value.trim(); if(!k||!t) return; k.upd2=[...(k.upd2||[]),{d:TODAY(),tm:nowStamp().slice(9),by:meK(),t,at:new Date().toISOString()}]; put('tasks',k); a++; });
+      todos.forEach((_,i)=>{ if(!$('#fc_tc'+i).checked) return; const title=$('#fc_t'+i).value.trim(); if(!title) return; const t={id:uid(),title,who:$('#fc_w'+i).value,due:$('#fc_d'+i).value,pid,done:false,prio:($('#fc_r'+i)||{}).value||'normal',src:'datei',created:TODAY()}; if(!t.due) delete t.due; put('tasks',t); a++; });
+      toast(a?a+' Eintr'+(a>1?'äge':'ag')+' übernommen.':'Nur in der Datenablage abgelegt.'); }});
+  if(SHEET) setTimeout(show,700); else show();
 }
 // Datenablage zeigt auch Belege, die an Bestellungen hängen
 function allFiles(){
