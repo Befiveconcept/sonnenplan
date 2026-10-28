@@ -702,7 +702,10 @@ details.pf:not([open])>summary{border-bottom:0}
 .vl-sug{background:var(--sun-soft);border:1px solid var(--sun);border-radius:10px;padding:8px 12px;font-size:13.5px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .vl-tl{border-left:2px solid var(--line);margin-left:6px;padding-left:14px;display:flex;flex-direction:column;gap:6px}
 .vl-tl>div{position:relative;font-size:14px;line-height:1.5}
-.nb.dy{display:block;padding:10px 4px 12px}
+.nb.dy{display:block;padding:8px 4px 9px}
+.dy-tk{margin-top:4px}
+.dy-tog{font-size:12.5px;font-weight:600;color:#7a6a00;padding:0}
+.dy-link{margin-top:4px!important;padding:2px 0 2px 10px!important}
 .dy-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
 .dy-h b{font-size:15px}
 .dy-d{font-family:var(--f-mono);font-size:12px;font-weight:600;background:var(--sun-soft);border-radius:6px;padding:2px 7px}
@@ -4983,22 +4986,28 @@ const dyPlain=e=>e.kind==='note'?shortMailRefs(e.text):e.kind==='new'?'Neues To-
 const dyHash=x=>strHash(x.items.map(dyPlain).join('|'));
 const dyTask=t=>`<button class="lnk" data-act="editTask" data-id="${t.id}">${esc(t.title)}</button>`;
 function dyItem(p,e,adm){
-  const meta=`<span class="dy-m">${esc([e.tm,e.by].filter(Boolean).join(' '))}</span>`;
+  const mt=[e.tm,e.by].filter(Boolean).join(' '), meta=mt?`<span class="dy-m">${esc(mt)}</span>`:'';
   if(e.kind==='note') return `<div class="dy-e">${meta}<div class="dy-t">${esc(shortMailRefs(e.text))}</div>${adm?`<span class="dy-a"><button class="icon-btn" title="Bearbeiten" data-act="editNoteBlock" data-pid="${p.id}" data-k="${e.k}" data-i="${e.i}">${ic('edit')}</button><button class="icon-btn" title="Löschen" data-act="delNoteBlock" data-pid="${p.id}" data-k="${e.k}" data-i="${e.i}">${ic('x')}</button></span>`:''}</div>`;
   const t=e.task, who=t.ext?'extern: '+t.ext:t.who?shortWho(t.who):'';
   const body=e.kind==='new'?`☐ Neues To-Do: ${dyTask(t)}${who?' · '+esc(who):''}${t.due?' · fällig '+esc(fmtD(t.due)):''}`
     :e.kind==='upd'?`↳ To-Do ${dyTask(t)}: ${esc(e.text)}`:`✓ Erledigt: ${dyTask(t)}${e.text?' – '+esc(e.text):''}`;
   return `<div class="dy-e dy-task">${meta}<div class="dy-t">${body}</div></div>`;
 }
-function dyLink(p,t){
-  const ups=[...(t.upd2||[])].sort((a,b)=>updKey(b).localeCompare(updKey(a)));
-  return `<div class="dy-link"><div class="dy-lh">🔗 ${dyTask(t)} <span class="small muted">${t.done?'✓ erledigt':'offen'}${t.who?' · '+esc(shortWho(t.who)):''}</span><button class="icon-btn" title="Verknüpfung lösen" data-act="dyUnlink" data-pid="${p.id}" data-id="${t.id}">${ic('x')}</button></div>
-    ${ups.map(u=>`<div class="dy-lu"><span class="dy-m">${esc(fmtD(u.d)+' '+(updTime(u)||'')+' '+(u.by||''))}</span> ${esc(u.t)}</div>`).join('')||'<div class="small muted">Noch keine Updates.</div>'}</div>`;
+// Kompakt: To-Do-Einträge des Tages und Updates verknüpfter To-Dos nur aufklappbar (UI.dyOpen[Schlüssel])
+const dyIsOpen=k=>!!(UI.dyOpen||{})[k];
+const dyTog=(k,label)=>`<button class="lnk dy-tog" data-act="dyToggle" data-k="${esc(k)}">${dyIsOpen(k)?'▾':'▸'} ${label}</button>`;
+function dyLink(p,t,d){
+  const ups=[...(t.upd2||[])].sort((a,b)=>updKey(b).localeCompare(updKey(a))), k='l'+p.id+t.id;
+  return `<div class="dy-link"><div class="dy-lh">🔗 ${dyTask(t)} <span class="small muted">${t.done?'✓ erledigt':'offen'}${t.who?' · '+esc(shortWho(t.who)):''}</span>${ups.length?dyTog(k,ups.length+' Update'+(ups.length>1?'s':'')):''}<button class="icon-btn" title="Verknüpfung lösen" data-act="dyUnlink" data-pid="${p.id}" data-id="${t.id}">${ic('x')}</button></div>
+    ${ups.length&&dyIsOpen(k)?ups.map(u=>`<div class="dy-lu"><span class="dy-m">${esc(fmtD(u.d)+' '+(updTime(u)||'')+' '+(u.by||''))}</span> ${esc(u.t)}</div>`).join(''):''}</div>`;
 }
 function dyCard(p,x,adm){
-  const hd=(p.dayHeads||{})[x.d];
+  const hd=(p.dayHeads||{})[x.d], notes=x.items.filter(e=>e.kind==='note'), tk=x.items.filter(e=>e.kind!=='note'), k='t'+p.id+x.d;
+  const n=c=>tk.filter(e=>e.kind===c).length, sum=[n('new')?n('new')+' neu':'',n('upd')?n('upd')+' Update'+(n('upd')>1?'s':''):'',n('done')?n('done')+' erledigt':''].filter(Boolean).join(' · ');
   return `<div class="nb dy" ${x.d?`data-drop-note="${x.d}" data-pid="${p.id}"`:''}><div class="dy-h"><span class="dy-d">${esc(dyDate(x.d))}</span>${hd&&hd.t?`<b>${esc(hd.t)}</b>`:''}</div>
-    <div class="dy-list">${x.items.map(e=>dyItem(p,e,adm)).join('')}</div>${x.links.map(t=>dyLink(p,t)).join('')}</div>`;
+    ${notes.length?`<div class="dy-list">${notes.map(e=>dyItem(p,e,adm)).join('')}</div>`:''}
+    ${tk.length?`<div class="dy-tk">${dyTog(k,'To-Dos: '+sum)}${dyIsOpen(k)?`<div class="dy-list" style="margin-top:4px">${tk.map(e=>dyItem(p,e,adm)).join('')}</div>`:''}</div>`:''}
+    ${x.links.map(t=>dyLink(p,t,x.d)).join('')}</div>`;
 }
 function projVerlauf(p,adm){
   if(SAMPLE) setTimeout(()=>diaryHeads(p.id),400);
@@ -5025,6 +5034,7 @@ function vlSet(pid,fn,msg){ const p=clone(S.projects[pid]); if(!p) return; fn(p)
 // To-Do auf eine Tages-Notiz gezogen → verknüpfen
 function linkTaskNote(pid,id,d){ const t=S.tasks[id]; if(!t||!S.projects[pid]) return; vlSet(pid,p=>{ p.noteLinks={...(p.noteLinks||{}),[id]:d}; },'„'+t.title.slice(0,40)+'“ mit der Notiz vom '+dyDate(d)+' verknüpft.'); }
 Object.assign(A,{
+ dyToggle:d=>{ UI.dyOpen={...(UI.dyOpen||{}),[d.k]:!(UI.dyOpen||{})[d.k]}; render(); },
  dyUnlink:d=>vlSet(d.pid,p=>{ const l={...(p.noteLinks||{})}; delete l[d.id]; p.noteLinks=l; },'Verknüpfung gelöst.'),
 });
 // Aufklappen der Updates am To-Do öffnet nicht gleich das To-Do
