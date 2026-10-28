@@ -534,9 +534,20 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .gs-r:hover,.gs-r:focus-visible{background:var(--sun-soft);outline:none}
 .gs-r span{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;max-width:100%;white-space:nowrap}
 .gs-none{padding:12px;color:var(--muted)}
-@media (max-width:640px){ .gs-mic{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--sun);font-size:15px;line-height:1;display:grid;place-items:center;cursor:pointer;padding:0}
-.gs-mic.on{background:var(--bad);color:#fff;border-color:var(--bad);animation:recp 1s infinite}
-.gs-in kbd{display:none} }
+/* Ein Feld für alles: suchen, Claude fragen, sprechen, Dateien reinziehen */
+.ask-box{border-radius:16px}
+.ask-box.over .gs-in{border-color:var(--sun);border-style:dashed;background:var(--sun-soft)}
+.ask-go{flex:none}
+.ask-sub{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin:7px 4px 0;font-size:12.5px;color:var(--muted)}
+.ask-sub .lnk{font-size:12.5px;padding:0}
+.ask-ans{margin-top:8px;background:var(--sun-soft);border:1px solid var(--sun);border-radius:12px;padding:9px 12px;font-size:14px;display:flex;gap:10px;align-items:flex-start}
+.ask-ans:empty{display:none}
+.ask-pop{position:fixed;z-index:9000;left:50%;bottom:24px;transform:translateX(-50%);max-width:min(560px,calc(100vw - 32px));background:var(--night);color:#fff;border-radius:14px;padding:12px 40px 12px 16px;box-shadow:0 8px 30px rgba(0,0,0,.3);font-size:14.5px;line-height:1.45}
+.ask-pop b{color:var(--sun)}
+.ask-pop button{position:absolute;right:8px;top:8px;background:transparent;border:0;color:#fff;font-size:16px;cursor:pointer}
+.dy-hi{outline:3px solid var(--sun);outline-offset:2px;border-radius:12px;animation:dyhi 1.2s ease 2}
+@keyframes dyhi{50%{background:var(--sun-soft)}}
+@media (max-width:640px){ .gs-in kbd{display:none} .ask-pop{bottom:84px} }
 /* Allgemeine Aufgaben */
 .pool-it{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px dashed var(--line)}
 .pool-it .tt{font-weight:600}
@@ -704,6 +715,7 @@ details.pf:not([open])>summary{border-bottom:0}
 .vl-tl>div{position:relative;font-size:14px;line-height:1.5}
 .nb.dy{display:block;padding:8px 4px 9px}
 .dy-tk{margin-top:4px}
+.ps-drop{margin-bottom:12px}.ps-drop .dropz.slim{padding:6px 12px;min-height:0}
 .dy-tog{font-size:12.5px;font-weight:600;color:#7a6a00;padding:0}
 .dy-link{margin-top:4px!important;padding:2px 0 2px 10px!important}
 .dy-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
@@ -1883,7 +1895,7 @@ function vDash(){
   // 4) Noch zu bestellen, je Projekt gebündelt
   const nd=needAll(), ndP=[...new Set(nd.map(n=>n.pid))].map(pid=>({pid,its:nd.filter(n=>n.pid===pid)})).sort((a,b)=>b.its.length-a.its.length);
   const ndRow=g=>`<div class="nd-row"><div style="min-width:0" class="clickable" data-act="openAt" data-id="${g.pid}" data-at="material"><div class="tt">${esc(projName(g.pid)||'ohne Projekt')}</div><div class="small muted nd-its">${g.its.slice(0,3).map(n=>esc((n.qty?qn(n.qty)+' '+(n.unit||'')+' ':'')+n.art)).join(' · ')}${g.its.length>3?' · +'+(g.its.length-3):''}</div></div><button class="btn sun sm" data-act="needOrder" data-pid="${g.pid}">Bestellen</button></div>`;
-  return dashHero(t)+gsearchBox()+smartDropHtml()+`<div class="dash-grid">
+  return dashHero(t)+gsearchBox()+`<div class="dash-grid">
     <section class="card dash-todo"><div class="card-h"><h2>Meine offenen To-Dos <span class="cnt-b">${my.length}</span></h2>${myLate?`<span class="pill bad">${myLate} überfällig</span>`:''}<button class="btn ghost sm" data-act="myTasks">Alle</button></div>
       ${ME?`<div class="list">${my.slice(0,7).map(taskLi).join('')||'<div class="empty"><b>Alles erledigt</b>Du hast keine offenen Aufgaben.</div>'}</div>${my.length>7?`<button class="btn ghost sm more-b" data-act="myTasks">+ ${my.length-7} weitere anzeigen</button>`:''}`:'<div class="empty">Unten links „Wer bist du?“ wählen, dann erscheinen hier deine Aufgaben.</div>'}</section>
     <section class="card dash-dl"><div class="card-h"><h2>Offene Lieferungen <span class="cnt-b">${dl.length}</span></h2><button class="btn ghost sm" data-act="nav" data-v="orders">Alle</button></div>
@@ -2199,8 +2211,17 @@ const SORTS={
   stand:['Letzte Aktivität',(a,b)=>((nowOf(b)||{}).d||'').localeCompare((nowOf(a)||{}).d||'')||a.name.localeCompare(b.name,'de')],
   nr:['Projektnummer',(a,b)=>(b.nr||'').localeCompare(a.nr||'')||a.name.localeCompare(b.name,'de')],
   pl:['Projektleitung',(a,b)=>(a.pl||'~').localeCompare(b.pl||'~','de')||a.name.localeCompare(b.name,'de')],
-  tasks:['Meiste offene Aufgaben',(a,b)=>openTasks(b.id).length-openTasks(a.id).length||byPipe(a,b)]
+  tasks:['Meiste offene Aufgaben',(a,b)=>openTasks(b.id).length-openTasks(a.id).length||byPipe(a,b)],
+  own:['Individuelle Ansicht',(a,b)=>ownIdx(a.id)-ownIdx(b.id)||byPipe(a,b)]
 };
+// Individuelle Ansicht: jede Person zieht sich die Projekt-Kacheln selbst in Reihenfolge (config.projOrder[Kürzel] = [Projekt-ids])
+const ownOrder=()=>((S.config||{}).projOrder||{})[meK()]||[];
+const ownIdx=id=>{ const i=ownOrder().indexOf(id); return i<0?1e6:i; };
+function projReorder(src,tgt){
+  const ids=arr('projects').sort(SORTS.own[1]).map(p=>p.id), from=ids.indexOf(src), to=ids.indexOf(tgt); if(from<0||to<0||from===to) return;
+  ids.splice(from,1); ids.splice(to,0,src);
+  const cfg=clone(S.config||{}); cfg.projOrder={...(cfg.projOrder||{}),[meK()]:ids}; putConfig(cfg);
+}
 if(!UI.hide) UI.hide={erledigt:false,abgesagt:false,wartung:false};
 if(!UI.sort) UI.sort='status';
 function filterProjects(cat){
@@ -2219,7 +2240,8 @@ function filterProjects(cat){
 function navList(){ const l=filterProjects(UI.q.trim()?'alle':UI.projFilter); return l.length?l:arr('projects').sort(SORTS.az[1]); }
 function projCard(p){
   const pp=pipe(p), cat=catOf(p), nw=nowOf(p), active=['planung','laufend'].includes(cat), pct=pp.pct, nt=openTasks(p.id).length;
-  return `<article class="pcard c-${cat}" data-act="openProject" data-id="${p.id}" tabindex="0">
+  const own=UI.sort==='own'&&ME;
+  return `<article class="pcard c-${cat}" data-act="openProject" data-id="${p.id}" tabindex="0"${own?` data-drag="proj:${p.id}" data-drop-proj="${p.id}"`:''}>
     <div class="pc-top"><span class="type t-${p.type} hot" data-act="openAt" data-id="${p.id}" data-at="infos" title="Projektdaten öffnen">${TYPES[p.type]||''}</span><span class="pill ${CAT_CLS[cat]}">${CATS[cat]}</span></div>
     <div class="pc-head"><div class="ring hot" data-act="openAt" data-id="${p.id}" data-at="status" title="Statusverlauf öffnen" style="--p:${pct}" role="img" aria-label="${pp.work} von ${pp.total} Statusschritten"><span>${pp.work}<small>/${pp.total}</small></span></div>
       <div style="min-width:0"><h3>${esc(p.name)}</h3><div class="sub hot" data-act="openAt" data-id="${p.id}" data-at="infos" title="Projektdaten öffnen">${esc([p.nr,p.pl?shortWho(p.pl):''].filter(Boolean).join(' · ')||'Projektdaten ergänzen')}</div></div></div>
@@ -2232,7 +2254,7 @@ function projCard(p){
 function projListHtml(){
   if(UI.projMode==='board') return board();
   const rows=filterProjects(UI.q.trim()?'alle':UI.projFilter);
-  if(UI.projMode==='karten') return `<div class="small muted" style="margin-bottom:10px">${UI.q.trim()?rows.length+' Treffer':rows.length+' Projekte'} · sortiert nach ${esc(SORTS[UI.sort][0])}</div><div class="pgrid">${rows.map(projCard).join('')||'<div class="card"><div class="empty"><b>Keine Projekte in dieser Ansicht</b>Filter ändern oder neues Projekt anlegen.</div></div>'}</div>`;
+  if(UI.projMode==='karten') return `<div class="small muted" style="margin-bottom:10px">${UI.q.trim()?rows.length+' Treffer':rows.length+' Projekte'} · sortiert nach ${esc(SORTS[UI.sort][0])}${UI.sort==='own'?` · <b>Kacheln per Ziehen anordnen</b> (am Handy kurz gedrückt halten) – deine Reihenfolge gilt nur für dich (${esc(meK())})`:''}</div><div class="pgrid">${rows.map(projCard).join('')||'<div class="card"><div class="empty"><b>Keine Projekte in dieser Ansicht</b>Filter ändern oder neues Projekt anlegen.</div></div>'}</div>`;
   const lbl=UI.q.trim()?rows.length+' Treffer':rows.length+' Projekte';
   return `<div class="small muted" style="margin-bottom:8px">${lbl} · sortiert nach ${esc(SORTS[UI.sort][0])}</div><div class="card"><div class="plist">${rows.map(projRow).join('')||'<div class="empty"><b>Keine Projekte in dieser Ansicht</b>Filter ändern oder neues Projekt über „Neu“ anlegen.</div>'}</div></div>`;
 }
@@ -2321,11 +2343,13 @@ function projStatus(p){
   const nw=nowOf(p), tasks=openTasks(p.id).sort((a,b)=>taskActKey(b).localeCompare(taskActKey(a))), active=['planung','laufend'].includes(catOf(p));
   const nxTask=pp.next&&arr('tasks').find(t=>t.pid===p.id&&t.ms===pp.next&&!t.done);
   const dn=arr('tasks').filter(x=>x.pid===p.id&&x.done).sort((a,b)=>String(b.doneAt||'').localeCompare(String(a.doneAt||'')));
-  return `<div class="ps-grid">
+  return `<div class="ps-drop">${slimDrop(p.id)}</div><div class="ps-grid">
   <div class="ps-main">
   <div class="card ps-notes"><div class="card-h"><h3>Notizen</h3><span class="small muted">eine Notiz pro Tag · neueste oben · To-Do auf eine Notiz ziehen = verknüpfen</span></div><div class="card-b" style="display:flex;flex-direction:column;gap:12px">
     <div class="quick-note"><textarea id="qn_${p.id}" rows="2" placeholder="Neue Notiz … (Datum und Kürzel ${esc(meK())} kommen automatisch dazu, Strg+Enter speichert)" aria-label="Neue Notiz">${esc(QN[p.id]||'')}</textarea>
-      <div class="row"><select class="catsel" id="qnf_${p.id}" aria-label="Ablegen unter"><option value="updates">als Update</option><option value="notes">als Notiz</option><option value="questions">als offene Frage</option></select><span class="spacer"></span><button class="btn pri sm" data-act="quickNote" data-pid="${p.id}">Speichern</button></div></div>
+      <div class="row">${(()=>{ const m=(UI.qnMode||{})[p.id]||'notes', ot=openTasks(p.id);
+        return `<select class="catsel" id="qnf_${p.id}" data-chg="qnMode" data-pid="${p.id}" aria-label="Speichern als">${[['notes','Als Notiz'],['todo','Als To-Do'],['tupd','Als Update zu To-Do']].map(([k,l])=>`<option value="${k}" ${m===k?'selected':''}>${l}</option>`).join('')}</select>
+        ${m==='tupd'?`<select class="catsel" id="qnt_${p.id}" aria-label="Zu welchem To-Do?" style="max-width:260px">${ot.length?ot.map(t=>`<option value="${t.id}">${esc(t.title.slice(0,60))}${t.who?' · '+esc(shortWho(t.who)):''}</option>`).join(''):'<option value="">– keine offenen To-Dos –</option>'}</select>`:''}`; })()}<span class="spacer"></span><button class="btn pri sm" data-act="quickNote" data-pid="${p.id}">Speichern</button></div></div>
     ${projVerlauf(p,adm)}
   </div></div>
    <details class="card st-det" ${UI.stOpen?'open':''} data-stdet="1"><summary class="card-h"><h3>Statusverlauf <span class="mono small muted">${pp.work}/${pp.total}</span></h3><span class="small muted">aufklappen · Haken setzt das heutige Datum · ⊘ = Schritt entfällt</span></summary>
@@ -2351,8 +2375,7 @@ function projStatus(p){
    </div></div>
 
   </div>
-  </div>
-  ${slimDrop(p.id)}`;
+  </div>`;
 }
 // Abgehakte Aufgabe automatisch als Update ins Projekt; danach optional ein ergänzender Satz
 // Projekt-To-Do abhaken: Beschreibung ist Pflicht und landet mit Kürzel als Update in den Notizen
@@ -3851,6 +3874,7 @@ function resizeRef(ref,date){
 let DRAG=null, SUPPRESS_CLICK=false;
 // Ein To-Do auf ein anderes To-Do ziehen → wird dort als Update übernommen
 function dropTargetAt(x,y){ const el=document.elementFromPoint(x,y); if(!el) return null;
+  if(DRAG&&String(DRAG.ref).startsWith('proj:')){ const pc=el.closest('[data-drop-proj]'); return pc&&'proj:'+pc.dataset.dropProj!==DRAG.ref?pc:null; }
   if(DRAG&&String(DRAG.ref).startsWith('task:')){ const tk=el.closest('[data-drop-task],[data-drop-note]'); if(tk&&(tk.dataset.dropNote||'task:'+tk.dataset.dropTask!==DRAG.ref)) return tk; }
   return el.closest('[data-drop-d],[data-drop-who]'); }
 function mergeTask(srcId,dstId){
@@ -3895,7 +3919,8 @@ document.addEventListener('touchmove',e=>{ if(DRAG&&DRAG.started) e.preventDefau
 document.addEventListener('pointerup',e=>{
   if(!DRAG) return; const d=DRAG; if(!d.started){ endDrag(); return; }
   const t=dropTargetAt(e.clientX,e.clientY); endDrag(); SUPPRESS_CLICK=true; setTimeout(()=>{ SUPPRESS_CLICK=false; },60);
-  if(!t) return; if(t.dataset.dropNote){ linkTaskNote(t.dataset.pid,String(d.ref).slice(5),t.dataset.dropNote); return; }
+  if(!t) return; if(t.dataset.dropProj){ projReorder(String(d.ref).slice(5),t.dataset.dropProj); return; }
+  if(t.dataset.dropNote){ linkTaskNote(t.dataset.pid,String(d.ref).slice(5),t.dataset.dropNote); return; }
   if(t.dataset.dropTask){ mergeTask(String(d.ref).slice(5),t.dataset.dropTask); return; }
   if(d.mode==='resize'){ if(t.dataset.dropD) resizeRef(d.ref,t.dataset.dropD); } else moveRef(d.ref,t.dataset.dropD||'',t.dataset.dropWho);
 });
@@ -4055,7 +4080,14 @@ const A = {
    UI.ptab='ablauf'; UI.open[p.id+ph.id]=true; UI.hiItem=d.iid; render();
    const el=document.getElementById('ci-'+d.iid); if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
    setTimeout(()=>{ UI.hiItem=null; const e2=document.getElementById('ci-'+d.iid); if(e2) e2.classList.remove('hi'); },2500); },
- quickNote:d=>{ const ta=$('#qn_'+d.pid); const f=($('#qnf_'+d.pid)||{}).value||'updates'; if(!ta||!ta.value.trim()){ toast('Bitte zuerst eine Notiz schreiben.'); ta&&ta.focus(); return; } const t=ta.value; QN[d.pid]=''; ta.value=''; saveNote(d.pid,f,t); },
+ // Speichern als Notiz (Tagebuch), als neues To-Do oder als Update an einem offenen To-Do
+ quickNote:d=>{ const ta=$('#qn_'+d.pid); const f=($('#qnf_'+d.pid)||{}).value||'notes'; if(!ta||!ta.value.trim()){ toast('Bitte zuerst etwas schreiben.'); ta&&ta.focus(); return; }
+   const t=fixNames(ta.value.trim());
+   if(f==='todo'){ put('tasks',{id:uid(),pid:d.pid,title:t.slice(0,300),who:'',done:false,prio:'normal',src:'notiz',created:TODAY()}); toast('To-Do angelegt.'); }
+   else if(f==='tupd'){ const k=clone(S.tasks[($('#qnt_'+d.pid)||{}).value||'']||null); if(!k){ toast('Bitte ein To-Do auswählen.'); return; }
+     k.upd2=[...(k.upd2||[]),{d:TODAY(),tm:nowStamp().slice(9),by:meK(),t,at:new Date().toISOString()}]; put('tasks',k); toast('Update an „'+k.title.slice(0,40)+'“ gespeichert.'); }
+   else saveNote(d.pid,f==='questions'?'questions':'notes',t);
+   QN[d.pid]=''; ta.value=''; },
  editNoteBlock:d=>{ if(!isAdmin()) return toast('Nur EP und AvE können Notizen bearbeiten.'); const bl=noteBlocks(S.projects[d.pid][d.k]);
    openSheet({title:'Eintrag bearbeiten',value:{t:bl[+d.i]},fields:[{k:'t',label:'Text',type:'textarea',req:1}],onSave:v=>{ const b=noteBlocks(S.projects[d.pid][d.k]); b[+d.i]=v.t; saveNoteBlocks(d.pid,d.k,b,'Eintrag geändert.'); }}); },
  delNoteBlock:d=>{ if(!isAdmin()) return toast('Nur EP und AvE können Notizen löschen.'); const bl=noteBlocks(S.projects[d.pid][d.k]);
@@ -4426,18 +4458,79 @@ function gsearchHtml(q){
   const groups={}; ['Projekte','To-Dos','Notizen','Bestellungen','Dateien','Lager','Termine','Wochenplanung','Tagesrapporte','Kommissionierung','Private To-Dos'].forEach(g=>groups[g]=[]); res.forEach(r=>{ (groups[r.g]=groups[r.g]||[]).push(r); });
   return Object.entries(groups).filter(([,l])=>l.length).map(([g,l])=>`<div class="gs-g"><div class="gs-h">${esc(g)} <span class="mono">${l.length}</span></div>${l.slice(0,8).map(r=>`<button type="button" class="gs-r" data-act="${r.act}" data-id="${esc(r.id||'')}" ${r.at?`data-at="${r.at}"`:''} ${r.v?`data-v="${r.v}"`:''}><b>${esc(r.t)}</b><span>${esc(r.m||'')}</span></button>`).join('')}${l.length>8?`<div class="small muted" style="padding:4px 10px">+ ${l.length-8} weitere – Suche genauer eingeben</div>`:''}</div>`).join('');
 }
-function gsearchBox(){ return `<div class="gs-wrap"><div class="gs-in">${ic('search')}<input id="gSearch" type="search" autocomplete="off" placeholder="Alles durchsuchen: Projekte, Notizen, To-Dos, Bestellungen, Dateien (auch Inhalt), Lager …" value="${esc(UI.gq||'')}" aria-label="Gesamtes Programm durchsuchen">${SRec?`<button type="button" class="gs-mic" data-act="gsVoice" title="Per Sprache suchen" aria-label="Per Sprache suchen">🎙</button>`:''}<kbd>Strg K</kbd></div><div id="gResults" class="gs-res" role="region" aria-live="polite">${gsearchHtml(UI.gq)}</div></div>`; }
-let gT; document.addEventListener('input',e=>{ if(e.target.id!=='gSearch') return; UI.gq=e.target.value; clearTimeout(gT); gT=setTimeout(()=>{ const r=$('#gResults'); if(r) r.innerHTML=gsearchHtml(UI.gq); },150); });
-// Suche per Sprache: gesprochener Suchbegriff landet im Suchfeld (Namen wie Marc korrigiert)
+// Startseite: EIN Feld für alles – tippen = sofort suchen, Enter/Sprechen = Claude fragen („Zeig mir das neueste Update zum Energiepark“),
+// Dateien, Mails und Text reinziehen = wie bisher erkennen und zuordnen
+function gsearchBox(){
+  return `<section class="gs-wrap ask-box smart-drop" aria-label="Suchen, fragen oder Dateien ablegen"><div class="gs-in">${ic('search')}<input id="gSearch" type="search" autocomplete="off" enterkeyhint="go" placeholder="${SAMPLE?'Suchen oder fragen – z. B. „Zeig mir das neueste Update zum Energiepark“':'Alles durchsuchen: Projekte, Notizen, To-Dos, Bestellungen, Dateien, Lager …'}" value="${esc(UI.gq||'')}" aria-label="Suchen oder fragen">${SRec?`<button type="button" class="gs-mic" data-act="gsVoice" title="Sprechen: suchen oder fragen" aria-label="Sprechen">🎙</button>`:''}<button type="button" class="btn sun sm ask-go" data-act="askGo">${SAMPLE?'Fragen':'Suchen'}</button><kbd>Strg K</kbd></div>
+    <div class="ask-sub"><span>✨ Dateien, E-Mails (.msg/.eml), PDFs, Fotos oder Text hier reinziehen – die App erkennt, was es ist.</span><button type="button" class="lnk" data-act="smartPick">Datei wählen</button><button type="button" class="lnk" data-act="smartText">Text einfügen</button></div>
+    <div id="askOut" class="ask-ans" role="status"></div>
+    <div id="gResults" class="gs-res" role="region" aria-live="polite">${gsearchHtml(UI.gq)}</div></section><input type="file" id="smartIn" multiple hidden>`;
+}
+let gT; document.addEventListener('input',e=>{ if(e.target.id!=='gSearch') return; UI.gq=e.target.value; const o=$('#askOut'); if(o) o.innerHTML=''; clearTimeout(gT); gT=setTimeout(()=>{ const r=$('#gResults'); if(r) r.innerHTML=gsearchHtml(UI.gq); },150); });
+document.addEventListener('keydown',e=>{ if(e.target&&e.target.id==='gSearch'&&e.key==='Enter'){ e.preventDefault(); askRun(e.target.value); } });
+document.addEventListener('dragover',e=>{ const z=e.target.closest&&e.target.closest('.ask-box'); if(z){ e.preventDefault(); z.classList.add('over'); } });
+document.addEventListener('dragleave',e=>{ const z=e.target.closest&&e.target.closest('.ask-box'); if(z&&!z.contains(e.relatedTarget)) z.classList.remove('over'); });
+// Langer Text (z. B. Mail) ins Feld eingefügt → wie Reinziehen behandeln
+document.addEventListener('paste',e=>{ if(!e.target||e.target.id!=='gSearch') return; const t=e.clipboardData.getData('text/plain')||'', fl=[...(e.clipboardData.files||[])];
+  if(fl.length||/\n/.test(t.trim())||t.length>160){ e.preventDefault(); smartDrop(fl,t); } },true);
+A.askGo=()=>{ const i=$('#gSearch'); if(i) askRun(i.value); };
+// Enter / Sprechen: kurze Begriffe → bester Treffer; Sätze und Fragen → Claude
+function askRun(q){
+  q=fixNames(String(q||'').trim()).replace(/[.!]+$/,''); if(q.length<2) return;
+  const words=q.split(/\s+/).length, res=gsearch(q);
+  if(SAMPLE&&(words>=3||/\?$/.test(q)||!res.length)) return askAI(q);
+  if(res.length){ const r=res[0]; A[r.act]&&A[r.act]({id:r.id,at:r.at,v:r.v}); return; }
+  toast('Nichts gefunden.');
+}
+function askPop(html){ const old=$('.ask-pop'); if(old) old.remove(); if(!html) return; const d=document.createElement('div'); d.className='ask-pop'; d.setAttribute('role','status'); d.innerHTML=html+'<button type="button" aria-label="Schließen">✕</button>'; d.querySelector('button').onclick=()=>d.remove(); document.body.appendChild(d); setTimeout(()=>d.remove(),20000); }
+async function askAI(q){
+  const show=h=>{ const o=$('#askOut'); if(o) o.innerHTML=h; };
+  show('<span>✨</span><span>Claude schaut nach …</span>');
+  const ql=q.toLowerCase(), ws=ql.split(/[^a-zäöüß0-9-]+/).filter(w=>w.length>=4);
+  const cand=arr('projects').map(p=>{ const n=[p.name,p.place,p.customer,p.nr].join(' ').toLowerCase(); return {p,s:ws.filter(w=>n.includes(w)).length}; }).filter(x=>x.s).sort((a,b)=>b.s-a.s).slice(0,3).map(x=>x.p);
+  const lastUp=t=>{ const u=[...(t.upd2||[])].sort((a,b)=>updKey(b).localeCompare(updKey(a)))[0]; return u?' · letztes Update '+u.d+': '+u.t:''; };
+  const ctx=cand.map(p=>`PROJEKT ${p.id} „${p.name}“ (${CATS[catOf(p)]||''})\nNotizen, neueste Tage zuerst:\n${diaryDays(p).slice(0,5).map(x=>'- '+(x.d||'ohne Datum')+': '+x.items.map(dyPlain).join(' | ').slice(0,600)).join('\n')||'- keine'}\nOffene To-Dos:\n${openTasks(p.id).slice(0,10).map(t=>'- '+t.id+': '+t.title+(t.who?' ('+shortWho(t.who)+')':'')+(t.due?' fällig '+t.due:'')+lastUp(t)).join('\n')||'- keine'}`).join('\n\n');
+  const tk=arr('tasks').filter(t=>!t.done&&ws.some(w=>(t.title+' '+(t.notes||'')).toLowerCase().includes(w))).slice(0,10).map(t=>'- '+t.id+': '+t.title+' · '+(projName(t.pid)||'allgemein')+(t.who?' · '+shortWho(t.who):'')+lastUp(t)).join('\n');
+  const views=NAV.filter(n=>canSee(n[0])&&!String(n[0]).startsWith('f:')).map(n=>n[0]+' = '+n[1]).join(', ');
+  try{ const r=await SAMPLE.json(`Du bist der Assistent in der Projekt-App eines Solar-Installationsbetriebs (nutz die Sonne GmbH). Heute ist ${TODAY()}, ich bin ${meK()}.
+Anfrage (evtl. gesprochen): """${q.slice(0,600)}"""
+Alle Projekte (id | Name): ${arr('projects').map(p=>p.id+' | '+p.name).join('; ').slice(0,6000)}
+${ctx?'Passende Projekte im Detail:\n'+ctx:''}
+${tk?'Passende offene To-Dos:\n'+tk:''}
+Ansichten: ${views}
+Projekt-Reiter: status (Notizen + To-Dos), timeline, todos, material (Bestellungen), dateien, infos.
+Entscheide, was zu tun ist, und antworte nur mit JSON:
+{"do":"open|answer|search|capture","pid":"Projekt-id oder leer","tab":"status|timeline|todos|material|dateien|infos","day":"JJJJ-MM-TT des gemeinten Notiz-Tages oder leer","task":"To-Do-id oder leer","view":"Ansicht-id oder leer","q":"Suchbegriff (bei search)","say":"kurze Antwort auf Deutsch, 1–2 Sätze, mit dem konkreten Inhalt (z. B. was im neuesten Update steht)"}
+- open: das passende Fenster öffnen (Projekt + Reiter, ein To-Do oder eine Ansicht). „Neuestes Update / letzte Notiz zu X“ → tab status, day = neuester Tag, say = Inhalt.
+- answer: nur antworten, nichts öffnen.
+- search: allgemeine Volltextsuche mit q (1–3 Stichwörter).
+- capture: die Anfrage ist etwas zum Festhalten (Aufgabe, Info, Notiz, z. B. „MK soll morgen Westnetz anrufen“).
+Nichts erfinden: steht etwas nicht in den Daten, sag das in say.`,{modelTier:'quick'});
+    const say=String(r&&r.say||'').trim(), pid=r&&S.projects[r.pid]?r.pid:'', task=r&&S.tasks[r.task]?r.task:'', view=r&&NAV.some(n=>n[0]===r.view&&canSee(n[0]))?r.view:'';
+    const sayH=say?esc(say):'';
+    if(r&&r.do==='capture'){ show(''); return smartDrop([],q); }
+    if(r&&r.do==='search'&&r.q){ const i=$('#gSearch'); if(i){ i.value=r.q; i.dispatchEvent(new Event('input',{bubbles:true})); } show(sayH?`<span>✨</span><span>${sayH}</span>`:''); return; }
+    if(r&&r.do==='open'&&(pid||task||view)){
+      show(''); if(say) askPop('✨ '+sayH);
+      if(pid){ const p=S.projects[pid], day=/^\d{4}-\d{2}-\d{2}$/.test(r.day||'')?r.day:'';
+        if(day&&diaryDays(p).findIndex(x=>x.d===day)>=5) UI.nbAll=true;
+        A.openAt({id:pid,at:['infos','todos','material','timeline'].includes(r.tab)?r.tab:'status'}); if(r.tab==='dateien'){ UI.ptab='dateien'; render(); }
+        if(day&&(r.tab||'status')==='status') setTimeout(()=>{ const c=document.querySelector(`.nb.dy[data-drop-note="${day}"]`); if(c){ c.scrollIntoView({behavior:'smooth',block:'center'}); c.classList.add('dy-hi'); setTimeout(()=>c.classList.remove('dy-hi'),3000); } },120); }
+      else if(view) go(view);
+      if(task) setTimeout(()=>A.editTask({id:task}),pid||view?150:0);
+      return; }
+    show(`<span>✨</span><span>${sayH||'Dazu habe ich nichts gefunden.'}</span>`);
+  }catch(e){ show('<span>⚠️</span><span>Claude ist gerade nicht erreichbar – ich zeige die normale Suche.</span>'); }
+}
+// Sprechen: Gesprochenes landet im Feld, danach wird es wie Enter ausgeführt (Claude fragen)
 let GS_REC=null;
 A.gsVoice=(d,el)=>{ if(GS_REC){ try{ GS_REC.stop(); }catch(e){} return; } if(!SRec) return; if(MEET_ON) return toast('Während einer Meeting-Mitschrift ist das Mikrofon belegt.');
-  const r=new SRec(); r.lang='de-DE'; r.continuous=false; r.interimResults=true; GS_REC=r; const btn=()=>$('.gs-mic'), inp=()=>$('#gSearch');
-  const set=v=>{ const i=inp(); if(!i) return; i.value=v.replace(/[.!?]+$/,''); i.dispatchEvent(new Event('input',{bubbles:true})); };
-  r.onresult=e=>{ let s=''; for(let i=0;i<e.results.length;i++) s+=e.results[i][0].transcript; set(fixNames(s.trim())); };
+  const r=new SRec(); r.lang='de-DE'; r.continuous=false; r.interimResults=true; GS_REC=r; let said=''; const btn=()=>$('.gs-mic'), inp=()=>$('#gSearch');
+  r.onresult=e=>{ let s=''; for(let i=0;i<e.results.length;i++) s+=e.results[i][0].transcript; said=fixNames(s.trim()); const i=inp(); if(i){ i.value=said; UI.gq=said; } };
   r.onerror=e=>{ if(['not-allowed','service-not-allowed'].includes(e.error)) toast('Kein Zugriff aufs Mikrofon – bitte im Browser erlauben.'); };
-  r.onend=()=>{ GS_REC=null; const b=btn(); if(b){ b.classList.remove('on'); b.textContent='🎙'; } };
+  r.onend=()=>{ GS_REC=null; const b=btn(); if(b){ b.classList.remove('on'); b.textContent='🎙'; } if(said) askRun(said); };
   try{ r.start(); }catch(e){ GS_REC=null; return toast('Mikrofon konnte nicht gestartet werden.'); }
-  const b=btn(); if(b){ b.classList.add('on'); b.textContent='■'; } toast('Sag, wonach du suchst …'); };
+  const b=btn(); if(b){ b.classList.add('on'); b.textContent='■'; } toast(SAMPLE?'Sprich – z. B. „Zeig mir das neueste Update zum Energiepark“':'Sag, wonach du suchst …'); };
 document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); if(UI.view!=='dash'){ go('dash'); } setTimeout(()=>{ const i=$('#gSearch'); if(i){ i.focus(); i.select(); } },60); } });
 
 /* ========== Checklisten ausfüllen, speichern, drucken ========== */
@@ -5039,7 +5132,7 @@ Object.assign(A,{
 });
 // Aufklappen der Updates am To-Do öffnet nicht gleich das To-Do
 document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('.tu-inl')) e.stopPropagation(); },true);
-Object.assign(CHG,{ prioSelCls:(d,el)=>{ el.className='inp prio-sel p-'+el.value; }, mtAllP:(d,el)=>{ if(el.value==='__keep') return; document.querySelectorAll('#mt_list .mt-p').forEach(s=>{ s.value=el.value; s.classList.toggle('none',!el.value); }); }, mtRowP:(d,el)=>el.classList.toggle('none',!el.value), todoSort:(d,el)=>{ UI.todoSort=el.value; saveUI(); render(); } });
+Object.assign(CHG,{ qnMode:(d,el)=>{ UI.qnMode={...(UI.qnMode||{}),[d.pid]:el.value}; render(); }, prioSelCls:(d,el)=>{ el.className='inp prio-sel p-'+el.value; }, mtAllP:(d,el)=>{ if(el.value==='__keep') return; document.querySelectorAll('#mt_list .mt-p').forEach(s=>{ s.value=el.value; s.classList.toggle('none',!el.value); }); }, mtRowP:(d,el)=>el.classList.toggle('none',!el.value), todoSort:(d,el)=>{ UI.todoSort=el.value; saveUI(); render(); } });
 Object.assign(A,{
  rdCat:d=>{ UI.rdCat=d.v; saveUI(); render(); },
  orderBuyer:d=>{ UI.orderBuyer=d.v||''; render(); },
