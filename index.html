@@ -1235,14 +1235,17 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
   let session = null, readyResolve; const ready = new Promise(r => readyResolve = r);
 
   /* ---------- Anmeldung ---------- */
-  const css = `#sbLogin{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:#0B0B0B;font:15px/1.5 Inter,system-ui,sans-serif;padding:16px}
-  #sbLogin form{width:100%;max-width:380px;background:#fff;color:#111;border-radius:18px;padding:28px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
-  #sbLogin .wm{font-family:'Work Sans',sans-serif;font-weight:800;font-size:22px;letter-spacing:.02em}#sbLogin .wm span{background:#F4DB02;padding:0 5px}
-  #sbLogin label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:#555}
-  #sbLogin input{font:inherit;padding:11px 12px;border:1.5px solid #ddd;border-radius:10px;color:#111}
+  // Feste helle Farben (auch im Dunkelmodus von Handy/Browser/App gut lesbar)
+  const css = `#sbLogin{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:#0B0B0B;font:15px/1.5 Inter,system-ui,sans-serif;padding:16px;color-scheme:light}
+  #sbLogin form{width:100%;max-width:380px;background:#fff!important;color:#111!important;border-radius:18px;padding:28px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  #sbLogin .wm{font-family:'Work Sans',sans-serif;font-weight:800;font-size:22px;letter-spacing:.02em;color:#111!important}#sbLogin .wm span{background:#F4DB02;padding:0 5px;color:#111!important}
+  #sbLogin label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:#444!important}
+  #sbLogin input{font:inherit;padding:11px 12px;border:1.5px solid #ccc;border-radius:10px;color:#111!important;background:#fff!important;-webkit-text-fill-color:#111}
+  #sbLogin input::placeholder{color:#888!important;-webkit-text-fill-color:#888}
+  #sbLogin input:-webkit-autofill{-webkit-box-shadow:0 0 0 40px #fff inset!important;-webkit-text-fill-color:#111!important}
   #sbLogin input:focus{outline:none;border-color:#F4DB02;box-shadow:0 0 0 3px #FBF4B8}
-  #sbLogin button{font:inherit;font-weight:600;padding:12px;border-radius:10px;border:0;background:#111;color:#fff;cursor:pointer}
-  #sbLogin .lnk{background:none;color:#555;padding:4px;font-weight:400;text-decoration:underline}
+  #sbLogin button{font:inherit;font-weight:600;padding:12px;border-radius:10px;border:0;background:#111!important;color:#fff!important;cursor:pointer}
+  #sbLogin .lnk{background:none!important;color:#555!important;padding:4px;font-weight:400;text-decoration:underline}
   #sbLogin .msg{font-size:13px;min-height:1.2em}#sbLogin .msg.err{color:#C0352B}#sbLogin .msg.ok{color:#2E7D4A}`;
   function loginScreen(mode){
     let el = document.getElementById('sbLogin'); if(!el){ const st=document.createElement('style'); st.textContent=css; document.head.appendChild(st); el=document.createElement('div'); el.id='sbLogin'; document.body.appendChild(el); }
