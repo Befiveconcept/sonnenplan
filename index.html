@@ -485,13 +485,19 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .nav-tg{background:none;border:0;color:var(--night-ink);opacity:.6;cursor:pointer;padding:6px 8px;font-size:14px;transition:transform .15s}
 .nav-tg.open{transform:rotate(180deg)}
 .nav-btn.sub{padding-left:34px;font-size:13px}
-.nav-grp{margin-top:6px;border-top:1px solid rgba(255,255,255,.08);padding-top:4px}
-.nav-gh{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;cursor:pointer;padding:8px 12px 6px;color:rgba(255,255,255,.5);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;text-align:left}
-.nav-gh:hover{color:#fff}
+.nav-pin{background:none;border:0;cursor:pointer;color:var(--night-ink);opacity:0;font-size:13px;padding:4px 5px;line-height:1;transition:opacity .15s,color .15s}
+.nav-row:hover .nav-pin,.nav-pin:focus-visible{opacity:.45}.nav-pin:hover{opacity:1;color:var(--sun)}.nav-pin.on{opacity:1;color:var(--sun)}
+.nav-row.sub .nav-btn.sub{flex:1;min-width:0}
+.nav-pins{margin:8px 0 2px;padding:6px;border-radius:12px;background:rgba(244,219,2,.07);border:1px solid rgba(244,219,2,.25)}
+.nav-pins-h{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sun);padding:2px 8px 4px}
+@media (hover:none){ .nav-pin{opacity:.45} }
+.nav-grp{margin-top:10px;border-top:1px solid rgba(255,255,255,.1);padding-top:6px}
+.nav-gh{display:flex;align-items:center;gap:8px;width:100%;border:0;background:rgba(255,255,255,.04);cursor:pointer;padding:9px 12px;margin-bottom:2px;border-radius:10px;color:rgba(255,255,255,.88);font-family:var(--f-display);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;text-align:left;border-left:3px solid transparent}
+.nav-gh:hover{background:rgba(255,255,255,.09);color:#fff}
 .nav-gh span:first-child{flex:1}
-.nav-gc{transition:transform .15s;font-size:12px}.nav-grp.open .nav-gc{transform:rotate(180deg)}
-.nav-grp.open .nav-gh{color:var(--sun)}
-.menu-h{padding:10px 10px 4px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-top:1px solid var(--line);margin-top:4px}
+.nav-gc{transition:transform .15s;font-size:13px;opacity:.8}.nav-grp.open .nav-gc{transform:rotate(180deg)}
+.nav-grp.open .nav-gh{color:var(--sun);border-left-color:var(--sun);background:rgba(244,219,2,.08)}
+.nav-grp.open .nav-row .nav-btn,.nav-grp.open>.nav-btn.sub{margin-left:4px}.menu-h{padding:10px 10px 4px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-top:1px solid var(--line);margin-top:4px}
 .priv-done summary{cursor:pointer;padding:10px 16px;font-weight:600;color:var(--muted)}
 .chat{display:grid;grid-template-columns:240px minmax(0,1fr);gap:14px;height:calc(100vh - 170px);min-height:420px}
 .ch-rooms{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:8px;overflow:auto;display:flex;flex-direction:column;gap:4px}
@@ -576,13 +582,13 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 @media (max-width:760px){ .sl-head,.sl-2{grid-template-columns:1fr} .sl-hdr{display:none} .sl-row{grid-template-columns:24px 1fr 1fr 1fr;grid-auto-rows:auto} .sl-row .sl-main{grid-column:2/-1} .sl-row .sl-sum{grid-column:2/4;text-align:left} }
 .fin-drop{margin-bottom:14px}
 /* Briefpapier-Druck (Verkaufsbelege) */
-.pr-letter{display:none}
+/* Briefpapier (Druck und Live-Vorschau) */
+.pr-letter{display:none;font-family:Arial,Helvetica,sans-serif;color:#222;font-size:10pt;line-height:1.35;text-align:left}
 @page letter{size:A4;margin:0}
-@media print{
-  body.print-letter #printArea .pr-letter{display:block;page:letter;font-family:Arial,Helvetica,sans-serif;color:#222;font-size:10pt;line-height:1.35}
+
   .lt-wrap{width:100%;border-collapse:collapse}.lt-wrap>thead>tr>td,.lt-wrap>tbody>tr>td,.lt-wrap>tfoot>tr>td{padding:0 18mm 0 24mm}
   .lt-hsp{height:14mm}.lt-fsp{height:36mm}
-  .lt-foot{position:fixed;left:24mm;right:18mm;bottom:10mm;display:grid;grid-template-columns:1fr 1.35fr 1.6fr;gap:6mm;font-size:7.5pt;line-height:1.45;color:#333;border-top:.3pt solid #bbb;padding-top:3mm}
+  .lt-foot{position:absolute;left:24mm;right:18mm;bottom:10mm;display:grid;grid-template-columns:1fr 1.35fr 1.6fr;gap:6mm;font-size:7.5pt;line-height:1.45;color:#333;border-top:.3pt solid #bbb;padding-top:3mm}
   .lt-first{position:relative;height:96mm}
   .lt-logo{position:absolute;right:0;top:-2mm;width:38mm}
   .lt-sender{position:absolute;left:0;top:36mm;font-size:7.5pt;color:#555;border-bottom:.3pt solid #999;padding-bottom:.5mm}
@@ -602,10 +608,49 @@ body.dragging,body.dragging *{cursor:grabbing!important}
   .lt-sums{margin:0 0 5mm auto;border-collapse:collapse;min-width:80mm;font-size:10pt}
   .lt-sums td{padding:1mm 1.5mm}.lt-sums td:last-child{text-align:right;white-space:nowrap}
   .lt-sums .lt-b td{font-weight:700;border-top:.6pt solid #222;padding-top:1.5mm}
-}
-/* Stammdaten / Projekt-Infos */
+
+  .lt-head td{font-weight:700;font-size:10.5pt;padding-top:4mm!important;border-bottom:.6pt solid #222!important}
+  .lt-txt td{border-bottom:none!important;font-weight:400!important}
+  .lt-line td{padding:0!important;height:1.5mm;border-bottom:.9pt solid #222!important}
+  .lt-subt td{font-weight:700;background:#f4f4f4}
+  .lt-opt td{color:#777}.lt-optl{font-size:8pt;color:#888;font-weight:400}
+  .lt-pb{break-before:page;page-break-before:always;height:0}
+@media print{ body.print-letter #printArea .pr-letter{display:block;page:letter} body.print-letter .lt-foot{position:fixed} }
+/* Live-Vorschau im Beleg-Editor */
+.sheet.wide:has(.sl-split){width:min(1560px,98vw)}
+.sl-split{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:18px;align-items:start}
+.sl-split.noprev{grid-template-columns:minmax(0,1fr)}.sl-split.noprev .sl-prev{display:none}
+.sl-prev{position:sticky;top:0;background:#5d6166;border-radius:14px;padding:10px;display:flex;flex-direction:column;max-height:calc(100vh - 170px)}
+.sl-prev-h{display:flex;justify-content:space-between;align-items:baseline;color:#fff;margin:0 4px 8px}.sl-prev-h .small{opacity:.75}
+.sl-prev-scroll{overflow:auto;border-radius:6px}
+.sl-paper{width:210mm;background:#fff;zoom:.5;box-shadow:0 4px 18px rgba(0,0,0,.35);margin:0 auto}
+.sl-paper .pr-letter{display:block;position:relative;min-height:297mm}
+.sl-paper .lt-pb{border-top:2px dashed #bbb;margin:8mm 0}
+@media (max-width:1150px){ .sl-split{grid-template-columns:minmax(0,1fr)} .sl-prev{position:static;max-height:none} .sl-paper{zoom:.42} }
+/* Beleg-Editor: Zeilentypen, Werkzeuge, Artikelauswahl */
+.sl-hdr,.sl-row{grid-template-columns:34px minmax(0,1fr) 62px 60px 88px 86px 90px 84px}
+.sl-row.sl-k{grid-template-columns:34px minmax(0,1fr) 84px;align-items:center}
+.sl-btns{display:flex;gap:2px;justify-content:flex-end}.sl-btns .icon-btn{width:26px;height:26px;font-size:13px}
+.sl-opt{display:flex!important;align-items:center;gap:6px;font-size:11.5px!important;margin:2px 0 0!important;color:var(--muted)}
+.sl-optrow .sl-art,.sl-optrow .sl-sum{opacity:.6;font-style:italic}
+.sl-headin{font-weight:700;font-size:15px}
+.sl-hr{border-top:2px solid var(--ink);margin:6px 0}
+.sl-subt{display:flex;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px;font-weight:600}
+.sl-pg{font-size:12px;color:var(--muted);border:1px dashed var(--line);padding:6px;text-align:center;border-radius:8px}
+.sl-disc{display:flex;gap:8px;align-items:center}.sl-disc .sl-pct{width:84px!important}.sl-disc .sl-desc{flex:1}
+.sl-tools{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+.sl-pick{margin-top:8px;border:1px solid var(--sun);background:var(--sun-soft);border-radius:12px;padding:10px}
+.sl-pr{max-height:280px;overflow:auto;display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.sl-pa{display:flex;flex-direction:column;align-items:flex-start;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer}
+.sl-pa:hover{border-color:var(--sun)}.sl-pa span{font-size:12px;color:var(--muted)}
+.sl-target{outline:2px solid var(--sun);outline-offset:2px;border-radius:8px}
+@media (max-width:760px){ .sl-row.sl-k{grid-template-columns:24px 1fr 70px} }/* Stammdaten / Projekt-Infos */
 .info-g{margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+.st-f{margin-top:-4px}
+.st-tbl tr.st-dup td{background:rgba(224,168,44,.08)}
+.st-dupg .card-h h3{font-size:15px}
 .st-tbl td{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rel-q{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px;display:flex;flex-direction:column;gap:4px}.rel-q select{margin-top:4px}
 .tk-ai{margin-top:12px;border:1px solid var(--sun);background:var(--sun-soft);border-radius:12px;padding:12px}
 .tk-tel{display:inline-block;margin-top:6px;font-size:22px;font-weight:700;font-family:var(--f-mono);color:var(--ink);text-decoration:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 14px}
 .tk-steps{margin:0;padding-left:20px;line-height:1.6}
@@ -1859,7 +1904,7 @@ function put(coll,obj){
   const what=describeChange(coll,prev,obj);
   obj.upd=now; obj.updBy=meK(); if(!prev){ obj.at=obj.at||now; obj.by=obj.by||meK(); }
   if(what) obj.hist=(obj.hist||[]).concat([{at:now,by:meK(),a:what}]).slice(-150);
-  S[coll][obj.id]=obj; scheduleRender();
+  S[coll][obj.id]=obj; scheduleRender(); if(coll==='tasks'&&!prev&&!obj.done&&!obj.relOk) relQueue(obj.id); // neues To-Do: gegen bestehende prüfen
   if(MODE!=='cloud'){ saveLocal(); return; }
   const key=coll+'/'+obj.id, body=JSON.parse(JSON.stringify(obj));
   chains[key]=(chains[key]||Promise.resolve()).then(()=>DB.collection(coll).doc(obj.id).set(body)).catch(writeErr);
@@ -1987,14 +2032,22 @@ const navTop=v=>{ const n=NAV.find(x=>x[0]===v); return n&&n[3]?n[3]:v; };
 function navGroups(){ const top=NAV.filter(n=>!n[3]&&canSee(n[0])), used=new Set(NAV_GROUPS.flatMap(g=>g[2])), extra=top.filter(n=>!used.has(n[0])).map(n=>n[0]);
   return NAV_GROUPS.map(([g,l,vs],gi)=>[g,l,(gi===NAV_GROUPS.length-1?[...vs,...extra]:vs).map(v=>top.find(n=>n[0]===v)).filter(Boolean)]).filter(x=>x[2].length); }
 const navGrpOpen=(g,items,cur)=>{ const s=NAV_GRP[g]; return s===true||(s!==false&&items.some(n=>n[0]===navTop(cur))); };
-function navItem([v,l,i],cur,cnt){ const kids=NAV.filter(n=>n[3]===v&&canSee(n[0])), open=kids.length&&(UI.navOpen&&UI.navOpen[v]||cur===v||kids.some(k=>k[0]===cur));
-  return `<div class="nav-row"><button class="nav-btn ${cur===v?'on':''}" data-act="nav" data-v="${v}">${ic(i)}<span>${l}</span>${cnt[v]?`<span class="cnt">${cnt[v]}</span>`:''}</button>${kids.length?`<button class="nav-tg ${open?'open':''}" data-act="navToggle" data-v="${v}" aria-label="${open?'Zuklappen':'Aufklappen'}" aria-expanded="${open?'true':'false'}">▾</button>`:''}</div>`+
-    (open?kids.map(([kv,kl,ki])=>`<button class="nav-btn sub ${cur===kv?'on':''}" data-act="nav" data-v="${kv}">${ic(ki)}<span>${kl}</span>${cnt[kv]?`<span class="cnt">${cnt[kv]}</span>`:''}</button>`).join(''):''); }
+// Unterpunkte auf-/zuklappen: offen, wenn man drin ist – außer man hat ihn selbst zugeklappt (navOpen[v]===false)
+const navSubOpen=(v,kids,cur)=>{ const s=UI.navOpen&&UI.navOpen[v]; return s===true||(s!==false&&(cur===v||kids.some(k=>k[0]===cur))); };
+// Angeheftete Rubriken (bis zu 3, mit ☀ markiert) – je Person und Gerät
+const NAV_PIN_KEY=()=>'sonnenplan-pins-'+(ME?meK():'');
+const navPins=()=>{ try{ return (JSON.parse(lsGet(NAV_PIN_KEY())||'[]')||[]).filter(v=>NAV.some(n=>n[0]===v)&&canSee(v)).slice(0,3); }catch(e){ return []; } };
+const navLabel=v=>{ const n=NAV.find(x=>x[0]===v); if(!n) return v; const p=n[3]&&NAV.find(x=>x[0]===n[3]); return (p?p[1]+' · ':'')+n[1]; };
+function navItem([v,l,i],cur,cnt){ const kids=NAV.filter(n=>n[3]===v&&canSee(n[0])), open=kids.length&&navSubOpen(v,kids,cur), pins=navPins();
+  const pin=x=>`<button class="nav-pin ${pins.includes(x)?'on':''}" data-act="navPin" data-v="${x}" title="${pins.includes(x)?'Nicht mehr oben anheften':'Oben anheften (max. 3)'}" aria-label="Anheften">☀</button>`;
+  return `<div class="nav-row"><button class="nav-btn ${cur===v?'on':''}" data-act="nav" data-v="${v}">${ic(i)}<span>${l}</span>${cnt[v]?`<span class="cnt">${cnt[v]}</span>`:''}</button>${v!=='dash'?pin(v):''}${kids.length?`<button class="nav-tg ${open?'open':''}" data-act="navToggle" data-v="${v}" aria-label="${open?'Zuklappen':'Aufklappen'}" aria-expanded="${open?'true':'false'}">▾</button>`:''}</div>`+
+    (open?kids.map(([kv,kl,ki])=>`<div class="nav-row sub"><button class="nav-btn sub ${cur===kv?'on':''}" data-act="nav" data-v="${kv}">${ic(ki)}<span>${kl}</span>${cnt[kv]?`<span class="cnt">${cnt[kv]}</span>`:''}</button>${pin(kv)}</div>`).join(''):''); }
 var NAV_CUR='dash';
-function navSide(cur,cnt){ NAV_CUR=cur; return navGroups().map(([g,l,items])=>{ const html=items.map(n=>navItem(n,cur,cnt)).join(''); if(!g) return html;
+function navSide(cur,cnt){ NAV_CUR=cur; const pins=navPins();
+  const pinHtml=pins.length?`<div class="nav-pins"><div class="nav-pins-h">☀ Angeheftet</div>${pins.map(v=>{ const n=NAV.find(x=>x[0]===v); return `<div class="nav-row"><button class="nav-btn ${cur===v?'on':''}" data-act="nav" data-v="${v}">${ic(n[2])}<span>${esc(navLabel(v))}</span>${cnt[v]?`<span class="cnt">${cnt[v]}</span>`:''}</button><button class="nav-pin on" data-act="navPin" data-v="${v}" title="Lösen" aria-label="Lösen">☀</button></div>`; }).join('')}</div>`:'';
+  return navGroups().map(([g,l,items])=>{ const html=items.map(n=>navItem(n,cur,cnt)).join(''); if(!g) return html+pinHtml;
   const open=navGrpOpen(g,items,cur), c=items.reduce((a,n)=>a+(+cnt[n[0]]||0),0);
-  return `<div class="nav-grp ${open?'open':''}"><button class="nav-gh" data-act="navGrp" data-g="${g}" aria-expanded="${open?'true':'false'}"><span>${l}</span>${!open&&c?`<span class="cnt">${c}</span>`:''}<span class="nav-gc" aria-hidden="true">▾</span></button>${open?html:''}</div>`; }).join(''); }
-function renderShell(){  const openTodos=arr('tasks').filter(t=>!t.done&&!(t.pool&&!t.who)).length, openOrders=arr('orders').filter(o=>orderState(o).open).length;
+  return `<div class="nav-grp ${open?'open':''}"><button class="nav-gh" data-act="navGrp" data-g="${g}" aria-expanded="${open?'true':'false'}"><span>${l}</span>${!open&&c?`<span class="cnt">${c}</span>`:''}<span class="nav-gc" aria-hidden="true">▾</span></button>${open?html:''}</div>`; }).join(''); }function renderShell(){  const openTodos=arr('tasks').filter(t=>!t.done&&!(t.pool&&!t.who)).length, openOrders=arr('orders').filter(o=>orderState(o).open).length;
   const cnt={projects:activeProjects().length,todos:openTodos,orders:openOrders,chat:chatUnreadAll(),private:Object.values(S.priv||{}).filter(t=>!t.done).length,pool:arr('tasks').filter(t=>t.pool&&!t.done&&!t.who).length};
   const cur = UI.view==='sales'?'vk:'+(UI.vkTab||'rechnung'):UI.view==='fin'?'fi:'+(UI.fiTab||'bank'):UI.view==='stamm'?'st:'+(UI.stTab||'kunden'):UI.view==='project'?'projects':UI.view==='calendar'?'week':UI.view==='files'&&UI.fkind?'f:'+UI.fkind:UI.view==='offers'?'f:angebot':UI.view==='reports'?'f:rapport':UI.view;
   $('#side').innerHTML = `<div class="brand"><div class="wordmark"><span class="y">NUTZ DIE</span> <span class="g">SONNE</span></div><small>Projektsteuerung</small></div>`+
@@ -3952,6 +4005,7 @@ function allFiles(){
   const od=[]; arr('orders').forEach(o=>(o.docs||[]).forEach(d=>{ const k=/liefer/i.test(d.kind||'')?'lieferschein':/^ab$/i.test(d.kind||'')?'ab':'rechnung';
     od.push({id:'od_'+d.id,name:STD_RX.test(d.name)?d.name:stdName(d.date,k,[o.supplier,d.docNo||stemOf(d.name)].filter(Boolean).join(' '),extOf(d.name)),asset:d.id,mime:d.type,kind:k,pid:o.pid,date:d.date,virtual:true,src:'Bestellung '+(o.supplier||''),vact:'editOrder',vid:o.id}); }));
   arr('offers').forEach(o=>od.push({id:'of_'+o.id,name:stdName(o.date,'angebot',[o.no,o.title||o.customer].filter(Boolean).join(' ')),kind:'angebot',pid:o.pid,date:o.date,at:o.upd,virtual:true,src:'Angebot · '+(OFFER_ST[o.status]||o.status||''),vact:'editOffer',vid:o.id}));
+  arr('sales').filter(s=>s.pid&&(s.nr||s.status!=='entwurf')).forEach(s=>{ const k=s.type==='angebot'?'angebot':s.type==='auftrag'?'ab':s.type==='lieferschein'?'lieferschein':'rechnung', m=saleSums(s); od.push({id:'sa_'+s.id,name:stdName(s.date,k,[SALE_T[s.type][0]==='Rechnung'?'':SALE_T[s.type][0],s.nr,(s.cust||{}).name].filter(Boolean).join(' ')),kind:k,pid:s.pid,date:s.date,at:s.upd,virtual:true,src:'Verkauf · '+(SALE_ST[s.status]||[s.status])[0]+(s.type==='lieferschein'?'':' · '+euro(isInv(s.type)?m.pay:m.gross)),vact:'saleEdit',vid:s.id}); });
   arr('picks').forEach(k=>od.push({id:'pk_'+k.id,name:stdName(k.date,'kommi',projName(k.pid)||'Liste'),kind:'kommi',pid:k.pid,date:k.date,at:k.upd,virtual:true,src:(PICK_ST[k.status]||k.status)+' · '+(k.items||[]).length+' Artikel'+(k.who?' · '+shortWho(k.who):''),vact:'openPick',vid:k.id}));
   arr('reports').forEach(r=>od.push({id:'rp_'+r.id,name:stdName(r.date,'rapport',projName(r.pid)||'Baustelle'),kind:'rapport',pid:r.pid,date:r.date,at:r.upd,virtual:true,src:r.status==='vorbereitet'?'vorbereitet':'ausgefüllt',vact:'editReport',vid:r.id}));
   return own.concat(od).sort((a,b)=>(b.at||b.date||'').localeCompare(a.at||a.date||''));
@@ -4363,7 +4417,8 @@ const A = {
  privCycle:d=>{ const t=S.priv[d.id]; if(!t) return; const s=t.state||(t.done?'erledigt':'offen'), n={offen:'angefangen',angefangen:'erledigt',erledigt:'offen'}[s]; privPut({...t,state:n,done:n==='erledigt',doneAt:n==='erledigt'?new Date().toISOString():''}); },
  privEdit:d=>{ const t=S.priv[d.id]; if(!t) return; openSheet({title:'Privates To-Do',fields:[{k:'title',label:'Aufgabe',req:1,full:1,type:'textarea'},{k:'firm',label:'Für Firma',list:'firmList'},{k:'due',label:'Fällig am',type:'date'},{k:'prio',label:'Priorität',type:'select',options:[['normal','normal'],['hoch','wichtig']]}],value:t,onSave:v=>{ privPut({...t,...v}); }}); },
  navGrp:d=>{ const g=d.g, it=(navGroups().find(x=>x[0]===g)||[])[2]||[]; NAV_GRP={...NAV_GRP,[g]:!navGrpOpen(g,it,NAV_CUR)}; lsSet('sonnenplan-navgrp',JSON.stringify(NAV_GRP)); render(); },
- navToggle:d=>{ UI.navOpen={...(UI.navOpen||{}),[d.v]:!(UI.navOpen&&UI.navOpen[d.v])}; render(); },
+ navToggle:d=>{ const kids=NAV.filter(n=>n[3]===d.v&&canSee(n[0])); UI.navOpen={...(UI.navOpen||{}),[d.v]:!navSubOpen(d.v,kids,NAV_CUR)}; render(); },
+ navPin:d=>{ const p=navPins(), v=d.v; let n; if(p.includes(v)) n=p.filter(x=>x!==v); else { if(p.length>=3){ toast('Maximal 3 Rubriken anheften – erst eine lösen (☀ anklicken).'); return; } n=[...p,v]; } lsSet(NAV_PIN_KEY(),JSON.stringify(n)); toast(p.includes(v)?'Gelöst.':'Oben angeheftet: '+navLabel(v)); render(); },
  privDel:d=>privDel(d.id),
  chatRoom:d=>{ UI.room=d.v; render(); },
  chatTeamNew:()=>chatTeamForm(null), chatTeamEdit:d=>{ const t=chatTeams().find(x=>x.id===d.id); if(t) chatTeamForm(t); },
@@ -5099,7 +5154,7 @@ const TOK_STOP=new Set(['bitte','noch','und','oder','für','mit','beim','dass','
 const toks=s=>new Set((String(s||'').toLowerCase().match(/[a-zäöüß0-9-]{4,}/g)||[]).filter(w=>!TOK_STOP.has(w)).map(w=>w.slice(0,7)));
 // Rückgabe {id, strong}: schwacher Treffer wird nur angezeigt (Standard: neues To-Do), starker als Update vorgeschlagen
 function findRelated(t){ const pw=t.projectId&&S.projects[t.projectId]?toks(S.projects[t.projectId].name):new Set(); const a=new Set([...toks(t.title)].filter(w=>!pw.has(w))); if(!a.size) return null; let best=null;
-  arr('tasks').filter(x=>!x.done).forEach(x=>{ if(t.projectId&&x.pid&&x.pid!==t.projectId) return; const bt=toks(x.title), b=new Set([...bt,...toks(x.notes)]); let c=0; a.forEach(w=>{ if(b.has(w)) c++; }); if(!c) return;
+  arr('tasks').filter(x=>!x.done&&x.id!==t.id).forEach(x=>{ if(t.projectId&&x.pid&&x.pid!==t.projectId) return; const bt=toks(x.title), b=new Set([...bt,...toks(x.notes)]); let c=0; a.forEach(w=>{ if(b.has(w)) c++; }); if(!c) return;
     const same=!!(t.projectId&&x.pid===t.projectId), sc=c/Math.max(1,Math.min(a.size,bt.size||1))+(same?0.2:0);
     const strong=(c>=2&&sc>=0.5)||(same&&sc>=0.7); if(strong||(same&&c>=1)) if(!best||sc>best.sc) best={id:x.id,sc,strong}; });
   return best; }
@@ -5128,7 +5183,7 @@ function showMailTodos(m,pid,why,todos,summary,files,text){
           x.upd2=[...(x.upd2||[]),{d:TODAY(),by:meK(),t:info.slice(0,400),at:new Date().toISOString()}]; const pr=(g('r')||{}).value; if(pr&&PRIO[pr]&&PRIO[pr][1]>prioN(x)) x.prio=pr; if(!x.due&&g('d').value) x.due=g('d').value; if(!x.who&&g('w').value) x.who=g('w').value;
           if(act==='erledigt'){ x.done=true; x.doneAt=new Date().toISOString(); x.doneBy=meK(); x.doneNote=info.slice(0,300); }
           put('tasks',x); upd.push({...x,_act:act}); return; }
-        const t={id:uid(),title,who:g('w').value,due:g('d').value,ext:g('e').value.trim(),pid:p===INTERN?'':p,done:false,prio:(g('r')||{}).value||'normal',src:isMail?'mail':'liste',notes:isMail?'Aus E-Mail: '+(m.subject||'')+(m.from?' · von '+m.from:''):''};
+        const t={id:uid(),title,who:g('w').value,due:g('d').value,ext:g('e').value.trim(),pid:p===INTERN?'':p,done:false,prio:(g('r')||{}).value||'normal',src:isMail?'mail':'liste',...(relBox?{relOk:1}:{}),notes:isMail?'Aus E-Mail: '+(m.subject||'')+(m.from?' · von '+m.from:''):''};
         ['due','ext','notes'].forEach(k=>{ if(!t[k]) delete t[k]; }); put('tasks',t); made.push(t); });
       const mailPid=isMail?($('#mt_pid').value||(made.find(t=>t.pid)||{}).pid||''):'';
       if(isMail&&$('#mt_file').checked) ingestFiles(m.file?[m.file]:[],m.file?'':text,mailPid);
@@ -5572,21 +5627,70 @@ function stLists(){ if(!stListsDirty) return; stListsDirty=false; const set=(id,
   set('stCatList',[...new Set([...Object.values(S.kunden||{}),...Object.values(S.artikel||{})].map(x=>x.cat).filter(Boolean))]);
   const sl=document.getElementById('supplierList'); if(sl){ const have=new Set([...sl.options].map(o=>o.value)); Object.values(S.lieferanten||{}).forEach(x=>{ if(x.name&&!have.has(x.name)){ have.add(x.name); sl.insertAdjacentHTML('beforeend',`<option value="${esc(x.name)}">`); } }); } }
 const stDatalists=()=>''; // Listen hängen global am Dokument (stLists)
+// Verknüpfungen zählen (einmal je Zeichnen): Kunden ↔ Projekte (Auftraggeber/Eigentümer/Kunden-Nr.), Lieferanten ↔ Bestellungen, Artikel ↔ Lager
+function stLinks(k){ const m={};
+  if(k==='kunden') arr('projects').forEach(p=>{ [p.customer,p.owner].forEach(n=>{ const s=stNorm(n); if(s) (m[s]=m[s]||new Set()).add(p.id); }); if(p.custNr) (m['#'+p.custNr]=m['#'+p.custNr]||new Set()).add(p.id); });
+  if(k==='lieferanten') arr('orders').forEach(o=>{ const s=stNorm(o.supplier); if(s) (m[s]=m[s]||new Set()).add(o.id); });
+  if(k==='artikel') arr('stock').forEach(x=>{ const s=stNorm(x.art); if(s) (m[s]=m[s]||new Set()).add(x.id); });
+  return x=>{ const a=m[stNorm(x.name)], b=x.nr&&m['#'+x.nr]; return new Set([...(a||[]),...(b||[])]).size; }; }
+// Mögliche Dopplungen: gleicher Name (auch mit vertauschten Wörtern / ohne Rechtsform), gleiche E-Mail, gleiche Telefonnummer, gleiche Adresse
+const stWords=s=>String(s||'').toLowerCase().replace(/gmbh|&|co\.?|kg|ag|e\.k\.|ug|haftungsbeschränkt|mbh|herr|frau|familie|fam\./g,' ').split(/[^a-z0-9äöüß]+/).filter(w=>w.length>1).sort().join(' ');
+const stPhone=s=>{ const d=String(s||'').replace(/\D/g,'').replace(/^0049|^49/,'0'); return d.length>=7?d.slice(-9):''; };
+let ST_DUP_CACHE={};
+function stDups(k){ const all=Object.values(S[k]||{}), sig=k+all.length+'|'+all.reduce((a,x)=>a+(x.upd||x.at||'').length,0)+'|'+JSON.stringify(((S.config||{}).notDup||{})[k]||{}).length; if(ST_DUP_CACHE[k]&&ST_DUP_CACHE[k].sig===sig) return ST_DUP_CACHE[k];
+  const par={}, find=a=>{ while(par[a]!==a){ par[a]=par[par[a]]; a=par[a]; } return a; }, why={}; all.forEach(x=>par[x.id]=x.id);
+  const nd=((S.config||{}).notDup||{})[k]||{}, pairOk=(a,b)=>nd[[a,b].sort().join('|')];
+  const join=(ids,r)=>{ for(let i=1;i<ids.length;i++){ if(pairOk(ids[0],ids[i])) continue; const a=find(ids[0]), b=find(ids[i]); if(a!==b) par[b]=a; } ids.forEach(id=>{ (why[id]=why[id]||new Set()).add(r); }); };
+  const idx=(f,r)=>{ const m={}; all.forEach(x=>{ const v=f(x); if(v) (m[v]=m[v]||[]).push(x.id); }); Object.values(m).forEach(ids=>{ if(ids.length>1&&ids.length<15) join(ids,r); }); };
+  idx(x=>stWords(x.name),'gleicher Name'); idx(x=>String(x.email||'').toLowerCase().trim(),'gleiche E-Mail'); idx(x=>stPhone(x.phone)||'','gleiche Telefonnummer');
+  if(k!=='artikel') idx(x=>x.street&&x.city?(String(x.street).toLowerCase().replace(/str(\.|aße|asse)/,'str').replace(/\s+/g,'')+'|'+stNorm(x.city).slice(0,8)):'','gleiche Adresse');
+  if(k==='artikel') idx(x=>x.supNr?String(x.supNr).toLowerCase():'','gleiche Lieferanten-Art.-Nr.');
+  const g={}; all.forEach(x=>{ const r=find(x.id); (g[r]=g[r]||[]).push(x); }); const groups=Object.values(g).filter(a=>a.length>1).map(a=>({items:a.sort((p,q)=>String(p.nr||'').localeCompare(String(q.nr||''),'de',{numeric:true})),why:[...new Set(a.flatMap(x=>[...(why[x.id]||[])]))]})).sort((a,b)=>String(a.items[0].name).localeCompare(String(b.items[0].name),'de'));
+  const byId={}; groups.forEach((gr,i)=>gr.items.forEach(x=>byId[x.id]=i)); return ST_DUP_CACHE[k]={sig,groups,byId}; }
+const ST_FILTERS={kunden:[['proj','mit Projekt'],['noproj','ohne Projekt'],['mail','mit E-Mail'],['nomail','ohne E-Mail'],['nophone','ohne Telefon'],['noaddr','ohne Adresse'],['new','neu (30 Tage)'],['dup','⚠ Dopplungen']],
+  lieferanten:[['proj','mit Bestellungen'],['noproj','ohne Bestellungen'],['mail','mit E-Mail'],['nomail','ohne E-Mail'],['nophone','ohne Telefon'],['nocust','ohne unsere Kd.-Nr.'],['new','neu (30 Tage)'],['dup','⚠ Dopplungen']],
+  artikel:[['proj','im Lager'],['noprice','ohne Preis'],['nounit','ohne Einheit'],['nosup','ohne Lieferant'],['new','neu (30 Tage)'],['dup','⚠ Dopplungen']]};
 function vStamm(){
-  stLoad(); const k=ST_DEF[UI.stTab]?UI.stTab:'kunden', D=ST_DEF[k], all=Object.values(S[k]||{}), q=String(UI.stQ||'').toLowerCase().trim(), cf=UI.stCat||'';
-  let list=all; if(cf) list=list.filter(x=>(x.cat||'')===cf); if(q) list=list.filter(x=>Object.values(x).join(' ').toLowerCase().includes(q));
-  const sk=UI.stSort||'name'; list=list.sort((a,b)=>sk==='nr'?String(b.nr||'').localeCompare(String(a.nr||''),'de',{numeric:true}):String(a.name||'').localeCompare(String(b.name||''),'de'));
+  stLoad(); const k=ST_DEF[UI.stTab]?UI.stTab:'kunden', D=ST_DEF[k], all=Object.values(S[k]||{}), q=String(UI.stQ||'').toLowerCase().trim(), cf=UI.stCat||'', ff=UI.stF||'', city=UI.stCity||'';
+  const links=stLinks(k), dup=stDups(k), since=addDays(TODAY(),-30);
+  const test={proj:x=>links(x)>0,noproj:x=>!links(x),mail:x=>!!x.email,nomail:x=>!x.email,nophone:x=>!x.phone&&!x.mobile,noaddr:x=>!x.street&&!x.city,nocust:x=>!x.custNo,noprice:x=>x.price===''||x.price==null,nounit:x=>!x.unit,nosup:x=>!x.supplier,new:x=>String(x.at||'').slice(0,10)>=since&&x.by!=='Import',dup:x=>dup.byId[x.id]!=null};
+  let list=all; if(cf) list=list.filter(x=>(x.cat||'')===cf); if(city) list=list.filter(x=>stNorm(x.city).startsWith(city)); if(ff&&test[ff]) list=list.filter(test[ff]); if(q) list=list.filter(x=>Object.values(x).join(' ').toLowerCase().includes(q));
+  const sk=UI.stSort||'name'; list=list.sort((a,b)=>sk==='nr'?String(b.nr||'').localeCompare(String(a.nr||''),'de',{numeric:true}):sk==='links'?links(b)-links(a):String(a.name||'').localeCompare(String(b.name||''),'de'));
   const cats=[...new Set(all.map(x=>x.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'de')), lim=UI.stLim||100;
-  const extra=x=>k==='kunden'?arr('projects').filter(p=>p.customer&&stNorm(p.customer)===stNorm(x.name)||p.custNr&&p.custNr===x.nr||p.owner&&stNorm(p.owner)===stNorm(x.name)).length:k==='lieferanten'?arr('orders').filter(o=>stNorm(o.supplier)===stNorm(x.name)).length:0;
-  const rows=list.slice(0,lim).map(x=>{ const n=extra(x); return `<tr class="clickable" data-act="stEdit" data-k="${k}" data-id="${esc(x.id)}">${D.cols.map(([c])=>`<td class="${c==='nr'||c==='price'?'mono':''}">${c==='name'?`<b>${esc(x.name||'')}</b>`:c==='price'&&x.price!=null&&x.price!==''?esc(nf(+x.price,2)):esc(x[c]||'')}</td>`).join('')}<td class="small muted">${n?(k==='kunden'?n+' Projekt'+(n>1?'e':''):n+' Bestellung'+(n>1?'en':'')):''}</td></tr>`; }).join('');
-  return head('Stammdaten · '+D.l,all.length.toLocaleString('de-DE')+' '+D.l+(MODE==='cloud'&&!all.length?' · wird geladen …':''),`<button class="btn pri" data-act="stEdit" data-k="${k}">${ic('plus')}${D.one} anlegen</button>`)+
+  const cities=k==='artikel'?[]:Object.entries(all.reduce((m,x)=>{ const c=String(x.city||'').split(',')[0].trim(); if(c) m[c]=(m[c]||0)+1; return m; },{})).sort((a,b)=>b[1]-a[1]).slice(0,40);
+  const lnkTxt=n=>!n?'':k==='kunden'?n+' Projekt'+(n>1?'e':''):k==='lieferanten'?n+' Bestellung'+(n>1?'en':''):'im Lager';
+  const row=x=>{ const n=links(x), d=dup.byId[x.id]!=null; return `<tr class="clickable ${d?'st-dup':''}" data-act="stEdit" data-k="${k}" data-id="${esc(x.id)}">${D.cols.map(([c])=>`<td class="${c==='nr'||c==='price'?'mono':''}">${c==='name'?`<b>${esc(x.name||'')}</b>${d?' <span class="pill warn" title="möglicherweise doppelt">doppelt?</span>':''}`:c==='price'&&x.price!=null&&x.price!==''?esc(nf(+x.price,2)):esc(x[c]||'')}</td>`).join('')}<td class="small muted">${lnkTxt(n)}</td></tr>`; };
+  const filterBar=`<div class="chips st-f">${ST_FILTERS[k].map(([f,l])=>`<button class="chip ${ff===f?'on':''}" data-act="stF" data-f="${f}">${l}${f==='dup'?` <span class="mono small">${dup.groups.reduce((a,g)=>a+g.items.length,0)}</span>`:''}</button>`).join('')}${ff||cf||city||q?`<button class="chip" data-act="stF" data-f="" title="Alle Filter zurücksetzen">✕ zurücksetzen</button>`:''}</div>`;
+  const body=ff==='dup'?stDupView(k,dup,q):`<div class="card"><div class="tbl-wrap"><table class="tbl st-tbl"><thead><tr>${D.cols.map(([,l])=>`<th>${l}</th>`).join('')}<th></th></tr></thead><tbody>${list.slice(0,lim).map(row).join('')||`<tr><td colspan="${D.cols.length+1}"><div class="empty">${all.length?'Keine Treffer.':'Noch keine '+D.l+'.'}</div></td></tr>`}</tbody></table></div>
+    ${list.length>lim?`<div style="padding:10px 16px"><button class="btn sm" data-act="stMore">+ weitere ${Math.min(200,list.length-lim)} von ${list.length-lim} anzeigen</button></div>`:''}</div>`;
+  return head('Stammdaten · '+D.l,all.length.toLocaleString('de-DE')+' '+D.l+(ff||cf||city||q?' · '+list.length.toLocaleString('de-DE')+' gefiltert':'')+(MODE==='cloud'&&!all.length?' · wird geladen …':''),`<button class="btn pri" data-act="stEdit" data-k="${k}">${ic('plus')}${D.one} anlegen</button>`)+
     `<div class="chips">${Object.entries(ST_DEF).map(([kk,dd])=>`<button class="chip ${kk===k?'on':''}" data-act="nav" data-v="st:${kk}">${dd.l} <span class="mono small">${Object.keys(S[kk]||{}).length}</span></button>`).join('')}</div>
     <div class="row"><input class="search" id="stQ" type="search" placeholder="${D.l} durchsuchen: Name, Nummer, Ort, E-Mail …" value="${esc(UI.stQ||'')}" aria-label="Suchen">
       ${cats.length?`<select class="catsel" data-chg="stCat" aria-label="Kategorie"><option value="">Alle Kategorien</option>${cats.map(c=>`<option ${c===cf?'selected':''}>${esc(c)}</option>`).join('')}</select>`:''}
-      <select class="catsel" data-chg="stSort" aria-label="Sortieren"><option value="name" ${sk==='name'?'selected':''}>Name A–Z</option><option value="nr" ${sk==='nr'?'selected':''}>Nummer (neueste zuerst)</option></select></div>
-    <div class="card"><div class="tbl-wrap"><table class="tbl st-tbl"><thead><tr>${D.cols.map(([,l])=>`<th>${l}</th>`).join('')}<th></th></tr></thead><tbody>${rows||`<tr><td colspan="${D.cols.length+1}"><div class="empty">${all.length?'Keine Treffer.':'Noch keine '+D.l+'.'}</div></td></tr>`}</tbody></table></div>
-    ${list.length>lim?`<div style="padding:10px 16px"><button class="btn sm" data-act="stMore">+ weitere ${Math.min(200,list.length-lim)} von ${list.length-lim} anzeigen</button></div>`:''}</div>`;
+      ${cities.length?`<select class="catsel" data-chg="stCity" aria-label="Ort"><option value="">Alle Orte</option>${cities.map(([c,n])=>`<option value="${esc(stNorm(c))}" ${stNorm(c)===city?'selected':''}>${esc(c)} (${n})</option>`).join('')}</select>`:''}
+      <select class="catsel" data-chg="stSort" aria-label="Sortieren"><option value="name" ${sk==='name'?'selected':''}>Name A–Z</option><option value="nr" ${sk==='nr'?'selected':''}>Nummer (neueste zuerst)</option><option value="links" ${sk==='links'?'selected':''}>${k==='kunden'?'meiste Projekte':k==='lieferanten'?'meiste Bestellungen':'im Lager zuerst'}</option></select></div>
+    ${filterBar}${body}`;
 }
+// Dopplungen: Gruppen mit Grund; „Zusammenführen“ (leere Felder ergänzen, andere löschen) oder „kein Duplikat“
+function stDupView(k,dup,q){ let gs=dup.groups; if(q) gs=gs.filter(g=>g.items.some(x=>Object.values(x).join(' ').toLowerCase().includes(q)));
+  if(!gs.length) return '<div class="card"><div class="empty"><b>Keine möglichen Dopplungen gefunden</b>Geprüft werden Name, E-Mail, Telefon'+(k==='artikel'?' und Lieferanten-Artikelnummer':' und Adresse')+'.</div></div>';
+  const D=ST_DEF[k], lim=UI.stLim||100;
+  return `<div class="small muted" style="margin:0 0 8px">${gs.length} Gruppe${gs.length>1?'n':''} mit ${gs.reduce((a,g)=>a+g.items.length,0)} Einträgen. Beim Zusammenführen bleibt der oberste Eintrag; leere Felder werden aus den anderen ergänzt, die anderen gelöscht.</div>`+
+    gs.slice(0,lim).map(g=>{ const ids=g.items.map(x=>x.id).join(',');
+      return `<section class="card st-dupg"><div class="card-h"><h3>${esc(g.items[0].name||'')}</h3><span class="row" style="gap:6px">${g.why.map(w=>`<span class="pill warn">${esc(w)}</span>`).join('')}</span></div>
+        <div class="tbl-wrap"><table class="tbl"><tbody>${g.items.map((x,i)=>`<tr class="clickable" data-act="stEdit" data-k="${k}" data-id="${esc(x.id)}"><td class="mono">${esc(x.nr||'')}</td><td><b>${esc(x.name||'')}</b>${i===0?' <span class="small muted">(bleibt)</span>':''}</td>${k==='artikel'?`<td>${esc(x.cat||'')}</td><td>${esc(x.supNr||'')}</td>`:`<td>${esc([x.street,[x.zip,x.city].filter(Boolean).join(' ')].filter(Boolean).join(', '))}</td><td>${esc(x.email||'')}</td><td>${esc(x.phone||'')}</td>`}</tr>`).join('')}</tbody></table></div>
+        <div class="row" style="padding:8px 16px 12px;gap:6px">${isAdmin()?`<button class="btn sun sm" data-act="stMerge" data-k="${k}" data-ids="${esc(ids)}">Zusammenführen</button>`:''}<button class="btn sm" data-act="stNotDup" data-k="${k}" data-ids="${esc(ids)}">Kein Duplikat</button></div></section>`; }).join('')+
+    (gs.length>lim?`<button class="btn sm" data-act="stMore">+ weitere Gruppen anzeigen</button>`:'');
+}
+Object.assign(A,{
+ stF:d=>{ if(!d.f){ UI.stF=''; UI.stCat=''; UI.stCity=''; UI.stQ=''; } else UI.stF=UI.stF===d.f?'':d.f; UI.stLim=100; render(); },
+ stNotDup:d=>{ const ids=String(d.ids).split(','), cfg=clone(S.config||{}); cfg.notDup={...(cfg.notDup||{})}; const m={...(cfg.notDup[d.k]||{})}; for(let i=0;i<ids.length;i++) for(let j=i+1;j<ids.length;j++) m[[ids[i],ids[j]].sort().join('|')]=1; cfg.notDup[d.k]=m; putConfig(cfg); ST_DUP_CACHE={}; toast('Als „kein Duplikat“ markiert.'); },
+ stMerge:d=>{ if(!isAdmin()) return; const k=d.k, items=String(d.ids).split(',').map(id=>(S[k]||{})[id]).filter(Boolean); if(items.length<2) return; const keep=clone(items[0]);
+   confirmSheet(items.length-1+' Eintrag/Einträge in „'+keep.name+'“ ('+(keep.nr||'ohne Nr.')+') zusammenführen? Leere Felder werden ergänzt, Notizen zusammengefügt, die anderen gelöscht.',()=>{
+     items.slice(1).forEach(x=>{ Object.entries(x).forEach(([f,v])=>{ if(['id','nr','upd','updBy','hist','at','by','src'].includes(f)) return; if((keep[f]==null||keep[f]==='')&&v!=null&&v!=='') keep[f]=v; }); if(x.notes&&x.notes!==keep.notes) keep.notes=[keep.notes,x.notes].filter(Boolean).join('\n'); keep.merged=[...(keep.merged||[]),x.nr||x.id]; });
+     put(k,keep); items.slice(1).forEach(x=>del(k,x.id)); ST_DUP_CACHE={}; stListsDirty=true; toast('Zusammengeführt.'); }); },
+});
+Object.assign(CHG,{ stCity:(d,el)=>{ UI.stCity=el.value; UI.stLim=100; render(); } });
 let stQT; document.addEventListener('input',e=>{ if(e.target.id!=='stQ') return; UI.stQ=e.target.value; UI.stLim=100; clearTimeout(stQT); stQT=setTimeout(()=>render(),200); });
 function stForm(k,x){ const D=ST_DEF[k], isNew=!x; x=x?clone(x):{id:D.pre+uid()};
   const links=!isNew&&k==='kunden'?arr('projects').filter(p=>p.customer&&stNorm(p.customer)===stNorm(x.name)||p.custNr&&p.custNr===x.nr||p.owner&&stNorm(p.owner)===stNorm(x.name)):[];
@@ -5669,13 +5773,14 @@ const isInv=t=>t==='rechnung'||t==='abschlag'||t==='storno';
 const r2=x=>Math.round((+x||0)*100)/100;
 const euro=x=>(+x||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
 const dDE=d=>d?String(d).slice(8,10)+'.'+String(d).slice(5,7)+'.'+String(d).slice(0,4):'';
-// Summen: netto je Steuersatz, Steuer, brutto; Schlussrechnung zieht verknüpfte Abschläge ab
-function saleSums(s){ const by={}; (s.items||[]).filter(i=>!i.text).forEach(i=>{ const n=r2((+i.qty||0)*(+i.price||0)); const k=i.vat||'19'; by[k]=by[k]||{net:0,vat:0}; by[k].net=r2(by[k].net+n); });
+// Summen: netto je Steuersatz (ohne optionale Positionen), Rabatt-Zeilen (% auf alle Positionen), Steuer, brutto; Schlussrechnung zieht verknüpfte Abschläge ab
+function saleSums(s){ const by={}; let disc=0; (s.items||[]).forEach(i=>{ const k=i.k||(i.text?'text':'pos'); if(k==='disc') disc+=(+i.pct||0); if(k!=='pos'||i.opt) return; const n=r2((+i.qty||0)*(+i.price||0)), v=i.vat||'19'; by[v]=by[v]||{net:0,vat:0}; by[v].net=r2(by[v].net+n); });
+  const pre=r2(Object.values(by).reduce((a,x)=>a+x.net,0)); let discAmt=0; if(disc) Object.keys(by).forEach(k=>{ const d=r2(by[k].net*disc/100); by[k].net=r2(by[k].net-d); discAmt=r2(discAmt+d); });
   Object.keys(by).forEach(k=>by[k].vat=r2(by[k].net*vatPct(k)/100));
   const net=r2(Object.values(by).reduce((a,x)=>a+x.net,0)), vat=r2(Object.values(by).reduce((a,x)=>a+x.vat,0)), gross=r2(net+vat);
   const ded=(s.deduct||[]).map(id=>S.sales&&S.sales[id]).filter(Boolean).map(a=>({a,...saleSums({...a,deduct:[]})}));
   const dedGross=r2(ded.reduce((a,x)=>a+x.gross,0)), pay=r2(gross-dedGross), paid=r2((s.paid||[]).reduce((a,p)=>a+(+p.amt||0),0));
-  return {by,net,vat,gross,ded,dedGross,pay,paid,open:r2(pay-paid)}; }
+  return {by,pre,disc,discAmt,net,vat,gross,ded,dedGross,pay,paid,open:r2(pay-paid)}; }
 // Steuerlich relevante Beträge einer Rechnung: bei Schlussrechnungen abzüglich der bereits versteuerten Abschläge (je Steuersatz)
 function saleBy(s){ const m=saleSums({...s,deduct:[]}), by=clone(m.by); (s.deduct||[]).forEach(id=>{ const a=S.sales&&S.sales[id]; if(!a) return; Object.entries(saleSums({...a,deduct:[]}).by).forEach(([k,v])=>{ by[k]=by[k]||{net:0,vat:0}; by[k].net=r2(by[k].net-v.net); by[k].vat=r2(by[k].vat-v.vat); }); });
   const net=r2(Object.values(by).reduce((a,x)=>a+x.net,0)), vat=r2(Object.values(by).reduce((a,x)=>a+x.vat,0)); return {by,net,vat,gross:r2(net+vat)}; }
@@ -5712,20 +5817,38 @@ function vSales(){
 let vkQT; document.addEventListener('input',e=>{ if(e.target.id!=='vkQ') return; UI.vkQ=e.target.value; clearTimeout(vkQT); vkQT=setTimeout(render,200); });
 
 // ---------- Formular ----------
-function saleLineHtml(i,n,ro){ const dis=ro?'disabled':'';
-  if(i.text) return `<div class="sl-row sl-txt" data-i="${n}"><span class="sl-pos">–</span><textarea class="inp sl-desc" rows="2" ${dis} placeholder="Zwischentext / Überschrift">${esc(i.desc||'')}</textarea>${ro?'':`<button type="button" class="icon-btn" data-act="slDel" title="Zeile löschen">${ic('x')}</button>`}</div>`;
-  return `<div class="sl-row" data-i="${n}"><span class="sl-pos">${n+1}.</span><div class="sl-main"><input class="inp sl-art" list="artikelList" value="${esc(i.art||'')}" placeholder="Bezeichnung (aus Artikeln wählen oder eintippen)" ${dis}><textarea class="inp sl-desc" rows="1" placeholder="Beschreibung (optional)" ${dis}>${esc(i.desc||'')}</textarea></div>
+// Zeilentypen im Beleg: Position (optional = Alternativ-/Bedarfsposition, nicht in der Summe), Überschrift, Freitext, Trennlinie, Zwischensumme, Rabatt (%), Seitenumbruch
+const SL_KINDS={pos:'Position',head:'Überschrift',text:'Freitext',line:'Trennlinie',sub:'Zwischensumme',disc:'Rabatt',page:'Seitenumbruch'};
+const slKind=i=>i.k||(i.text?'text':'pos');
+// Zwischensummen: netto der Positionen seit der letzten Überschrift bzw. Zwischensumme
+function slSubtotals(items){ const out={}; let run=0; (items||[]).forEach((i,n)=>{ const k=slKind(i); if(k==='pos'&&!i.opt) run+=(+i.qty||0)*(+i.price||0); if(k==='sub'){ out[n]=r2(run); run=0; } if(k==='head') run=0; }); return out; }
+function saleLineHtml(i,n,ro){ const dis=ro?'disabled':'', k=slKind(i);
+  const btn=(a,t,l)=>ro?'':`<button type="button" class="icon-btn" data-act="${a}" title="${t}">${l}</button>`, tools=`<span class="sl-btns">${k==='pos'?btn('slPickRow','Aus Artikelliste übernehmen','⌕'):''}${btn('slUp','Nach oben','↑')}${btn('slDel','Zeile löschen',ic('x'))}</span>`;
+  if(k==='pos') return `<div class="sl-row ${i.opt?'sl-optrow':''}" data-k="pos"><span class="sl-pos"></span><div class="sl-main"><input class="inp sl-art" list="artikelList" value="${esc(i.art||'')}" placeholder="Bezeichnung (Artikelliste ⌕ oder eintippen)" ${dis}><textarea class="inp sl-desc" rows="1" placeholder="Beschreibung (optional)" ${dis}>${esc(i.desc||'')}</textarea><label class="sl-opt"><input type="checkbox" class="sl-o" ${i.opt?'checked':''} ${dis}> optional / Alternativposition (nicht in der Summe)</label></div>
     <input class="inp sl-qty" type="number" step="any" value="${esc(i.qty??1)}" aria-label="Menge" ${dis}><input class="inp sl-unit" list="slUnits" value="${esc(i.unit||'Stk.')}" aria-label="Einheit" ${dis}><input class="inp sl-price" type="number" step="any" value="${esc(i.price??'')}" aria-label="Einzelpreis netto" placeholder="EP netto" ${dis}>
-    <select class="inp sl-vat" aria-label="MwSt." ${dis}>${VAT_OPT.map(([k,l])=>`<option value="${k}" ${String(i.vat||'19')===k?'selected':''}>${k==='0p'||k==='0r'?'0 % '+(k==='0p'?'PV':'§13b'):l}</option>`).join('')}</select><span class="sl-sum mono">${euro((+i.qty||0)*(+i.price||0))}</span>${ro?'':`<button type="button" class="icon-btn" data-act="slDel" title="Position löschen">${ic('x')}</button>`}</div>`; }
-function saleReadLines(){ return [...document.querySelectorAll('#sl_items .sl-row')].map(r=>r.classList.contains('sl-txt')?{text:true,desc:r.querySelector('.sl-desc').value}:{art:r.querySelector('.sl-art').value.trim(),desc:r.querySelector('.sl-desc').value,qty:+String(r.querySelector('.sl-qty').value).replace(',','.')||0,unit:r.querySelector('.sl-unit').value.trim(),price:r.querySelector('.sl-price').value===''?'':+String(r.querySelector('.sl-price').value).replace(',','.'),vat:r.querySelector('.sl-vat').value}).filter(i=>i.text?String(i.desc).trim():(i.art||i.desc||i.price!=='')); }
+    <select class="inp sl-vat" aria-label="MwSt." ${dis}>${VAT_OPT.map(([v,l])=>`<option value="${v}" ${String(i.vat||'19')===v?'selected':''}>${v==='0p'||v==='0r'?'0 % '+(v==='0p'?'PV':'§13b'):l}</option>`).join('')}</select><span class="sl-sum mono">${euro((+i.qty||0)*(+i.price||0))}</span>${tools}</div>`;
+  const wrap=(icon,inner)=>`<div class="sl-row sl-k sl-k-${k}" data-k="${k}"><span class="sl-pos" title="${SL_KINDS[k]}">${icon}</span><div class="sl-kb">${inner}</div>${tools}</div>`;
+  if(k==='head') return wrap('§',`<input class="inp sl-desc sl-headin" value="${esc(i.desc||'')}" placeholder="Überschrift / Titel, z. B. „1. DC-Installation“" ${dis}>`);
+  if(k==='text') return wrap('¶',`<textarea class="inp sl-desc" rows="2" placeholder="Freitext, z. B. Hinweis zur Ausführung" ${dis}>${esc(i.desc||'')}</textarea>`);
+  if(k==='line') return wrap('—','<div class="sl-hr"></div>');
+  if(k==='sub') return wrap('Σ','<div class="sl-subt"><span>Zwischensumme</span><b class="sl-subv mono"></b></div>');
+  if(k==='page') return wrap('⤓','<div class="sl-pg">Seitenumbruch im PDF</div>');
+  if(k==='disc') return wrap('%',`<div class="sl-disc"><input class="inp sl-pct" type="number" step="any" value="${esc(i.pct??'')}" placeholder="%" ${dis}><span>% Rabatt auf alle Positionen</span><input class="inp sl-desc" value="${esc(i.desc||'')}" placeholder="Bezeichnung, z. B. Projektrabatt" ${dis}></div>`);
+  return ''; }
+function saleReadLines(){ return [...document.querySelectorAll('#sl_items .sl-row')].map(r=>{ const k=r.dataset.k||'pos', q=s=>r.querySelector(s);
+    if(k==='pos') return {art:q('.sl-art').value.trim(),desc:q('.sl-desc').value,qty:+String(q('.sl-qty').value).replace(',','.')||0,unit:q('.sl-unit').value.trim(),price:q('.sl-price').value===''?'':+String(q('.sl-price').value).replace(',','.'),vat:q('.sl-vat').value,...(q('.sl-o')&&q('.sl-o').checked?{opt:true}:{})};
+    if(k==='disc') return {k,pct:+String(q('.sl-pct').value).replace(',','.')||0,desc:q('.sl-desc').value};
+    return {k,desc:q('.sl-desc')?q('.sl-desc').value:''}; })
+  .filter(i=>{ const k=slKind(i); return k==='pos'?(i.art||i.desc||i.price!==''):k==='head'||k==='text'?String(i.desc).trim():k==='disc'?i.pct:true; }); }
 function saleSumsHtml(s){ const m=saleSums(s); if(s.type==='lieferschein') return '';
-  return `<div class="sl-sums"><div><span>Summe netto</span><b>${euro(m.net)}</b></div>${Object.entries(m.by).map(([k,x])=>`<div><span>MwSt. ${vatPct(k)} %${k==='0p'?' (PV)':k==='0r'?' (§ 13b)':''}</span><b>${euro(x.vat)}</b></div>`).join('')}<div class="sl-tot"><span>Gesamt</span><b>${euro(m.gross)}</b></div>
+  return `<div class="sl-sums">${m.discAmt?`<div><span>Summe Positionen</span><b>${euro(m.pre)}</b></div><div><span>Rabatt ${nf(m.disc,2).replace(/,00$/,'')} %</span><b>−${euro(m.discAmt)}</b></div>`:''}<div><span>Summe netto</span><b>${euro(m.net)}</b></div>${Object.entries(m.by).map(([k,x])=>`<div><span>MwSt. ${vatPct(k)} %${k==='0p'?' (PV)':k==='0r'?' (§ 13b)':''}</span><b>${euro(x.vat)}</b></div>`).join('')}<div class="sl-tot"><span>Gesamt</span><b>${euro(m.gross)}</b></div>
     ${m.ded.map(d=>`<div><span>abzgl. Abschlag ${esc(d.a.nr||'')} vom ${esc(dDE(d.a.date))}</span><b>−${euro(d.gross)}</b></div>`).join('')}${m.ded.length?`<div class="sl-tot"><span>Zahlbetrag</span><b>${euro(m.pay)}</b></div>`:''}</div>`; }
 function saleForm(s){
   stLoad(); const isNew=!S.sales||!S.sales[s.id]; s=clone(s); const ro=saleLocked(s), T=SALE_T[s.type], m=saleSums(s);
   const custOpts=`<input class="inp" id="sl_cn" list="kundenList" value="${esc(s.cust.name||'')}" placeholder="Kunde (aus Stammdaten oder neu)" ${ro?'disabled':''}>`;
   const succ=s.type==='angebot'?[['auftrag','→ Auftragsbestätigung'],['rechnung','→ Rechnung']]:s.type==='auftrag'?[['lieferschein','→ Lieferschein'],['abschlag','→ Abschlagsrechnung'],['rechnung','→ Schlussrechnung']]:s.type==='lieferschein'?[['rechnung','→ Rechnung']]:[];
-  openSheet({title:(isNew?'Neue ':'')+T[0]+(s.nr?' '+s.nr:''),wide:1,html:`<div class="fld full sl-form">
+  const add=(k,l)=>`<button type="button" class="btn ghost sm" data-act="slAddK" data-k="${k}">${l}</button>`;
+  openSheet({title:(isNew?'Neue ':'')+T[0]+(s.nr?' '+s.nr:''),wide:1,html:`<div class="fld full sl-split ${UI.slPrev===false?'noprev':''}"><div class="sl-form">
     ${ro?`<div class="banner">Diese ${T[0]} ist fertiggestellt und kann nicht mehr geändert werden (GoBD). Korrektur über „Stornieren“.</div>`:''}
     <div class="sl-head"><div class="sl-col"><label>Kunde</label>${custOpts}<label>Anschrift</label><textarea class="inp" id="sl_ca" rows="3" placeholder="Straße&#10;PLZ Ort" ${ro?'disabled':''}>${esc(s.cust.addr||'')}</textarea></div>
       <div class="sl-col"><label>Kunden-Nr.</label><input class="inp" id="sl_cnr" value="${esc(s.custNr||'')}" ${ro?'disabled':''}><label>Projekt</label><select class="inp" id="sl_pid" ${ro?'disabled':''}><option value="">– ohne Projekt –</option>${arr('projects').filter(p=>!isIntern(p)).sort((a,b)=>a.name.localeCompare(b.name,'de')).map(p=>`<option value="${p.id}" ${p.id===s.pid?'selected':''}>${esc(p.name)}</option>`).join('')}</select>
@@ -5734,7 +5857,8 @@ function saleForm(s){
     <label>Einleitung</label><textarea class="inp" id="sl_in" rows="2" ${ro?'disabled':''}>${esc(s.intro||'')}</textarea>
     <div class="sl-hdr"><span>Pos.</span><span>Bezeichnung</span><span>Menge</span><span>Einheit</span><span>EP netto</span><span>MwSt.</span><span class="r">Gesamt</span><span></span></div>
     <div id="sl_items">${(s.items||[]).map((i,n)=>saleLineHtml(i,n,ro)).join('')}</div>
-    ${ro?'':`<div class="row" style="gap:6px;margin-top:6px"><button type="button" class="btn sm" data-act="slAdd">${ic('plus')}Position</button><button type="button" class="btn ghost sm" data-act="slAddTxt">+ Text / Überschrift</button><select class="inp sl-vatall" data-chg="slVatAll" aria-label="MwSt. für alle Positionen"><option value="">MwSt. für alle setzen …</option>${VAT_OPT.map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select></div>`}
+    ${ro?'':`<div class="sl-tools"><button type="button" class="btn sm" data-act="slAddK" data-k="pos">${ic('plus')}Position</button><button type="button" class="btn sun sm" data-act="slPickRow">⌕ Aus Artikelliste</button>${add('head','§ Überschrift')}${add('text','¶ Text')}${add('line','— Trennlinie')}${add('sub','Σ Zwischensumme')}${add('disc','% Rabatt')}${add('page','⤓ Seitenumbruch')}<select class="inp sl-vatall" data-chg="slVatAll" aria-label="MwSt. für alle Positionen"><option value="">MwSt. für alle …</option>${VAT_OPT.map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select></div>
+      <div class="sl-pick" id="sl_pick" hidden><div class="row" style="gap:6px"><input id="sl_pq" class="inp" placeholder="Artikel suchen: Name, Nummer, Kategorie …" style="flex:1"><button type="button" class="btn ghost sm" data-act="slPickClose">Fertig</button></div><div id="sl_pr" class="sl-pr"></div></div>`}
     <div id="sl_sums">${saleSumsHtml(s)}</div>
     <label>Schlusstext</label><textarea class="inp" id="sl_out" rows="3" ${ro?'disabled':''}>${esc(s.outro||'')}</textarea>
     <div class="sl-2">${isInv(s.type)?`<div><label>Zahlungsziel (Tage, 0 = sofort)</label><input class="inp" type="number" id="sl_pay" value="${esc(s.payDays??14)}" ${ro?'disabled':''}></div>`:'<div></div>'}<div><label>Status</label><select class="inp" id="sl_st">${Object.entries(SALE_ST).filter(([k])=>isInv(s.type)?['entwurf','offen','versendet','teilbezahlt','bezahlt','storniert'].includes(k)&&(k!=='entwurf'||!ro):!['entwurf','teilbezahlt','bezahlt'].includes(k)).map(([k,[l]])=>`<option value="${k}" ${s.status===k?'selected':''}>${l}</option>`).join('')}</select></div></div>
@@ -5742,26 +5866,51 @@ function saleForm(s){
     <div class="row sl-act">${!isNew||ro?`<button type="button" class="btn" data-act="salePrint" data-id="${s.id}">${ic('report')}Drucken / PDF</button><button type="button" class="btn" data-act="saleMail" data-id="${s.id}">✉ E-Mail-Text</button>`:''}
       ${!isNew?succ.map(([t,l])=>`<button type="button" class="btn ghost" data-act="saleNext" data-id="${s.id}" data-type="${t}">${l}</button>`).join(''):''}
       ${ro&&s.type!=='storno'&&s.status!=='storniert'?`<button type="button" class="btn danger" data-act="saleStorno" data-id="${s.id}">Stornieren</button>`:''}
-      ${!isNew?`<button type="button" class="btn ghost" data-act="saleCopy" data-id="${s.id}">Kopieren</button>`:''}</div>
-    <datalist id="slUnits">${['Stk.','m','m²','kWp','psch.','Std.','Pal.','Satz','km'].map(u=>`<option value="${u}">`).join('')}</datalist></div>`,
+      ${!isNew?`<button type="button" class="btn ghost" data-act="saleCopy" data-id="${s.id}">Kopieren</button>`:''}<button type="button" class="btn ghost sl-prevtg" data-act="slPrevTg">👁 ${UI.slPrev===false?'Vorschau zeigen':'Vorschau ausblenden'}</button></div>
+    <datalist id="slUnits">${['Stk.','m','m²','kWp','psch.','Std.','Pal.','Satz','km'].map(u=>`<option value="${u}">`).join('')}</datalist></div>
+    <div class="sl-prev"><div class="sl-prev-h"><b>Live-Vorschau</b><span class="small">so sieht das PDF aus</span></div><div class="sl-prev-scroll"><div class="sl-paper" id="sl_prev"></div></div></div></div>`,
     saveLabel:ro?'Speichern':isInv(s.type)&&s.status==='entwurf'?'Entwurf speichern':'Speichern',
     extraBtn:!ro&&isInv(s.type)?`<button type="button" class="btn sun" data-act="saleFinal" data-id="${s.id}" title="Rechnungsnummer vergeben und festschreiben">Fertigstellen & Nummer vergeben</button>`:'',
-    onSave:()=>{ const v=saleRead(s); if(v===false) return false; put('sales',v); toast(T[0]+' gespeichert.'); },
+    onSave:()=>{ const v=saleRead(s); if(v===false) return false; salePut(v); toast(T[0]+' gespeichert.'); },
     onDelete:isNew||(ro&&!isAdmin())||(isInv(s.type)&&s.nr)?null:()=>confirmSheet(T[0]+' '+(s.nr||'(Entwurf)')+' löschen?',()=>{ del('sales',s.id); closeSheet(); })});
   SALE_CUR=s; saleBind(); }
-let SALE_CUR=null;
-// Werte aus dem Formular übernehmen (bei festgeschriebenen Rechnungen nur Status)
+let SALE_CUR=null, SL_PICK_ROW=null, slPrevT=null;
+// Formularstand ohne Prüfung / Nummernvergabe (für Vorschau und Speichern)
+function saleDraft(s){ if(saleLocked(s)) return clone(S.sales[s.id]||s); const g=id=>{ const e=$('#'+id); return e?e.value:''; };
+  const v={...clone(s),cust:{name:g('sl_cn').trim(),addr:g('sl_ca').trim()},custNr:g('sl_cnr').trim(),pid:g('sl_pid'),date:g('sl_d')||TODAY(),perf:g('sl_perf').trim(),subject:g('sl_sub').trim(),intro:g('sl_in'),outro:g('sl_out'),items:saleReadLines(),status:g('sl_st')||s.status};
+  if($('#sl_pay')) v.payDays=+g('sl_pay')||0; return v; }
 function saleRead(s){ const st=$('#sl_st')?$('#sl_st').value:s.status; if(saleLocked(s)){ return {...clone(S.sales[s.id]||s),status:st==='entwurf'?s.status:st}; }
-  const v={...clone(s),cust:{name:$('#sl_cn').value.trim(),addr:$('#sl_ca').value.trim()},custNr:$('#sl_cnr').value.trim(),pid:$('#sl_pid').value,date:$('#sl_d').value||TODAY(),perf:$('#sl_perf').value.trim(),subject:$('#sl_sub').value.trim(),intro:$('#sl_in').value,outro:$('#sl_out').value,items:saleReadLines(),status:st};
-  if($('#sl_pay')) v.payDays=+$('#sl_pay').value||0;
-  if(!v.cust.name){ toast('Bitte einen Kunden eintragen.'); return false; }
+  const v=saleDraft(s); if(!v.cust.name){ toast('Bitte einen Kunden eintragen.'); return false; }
   if(!isInv(v.type)&&!v.nr) v.nr=saleNr(v.type);
   if(isInv(v.type)&&v.status!=='entwurf'&&!v.nr) v.nr=saleNr(v.type); // Status manuell auf „offen“ gesetzt = fertigstellen
   return v; }
-function saleBind(){ const box=$('#sl_items'); if(!box) return; const upd=()=>{ const s={...SALE_CUR,items:saleReadLines()}; const m=$('#sl_sums'); if(m) m.innerHTML=saleSumsHtml(s); box.querySelectorAll('.sl-row:not(.sl-txt)').forEach(r=>{ const q=+String(r.querySelector('.sl-qty').value).replace(',','.')||0, p=+String(r.querySelector('.sl-price').value).replace(',','.')||0; r.querySelector('.sl-sum').textContent=euro(q*p); }); };
-  box.addEventListener('input',upd); box.addEventListener('change',e=>{ if(e.target.classList.contains('sl-art')){ const a=Object.values(S.artikel||{}).find(x=>x.name===e.target.value); if(a){ const r=e.target.closest('.sl-row'); if(a.vk!=null&&a.vk!==''&&!r.querySelector('.sl-price').value) r.querySelector('.sl-price').value=a.vk; if(a.unit) r.querySelector('.sl-unit').value=a.unit; if(a.desc&&!r.querySelector('.sl-desc').value) r.querySelector('.sl-desc').value=String(a.desc).slice(0,400); upd(); } } upd(); });
-  const cn=$('#sl_cn'); if(cn) cn.addEventListener('change',()=>{ const k=stKunde(cn.value); if(!k) return; if(!$('#sl_ca').value.trim()) $('#sl_ca').value=[k.street,[k.zip,k.city].filter(Boolean).join(' ')].filter(Boolean).join('\n'); if(!$('#sl_cnr').value) $('#sl_cnr').value=k.nr||''; });
-  const ps=$('#sl_pid'); if(ps) ps.addEventListener('change',()=>{ const p=S.projects[ps.value]; if(!p) return; if(!$('#sl_cn').value&&p.customer){ $('#sl_cn').value=p.customer; $('#sl_cn').dispatchEvent(new Event('change')); if(!$('#sl_ca').value&&p.custAddress) $('#sl_ca').value=p.custAddress.replace(/,\s*/,'\n'); } if(!$('#sl_sub').value) $('#sl_sub').value=p.name+(p.nr?' (Projekt '+p.nr+')':''); }); }
+function slPreview(){ const el=$('#sl_prev'); if(!el||!SALE_CUR) return; const d=saleDraft(SALE_CUR); el.innerHTML=salePrintHtml({...d,nr:d.nr||(isInv(d.type)?'':saleNr(d.type)+' (vorläufig)')}); }
+function saleBind(){ const box=$('#sl_items'); if(!box) return;
+  const upd=()=>{ const items=saleReadLines(), s={...SALE_CUR,items}; const m=$('#sl_sums'); if(m) m.innerHTML=saleSumsHtml(s);
+    let n=0; box.querySelectorAll('.sl-row').forEach(r=>{ if(r.dataset.k==='pos'){ const q=+String(r.querySelector('.sl-qty').value).replace(',','.')||0, p=+String(r.querySelector('.sl-price').value).replace(',','.')||0, o=r.querySelector('.sl-o').checked; r.classList.toggle('sl-optrow',o); r.querySelector('.sl-sum').textContent=(o?'(':'')+euro(q*p)+(o?')':''); r.querySelector('.sl-pos').textContent=o?'opt.':(++n)+'.'; } });
+    // Zwischensummen live
+    let run=0; box.querySelectorAll('.sl-row').forEach(r=>{ const k=r.dataset.k; if(k==='pos'&&!r.querySelector('.sl-o').checked) run+=(+String(r.querySelector('.sl-qty').value).replace(',','.')||0)*(+String(r.querySelector('.sl-price').value).replace(',','.')||0); if(k==='sub'){ r.querySelector('.sl-subv').textContent=euro(run); run=0; } if(k==='head') run=0; });
+    clearTimeout(slPrevT); slPrevT=setTimeout(slPreview,250); };
+  SALE_CUR.upd=upd;
+  const form=box.closest('.sl-form'); form.addEventListener('input',upd); form.addEventListener('change',e=>{ if(e.target.classList.contains('sl-art')){ const a=Object.values(S.artikel||{}).find(x=>x.name===e.target.value); if(a) slApplyArt(e.target.closest('.sl-row'),a); } upd(); });
+  const cn=$('#sl_cn'); if(cn) cn.addEventListener('change',()=>{ const k=stKunde(cn.value); if(!k) return; if(!$('#sl_ca').value.trim()) $('#sl_ca').value=[k.street,[k.zip,k.city].filter(Boolean).join(' ')].filter(Boolean).join('\n'); if(!$('#sl_cnr').value) $('#sl_cnr').value=k.nr||''; upd(); });
+  const ps=$('#sl_pid'); if(ps) ps.addEventListener('change',()=>{ const p=S.projects[ps.value]; if(!p) return; if(!$('#sl_cn').value&&p.customer){ $('#sl_cn').value=p.customer; $('#sl_cn').dispatchEvent(new Event('change')); if(!$('#sl_ca').value&&p.custAddress) $('#sl_ca').value=p.custAddress.replace(/,\s*/,'\n'); } if(!$('#sl_sub').value) $('#sl_sub').value=p.name+(p.nr?' (Projekt '+p.nr+')':''); upd(); });
+  const pq=$('#sl_pq'); if(pq) pq.addEventListener('input',slPickList);
+  upd(); slPreview(); }
+// Artikel in eine Zeile übernehmen (Bezeichnung, Beschreibung, Einheit, VK-Preis)
+function slApplyArt(r,a){ if(!r||!a) return; r.querySelector('.sl-art').value=a.name||''; if(a.desc&&!r.querySelector('.sl-desc').value) r.querySelector('.sl-desc').value=String(a.desc).slice(0,400); if(a.unit) r.querySelector('.sl-unit').value=a.unit; if(a.vk!=null&&a.vk!=='') r.querySelector('.sl-price').value=a.vk; else if(a.price!=null&&a.price!==''&&!r.querySelector('.sl-price').value) r.querySelector('.sl-price').value=''; }
+function slPickList(){ const q=String(($('#sl_pq')||{}).value||'').toLowerCase().trim(), all=Object.values(S.artikel||{}); const L=(q?all.filter(a=>[a.name,a.nr,a.cat,a.supNr].join(' ').toLowerCase().includes(q)):all).sort((a,b)=>String(a.name).localeCompare(String(b.name),'de')).slice(0,40);
+  const el=$('#sl_pr'); if(!el) return; el.innerHTML=L.map(a=>`<button type="button" class="sl-pa" data-act="slPickArt" data-id="${esc(a.id)}"><b>${esc(a.name)}</b><span>${esc([a.nr&&'Nr. '+a.nr,a.cat,a.unit,a.vk!=null&&a.vk!==''?euro(a.vk)+' VK':a.price!=null&&a.price!==''?euro(a.price)+' EK':''].filter(Boolean).join(' · '))}</span></button>`).join('')||`<div class="small muted" style="padding:8px">${all.length?'Kein Artikel gefunden.':'Noch keine Artikel in den Stammdaten (wird ggf. noch geladen).'}</div>`; }
+Object.assign(A,{
+ slAddK:d=>{ const b=$('#sl_items'), k=d.k||'pos'; b.insertAdjacentHTML('beforeend',saleLineHtml(k==='pos'?{qty:1,unit:'Stk.',vat:(b.querySelector('.sl-vat')||{}).value||'19'}:{k},0)); const r=b.lastElementChild; const f=r.querySelector('.sl-art,.sl-headin,textarea,.sl-pct'); if(f) f.focus(); SALE_CUR.upd&&SALE_CUR.upd(); },
+ slDel:(d,el)=>{ el.closest('.sl-row').remove(); SALE_CUR.upd&&SALE_CUR.upd(); },
+ slUp:(d,el)=>{ const r=el.closest('.sl-row'), p=r.previousElementSibling; if(p) r.parentNode.insertBefore(r,p); SALE_CUR.upd&&SALE_CUR.upd(); },
+ slPickRow:(d,el)=>{ stLoad(); const r=el.closest('.sl-row'); SL_PICK_ROW=r||null; $('#sl_items').querySelectorAll('.sl-row').forEach(x=>x.classList.toggle('sl-target',x===r)); const p=$('#sl_pick'); if(!p) return; p.hidden=false; slPickList(); const q=$('#sl_pq'); if(q) q.focus(); p.scrollIntoView({block:'nearest'}); },
+ slPickClose:()=>{ const p=$('#sl_pick'); if(p) p.hidden=true; SL_PICK_ROW=null; document.querySelectorAll('.sl-target').forEach(x=>x.classList.remove('sl-target')); },
+ slPickArt:d=>{ const a=(S.artikel||{})[d.id]; if(!a) return; let r=SL_PICK_ROW&&document.body.contains(SL_PICK_ROW)?SL_PICK_ROW:null;
+   if(!r){ A.slAddK({k:'pos'}); r=$('#sl_items').lastElementChild; } slApplyArt(r,a); if(SL_PICK_ROW) A.slPickClose(); else toast('„'+a.name.slice(0,40)+'“ hinzugefügt.'); SALE_CUR.upd&&SALE_CUR.upd(); },
+ slPrevTg:()=>{ UI.slPrev=UI.slPrev===false?true:false; const sp=document.querySelector('.sl-split'); if(sp) sp.classList.toggle('noprev',UI.slPrev===false); const b=document.querySelector('.sl-prevtg'); if(b) b.textContent='👁 '+(UI.slPrev===false?'Vorschau zeigen':'Vorschau ausblenden'); if(UI.slPrev!==false) slPreview(); },
+});
 // Nachfolger anlegen: Angebot → Auftrag → Lieferschein / Abschlag / Schlussrechnung
 function saleNext(id,type){ const s=S.sales[id]; if(!s) return; const base={cust:clone(s.cust),custNr:s.custNr,pid:s.pid,subject:s.subject,from:s.id};
   if(type==='abschlag'){ const m=saleSums(s); openSheet({title:'Abschlagsrechnung zu '+s.nr,fields:[{k:'pct',label:'Abschlag in % der Auftragssumme',type:'number',step:'any'},{k:'amt',label:'oder fester Betrag netto (€)',type:'number',step:'any'},{k:'txt',label:'Bezeichnung',full:1}],value:{pct:30,txt:'Abschlag gemäß Vereinbarung zu '+SALE_T[s.type][0]+' '+s.nr},
@@ -5769,11 +5918,23 @@ function saleNext(id,type){ const s=S.sales[id]; if(!s) return; const base={cust
   const items=clone(s.items||[]), pre={...base,items};
   if(type==='rechnung'&&s.type==='auftrag') pre.deduct=arr('sales').filter(a=>a.type==='abschlag'&&a.from===s.id&&a.nr&&a.status!=='storniert').map(a=>a.id);
   closeSheet(); setTimeout(()=>saleForm(saleNew(type,pre)),60);
-  if(s.type==='angebot'&&type==='auftrag'&&['offen','versendet'].includes(s.status)) put('sales',{...clone(s),status:'angenommen'}); }
+  if(s.type==='angebot'&&type==='auftrag'&&['offen','versendet'].includes(s.status)) salePut({...clone(s),status:'angenommen'}); }
 // Druck im Briefpapier (A4, Fußzeile auf jeder Seite)
+// Positionstabelle(n) fürs Briefpapier – Seitenumbruch-Zeilen teilen die Tabelle auf (Kopfzeile wiederholt sich)
+function salePosTables(s){ const ls=s.type==='lieferschein', cols=ls?4:7, sub=slSubtotals(s.items||[]); let n=0;
+  const head=`<thead><tr><th class="c1">Pos.</th><th>Bezeichnung</th><th class="r">Menge</th><th>Einheit</th>${ls?'':'<th class="r">MwSt.</th><th class="r">Preis</th><th class="r">Gesamt</th>'}</tr></thead>`;
+  const parts=[[]]; (s.items||[]).forEach((i,ix)=>{ const k=i.k||(i.text?'text':'pos'); const rows=parts[parts.length-1];
+    if(k==='page'){ parts.push([]); return; }
+    if(k==='head') rows.push(`<tr class="lt-head"><td colspan="${cols}">${esc(i.desc||'')}</td></tr>`);
+    else if(k==='text') rows.push(`<tr class="lt-txt"><td></td><td colspan="${cols-1}">${esc(i.desc||'').replace(/\n/g,'<br>')}</td></tr>`);
+    else if(k==='line') rows.push(`<tr class="lt-line"><td colspan="${cols}"></td></tr>`);
+    else if(k==='sub'){ if(!ls) rows.push(`<tr class="lt-subt"><td></td><td colspan="${cols-2}">Zwischensumme</td><td class="r">${euro(sub[ix]||0)}</td></tr>`); }
+    else if(k==='pos'){ const o=!!i.opt, g=(+i.qty||0)*(+i.price||0);
+      rows.push(`<tr class="${o?'lt-opt':''}"><td class="c1">${o?'opt.':(++n)+'.'}</td><td><div>${esc(i.art||'')}${o?' <span class="lt-optl">(optional – nicht im Gesamtbetrag)</span>':''}</div>${i.desc?`<div class="lt-desc">${esc(i.desc).replace(/\n/g,'<br>')}</div>`:''}</td><td class="r">${nf(i.qty,2)}</td><td>${esc(i.unit||'')}</td>${ls?'':`<td class="r">${vatPct(i.vat)} %</td><td class="r">${euro(i.price)}</td><td class="r">${o?'('+euro(g)+')':euro(g)}</td>`}</tr>`); } });
+  return parts.map((rows,pi)=>`${pi?'<div class="lt-pb"></div>':''}<table class="lt-pos">${head}<tbody>${rows.join('')}</tbody></table>`).join(''); }
 function salePrintHtml(s){ const T=SALE_T[s.type], m=saleSums(s), pos=(s.items||[]); let n=0;
   const infoRows=[[s.type==='angebot'?'Angebots-Nr.':s.type==='auftrag'?'Auftrags-Nr.':s.type==='lieferschein'?'Lieferschein-Nr.':'Rechnungs-Nr.',s.nr||'ENTWURF'],['Kunden-Nr.',s.custNr],[isInv(s.type)?'Rechnungsdatum':'Datum',dDE(s.date)],[s.type==='angebot'?'Gültig bis':isInv(s.type)?'Lieferzeitraum':'Leistungsdatum',s.perf&&/^\d{4}-/.test(s.perf)?dDE(s.perf):s.perf],...(s.pid&&S.projects[s.pid]&&S.projects[s.pid].nr?[['Projekt-Nr.',S.projects[s.pid].nr]]:[])].filter(r=>r[1]);
-  const vatNotes=[...new Set(pos.filter(i=>!i.text&&VAT_NOTE[i.vat]).map(i=>VAT_NOTE[i.vat]))];
+  const vatNotes=[...new Set(pos.filter(i=>!i.k&&!i.text&&!i.opt&&VAT_NOTE[i.vat]).map(i=>VAT_NOTE[i.vat]))];
   const due=saleDue(s), payTxt=isInv(s.type)&&s.type!=='storno'?(+s.payDays?`Zahlbar bis ${dDE(due)} ohne Abzug.`:'Zahlbar sofort nach Erhalt der Rechnung')+'':'';
   const body=`<div class="lt-first"><img class="lt-logo" src="${NDS_LOGO}" alt="nutz die Sonne">
     <div class="lt-sender">${esc(NDS.name)} - ${esc(NDS.street)} - ${esc(NDS.city)}</div>
@@ -5781,9 +5942,8 @@ function salePrintHtml(s){ const T=SALE_T[s.type], m=saleSums(s), pos=(s.items||
     <table class="lt-info">${infoRows.map(([l,v])=>`<tr><th>${esc(l)}</th><td>${esc(v)}</td></tr>`).join('')}</table></div>
     <h1 class="lt-title">${esc(T[0])}${s.type==='storno'&&s.from&&S.sales[s.from]?' zu Rechnung '+esc(S.sales[s.from].nr):''}</h1>${s.subject?`<div class="lt-sub">${esc(s.subject)}</div>`:''}
     ${s.intro?`<p class="lt-p">${esc(s.intro).replace(/\n/g,'<br>')}</p>`:''}
-    <table class="lt-pos"><thead><tr><th class="c1">Pos.</th><th>Bezeichnung</th><th class="r">Menge</th><th>Einheit</th>${s.type==='lieferschein'?'':'<th class="r">MwSt.</th><th class="r">Preis</th><th class="r">Gesamt</th>'}</tr></thead><tbody>
-    ${pos.map(i=>i.text?`<tr class="lt-txt"><td></td><td colspan="${s.type==='lieferschein'?3:6}">${esc(i.desc||'').replace(/\n/g,'<br>')}</td></tr>`:`<tr><td class="c1">${++n}.</td><td><div>${esc(i.art||'')}</div>${i.desc?`<div class="lt-desc">${esc(i.desc).replace(/\n/g,'<br>')}</div>`:''}</td><td class="r">${nf(i.qty,2)}</td><td>${esc(i.unit||'')}</td>${s.type==='lieferschein'?'':`<td class="r">${vatPct(i.vat)} %</td><td class="r">${euro(i.price)}</td><td class="r">${euro((+i.qty||0)*(+i.price||0))}</td>`}</tr>`).join('')}</tbody></table>
-    ${s.type==='lieferschein'?'':`<table class="lt-sums"><tr><td>Summe netto</td><td>${euro(m.net)}</td></tr>${Object.entries(m.by).map(([k,x])=>`<tr><td>MwSt. ${vatPct(k)} %</td><td>${euro(x.vat)}</td></tr>`).join('')}<tr class="lt-b"><td>Gesamt</td><td>${euro(m.gross)}</td></tr>
+    ${salePosTables(s)}
+    ${s.type==='lieferschein'?'':`<table class="lt-sums">${m.discAmt?`<tr><td>Summe Positionen</td><td>${euro(m.pre)}</td></tr>${(s.items||[]).filter(i=>i.k==='disc'&&+i.pct).map(i=>`<tr><td>${esc(i.desc||'Rabatt')} ${nf(i.pct,2).replace(/,00$/,'')} %</td><td>−${euro(r2(m.pre*(+i.pct)/100))}</td></tr>`).join('')}`:''}<tr><td>Summe netto</td><td>${euro(m.net)}</td></tr>${Object.entries(m.by).map(([k,x])=>`<tr><td>MwSt. ${vatPct(k)} %</td><td>${euro(x.vat)}</td></tr>`).join('')}<tr class="lt-b"><td>Gesamt</td><td>${euro(m.gross)}</td></tr>
       ${m.ded.map(d=>`<tr><td>abzgl. Abschlagsrechnung ${esc(d.a.nr)} vom ${esc(dDE(d.a.date))}<div class="lt-desc">netto ${euro(d.net)}, MwSt. ${euro(d.vat)}</div></td><td>−${euro(d.gross)}</td></tr>`).join('')}${m.ded.length?`<tr class="lt-b"><td>Zahlbetrag</td><td>${euro(m.pay)}</td></tr>`:''}</table>`}
     ${vatNotes.map(t=>`<p class="lt-p">${esc(t)}</p>`).join('')}${payTxt?`<p class="lt-p">${esc(payTxt)}</p>`:''}${s.outro?`<p class="lt-p">${esc(s.outro).replace(/\n/g,'<br>')}</p>`:''}`;
   const foot=`<div class="lt-foot"><div><b>${esc(NDS.name)}</b><br>${esc(NDS.street)}<br>${esc(NDS.city)}<br>${esc(NDS.country)}</div><div><b>Geschäftsführer: ${esc(NDS.gf)}</b><br>E-Mail: ${esc(NDS.mail)}<br>Telefon: ${esc(NDS.tel)}<br>${esc(NDS.hrb)}<br>USt-ID: ${esc(NDS.ustid)}</div><div><b>Bankverbindungen</b><br>${esc(NDS.bank)}<br>IBAN ${esc(NDS.iban)}<br>BIC/Swift ${esc(NDS.bic)}</div></div>`;
@@ -5791,23 +5951,20 @@ function salePrintHtml(s){ const T=SALE_T[s.type], m=saleSums(s), pos=(s.items||
 function salePrint(id){ const s=S.sales[id]||SALE_CUR; if(!s) return; let el=$('#printArea'); if(!el){ el=document.createElement('div'); el.id='printArea'; document.body.appendChild(el); }
   el.innerHTML=salePrintHtml(s); document.body.classList.add('printing','print-letter'); const t0=document.title; document.title=(SALE_T[s.type][0]+' '+(s.nr||'Entwurf')+' '+((s.cust&&s.cust.name)||'')).trim();
   const done=()=>{ document.body.classList.remove('printing','print-letter'); document.title=t0; window.removeEventListener('afterprint',done); }; window.addEventListener('afterprint',done); setTimeout(()=>window.print(),80);
-  if(s.status==='offen'&&S.sales[s.id]) put('sales',{...clone(S.sales[s.id]),status:'versendet'}); }
+  if(s.status==='offen'&&S.sales[s.id]) salePut({...clone(S.sales[s.id]),status:'versendet'}); }
 Object.assign(A,{
  vkGo:d=>{ UI.vkTab=d.tab; UI.vkSt=d.st||''; go('sales'); },
  saleNew:d=>saleForm(saleNew(d.type||'rechnung')),
  saleEdit:d=>{ const s=S.sales&&S.sales[d.id]; if(s) saleForm(s); },
- slAdd:()=>{ const b=$('#sl_items'); b.insertAdjacentHTML('beforeend',saleLineHtml({qty:1,unit:'Stk.',vat:(b.querySelector('.sl-vat')||{}).value||'19'},b.querySelectorAll('.sl-row').length)); b.lastElementChild.querySelector('.sl-art').focus(); },
- slAddTxt:()=>{ const b=$('#sl_items'); b.insertAdjacentHTML('beforeend',saleLineHtml({text:true,desc:''},0)); },
- slDel:(d,el)=>{ el.closest('.sl-row').remove(); $('#sl_items').dispatchEvent(new Event('input')); },
  saleFinal:d=>{ const s=SALE_CUR; if(!s) return; const v=saleRead({...s}); if(v===false) return; if(!v.items.some(i=>!i.text)){ toast('Bitte mindestens eine Position eintragen.'); return; }
-   confirmSheet('Rechnung fertigstellen? Sie bekommt jetzt die Nummer '+saleNr(v.type)+' und kann danach nicht mehr geändert werden.',()=>{ v.status='offen'; v.nr=saleNr(v.type); v.finalAt=new Date().toISOString(); v.finalBy=meK(); put('sales',v); toast(SALE_T[v.type][0]+' '+v.nr+' fertiggestellt.'); setTimeout(()=>saleForm(v),80); }); },
- salePrint:d=>{ if(SHEET&&SALE_CUR&&!saleLocked(SALE_CUR)){ const v=saleRead({...SALE_CUR}); if(v===false) return; put('sales',v); SALE_CUR=v; } salePrint(d.id); },
+   confirmSheet('Rechnung fertigstellen? Sie bekommt jetzt die Nummer '+saleNr(v.type)+' und kann danach nicht mehr geändert werden.',()=>{ v.status='offen'; v.nr=saleNr(v.type); v.finalAt=new Date().toISOString(); v.finalBy=meK(); salePut(v); toast(SALE_T[v.type][0]+' '+v.nr+' fertiggestellt.'); setTimeout(()=>saleForm(v),80); }); },
+ salePrint:d=>{ if(SHEET&&SALE_CUR&&!saleLocked(SALE_CUR)){ const v=saleRead({...SALE_CUR}); if(v===false) return; salePut(v); SALE_CUR=v; } salePrint(d.id); },
  saleMail:d=>{ const s=S.sales[d.id]; if(!s) return; const T=SALE_T[s.type], m=saleSums(s); copyText(`Betreff: ${T[0]} ${s.nr}${s.subject?' – '+s.subject:''}\n\nSehr geehrte Damen und Herren,\n\nanbei erhalten Sie unsere ${T[0]} ${s.nr} vom ${dDE(s.date)}${isInv(s.type)?' über '+euro(m.pay)+'. Zahlbar '+(+s.payDays?'bis '+dDE(saleDue(s)):'sofort')+'.':'.'}\n\nBei Fragen sind wir gern für Sie da.\n\nMit freundlichen Grüßen\n${ME?ME.replace(/\s*\([^)]*\)$/,''):''}\n${NDS.name}\n${NDS.tel}`,'E-Mail-Text kopiert – PDF über „Drucken / PDF“ speichern und anhängen.'); },
  saleNext:d=>saleNext(d.id,d.type),
  saleCopy:d=>{ const s=S.sales[d.id]; if(!s) return; closeSheet(); setTimeout(()=>saleForm(saleNew(s.type,{cust:clone(s.cust),custNr:s.custNr,pid:s.pid,subject:s.subject,intro:s.intro,outro:s.outro,items:clone(s.items)})),60); },
- saleStorno:d=>{ const s=S.sales[d.id]; if(!s) return; confirmSheet('Rechnung '+s.nr+' stornieren? Es wird eine Stornorechnung mit neuer Nummer und negativen Beträgen erstellt.',()=>{ const st=saleNew('storno',{cust:clone(s.cust),custNr:s.custNr,pid:s.pid,subject:s.subject,from:s.id,status:'offen',items:(s.items||[]).map(i=>i.text?i:{...i,price:-(+i.price||0)}),payDays:0}); st.nr=saleNr('storno'); st.finalAt=new Date().toISOString(); st.finalBy=meK(); put('sales',st); put('sales',{...clone(s),status:'storniert',stornoId:st.id}); toast('Storniert – Stornorechnung '+st.nr+' erstellt.'); setTimeout(()=>saleForm(st),80); }); },
+ saleStorno:d=>{ const s=S.sales[d.id]; if(!s) return; confirmSheet('Rechnung '+s.nr+' stornieren? Es wird eine Stornorechnung mit neuer Nummer und negativen Beträgen erstellt.',()=>{ const st=saleNew('storno',{cust:clone(s.cust),custNr:s.custNr,pid:s.pid,subject:s.subject,from:s.id,status:'offen',items:(s.items||[]).map(i=>i.text?i:{...i,price:-(+i.price||0)}),payDays:0}); st.nr=saleNr('storno'); st.finalAt=new Date().toISOString(); st.finalBy=meK(); salePut(st); salePut({...clone(s),status:'storniert',stornoId:st.id}); toast('Storniert – Stornorechnung '+st.nr+' erstellt.'); setTimeout(()=>saleForm(st),80); }); },
  salePay:d=>{ const s=S.sales[d.id]; if(!s) return; const m=saleSums(s); openSheet({title:'Zahlung zu '+SALE_T[s.type][0]+' '+s.nr,fields:[{k:'d',label:'Zahlungsdatum',type:'date',req:1},{k:'amt',label:'Betrag (€)',type:'number',step:'any',req:1},{k:'acc',label:'Konto',type:'select',options:[['Bank','Bank'],['Kasse','Kasse']]},{k:'note',label:'Notiz',full:1}],value:{d:TODAY(),amt:m.open,acc:'Bank'},
-   onSave:v=>{ const x=clone(S.sales[d.id]); x.paid=[...(x.paid||[]),{d:v.d,amt:r2(+String(v.amt).replace(',','.')),acc:v.acc,note:v.note||'',by:meK(),at:new Date().toISOString()}]; const mm=saleSums(x); x.status=mm.open<=0.005?'bezahlt':'teilbezahlt'; put('sales',x); toast('Zahlung erfasst'+(x.status==='bezahlt'?' – Rechnung bezahlt.':'.')); }}); },
+   onSave:v=>{ const x=clone(S.sales[d.id]); x.paid=[...(x.paid||[]),{d:v.d,amt:r2(+String(v.amt).replace(',','.')),acc:v.acc,note:v.note||'',by:meK(),at:new Date().toISOString()}]; const mm=saleSums(x); x.status=mm.open<=0.005?'bezahlt':'teilbezahlt'; salePut(x); toast('Zahlung erfasst'+(x.status==='bezahlt'?' – Rechnung bezahlt.':'.')); }}); },
  saleCfg:()=>{ const c=SCFG(); openSheet({title:'Verkauf · Einstellungen',fields:[{k:'invStart',label:'Rechnungsnummern: laufende Nummer ab (5-stellig, nach dem Jahr)',type:'number',ph:'50001 → 2650001'},{k:'payDays',label:'Standard-Zahlungsziel (Tage)',type:'number'}],value:{invStart:c.invStart||50001,payDays:c.payDays??14},
    onSave:v=>{ const cfg=clone(S.config||{}); cfg.sales={...(cfg.sales||{}),invStart:+v.invStart||50001,payDays:+v.payDays||0}; putConfig(cfg); toast('Gespeichert.'); }}); },
 });
@@ -5994,7 +6151,7 @@ async function finCsvImport(file){ const txt=await file.text(), lines=txt.split(
 // Zuordnung: Zahlungseingang ↔ offene Rechnung (Betrag + Nummer im Text), Abbuchung ↔ offene Ausgabe (Betrag + Lieferant)
 function finAutoMatch(f){ const amt=r2(f.gross), txt=(f.text+' '+f.partner).toLowerCase();
   if(amt>0){ const s=arr('sales').filter(s=>isInv(s.type)&&s.nr&&!['bezahlt','storniert'].includes(s.status)).find(s=>Math.abs(saleSums(s).open-amt)<0.01&&(txt.includes(String(s.nr))||stNorm(f.partner)&&stNorm((s.cust||{}).name)===stNorm(f.partner)));
-    if(s){ const x=clone(s); x.paid=[...(x.paid||[]),{d:f.date,amt,acc:'Bank',note:'Kontoauszug',by:meK(),at:new Date().toISOString()}]; x.status=saleSums(x).open<=0.005?'bezahlt':'teilbezahlt'; put('sales',x); return 'sale:'+s.id; } }
+    if(s){ const x=clone(s); x.paid=[...(x.paid||[]),{d:f.date,amt,acc:'Bank',note:'Kontoauszug',by:meK(),at:new Date().toISOString()}]; x.status=saleSums(x).open<=0.005?'bezahlt':'teilbezahlt'; salePut(x); return 'sale:'+s.id; } }
   else { const e=finAll().find(y=>y.kind==='ausgabe'&&y.status!=='bezahlt'&&Math.abs(r2(+y.gross)+amt)<0.01&&(y.docNr&&txt.includes(String(y.docNr).toLowerCase())||stNorm(y.partner)&&txt.includes(stNorm(y.partner).slice(0,6))));
     if(e){ put('fin',{...clone(e),status:'bezahlt',paidDate:f.date,acc:'Bank'}); return 'fin:'+e.id; } }
   return ''; }
@@ -6005,7 +6162,7 @@ function finMatchForm(id){ const f=(S.fin||{})[id]; if(!f) return; const amt=r2(
     <label for="fm_c" style="margin-top:10px;display:block">${amt>0?'Offene Rechnung':'Offene Ausgabe'}</label><select id="fm_c" class="inp"><option value="">– keine, stattdessen neu verbuchen –</option>${cand.slice(0,40).map(c=>`<option value="${c.id}">${esc(c.l)}${c.d<0.01?' ✓ Betrag passt':''}</option>`).join('')}</select>
     <label for="fm_k" style="margin-top:10px;display:block">oder verbuchen als</label><select id="fm_k" class="inp">${Object.entries(amt<0?FIN_CAT:FIN_INC).map(([k,v])=>`<option value="${k}">${esc(v[0])}</option>`).join('')}</select></div>`,saveLabel:'Übernehmen',
     onSave:()=>{ const c=$('#fm_c').value; const x=clone(f);
-      if(c.startsWith('sale:')){ const s=clone(S.sales[c.slice(5)]); s.paid=[...(s.paid||[]),{d:f.date,amt,acc:'Bank',note:'Kontoauszug',by:meK(),at:new Date().toISOString()}]; s.status=saleSums(s).open<=0.005?'bezahlt':'teilbezahlt'; put('sales',s); x.match=c; }
+      if(c.startsWith('sale:')){ const s=clone(S.sales[c.slice(5)]); s.paid=[...(s.paid||[]),{d:f.date,amt,acc:'Bank',note:'Kontoauszug',by:meK(),at:new Date().toISOString()}]; s.status=saleSums(s).open<=0.005?'bezahlt':'teilbezahlt'; salePut(s); x.match=c; }
       else if(c.startsWith('fin:')){ put('fin',{...clone(S.fin[c.slice(4)]),status:'bezahlt',paidDate:f.date,acc:'Bank'}); x.match=c; }
       else { const k=$('#fm_k').value, gross=Math.abs(amt), rate=amt<0?19:0; const n={id:uid(),kind:amt<0?'ausgabe':'einnahme',date:f.date,partner:f.partner,text:String(f.text||'').slice(0,120),cat:k,gross,net:r2(gross/(1+rate/100)),vat:r2(gross-gross/(1+rate/100)),vatRate:rate,status:'bezahlt',paidDate:f.date,acc:'Bank'}; put('fin',n); x.match='fin:'+n.id; setTimeout(()=>finForm(n),80); }
       put('fin',x); toast('Zugeordnet.'); }}); }
@@ -6039,6 +6196,73 @@ Object.assign(CHG,{ fiYear:(d,el)=>{ UI.fiYear=el.value; render(); }, fiAcc:(d,e
 document.addEventListener('change',e=>{ if(e.target.id==='finIn'){ const fl=[...(e.target.files||[])]; if(fl.length) finIngest(fl); } if(e.target.id==='finCsv'&&e.target.files[0]) finCsvImport(e.target.files[0]); });
 document.addEventListener('dragover',e=>{ const z=e.target.closest&&e.target.closest('.fin-drop'); if(z){ e.preventDefault(); z.classList.add('over'); } });
 document.addEventListener('drop',e=>{ const z=e.target.closest&&e.target.closest('.fin-drop'); if(!z) return; e.preventDefault(); e.stopImmediatePropagation(); z.classList.remove('over'); finIngest(e.dataTransfer.files); },true);
+
+/* ========== Verkauf ↔ Projekt: Status, Tagesnotiz und To-Dos automatisch nachziehen ========== */
+// Jede Änderung an einem Verkaufsbeleg läuft über salePut(). Gehört er zu einem Projekt, wird dort
+//  1) der passende Statusschritt gesetzt, 2) ein Eintrag in die Tagesnotiz geschrieben und
+//  3) geprüft, ob ein offenes To-Do damit erledigt ist (Rückfrage mit vorausgewählten Haken).
+const SALE_MS={angebot:{versendet:3,angenommen:7},auftrag:{created:7},abschlag:{created:9,bezahlt:10},rechnung:{created:24,bezahlt:25}};
+const SALE_TODO_RX={angebot:/angebot/i,auftrag:/auftrag|auftragsbest/i,lieferschein:/lieferschein|ausliefer/i,abschlag:/abschlag|anzahlung/i,rechnung:/rechnung|abrechn/i};
+const TODO_SEND_RX=/schick|send|raus|versend|übermitt|zuschick/i;
+const TODO_DO_RX=/erstell|schreib|schick|send|stell|mach|raus|fertig|vorbereit|ausstell|versend/i, TODO_PAY_RX=/bezahl|zahlung|eingang|überwies|ueberwies|offen|nachhak|mahn|erinner/i;
+function salePut(v){ const prev=S.sales&&S.sales[v.id]?clone(S.sales[v.id]):null; put('sales',v); try{ saleEvents(prev,v); }catch(e){ console.warn(e); } }
+function saleEvents(prev,v){ if(!v||!v.pid||!S.projects[v.pid]) return; const T=SALE_T[v.type][0], nr=v.nr||'', ev=[];
+  const created=v.nr&&(!prev||!prev.nr), st=prev&&prev.status!==v.status?v.status:'', paidNew=(v.paid||[]).length>((prev&&prev.paid)||[]).length;
+  const m=saleSums(v), amt=isInv(v.type)?m.pay:m.gross;
+  if(created) ev.push({k:'created',txt:T+' '+nr+' erstellt'+(v.type==='lieferschein'?'':isInv(v.type)?' ('+euro(amt)+' brutto)':' (netto '+euro(m.net)+')')});
+  if(st&&!created&&!['entwurf','offen'].includes(st)) ev.push({k:st,txt:T+' '+nr+': '+(SALE_ST[st]||[st])[0]});
+  if(paidNew){ const p=v.paid[v.paid.length-1]; ev.push({k:'pay',txt:'Zahlung '+euro(p.amt)+' zu '+T+' '+nr+' eingegangen'+(v.status==='bezahlt'?' – vollständig bezahlt':', offen noch '+euro(m.open))}); }
+  if(paidNew&&v.status==='bezahlt'&&!(prev&&prev.status==='bezahlt')) ev.push({k:'bezahlt',silent:1});
+  if(!ev.length) return;
+  // 1) Status + 2) Tagesnotiz in einem Schritt speichern
+  const p=clone(S.projects[v.pid]), map=SALE_MS[v.type]||{}, msgs=[]; let steps=[];
+  ev.forEach(e=>{ let n=map[e.k]; if(v.type==='abschlag'&&e.k==='created'&&(p.ms||{}).m9) n=22; if(v.type==='angebot'&&e.k==='created') n=0; if(n&&!(p.ms||{})['m'+n]){ const msg=applyMs(p,n,TODAY()); steps.push(PIPE[n-1]); if(msg) msgs.push(msg); } });
+  const lines=ev.filter(e=>!e.silent).map(e=>e.txt); if(steps.length) lines.push('Status: '+steps.join(', '));
+  if(lines.length){ p.notes=(p.notes?p.notes.replace(/\s+$/,'')+'\n':'')+nowStamp()+' ('+meK()+'): '+lines.join(' · '); delete p.now; delete p.nowD; }
+  put('projects',p); if(steps.length) toast('Projekt „'+p.name.slice(0,30)+'“: '+steps.join(', ')+(msgs.length?' · '+msgs.join(' '):''));
+  // 3) Offene To-Dos, die damit erledigt sein könnten
+  const keys=ev.map(e=>e.k), rx=SALE_TODO_RX[v.type==='storno'?'rechnung':v.type];
+  const todos=arr('tasks').filter(t=>t.pid===v.pid&&!t.done).filter(t=>{ const s=(t.title+' '+(t.notes||'')); const msN=steps.length&&t.ms&&steps.includes(PIPE[t.ms-1]);
+    if(msN) return true; if(!rx||!rx.test(s)) return false; if(keys.includes('pay')||keys.includes('bezahlt')) return TODO_PAY_RX.test(s); if(v.type==='angebot'&&!keys.includes('versendet')&&TODO_SEND_RX.test(s)) return false; // Angebot schicken: erst beim Versenden
+    return TODO_DO_RX.test(s)&&!TODO_PAY_RX.test(s); });
+  if(todos.length) setTimeout(()=>saleTodoAsk(v,todos,lines[0]||T+' '+nr),SHEET?900:200); }
+function saleTodoAsk(v,todos,why){ const go=()=>{ if(SHEET){ setTimeout(go,800); return; }
+  openSheet({title:'To-Do damit erledigt?',html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">${esc(why)} – im Projekt „${esc(projName(v.pid))}“ sind diese To-Dos noch offen:</div>${todos.map((t,i)=>`<label class="mt-opt" style="padding:4px 0"><input type="checkbox" class="ck" id="std_${i}" checked><span><b>${esc(t.title)}</b>${t.who?` <span class="small muted">· ${esc(shortWho(t.who))}</span>`:''}</span></label>`).join('')}<div class="small muted" style="margin-top:6px">Abgehakte To-Dos werden als erledigt markiert, mit Vermerk in der Tagesnotiz.</div></div>`,saveLabel:'Als erledigt markieren',
+    onSave:()=>{ const done=todos.filter((t,i)=>$('#std_'+i).checked); if(!done.length) return; const note=why;
+      done.forEach(t=>put('tasks',{...clone(S.tasks[t.id]||t),done:true,doneAt:new Date().toISOString(),doneBy:meK(),doneNote:'erledigt durch: '+note}));
+      const p=clone(S.projects[v.pid]); if(p){ p.notes=(p.notes?p.notes.replace(/\s+$/,'')+'\n':'')+nowStamp()+' ('+meK()+'): ✓ Erledigt: '+done.map(t=>t.title).join(', ')+' – '+note; put('projects',p); }
+      toast(done.length+' To-Do'+(done.length>1?'s':'')+' erledigt.'); }}); };
+  go(); }
+
+/* ========== Neue To-Dos immer gegen bestehende prüfen (Formular, Notizfeld, Sprache, KI-Chat, Meeting, Belege – auch am Handy) ========== */
+// put() meldet jedes neu angelegte To-Do hier an. Nach kurzer Sammelpause (mehrere auf einmal) werden alle geprüft:
+// erst per Stichwort-Abgleich (findRelated), mit KI zusätzlich nach Sinn. Gibt es Bezug, kommt EIN Fenster mit Vorschlag je To-Do.
+let REL_Q=[], REL_T=null;
+function relQueue(id){ REL_Q.push(id); clearTimeout(REL_T); REL_T=setTimeout(relRun,1500); }
+async function relRun(){ const ids=[...new Set(REL_Q)]; REL_Q=[]; const news=ids.map(id=>S.tasks[id]).filter(t=>t&&!t.done); if(!news.length) return; const found=[];
+  for(const t of news){ const kw=findRelated({id:t.id,title:t.title+' '+(t.notes||''),projectId:t.pid}); if(kw&&kw.strong&&S.tasks[kw.id]) found.push({t,x:S.tasks[kw.id],why:'ähnliche Begriffe',how:'update'}); }
+  if(SAMPLE){ const rest=news.filter(t=>!found.some(f=>f.t.id===t.id)); if(rest.length) try{
+      const pool=arr('tasks').filter(x=>!x.done&&!news.some(n=>n.id===x.id)&&(rest.some(t=>t.pid&&x.pid===t.pid)||!x.pid||rest.some(t=>!t.pid))).sort((a,b)=>String(b.upd||b.at||'').localeCompare(String(a.upd||a.at||''))).slice(0,80);
+      if(pool.length){ const r=await SAMPLE.json(`In einer Projekt-App (Solar-Installationsbetrieb) wurden gerade neue To-Dos angelegt. Prüfe für jedes, ob es inhaltlich zu einem BESTEHENDEN offenen To-Do gehört (gleiche Sache, Fortschritt, Ergebnis, Doppelung). Nur bei klarem Bezug – im Zweifel nicht.
+NEU (Nr | Titel | Projekt):
+${rest.map((t,i)=>(i+1)+' | '+t.title+(t.notes?' – '+String(t.notes).slice(0,150):'')+' | '+(projName(t.pid)||'-')).join('\n')}
+BESTEHEND (id | Titel | Projekt | wer | letztes Update):
+${pool.map(x=>x.id+' | '+x.title+' | '+(projName(x.pid)||'-')+' | '+(x.who?shortWho(x.who):'-')+' | '+(((x.upd2||[]).slice(-1)[0]||{}).t||'').slice(0,80)).join('\n')}
+how: "update" = das Neue ist eine Neuigkeit/ein Ergebnis zum Bestehenden; "dup" = gleiche Aufgabe doppelt; "done" = das Neue bedeutet, dass das Bestehende erledigt ist.
+Antworte nur mit JSON: {"items":[{"nr":1,"id":"bestehende id oder leer","how":"update|dup|done","why":"kurz"}]}`,{modelTier:'quick',bg:true});
+        (r&&Array.isArray(r.items)?r.items:[]).forEach(o=>{ const t=rest[(+o.nr||0)-1], x=S.tasks[o.id]; if(t&&x&&!x.done&&x.id!==t.id&&!found.some(f=>f.t.id===t.id)) found.push({t,x,why:String(o.why||'Bezug erkannt').slice(0,120),how:['update','dup','done'].includes(o.how)?o.how:'update'}); }); } }catch(e){} }
+  if(found.length) relAsk(found); }
+function relAsk(found){ if(SHEET){ setTimeout(()=>relAsk(found),1200); return; } found=found.filter(f=>S.tasks[f.t.id]&&!S.tasks[f.t.id].done&&S.tasks[f.x.id]&&!S.tasks[f.x.id].done); if(!found.length) return;
+  openSheet({title:found.length>1?found.length+' neue To-Dos hängen mit bestehenden zusammen':'Gibt es dazu schon ein To-Do?',wide:1,html:`<div class="fld full">${found.map((f,i)=>`<div class="rel-q"><div><b>Neu:</b> ${esc(f.t.title)}${f.t.pid?` <span class="small muted">· ${esc(projName(f.t.pid))}</span>`:''}</div>
+      <div><b>Bestehend:</b> <span class="lnk" role="button" tabindex="0" data-act="editTask" data-id="${f.x.id}">${esc(f.x.title)}</span> <span class="small muted">· ${esc([projName(f.x.pid),f.x.who?shortWho(f.x.who):'niemand',f.x.due?'fällig '+fmtD(f.x.due):''].filter(Boolean).join(' · '))}</span></div>
+      <div class="small muted">↔ ${esc(f.why)}</div>
+      <select class="inp" id="rel_a${i}" aria-label="Was tun?"><option value="update" ${f.how!=='done'?'selected':''}>Als Update zum bestehenden To-Do übernehmen (neues entfällt)</option><option value="done" ${f.how==='done'?'selected':''}>Bestehendes To-Do ist damit erledigt (neues entfällt)</option><option value="keep">Beide behalten (kein Zusammenhang)</option></select></div>`).join('')}</div>`,saveLabel:'Übernehmen',
+    onSave:()=>{ let n=0; found.forEach((f,i)=>{ const a=$('#rel_a'+i).value; if(a==='keep'){ const t=clone(S.tasks[f.t.id]); if(t){ t.relOk=1; put('tasks',t); } return; }
+        const x=clone(S.tasks[f.x.id]), t=S.tasks[f.t.id]; if(!x||!t) return; const info=t.title+(t.notes?' – '+t.notes:'');
+        x.upd2=[...(x.upd2||[]),{d:TODAY(),tm:nowStamp().slice(9),by:meK(),t:info.slice(0,400),at:new Date().toISOString()}]; if(t.due&&!x.due) x.due=t.due; if(t.who&&!x.who) x.who=t.who; if(PRIO[t.prio]&&PRIO[x.prio||'normal']&&PRIO[t.prio][1]>PRIO[x.prio||'normal'][1]) x.prio=t.prio;
+        if(a==='done'){ x.done=true; x.doneAt=new Date().toISOString(); x.doneBy=meK(); x.doneNote=info.slice(0,300); }
+        put('tasks',x); del('tasks',t.id); n++; });
+      if(n) toast(n+' To-Do'+(n>1?'s':'')+' mit bestehenden zusammengeführt.'); }}); }
 
 function vMeetings(){
   const list=arr('meetings').sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||'')));
