@@ -1341,7 +1341,13 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 /* Mobile */
 @media (max-width:900px){
   .app{grid-template-columns:minmax(0,1fr)}
-  .side{display:none}
+  /* Handy: dieselbe Seitenleiste (Gruppen, aufklappbar, angeheftete Sonnen) als Schublade über „Mehr“ */
+  .side{position:fixed;top:0;left:0;bottom:0;height:auto;width:min(86vw,320px);z-index:60;transform:translateX(-105%);transition:transform .22s ease-out;padding-top:max(18px,env(safe-area-inset-top,0px));padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:none;visibility:hidden}
+  body.nav-open .side{transform:none;visibility:visible;box-shadow:8px 0 30px rgba(0,0,0,.35)}
+  #navScrim{display:none}
+  body.nav-open #navScrim{display:block;position:fixed;inset:0;z-index:55;background:rgba(0,0,0,.45)}
+  body.nav-open{overflow:hidden}
+  .side .nav-btn{padding-block:10px}
   .main{padding-block:12px 96px}
   body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--night)}
   .mobile-top{display:flex;position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--night);color:#fff;align-items:center;gap:10px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -4416,7 +4422,8 @@ const A = {
  openPick:d=>{ UI.stockTab='listen'; go('stock'); },
  newMenu:(d,el)=>showMenu(el,[['newProject','Projekt','proj'],['newTask','To-Do','todo'],['newEvent','Termin','cal'],['newOrder','Bestellung','box'],['newOffer','Angebot','offer'],['newReport','Tagesrapport','report']].map(x=>{ if(UI.view==='project'&&x[0]!=='newProject') x[3]=`data-pid="${UI.pid}"`; return x; })),
  // Handy-Menü „Mehr“ = dieselben Rubriken wie die Seitenleiste am Desktop (ohne die 4 Tabs unten)
- moreMenu:(d,el)=>showMenu(el,[['meProfile','Mein Profil ('+(ME?meK():'?')+'): Farbe, Passwort','assign'],
+ moreMenu:()=>navDrawer(!document.body.classList.contains('nav-open')),
+ moreMenuOld:(d,el)=>showMenu(el,[['meProfile','Mein Profil ('+(ME?meK():'?')+'): Farbe, Passwort','assign'],
    ...navGroups().flatMap(([g,l,items])=>{ const rows=items.flatMap(n=>[n,...NAV.filter(k=>k[3]===n[0]&&canSee(k[0]))]).filter(n=>!['dash','projects','week'].includes(n[0])).map(([v,lb,i,parent])=>['nav',(parent?'– ':'')+lb,i,`data-v="${v}"`]); return rows.length?[...(l?[['_h',l]]:[]),...rows]:[]; }),
    ...(window.SB_LOGOUT?[['sbLogout','Abmelden','lock']]:[])]),
  newProject:()=>projectForm(), editProject:d=>projectForm(S.projects[d.id]),
@@ -5577,16 +5584,18 @@ function hrStatus(who){ const d=TODAY(), c=hrCalc(hrRec(who,d),true), ab=hrAbsOn
 function hrStampBtns(who){ const s=hrCalc(hrRec(who,TODAY()),true).state, b=(t,cls,l)=>`<button class="btn ${cls}" data-act="hrStamp" data-t="${t}"${who!==ME?` data-who="${esc(who)}"`:''}>${l}</button>`;
   return s==='out'?b('in','sun hr-big','▶ Kommen'):s==='in'?b('pin','','☕ Pause')+b('out','pri','■ Gehen'):b('pout','sun','▶ Pause beenden')+b('out','pri','■ Gehen'); }
 // kleine Stempel-Leiste auf der Startseite
-function hrDashStrip(){ if(!ME||!canSee('hr')) return ''; const s=hrStatus(ME), c=hrCalc(hrRec(ME,TODAY()),true), pend=isAdmin()?arr('hrabs').filter(a=>a.status==='beantragt').length:0, od=hrOpenDays(ME);
+// Geschäftsführung / Büroleitung stempeln nicht: keine Stempeluhr für AvE, JP und EP
+const HR_NOCLOCK=['ave','jp','ep'], hrNoClock=()=>!!ME&&HR_NOCLOCK.includes(String(meK()).toLowerCase());
+function hrDashStrip(){ if(!ME||!canSee('hr')) return ''; if(hrNoClock()){ const pend=isAdmin()?arr('hrabs').filter(a=>a.status==='beantragt').length:0; return pend?`<div class="hr-strip"><b>HR</b><span class="spacer"></span><button class="lnk" data-act="hrGo" data-tab="abw">${pend} Antrag${pend>1?'äge':''} offen</button></div>`:''; } const s=hrStatus(ME), c=hrCalc(hrRec(ME,TODAY()),true), pend=isAdmin()?arr('hrabs').filter(a=>a.status==='beantragt').length:0, od=hrOpenDays(ME);
   return `<div class="hr-strip"><span class="hr-dot ${s.k}"></span><b>${esc(s.l)}</b>${c.net?`<span class="small muted">heute ${hrHM(c.net)} h</span>`:''}<span class="spacer"></span>${od.length?`<button class="lnk bad-t" data-act="hrGo" data-tab="zeiten">⚠ ${od.length} Tag${od.length>1?'e':''} ohne „Gehen“</button>`:''}${pend?`<button class="lnk" data-act="hrGo" data-tab="abw">${pend} Antrag${pend>1?'äge':''} offen</button>`:''}${hrStampBtns(ME)}</div>`; }
 
 // ---------- Ansicht ----------
 function vHR(){
-  const adm=isAdmin(), tabs=[['stempel','Stempeluhr'],['abw','Urlaub & Abwesenheit'],['zeiten','Arbeitszeiten'],...(adm?[['team','Mitarbeiter']]:[])];
-  if(!tabs.some(t=>t[0]===UI.hrTab)) UI.hrTab='stempel';
+  const adm=isAdmin(), tabs=[...(hrNoClock()?[]:[['stempel','Stempeluhr']]),['abw','Urlaub & Abwesenheit'],['zeiten','Arbeitszeiten'],...(adm?[['team','Mitarbeiter']]:[])];
+  if(!tabs.some(t=>t[0]===UI.hrTab)) UI.hrTab=tabs[0][0];
   const pend=adm?arr('hrabs').filter(a=>a.status==='beantragt').length:0;
   const body={stempel:hrTabStempel,abw:hrTabAbw,zeiten:hrTabZeiten,team:hrTabTeam}[UI.hrTab]();
-  return head('HR','Stempeluhr · Urlaub · Abwesenheiten · Arbeitszeiten',`<button class="btn" data-act="hrAbsNew" data-type="krank">Krankmeldung</button><button class="btn pri" data-act="hrAbsNew" data-type="urlaub">${ic('plus')}Urlaub beantragen</button>`)+
+  return head('HR',hrNoClock()?'Urlaub · Abwesenheiten · Arbeitszeiten':'Stempeluhr · Urlaub · Abwesenheiten · Arbeitszeiten',`<button class="btn" data-act="hrAbsNew" data-type="krank">Krankmeldung</button><button class="btn pri" data-act="hrAbsNew" data-type="urlaub">${ic('plus')}Urlaub beantragen</button>`)+
     `<div class="chips hr-tabs">${tabs.map(([k,l])=>`<button class="chip ${UI.hrTab===k?'on':''}" data-act="hrGo" data-tab="${k}">${l}${k==='abw'&&pend?` <span class="cnt-b">${pend}</span>`:''}</button>`).join('')}</div>`+body;
 }
 function hrTabStempel(){
@@ -6848,8 +6857,11 @@ document.addEventListener('drop',e=>{ const z=e.target.closest&&e.target.closest
 document.addEventListener('paste',e=>{ if(UI.view!=='todos'||SHEET) return; const tg=e.target; if(tg&&(tg.tagName==='TEXTAREA'||tg.tagName==='INPUT')) return;
   const files=[...(e.clipboardData.files||[])], text=e.clipboardData.getData('text/plain')||''; if(!files.length&&text.trim().length<30) return; e.preventDefault(); e.stopImmediatePropagation(); mailToTodos(files,text); },true);
 
+// Handy-Schublade: Seitenleiste ein-/ausblenden (Abdunklung dahinter schließt sie)
+function navDrawer(on){ let s=$('#navScrim'); if(!s){ s=document.createElement('div'); s.id='navScrim'; s.onclick=()=>navDrawer(false); document.body.appendChild(s); } document.body.classList.toggle('nav-open',!!on); if(on){ const c=document.querySelector('#side .nav-btn.on'); if(c) c.scrollIntoView({block:'center'}); } }
 document.addEventListener('click',e=>{
   const a=e.target.closest('[data-act]');
+  if(a&&document.body.classList.contains('nav-open')&&a.closest('#side')&&!['navGrp','navToggle','navPin'].includes(a.dataset.act)) navDrawer(false);
   if(!a){ if(!e.target.closest('#menu')) closeMenu(); return; }
   if(a.tagName==='A') e.preventDefault();
   const fn=A[a.dataset.act]; if(!fn) return;
