@@ -553,6 +553,11 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .aic-m.a{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px;max-width:100%}
 .aic-m ul{margin:4px 0;padding-left:18px}
 .aic-acts{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px}.aic-acts:empty{display:none}
+.aic-cards{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.aic-card{display:flex;align-items:center;gap:10px;justify-content:space-between;border:1px solid var(--sun);background:var(--sun-soft);border-radius:10px;padding:7px 10px}
+.aic-card.ok{border-color:var(--line);background:transparent;opacity:.8}
+.aic-cl{font-family:var(--f-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.aic-cd{font-size:13.5px;line-height:1.35}
 .aic-acts .lnk{font-size:12.5px;font-weight:600;color:#7a6a00}
 .aic-in{display:flex;gap:6px;align-items:flex-end;padding:10px;border-top:1px solid var(--line);background:var(--surface)}
 .aic-in textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:12px;padding:9px 11px;font:inherit;font-size:15px;max-height:120px;background:var(--bg);color:var(--ink)}
@@ -4632,7 +4637,8 @@ function aicEl(){ let d=$('#aic'); if(d) return d;
   document.body.appendChild(d);
   d.addEventListener('click',e=>{ const b=e.target.closest('[data-aic]'); if(!b) return; const k=b.dataset.aic;
     if(k==='close') aicShow(false); else if(k==='new'){ AIC.msgs=[]; speakStop(); aicPaint(); } else if(k==='spk'){ A.askSpkTog(); aicPaint(); }
-    else if(k==='mic') aicMic(b); else if(k==='say') speak(AIC.msgs[+b.dataset.i].text); else if(k==='go') aicDo(AIC.msgs[+b.dataset.i].open,true); });
+    else if(k==='mic') aicMic(b); else if(k==='say') speak(AIC.msgs[+b.dataset.i].text); else if(k==='go') aicDo(AIC.msgs[+b.dataset.i].open,true);
+    else if(k==='act'){ const m=AIC.msgs[+b.dataset.i], j=+b.dataset.j; if(m&&m.acts&&m.acts[j]) aicRunAct(m,j); } });
   d.querySelector('#aic_f').addEventListener('submit',e=>{ e.preventDefault(); const t=$('#aic_tx'); const v=t.value.trim(); if(!v) return; t.value=''; aiChat(v); });
   d.querySelector('#aic_tx').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); d.querySelector('#aic_f').requestSubmit(); } });
   return d; }
@@ -4665,10 +4671,43 @@ function aicChart(c){
 function aicOpenLabel(o){ if(!o) return ''; if(o.task&&S.tasks[o.task]) return 'To-Do „'+S.tasks[o.task].title.slice(0,40)+'“ öffnen'; if(o.pid&&S.projects[o.pid]) return projName(o.pid)+' · '+({todos:'To-Dos',material:'Material/Bestellungen',timeline:'Timeline',dateien:'Dateien',infos:'Infos'}[o.tab]||'Notizen')+' öffnen'; const n=NAV.find(n=>n[0]===o.view); return n?n[1]+' öffnen':''; }
 function aicPaint(){ const box=$('#aic_msgs'); if(!box) return; const sp=document.querySelector('#aic [data-aic=spk]'); if(sp){ sp.textContent=ASK_SPEAK?'🔊':'🔈'; sp.classList.toggle('on',ASK_SPEAK); }
   box.innerHTML=(AIC.msgs.length?'':`<div class="aic-empty"><b>Was möchtest du wissen?</b><div class="small muted">Ich kenne alle Projekte, Notizen, To-Dos, Bestellungen, Lager und die Wochenplanung. Beispiele:</div>${['Gib mir alle To-Dos zum Energiepark','Was ist diese Woche bei Strundepark passiert?','Diagramm: offene To-Dos je Mitarbeiter','Welche Lieferungen kommen diese Woche?'].map(x=>`<button type="button" class="chip" data-aicq="${esc(x)}">${esc(x)}</button>`).join('')}</div>`)+
-    AIC.msgs.map((m,i)=>m.role==='u'?`<div class="aic-m u">${esc(m.text)}</div>`:`<div class="aic-m a">${m.err?`<span class="muted">${esc(m.text)}</span>`:aicMd(m.text)}${aicTable(m.table)}${aicChart(m.chart)}<div class="aic-acts">${m.open&&aicOpenLabel(m.open)?`<button type="button" class="lnk" data-aic="go" data-i="${i}">↗ ${esc(aicOpenLabel(m.open))}</button>`:''}${CAN_SPEAK&&m.text&&!m.err?`<button type="button" class="lnk" data-aic="say" data-i="${i}">🔊 Vorlesen</button>`:''}</div></div>`).join('')+
+    AIC.msgs.map((m,i)=>m.role==='u'?`<div class="aic-m u">${esc(m.text)}</div>`:`<div class="aic-m a">${m.err?`<span class="muted">${esc(m.text)}</span>`:aicMd(m.text)}${aicTable(m.table)}${aicChart(m.chart)}${aicActsHtml(m,i)}<div class="aic-acts">${m.open&&aicOpenLabel(m.open)?`<button type="button" class="lnk" data-aic="go" data-i="${i}">↗ ${esc(aicOpenLabel(m.open))}</button>`:''}${CAN_SPEAK&&m.text&&!m.err?`<button type="button" class="lnk" data-aic="say" data-i="${i}">🔊 Vorlesen</button>`:''}</div></div>`).join('')+
     (AIC.busy?'<div class="aic-m a"><span class="aic-dots"><i></i><i></i><i></i></span></div>':'');
   box.querySelectorAll('[data-aicq]').forEach(b=>b.onclick=()=>aiChat(b.dataset.aicq));
   box.scrollTop=box.scrollHeight; }
+// Aktionen aus dem Chat: Karte je Vorgang; „Prüfen & speichern“ öffnet das normale, schon ausgefüllte Fenster
+// (Termin, To-Do, Bestellung, Einsatz, Warenannahme) – kleine Dinge (Notiz, Update, Erledigt) werden direkt übernommen.
+const aicWho=k=>{ const s=staff().find(x=>shortWho(x.name).toLowerCase()===String(k||'').toLowerCase()||x.name===k); return s?s.name:''; };
+const aicDate=d=>/^\d{4}-\d{2}-\d{2}$/.test(d||'')?d:'';
+const aicPid=p=>S.projects[p]||p===INTERN?p:'';
+const AIC_ACT={
+ task:{l:'To-Do anlegen',form:1,desc:a=>[a.title,a.who&&'→ '+a.who,aicDate(a.due)&&'fällig '+fmtD(a.due),projName(aicPid(a.pid))].filter(Boolean).join(' · '),
+   run:a=>taskForm(null,{title:String(a.title||'').slice(0,300),who:aicWho(a.who),due:aicDate(a.due),pid:aicPid(a.pid),prio:PRIO[a.prio]?a.prio:'normal',notes:a.notes||'',src:'ki',created:TODAY()})},
+ task_update:{l:'Update zum To-Do',desc:a=>((S.tasks[a.task]||{}).title||'?')+': '+(a.text||''),
+   run:a=>{ const k=clone(S.tasks[a.task]||null); if(!k||!String(a.text||'').trim()) return toast('To-Do nicht gefunden.'),false; k.upd2=[...(k.upd2||[]),{d:TODAY(),tm:nowStamp().slice(9),by:meK(),t:fixNames(String(a.text).trim()),at:new Date().toISOString()}]; put('tasks',k); toast('Update gespeichert.'); }},
+ task_done:{l:'To-Do erledigt',desc:a=>((S.tasks[a.task]||{}).title||'?')+(a.text?' – '+a.text:''),
+   run:a=>{ const k=S.tasks[a.task]; if(!k) return toast('To-Do nicht gefunden.'),false; if(k.pid&&S.projects[k.pid]){ completeProjTask(k.id); setTimeout(()=>{ const x=$('#scrim textarea'); if(x&&a.text) x.value=a.text; },60); return 'form'; }
+     put('tasks',{...clone(k),done:true,doneAt:new Date().toISOString(),doneBy:meK(),doneNote:a.text||''}); toast('Erledigt.'); }},
+ note:{l:'Projekt-Notiz',desc:a=>projName(aicPid(a.pid))+': '+(a.text||''),
+   run:a=>{ const p=aicPid(a.pid); if(!p||!String(a.text||'').trim()) return toast('Projekt fehlt.'),false; saveNote(p,'notes',a.text); }},
+ event:{l:'Termin eintragen',form:1,desc:a=>[a.title,aicDate(a.date)?fmtD(a.date)+(a.time?' '+a.time:''):'Datum fehlt',a.who,projName(aicPid(a.pid)),a.place].filter(Boolean).join(' · '),
+   run:a=>eventForm(null,{title:a.title||'',date:aicDate(a.date)||TODAY(),end:aicDate(a.end),time:/^\d{1,2}:\d{2}$/.test(a.time||'')?a.time.padStart(5,'0'):'',who:aicWho(a.who),pid:aicPid(a.pid),place:a.place||'',kind:EV_KINDS[a.kind]?a.kind:'bau'})},
+ plan:{l:'Einsatz planen',form:1,desc:a=>[aicDate(a.d)?fmtD(a.d):'Datum fehlt',a.who,a.t,projName(aicPid(a.pid))].filter(Boolean).join(' · '),
+   run:a=>planForm({d:aicDate(a.d)||TODAY(),t:a.t||'',who:aicWho(a.who),kind:'bau',pid:aicPid(a.pid),time:a.time||'',mat:[]},v=>savePlanEntry(v))},
+ order:{l:'Bestellung erfassen',form:1,desc:a=>[a.supplier||'Lieferant fehlt',projName(aicPid(a.pid)),(a.items||[]).length+' Pos.',aicDate(a.delivery)&&'Lieferung '+fmtD(a.delivery)].filter(Boolean).join(' · '),
+   run:a=>orderForm(null,{supplier:a.supplier||'',pid:aicPid(a.pid),buyer:a.buyer||'',no:a.no||'',delivery:aicDate(a.delivery),items:markExtras((Array.isArray(a.items)?a.items:[]).filter(i=>i&&i.art).map(i=>({qty:+i.qty||1,unit:i.unit||'Stk',art:String(i.art)})))})},
+ receive:{l:'Ware annehmen',form:1,desc:a=>{ const o=S.orders[a.order]; return o?[o.supplier,projName(o.pid),o.delivery&&'Liefertermin '+fmtD(o.delivery)].filter(Boolean).join(' · '):'Bestellung nicht gefunden'; },
+   run:a=>{ if(!S.orders[a.order]) return toast('Bestellung nicht gefunden.'),false; receiveForm(a.order); }},
+};
+function aicActsHtml(m,i){ if(!m.acts||!m.acts.length) return '';
+  return `<div class="aic-cards">${m.acts.map((a,j)=>{ const T=AIC_ACT[a.type], ok=m.done&&m.done[j];
+    return `<div class="aic-card ${ok?'ok':''}"><div style="min-width:0"><div class="aic-cl">${esc(T.l)}</div><div class="aic-cd">${esc(T.desc(a))}</div></div>${ok?'<span class="dy-ok">✓</span>':`<button type="button" class="btn sun sm" data-aic="act" data-i="${i}" data-j="${j}">${T.form?'Prüfen & speichern':'Übernehmen'}</button>`}</div>`; }).join('')}</div>`; }
+// Stand der Daten, um zu erkennen, ob im Formular wirklich gespeichert wurde (Abbrechen → kein Haken)
+const aicStamp=()=>['tasks','events','orders','plan'].map(c=>Object.values(S[c]||{}).map(x=>x.upd||'').sort().pop()||'').join('|');
+function aicRunAct(m,j){ const a=m.acts[j], T=AIC_ACT[a.type]; if(!T) return; const before=aicStamp(); let r; try{ r=T.run(a); }catch(e){ toast('Konnte nicht ausgeführt werden.'); return; }
+  if(r===false) return; m.done=m.done||{}; if(!T.form&&r!=='form'){ m.done[j]=true; aicPaint(); return; }
+  // Formular offen: Haken erst, wenn es zu ist UND sich Daten geändert haben
+  const t0=Date.now(), chk=setInterval(()=>{ if(!SHEET){ clearInterval(chk); if(aicStamp()!==before){ m.done[j]=true; aicPaint(); } } else if(Date.now()-t0>30*60*1000) clearInterval(chk); },500); }
 // Fenster öffnen, das zur Antwort gehört
 function aicDo(o,manual){ if(!o) return; const pid=S.projects[o.pid]?o.pid:'', task=S.tasks[o.task]?o.task:'', view=NAV.some(n=>n[0]===o.view&&canSee(n[0]))?o.view:''; if(!pid&&!task&&!view) return;
   if(innerWidth<760) aicShow(false); // Handy: Chat einklappen, ✨ holt ihn zurück
@@ -4691,7 +4730,8 @@ function aiSnapshot(q,hist){
   const ot=arr('tasks').filter(t=>!t.done);
   out.push('OFFENE TO-DOS (id | Titel | Projekt | wer | fällig | Dringlichkeit | angelegt | letztes Update):\n'+ot.map(t=>[t.id,t.title.slice(0,140),projName(t.pid)||(t.pool?'Allgemein':'-'),t.ext?'extern: '+t.ext:(t.who?shortWho(t.who):'niemand'),t.due||'',t.prio||'normal',t.created||String(t.at||'').slice(0,10),lastUp(t)].join(' | ')).join('\n'));
   const dn=arr('tasks').filter(t=>t.done&&String(t.doneAt||'')>=addDays(t0,-30)); if(dn.length) out.push('IN DEN LETZTEN 30 TAGEN ERLEDIGT (Titel | Projekt | wer | erledigt am):\n'+dn.map(t=>[t.title.slice(0,100),projName(t.pid)||'-',t.doneBy||shortWho(t.who||''),String(t.doneAt).slice(0,10)].join(' | ')).join('\n'));
-  const oo=arr('orders').filter(o=>orderState(o).open); if(oo.length) out.push('OFFENE BESTELLUNGEN (Lieferant | Projekt | bestellt | Liefertermin | Status | bestellt über | Positionen):\n'+oo.map(o=>[o.supplier||'',projName(o.pid)||'-',o.ordered||'',o.delivery||'',orderState(o).k,o.buyer||'',(o.items||[]).slice(0,5).map(i=>(i.qty||'')+' '+(i.unit||'')+' '+i.art).join('; ')].join(' | ')).join('\n'));
+  const ev=arr('events').filter(e=>e.date>=addDays(t0,-7)&&e.date<=addDays(t0,45)).sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||''))); if(ev.length) out.push('TERMINE (id | Datum | Uhrzeit | Titel | Art | wer | Projekt | Ort):\n'+ev.map(e=>[e.id,e.date,e.time||'',e.title||'',EV_KINDS[e.kind]||'',e.who?shortWho(e.who):'',projName(e.pid)||'',e.place||''].join(' | ')).join('\n'));
+  const oo=arr('orders').filter(o=>orderState(o).open); if(oo.length) out.push('OFFENE BESTELLUNGEN (id | Lieferant | Projekt | bestellt | Liefertermin | Status | bestellt über | Positionen):\n'+oo.map(o=>[o.id,o.supplier||'',projName(o.pid)||'-',o.ordered||'',o.delivery||'',orderState(o).k,o.buyer||'',(o.items||[]).slice(0,5).map(i=>(i.qty||'')+' '+(i.unit||'')+' '+i.art).join('; ')].join(' | ')).join('\n'));
   const wk=arr('plan').flatMap(w=>(w.entries||[]).filter(e=>e.d>=mon&&e.d<=addDays(mon,11)).map(e=>[e.d,e.who?shortWho(e.who):'-',e.t||'',projName(e.pid)||''].join(' | '))); if(wk.length) out.push('WOCHENPLANUNG diese + nächste Woche (Datum | wer | was | Projekt):\n'+wk.join('\n'));
   const st=arr('stock').filter(s=>+s.qty>0).slice(0,80); if(st.length) out.push('LAGER (Artikel | Bestand | Lagerort):\n'+st.map(s=>[s.art,qn(s.qty)+' '+(s.unit||''),s.loc||''].join(' | ')).join('\n'));
   cand.forEach(p=>out.push(`DETAILS ${p.name} (${p.id}):\nNotizen je Tag (neueste zuerst):\n${diaryDays(p).slice(0,10).map(x=>'- '+(x.d||'ohne Datum')+': '+x.items.map(e=>(e.by?e.by+': ':'')+dyPlain(e)).join(' | ').slice(0,900)).join('\n')||'- keine'}\nAlle To-Dos inkl. erledigte:\n${arr('tasks').filter(t=>t.pid===p.id).map(t=>'- '+(t.done?'✓ ':'☐ ')+t.title+(t.who?' ('+shortWho(t.who)+')':'')+(t.due?' fällig '+t.due:'')+((t.upd2||[]).length?' · Updates: '+[...t.upd2].sort((a,b)=>updKey(a).localeCompare(updKey(b))).map(u=>u.d+' '+(u.by||'')+': '+u.t).join(' / ').slice(0,500):'')).join('\n')||'- keine'}${p.questions?'\nOffene Fragen: '+p.questions.slice(0,600):''}`));
@@ -4713,16 +4753,27 @@ Ansichten der App: ${views}
 Projekt-Reiter: status (Notizen + To-Dos), todos (alle To-Dos des Projekts), material (Bestellungen), timeline, dateien, infos.
 
 Antworte nur mit JSON:
-{"say":"Antwort; Aufzählungen mit '- ', Wichtiges mit **fett**","open":{"pid":"","tab":"","day":"","task":"","view":""},"chart":null,"table":null,"capture":false}
+{"say":"Antwort; Aufzählungen mit '- ', Wichtiges mit **fett**","open":{"pid":"","tab":"","day":"","task":"","view":""},"chart":null,"table":null,"actions":[],"capture":false}
 Regeln:
 - open: das Fenster, das zur Frage passt (sonst null). Fragt jemand nach MEHREREN Dingen (alle To-Dos, alle Bestellungen eines Projekts, Material) → die Listen-Seite öffnen (pid + tab "todos" bzw. "material", oder view "todos"/"orders"), NIE nur ein einzelnes To-Do. "task" nur, wenn genau ein bestimmtes To-Do gemeint ist. „Neuestes Update/letzte Notiz zu X“ → tab "status", day = neuester Tag.
 - Bei Listen-Fragen zusätzlich die Einträge vollständig in say auflisten (oder als table, wenn es mehr als 6 sind oder mehrere Spalten sinnvoll sind).
 - chart: nur wenn ein Diagramm gewünscht ist oder Zahlen sich klar besser zeigen lassen: {"type":"bar|line|pie","title":"…","labels":["…"],"series":[{"name":"…","data":[Zahlen]}],"unit":""}. Werte exakt aus den Daten zählen/summieren.
 - table: {"cols":["…"],"rows":[["…"]]}
-- capture: true nur, wenn die Nachricht etwas zum Festhalten ist (neue Aufgabe/Info/Notiz, z. B. „MK soll morgen Westnetz anrufen“) und keine Frage.`,{modelTier:'default'});
+- actions: Soll etwas in der App ANGELEGT oder GEÄNDERT werden (Termin eintragen, To-Do anlegen, Update/Notiz schreiben, To-Do erledigen, Bestellung erfassen, Ware annehmen, Einsatz in der Wochenplanung), dann je Vorgang eine Aktion – der Nutzer prüft und speichert sie selbst. Behaupte nie, es sei schon gespeichert; in say kurz sagen, was vorbereitet ist. Mitarbeiter als Kürzel, Daten als JJJJ-MM-TT (relative Angaben wie „morgen“, „Freitag“, „nächste Woche“ ab heute ausrechnen), pid/task/order nur mit ids aus den Daten. Typen:
+  {"type":"task","title":"…","who":"Kürzel","pid":"","due":"","prio":"normal|hoch|dringend|niedrig","notes":""}
+  {"type":"task_update","task":"To-Do-id","text":"…"}
+  {"type":"task_done","task":"To-Do-id","text":"was wurde gemacht"}
+  {"type":"note","pid":"","text":"…"}  (Projekt-Notiz)
+  {"type":"event","title":"…","date":"","time":"HH:MM","end":"","who":"Kürzel","pid":"","place":"","kind":"bau|kunde|evu|lief|intern"}
+  {"type":"plan","d":"","t":"was","who":"Kürzel","pid":"","time":""}  (Einsatz in der Wochenplanung)
+  {"type":"order","supplier":"","pid":"","buyer":"","no":"","delivery":"","items":[{"qty":1,"unit":"Stk","art":""}]}
+  {"type":"receive","order":"Bestell-id"}  (Ware annehmen / Wareneingang buchen)
+  Fehlen Pflichtangaben (z. B. Datum beim Termin, Lieferant bei Bestellung), trotzdem die Aktion vorbereiten und in say kurz nachfragen.
+- capture: nur noch für längere, unstrukturierte Texte zum Zuordnen (z. B. eingefügte Mail) – für einzelne Aufgaben/Notizen/Termine actions verwenden.`,{modelTier:'default'});
     AIC.busy=false;
     if(r&&r.capture){ AIC.msgs.push({role:'a',text:'Das halte ich fest – bitte im Fenster prüfen und zuordnen.'}); aicPaint(); smartDrop([],q); return; }
-    const o=r&&r.open&&typeof r.open==='object'?r.open:null, m={role:'a',text:String(r&&r.say||'').trim()||'Dazu habe ich in den Daten nichts gefunden.',chart:r&&r.chart,table:r&&r.table,open:o&&(o.pid||o.task||o.view)?o:null};
+    const o=r&&r.open&&typeof r.open==='object'?r.open:null, acts=(r&&Array.isArray(r.actions)?r.actions:[]).filter(a=>a&&AIC_ACT[a.type]).slice(0,10);
+    const m={role:'a',text:String(r&&r.say||'').trim()||(acts.length?'Vorbereitet – bitte prüfen und speichern:':'Dazu habe ich in den Daten nichts gefunden.'),chart:r&&r.chart,table:r&&r.table,open:o&&(o.pid||o.task||o.view)&&!acts.length?o:null,acts,done:{}};
     AIC.msgs.push(m); aicPaint(); askSay(m.text);
     if(m.open) aicDo(m.open,false);
   }catch(e){ AIC.busy=false; AIC.msgs.push({role:'a',err:1,text:SAMPLE_ERR[e&&e.code]||'Die KI ist gerade nicht erreichbar. Bitte gleich nochmal versuchen.'}); aicPaint(); }
