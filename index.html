@@ -760,6 +760,8 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .aic-fab{position:fixed;right:18px;bottom:18px;z-index:44;width:52px;height:52px;border-radius:50%;border:0;background:var(--night);color:var(--sun);font-size:22px;box-shadow:0 6px 20px rgba(0,0,0,.3);cursor:pointer}
 .aic-fab[hidden]{display:none}
 @media (max-width:760px){ .aic{inset:0;width:auto;height:auto;border-radius:0;border:0} .aic-fab{bottom:calc(76px + env(safe-area-inset-bottom,0px))} }
+/* Handy im Projekt: Blätter-Pfeile sitzen unten rechts – KI-Knopf darüber, damit nichts überlappt */
+@media (max-width:900px){ body:has(.big-nav.r) .aic-fab{bottom:calc(158px + env(safe-area-inset-bottom,0px));right:10px} }
 .gs-spk{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:15px;line-height:1;display:grid;place-items:center;cursor:pointer;padding:0;opacity:.7}
 .gs-spk.on{background:var(--sun-soft);border-color:var(--sun);opacity:1}
 .ask-spk{display:inline-block;margin-top:6px;color:var(--sun);cursor:pointer;font-weight:600;font-size:13px}
