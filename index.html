@@ -485,6 +485,13 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .nav-tg{background:none;border:0;color:var(--night-ink);opacity:.6;cursor:pointer;padding:6px 8px;font-size:14px;transition:transform .15s}
 .nav-tg.open{transform:rotate(180deg)}
 .nav-btn.sub{padding-left:34px;font-size:13px}
+.nav-grp{margin-top:6px;border-top:1px solid rgba(255,255,255,.08);padding-top:4px}
+.nav-gh{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;cursor:pointer;padding:8px 12px 6px;color:rgba(255,255,255,.5);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;text-align:left}
+.nav-gh:hover{color:#fff}
+.nav-gh span:first-child{flex:1}
+.nav-gc{transition:transform .15s;font-size:12px}.nav-grp.open .nav-gc{transform:rotate(180deg)}
+.nav-grp.open .nav-gh{color:var(--sun)}
+.menu-h{padding:10px 10px 4px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-top:1px solid var(--line);margin-top:4px}
 .priv-done summary{cursor:pointer;padding:10px 16px;font-weight:600;color:var(--muted)}
 .chat{display:grid;grid-template-columns:240px minmax(0,1fr);gap:14px;height:calc(100vh - 170px);min-height:420px}
 .ch-rooms{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:8px;overflow:auto;display:flex;flex-direction:column;gap:4px}
@@ -539,7 +546,15 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .ask-box.over .gs-in{border-color:var(--sun);border-style:dashed;background:var(--sun-soft)}
 .ask-go{flex:none}
 /* Verkauf: Belegformular */
-.vk-kpi{margin:0 0 14px}
+/* Kennzahlen-Band (Verkauf, Finanzen): dunkel mit Sonnen-Schimmer, gelbe Zahlen */
+.vk-kpi{position:relative;isolation:isolate;overflow:hidden;margin:0 0 16px;padding:14px;border-radius:18px;background:linear-gradient(135deg,#141414 0%,var(--night) 55%,#1d1a05 100%);box-shadow:0 10px 30px rgba(0,0,0,.18);display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.vk-kpi::before{content:"";position:absolute;right:-70px;top:-90px;width:260px;height:260px;border-radius:50%;z-index:-1;background:radial-gradient(circle,rgba(244,219,2,.45) 0%,rgba(244,219,2,.1) 45%,transparent 70%)}
+.vk-kpi::after{content:"";position:absolute;inset:0;z-index:-1;opacity:.35;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:22px 22px}
+.vk-kpi .hk{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);padding:14px 16px 12px;gap:6px;transition:border-color .15s,transform .15s}
+.vk-kpi .hk:hover{transform:translateY(-1px)}
+.vk-kpi .hv{color:var(--sun);font-size:26px}
+.vk-kpi .hl{color:rgba(255,255,255,.78);opacity:1;font-size:12.5px}
+.vk-kpi .hk.hi{background:var(--sun);border-color:var(--sun)}.vk-kpi .hk.hi .hv,.vk-kpi .hk.hi .hl{color:#111}
 .sl-form label{display:block;font-size:12.5px;color:var(--muted);margin:10px 0 3px}
 .sl-head{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .sl-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -1964,15 +1979,26 @@ function calItems(from,to){
 const NAV = [['dash','Übersicht','dash'],['projects','Projekte','proj'],['todos','To-Dos','todo'],['private','Meine privaten To-Dos','lock','todos'],['pool','Allgemeine Aufgaben','todo','todos'],['meetings','Meetings','form'],['chat','Chat','chat'],['week','Kalender & Wochenplanung','cal'],['orders','Bestellungen & Wareneingänge','box'],['stock','Lagerverwaltung','stock'],['files','Datenablage','files'],['f:mail','Korrespondenz','chat','files'],['f:angebot','Angebote','offer','files'],['f:rechnung','Rechnungen','offer','files'],['f:lieferschein','Lieferscheine','truck','files'],['f:rapport','Tagesrapporte','report','files'],['f:kommi','Kommissionierung','stock','files'],['f:sonst','Sonstiges','files','files'],['sales','Verkauf','offer'],['vk:angebot','Angebote','offer','sales'],['vk:auftrag','Aufträge','form','sales'],['vk:lieferschein','Lieferscheine','truck','sales'],['vk:abschlag','Abschläge','offer','sales'],['vk:rechnung','Rechnungen','offer','sales'],['fin','Finanzen','euro'],['fi:bank','Bank / Kasse','euro','fin'],['fi:aus','Ausgaben','euro','fin'],['fi:ein','Sonstige Einnahmen','euro','fin'],['fi:journal','Buchungsübersicht','form','fin'],['fi:ust','USt-Voranmeldung','report','fin'],['fi:steuer','Steuerauswertungen','report','fin'],['fi:ausw','Auswertungen','report','fin'],['fi:export','Steuerberater-Export','files','fin'],['fi:anlagen','Anlagenverwaltung','box','fin'],['stamm','Stammdaten','box'],['st:kunden','Kunden','assign','stamm'],['st:lieferanten','Lieferanten','truck','stamm'],['st:artikel','Artikel','stock','stamm'],['templates','Vorlagen','tpl'],['hr','HR','clock'],['settings','Team & Einstellungen','gear'],['activity','Aktivität','form'],['rights','Admin: Rechte','lock']];
 const VIEW_T = {dash:'Übersicht',projects:'Projekte',project:'Projekt',todos:'To-Dos',pool:'Allgemeine Aufgaben',meetings:'Meetings',week:'Wochenplanung Team',calendar:'Kalender',files:'Datenablage',stock:'Lagerverwaltung',chat:'Chat',private:'Privat',activity:'Aktivität',orders:'Bestellungen & Wareneingänge',offers:'Angebote',reports:'Tagesrapporte',templates:'Vorlagen',settings:'Team & Einstellungen',rights:'Rechte',stamm:'Stammdaten',hr:'HR',sales:'Verkauf',fin:'Finanzen'};
 function sunMark(){ return `<svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="2" y="15" width="26" height="12" rx="2" fill="var(--primary)"/><path d="M2 21h26M10.7 15v12M19.3 15v12" stroke="var(--surface)" stroke-width="1.3"/><circle cx="15" cy="9" r="5" fill="var(--sun)"/></svg>` }
-function renderShell(){
-  const openTodos=arr('tasks').filter(t=>!t.done&&!(t.pool&&!t.who)).length, openOrders=arr('orders').filter(o=>orderState(o).open).length;
+// Seitenmenü in Bereichen: Übersicht und Chat oben, darunter aufklappbare Bereiche.
+// Offen ist der Bereich der aktuellen Seite und jeder, den man selbst aufgeklappt hat (pro Gerät gemerkt).
+const NAV_GROUPS=[['','',['dash','chat']],['plan','Projekte & Planung',['projects','todos','week','meetings','files']],['mat','Material & Lager',['orders','stock']],['kfm','Kaufmännisch',['sales','fin','stamm']],['team','Team & Verwaltung',['hr','templates','settings','activity','rights']]];
+var NAV_GRP=(()=>{ try{ return JSON.parse(lsGet('sonnenplan-navgrp')||'{}')||{}; }catch(e){ return {}; } })();
+const navTop=v=>{ const n=NAV.find(x=>x[0]===v); return n&&n[3]?n[3]:v; };
+function navGroups(){ const top=NAV.filter(n=>!n[3]&&canSee(n[0])), used=new Set(NAV_GROUPS.flatMap(g=>g[2])), extra=top.filter(n=>!used.has(n[0])).map(n=>n[0]);
+  return NAV_GROUPS.map(([g,l,vs],gi)=>[g,l,(gi===NAV_GROUPS.length-1?[...vs,...extra]:vs).map(v=>top.find(n=>n[0]===v)).filter(Boolean)]).filter(x=>x[2].length); }
+const navGrpOpen=(g,items,cur)=>{ const s=NAV_GRP[g]; return s===true||(s!==false&&items.some(n=>n[0]===navTop(cur))); };
+function navItem([v,l,i],cur,cnt){ const kids=NAV.filter(n=>n[3]===v&&canSee(n[0])), open=kids.length&&(UI.navOpen&&UI.navOpen[v]||cur===v||kids.some(k=>k[0]===cur));
+  return `<div class="nav-row"><button class="nav-btn ${cur===v?'on':''}" data-act="nav" data-v="${v}">${ic(i)}<span>${l}</span>${cnt[v]?`<span class="cnt">${cnt[v]}</span>`:''}</button>${kids.length?`<button class="nav-tg ${open?'open':''}" data-act="navToggle" data-v="${v}" aria-label="${open?'Zuklappen':'Aufklappen'}" aria-expanded="${open?'true':'false'}">▾</button>`:''}</div>`+
+    (open?kids.map(([kv,kl,ki])=>`<button class="nav-btn sub ${cur===kv?'on':''}" data-act="nav" data-v="${kv}">${ic(ki)}<span>${kl}</span>${cnt[kv]?`<span class="cnt">${cnt[kv]}</span>`:''}</button>`).join(''):''); }
+var NAV_CUR='dash';
+function navSide(cur,cnt){ NAV_CUR=cur; return navGroups().map(([g,l,items])=>{ const html=items.map(n=>navItem(n,cur,cnt)).join(''); if(!g) return html;
+  const open=navGrpOpen(g,items,cur), c=items.reduce((a,n)=>a+(+cnt[n[0]]||0),0);
+  return `<div class="nav-grp ${open?'open':''}"><button class="nav-gh" data-act="navGrp" data-g="${g}" aria-expanded="${open?'true':'false'}"><span>${l}</span>${!open&&c?`<span class="cnt">${c}</span>`:''}<span class="nav-gc" aria-hidden="true">▾</span></button>${open?html:''}</div>`; }).join(''); }
+function renderShell(){  const openTodos=arr('tasks').filter(t=>!t.done&&!(t.pool&&!t.who)).length, openOrders=arr('orders').filter(o=>orderState(o).open).length;
   const cnt={projects:activeProjects().length,todos:openTodos,orders:openOrders,chat:chatUnreadAll(),private:Object.values(S.priv||{}).filter(t=>!t.done).length,pool:arr('tasks').filter(t=>t.pool&&!t.done&&!t.who).length};
   const cur = UI.view==='sales'?'vk:'+(UI.vkTab||'rechnung'):UI.view==='fin'?'fi:'+(UI.fiTab||'bank'):UI.view==='stamm'?'st:'+(UI.stTab||'kunden'):UI.view==='project'?'projects':UI.view==='calendar'?'week':UI.view==='files'&&UI.fkind?'f:'+UI.fkind:UI.view==='offers'?'f:angebot':UI.view==='reports'?'f:rapport':UI.view;
   $('#side').innerHTML = `<div class="brand"><div class="wordmark"><span class="y">NUTZ DIE</span> <span class="g">SONNE</span></div><small>Projektsteuerung</small></div>`+
-    NAV.filter(n=>canSee(n[0])).map(([v,l,i,parent])=>{
-      if(parent){ const open=UI.navOpen&&UI.navOpen[parent]||cur===v||cur===parent||(NAV.find(n=>n[0]===cur)||[])[3]===parent; return open?`<button class="nav-btn sub ${cur===v?'on':''}" data-act="nav" data-v="${v}">${ic(i)}<span>${l}</span>${cnt[v]?`<span class="cnt">${cnt[v]}</span>`:''}</button>`:''; }
-      const kids=NAV.filter(n=>n[3]===v&&canSee(n[0])), open=kids.length&&(UI.navOpen&&UI.navOpen[v]||cur===v||kids.some(k=>k[0]===cur));
-      return `<div class="nav-row"><button class="nav-btn ${cur===v?'on':''}" data-act="nav" data-v="${v}">${ic(i)}<span>${l}</span>${cnt[v]?`<span class="cnt">${cnt[v]}</span>`:''}</button>${kids.length?`<button class="nav-tg ${open?'open':''}" data-act="navToggle" data-v="${v}" aria-label="${open?'Zuklappen':'Aufklappen'}" aria-expanded="${open?'true':'false'}">▾</button>`:''}</div>`; }).join('')+
+    navSide(cur,cnt)+
     `<button class="me-btn" data-act="askMe" title="Kürzel ändern">${ME?`<span class="who-chip">${esc(meK())}</span> ${esc(ME.replace(/\s*\([^)]*\)$/,''))}`:'<span class="who-chip open">?</span> Wer bist du?'}</button><button class="me-btn" data-act="sbLogout" title="Abmelden">⎋ Abmelden</button><div class="foot">${MODE==='cloud'?'● Synchronisiert über alle Geräte':MODE==='local'?'○ Lokaler Modus (nur dieses Gerät)':'Verbinde …'}</div>`;
   $('#mtop').innerHTML = (UI.view==='project'?`<button class="icon-btn" data-act="nav" data-v="projects" aria-label="Zurück">${ic('back')}</button>`:'<div class="wordmark"><span class="y">NUTZ DIE</span> <span class="g">SONNE</span></div>')+`<b>${UI.view==='dash'?'':VIEW_T[UI.view]||''}</b><button class="btn sun sm" data-act="newMenu">${ic('plus')}Neu</button>`;
   const tb=[['dash','Übersicht','dash'],['projects','Projekte','proj'],['week','Kalender','cal'],['todos','To-Dos','todo']];
@@ -4161,7 +4187,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&DRAG) endDrag(); }
 function closeMenu(){ const m=$('#menu'); if(m) m.remove(); }
 function showMenu(anchor,items){
   closeMenu(); const r=anchor.getBoundingClientRect(), m=document.createElement('div'); m.className='menu'; m.id='menu';
-  m.innerHTML=items.map(([act,l,i,extra])=>`<button data-act="${act}" ${extra||''}>${ic(i)}${l}</button>`).join('');
+  m.innerHTML=items.map(([act,l,i,extra])=>act==='_h'?`<div class="menu-h">${esc(l)}</div>`:`<button data-act="${act}" ${extra||''}>${ic(i)}${l}</button>`).join('');
   document.body.appendChild(m);
   const w=m.offsetWidth, h=m.offsetHeight;
   let left=Math.min(r.right-w, window.innerWidth-w-12); left=Math.max(12,left);
@@ -4231,7 +4257,7 @@ const A = {
  newMenu:(d,el)=>showMenu(el,[['newProject','Projekt','proj'],['newTask','To-Do','todo'],['newEvent','Termin','cal'],['newOrder','Bestellung','box'],['newOffer','Angebot','offer'],['newReport','Tagesrapport','report']].map(x=>{ if(UI.view==='project'&&x[0]!=='newProject') x[3]=`data-pid="${UI.pid}"`; return x; })),
  // Handy-Menü „Mehr“ = dieselben Rubriken wie die Seitenleiste am Desktop (ohne die 4 Tabs unten)
  moreMenu:(d,el)=>showMenu(el,[['askMe','Ich bin: '+(ME?meK():'?'),'assign'],
-   ...NAV.filter(n=>canSee(n[0])&&!['dash','projects','week'].includes(n[0])).map(([v,l,i,parent])=>['nav',(parent?'– ':'')+l,i,`data-v="${v}"`]),
+   ...navGroups().flatMap(([g,l,items])=>{ const rows=items.flatMap(n=>[n,...NAV.filter(k=>k[3]===n[0]&&canSee(k[0]))]).filter(n=>!['dash','projects','week'].includes(n[0])).map(([v,lb,i,parent])=>['nav',(parent?'– ':'')+lb,i,`data-v="${v}"`]); return rows.length?[...(l?[['_h',l]]:[]),...rows]:[]; }),
    ...(window.SB_LOGOUT?[['sbLogout','Abmelden','lock']]:[])]),
  newProject:()=>projectForm(), editProject:d=>projectForm(S.projects[d.id]),
  openProject:d=>{ if(!d.id) return; if(UI.pid!==d.id&&!d.keep) UI.ptab='status'; go('project',d.id); },
@@ -4336,6 +4362,7 @@ const A = {
  privAdd:()=>{ const t=($('#privT')||{}).value; if(!t||!t.trim()) return toast('Bitte eine Aufgabe eintragen.'); const firm=($('#privF')||{}).value||''; UI.privFirm=firm.trim(); privPut({id:uid(),kind:'todo',title:t.trim(),firm:firm.trim(),due:$('#privD').value||'',done:false,at:new Date().toISOString()}); setTimeout(()=>{ const i=$('#privT'); if(i) i.focus(); },30); },
  privCycle:d=>{ const t=S.priv[d.id]; if(!t) return; const s=t.state||(t.done?'erledigt':'offen'), n={offen:'angefangen',angefangen:'erledigt',erledigt:'offen'}[s]; privPut({...t,state:n,done:n==='erledigt',doneAt:n==='erledigt'?new Date().toISOString():''}); },
  privEdit:d=>{ const t=S.priv[d.id]; if(!t) return; openSheet({title:'Privates To-Do',fields:[{k:'title',label:'Aufgabe',req:1,full:1,type:'textarea'},{k:'firm',label:'Für Firma',list:'firmList'},{k:'due',label:'Fällig am',type:'date'},{k:'prio',label:'Priorität',type:'select',options:[['normal','normal'],['hoch','wichtig']]}],value:t,onSave:v=>{ privPut({...t,...v}); }}); },
+ navGrp:d=>{ const g=d.g, it=(navGroups().find(x=>x[0]===g)||[])[2]||[]; NAV_GRP={...NAV_GRP,[g]:!navGrpOpen(g,it,NAV_CUR)}; lsSet('sonnenplan-navgrp',JSON.stringify(NAV_GRP)); render(); },
  navToggle:d=>{ UI.navOpen={...(UI.navOpen||{}),[d.v]:!(UI.navOpen&&UI.navOpen[d.v])}; render(); },
  privDel:d=>privDel(d.id),
  chatRoom:d=>{ UI.room=d.v; render(); },
