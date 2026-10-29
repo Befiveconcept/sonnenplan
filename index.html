@@ -1468,27 +1468,54 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
   const emit = coll => { (subs[coll]||[]).forEach(cb=>{ try{ cb(snapOf(coll)); }catch(e){ console.error(e); } });
     Object.keys(docSubs).filter(k=>k.startsWith(coll+'/')&&k.split('/').length===coll.split('/').length+1).forEach(k=>{ const id=k.slice(coll.length+1), d=(cache[coll]||new Map()).get(id); docSubs[k].forEach(cb=>cb({exists:!!d,id,data:()=>d})); }); };
   const loaded = {};
+  let lastSync='';                   // neuester updated_at, den dieses Gerät kennt (für das Nachholen)
+  const seen = t => { if(t&&t>lastSync) lastSync=t; };
   async function load(coll){
     if(loaded[coll]) return loaded[coll];
     loaded[coll] = (async()=>{ const m=new Map(); let from=0;
-      for(;;){ const {data,error}=await sb.from('docs').select('id,data').eq('coll',coll).range(from,from+999); if(error) throw error; data.forEach(r=>m.set(r.id,r.data)); if(data.length<1000) break; from+=1000; }
+      for(;;){ const {data,error}=await sb.from('docs').select('id,data,updated_at').eq('coll',coll).range(from,from+999); if(error) throw error; data.forEach(r=>{ m.set(r.id,r.data); seen(r.updated_at); }); if(data.length<1000) break; from+=1000; }
       cache[coll]=m; })();
     return loaded[coll];
   }
-  let channel=null;
-  function live(){ if(channel) return; channel = sb.channel('docs-all').on('postgres_changes',{event:'*',schema:'public',table:'docs'},p=>{
-      const row=p.new&&p.new.coll?p.new:p.old; if(!row||!row.coll||!cache[row.coll]) return;
-      if(p.eventType==='DELETE') cache[row.coll].delete(row.id); else cache[row.coll].set(row.id,p.new.data);
-      emit(row.coll); }).subscribe(); }
+  /* Live-Abgleich, drei Wege – damit Einträge anderer in unter einer Sekunde erscheinen:
+     1) Broadcast: wer speichert, ruft „coll/id geändert“ in den Kanal; alle anderen holen genau diesen Datensatz (schnell, auch bei großen Einträgen)
+     2) Datenbank-Änderungen (postgres_changes) wie bisher – große Datensätze werden dabei nachgeladen statt übernommen
+     3) Nachholen: beim Zurückkehren in den Tab, nach Funkloch/Standby und alle 15 s alles seit dem letzten bekannten Stand */
+  let channel=null, chReady=false, fetchQ={}, fetchT=null;
+  const pend={}; const busyDoc=(coll,id)=>pend[coll+'/'+id]>0; // eigene Speicherung läuft noch → nicht mit älterem Stand überschreiben
+  function queueFetch(coll,id){ if(!cache[coll]) return; (fetchQ[coll]=fetchQ[coll]||new Set()).add(id); clearTimeout(fetchT); fetchT=setTimeout(flushFetch,40); }
+  async function flushFetch(){ const q=fetchQ; fetchQ={};
+    for(const [coll,ids] of Object.entries(q)){ const list=[...ids]; const {data,error}=await sb.from('docs').select('id,data,updated_at').eq('coll',coll).in('id',list); if(error||!cache[coll]) continue;
+      const got=new Set(); (data||[]).forEach(r=>{ got.add(r.id); seen(r.updated_at); if(!busyDoc(coll,r.id)) cache[coll].set(r.id,r.data); }); list.forEach(id=>{ if(!got.has(id)&&!busyDoc(coll,id)) cache[coll].delete(id); }); emit(coll); } }
+  let catching=false;
+  async function catchUp(){ if(catching||!lastSync||!session) return; catching=true;
+    try{ const colls=Object.keys(cache); if(!colls.length) return; const since=new Date(new Date(lastSync).getTime()-3000).toISOString();
+      const {data,error}=await sb.from('docs').select('coll,id,data,updated_at').in('coll',colls).gt('updated_at',since).limit(1000); if(error||!data) return;
+      const touched=new Set(); data.forEach(r=>{ if(!cache[r.coll]) return; const cur=cache[r.coll].get(r.id); seen(r.updated_at); if(busyDoc(r.coll,r.id)) return; if(cur&&JSON.stringify(cur)===JSON.stringify(r.data)) return; cache[r.coll].set(r.id,r.data); touched.add(r.coll); });
+      touched.forEach(emit); }finally{ catching=false; } }
+  function live(){ if(channel) return;
+    channel = sb.channel('docs-all',{config:{broadcast:{self:false,ack:false}}})
+      .on('broadcast',{event:'chg'},m=>{ const p=m&&m.payload; if(!p||!p.coll||!cache[p.coll]) return; if(p.del){ cache[p.coll].delete(p.id); emit(p.coll); } else queueFetch(p.coll,p.id); })
+      .on('postgres_changes',{event:'*',schema:'public',table:'docs'},p=>{
+        const row=p.new&&p.new.coll?p.new:p.old; if(!row||!row.coll||!cache[row.coll]) return;
+        if(p.eventType==='DELETE'){ cache[row.coll].delete(row.id); emit(row.coll); return; }
+        if(!p.new||p.new.data==null||(p.errors&&p.errors.length)) { queueFetch(row.coll,row.id); return; } // zu groß / gekürzt → nachladen
+        seen(p.new.updated_at); if(busyDoc(row.coll,row.id)) return; cache[row.coll].set(row.id,p.new.data); emit(row.coll); })
+      .subscribe(st=>{ const was=chReady; chReady=st==='SUBSCRIBED'; if(chReady&&was===false&&lastSync) catchUp(); // nach Neuverbindung Verpasstes holen
+        if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'||st==='CLOSED'){ setTimeout(()=>{ try{ sb.removeChannel(channel); }catch(e){} channel=null; live(); },2000); } }); }
+  const ping = (coll,id,del) => { if(channel&&chReady) channel.send({type:'broadcast',event:'chg',payload:{coll,id,del:!!del}}).catch(()=>{}); };
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') catchUp(); });
+  window.addEventListener('online',()=>catchUp()); window.addEventListener('focus',()=>catchUp());
+  setInterval(()=>{ if(document.visibilityState==='visible') catchUp(); },15000);
   const splitPath = path => { const s=path.split('/'); return { coll:s.slice(0,-1).join('/'), id:s[s.length-1] }; };
   const stripDel = o => { if(!o||typeof o!=='object'||Array.isArray(o)) return o; const r={}; Object.entries(o).forEach(([k,v])=>{ if(v&&typeof v==='object'&&v.__delete__===true) return; r[k]=stripDel(v); }); return r; };
   const merge = (a,b) => { const r={...(a||{})}; Object.entries(b||{}).forEach(([k,v])=>{ if(v&&typeof v==='object'&&v.__delete__===true) delete r[k]; else if(v&&typeof v==='object'&&!Array.isArray(v)&&r[k]&&typeof r[k]==='object'&&!Array.isArray(r[k])) r[k]=merge(r[k],v); else r[k]=v; }); return r; };
   function docRef(coll,id){ return {
     id,
     async set(body){ const data=stripDel(JSON.parse(JSON.stringify(body))); (cache[coll]=cache[coll]||new Map()).set(id,data); emit(coll);
-      const {error}=await sb.from('docs').upsert({coll,id,data}); if(error) throw Object.assign(new Error(error.message),{code:error.code||'write_failed'}); },
+      const pk=coll+'/'+id; pend[pk]=(pend[pk]||0)+1; let error; try{ ({error}=await sb.from('docs').upsert({coll,id,data})); } finally{ pend[pk]--; } if(error) throw Object.assign(new Error(error.message),{code:error.code||'write_failed'}); ping(coll,id); },
     async update(part){ await load(coll); const cur=(cache[coll]||new Map()).get(id)||{}; return this.set(merge(cur,part)); },
-    async delete(){ if(cache[coll]){ cache[coll].delete(id); emit(coll); } const {error}=await sb.from('docs').delete().eq('coll',coll).eq('id',id); if(error) throw Object.assign(new Error(error.message),{code:error.code||'write_failed'}); },
+    async delete(){ if(cache[coll]){ cache[coll].delete(id); emit(coll); } const {error}=await sb.from('docs').delete().eq('coll',coll).eq('id',id); if(error) throw Object.assign(new Error(error.message),{code:error.code||'write_failed'}); ping(coll,id,true); },
     async get(){ await load(coll); const d=cache[coll].get(id); return {exists:!!d,id,data:()=>d}; },
     onSnapshot(cb,err){ const k=coll+'/'+id; (docSubs[k]=docSubs[k]||[]).push(cb); load(coll).then(()=>{ live(); const d=cache[coll].get(id); cb({exists:!!d,id,data:()=>d}); }).catch(e=>err&&err(Object.assign(e,{code:e.code||'load_failed'}))); return ()=>{ docSubs[k]=docSubs[k].filter(x=>x!==cb); }; }
   }; }
@@ -2105,8 +2132,11 @@ const NAV_GROUPS=[['','',['dash','chat']],['plan','Projekte & Planung',['project
 var NAV_GRP=(()=>{ try{ return JSON.parse(lsGet('sonnenplan-navgrp')||'{}')||{}; }catch(e){ return {}; } })();
 const navTop=v=>{ const n=NAV.find(x=>x[0]===v); return n&&n[3]?n[3]:v; };
 function navGroups(){ const top=NAV.filter(n=>!n[3]&&canSee(n[0])), used=new Set(NAV_GROUPS.flatMap(g=>g[2])), extra=top.filter(n=>!used.has(n[0])).map(n=>n[0]);
-  return NAV_GROUPS.map(([g,l,vs],gi)=>[g,l,(gi===NAV_GROUPS.length-1?[...vs,...extra]:vs).map(v=>top.find(n=>n[0]===v)).filter(Boolean)]).filter(x=>x[2].length); }
-const navGrpOpen=(g,items,cur)=>{ const s=NAV_GRP[g]; return s===true||(s!==false&&items.some(n=>n[0]===navTop(cur))); };
+  return NAV_GROUPS.map(([g,l,vs],gi)=>{ let its=(gi===NAV_GROUPS.length-1?[...vs,...extra]:vs).map(v=>top.find(n=>n[0]===v)).filter(Boolean);
+    // Gruppe mit nur einer Rubrik (z. B. Stammdaten): deren Unterpunkte direkt unter die Überschrift
+    if(g&&its.length===1){ const kids=NAV.filter(n=>n[3]===its[0][0]&&canSee(n[0])); if(kids.length) its=kids.map(([v,lb,i])=>[v,lb,i]); }
+    return [g,l,its]; }).filter(x=>x[2].length); }
+const navGrpOpen=(g,items,cur)=>{ const s=NAV_GRP[g]; return s===true||(s!==false&&items.some(n=>n[0]===navTop(cur)||n[0]===cur)); };
 // Unterpunkte auf-/zuklappen: offen, wenn man drin ist – außer man hat ihn selbst zugeklappt (navOpen[v]===false)
 const navSubOpen=(v,kids,cur)=>{ const s=UI.navOpen&&UI.navOpen[v]; return s===true||(s!==false&&(cur===v||kids.some(k=>k[0]===cur))); };
 // Angeheftete Rubriken (bis zu 3, mit ☀ markiert) – je Person und Gerät
