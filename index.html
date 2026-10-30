@@ -568,6 +568,8 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .sl-form label{display:block;font-size:12.5px;color:var(--muted);margin:10px 0 3px}
 .sl-head{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .sl-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.menu-row{display:flex;align-items:stretch}.menu-row>button:first-child{flex:1;min-width:0}
+.menu .menu-x{flex:none;width:30px;justify-content:center;padding:0;color:var(--muted);font-size:17px;font-weight:700;opacity:.45}.menu .menu-row:hover .menu-x{opacity:1}.menu .menu-x:hover{color:var(--ink);background:var(--sunken)}
 .ev-td{display:grid;grid-template-columns:minmax(120px,170px) minmax(0,1fr) 140px 32px;gap:6px;align-items:center;margin-bottom:6px}
 @media (max-width:700px){ .ev-td{grid-template-columns:1fr 32px} .ev-td .evt-t{grid-column:1/-1} .ev-td .evt-d{grid-column:1/2} }
 .ev-linked{margin-bottom:8px;border:1px solid var(--line);border-radius:10px}
@@ -851,6 +853,8 @@ details.pf:not([open])>summary{border-bottom:0}
 .prio-sel.p-dringend{border-color:var(--bad);background:var(--bad-soft);font-weight:600}.prio-sel.p-hoch{border-color:var(--warn);background:var(--warn-soft)}
 .mt-head{display:grid;gap:8px;font-family:var(--f-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:0 0 4px}
 .mt-p.none{border-color:var(--warn);background:var(--warn-soft)}
+/* Mehrzeilige Felder, die mit dem Text mitwachsen (z. B. Aufgabe in der Meeting-Auswertung) */
+textarea.autogrow{resize:vertical;overflow:hidden;min-height:40px!important;max-height:260px;line-height:1.35;field-sizing:content}textarea.autogrow:focus{overflow:auto}.mt-row{align-items:start}
 .mt-all{display:flex;flex-direction:column;gap:4px;margin:8px 0}
 @media (max-width:640px){ .mt-head{display:none} }
 @media (max-width:640px){ .mt-row{grid-template-columns:22px minmax(0,1fr)} .mt-row>select,.mt-row>input[type=date],.mt-row>input[id^=mt_e]{grid-column:2} }
@@ -1860,7 +1864,8 @@ const MAT_KABEL = ['1,5mm²','2,5mm²','4mm²','6mm²','10mm²','16mm²','5x4mm�
 const MAT_DC = ['PV-Kabel 6mm² rot','PV-Kabel 6mm² schwarz','Erdung 16mm² starr','Erdung 16mm² flexibel','Dachhaken','Schienen Alu 3m','Schienen Alu 6m','Schienenverbinder','Kreuzverbinder','Endklemmen','Mittelklemmen','Stockschrauben'];
 const CREW_ROLES = ['Meister','Vorarbeiter','Facharbeiter','Hilfsarbeiter','Auszubildender'];
 const EV_KINDS = {bau:'Baustelle',kunde:'Kundentermin',evu:'EVU / Zählersetzung',lief:'Lieferung',intern:'Intern'};
-const ORDER_ST = {angefragt:'angefragt',bestellt:'bestellt',bestaetigt:'bestätigt',storniert:'storniert'};
+const ORDER_ST = {entwurf:'Entwurf (noch nicht bestellt)',freigegeben:'freigegeben – noch bestellen',angefragt:'angefragt',bestellt:'bestellt',bestaetigt:'bestätigt',storniert:'storniert'};
+const ordDraft=o=>o.status==='entwurf'||o.status==='freigegeben';
 const OFFER_ST = {entwurf:'Entwurf',versendet:'versendet',nachfassen:'nachfassen',beauftragt:'beauftragt',abgelehnt:'abgelehnt'};
 
 /* ========== Hilfsfunktionen ========== */
@@ -1992,7 +1997,7 @@ function put(coll,obj){
   if(!ME&&MODE==='cloud') askMe();
   const what=describeChange(coll,prev,obj);
   obj.upd=now; obj.updBy=meK(); if(!prev){ obj.at=obj.at||now; obj.by=obj.by||meK(); }
-  if(coll==='orders'&&!prev&&!obj.appr&&!obj.example) obj.appr=ordApprover()?'ok':'offen'; // Bestellfreigabe durch HH / AvE
+  if(coll==='orders'&&!prev&&!obj.appr&&!obj.example) obj.appr=obj.status==='entwurf'&&!ordNoAppr()?'offen':'ok'; // nur Entwuerfe brauchen die Freigabe durch HH / AvE
   if(what) obj.hist=(obj.hist||[]).concat([{at:now,by:meK(),a:what}]).slice(-150);
   S[coll][obj.id]=obj; scheduleRender(); if(coll==='tasks'&&!prev&&!obj.done&&!obj.relOk) relQueue(obj.id); // neues To-Do: gegen bestehende prüfen
   if(MODE!=='cloud'){ saveLocal(); return; }
@@ -2098,7 +2103,10 @@ const kCols=()=>((S.config||{}).kColors||{});
 const inkOn=h=>{ const m=String(h).match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i); if(!m) return ''; const [r,g,b]=m.slice(1).map(x=>parseInt(x,16)); return (r*299+g*587+b*114)/1000>140?'#111':'#fff'; };
 // Alle Kürzel-Chips (überall in der App) in der Farbe einfärben, die sich die Person ausgesucht hat
 let KC_T=0; function kColorPaint(){ KC_T=0; const c=kCols(); if(!Object.keys(c).length) return; document.querySelectorAll('.who-chip:not(.open)').forEach(e=>{ const k=String(e.textContent).trim().split(/\s+/)[0], h=c[k]; if(h){ if(e.style.background!==h){ e.style.background=h; e.style.color=inkOn(h); } } else if(e.style.background){ e.style.background=''; e.style.color=''; } }); }
-new MutationObserver(()=>{ if(!KC_T) KC_T=requestAnimationFrame(kColorPaint); }).observe(document.documentElement,{childList:true,subtree:true});
+const autoGrow=el=>{ el.style.height='0px'; el.style.height=Math.max(40,Math.min(260,el.scrollHeight+2))+'px'; };
+let AG_T=0; const autoGrowAll=()=>{ AG_T=0; document.querySelectorAll('textarea.autogrow').forEach(el=>{ if(!el.dataset.ag){ el.dataset.ag=1; autoGrow(el); } }); };
+document.addEventListener('input',e=>{ if(e.target.classList&&e.target.classList.contains('autogrow')) autoGrow(e.target); });
+new MutationObserver(()=>{ if(!KC_T) KC_T=requestAnimationFrame(kColorPaint); if(!AG_T) AG_T=requestAnimationFrame(autoGrowAll); }).observe(document.documentElement,{childList:true,subtree:true});
 function meProfile(){ if(!ME){ askMe(true); return; } const k=meK(), cur=kCols()[k]||'';
   openSheet({title:'Mein Profil',html:`<div class="fld full"><div class="me-prof"><span class="who-chip me-big" id="me_prev" style="${cur?`background:${cur};color:${inkOn(cur)}`:''}">${esc(k)}</span><div><b>${esc(ME.replace(/\s*\([^)]*\)$/,''))}</b>${USER_EMAIL?`<div class="small muted">${esc(USER_EMAIL)}</div>`:''}</div></div>
     <label>Farbe für mein Kürzel <span class="small muted">(sehen alle im Team)</span></label><div class="me-cols">${K_COLS.map(h=>`<button type="button" class="me-col ${h===cur?'on':''}" style="background:${h}" data-act="meCol" data-v="${h}" aria-label="Farbe ${h}"></button>`).join('')}<input type="color" id="me_colc" value="${cur||'#F4DB02'}" title="Eigene Farbe" aria-label="Eigene Farbe"><button type="button" class="lnk" data-act="meCol" data-v="">Standard</button></div>
@@ -2156,6 +2164,7 @@ const isIntern=p=>!!p&&(p.id===INTERN||p.internal);
 function ensureIntern(){ if(MODE!=='cloud'||!mayWrite('projects')||S.projects[INTERN]) return; put('projects',{id:INTERN,name:'Haus intern',internal:true,cat:'laufend',status:'aktiv',type:'sonst',flow:'service',scope:'Allgemeines Projekt für alles ohne Kundenbezug: Lager, Büro, Werkstatt, Fahrzeuge, Material fürs Haus, interne Korrespondenz.'}); }
 function orderState(o){
   if(o.status==='storniert'||o.appr==='storno') return {k:'storniert',cls:'',open:false};
+  if(ordDraft(o)) return o.appr==='offen'?{k:'Entwurf · wartet auf Freigabe',cls:'warn',open:false,draft:1,appr:1}:o.status==='freigegeben'?{k:'freigegeben – bitte bestellen',cls:'pri',open:false,draft:1}:{k:'Entwurf',cls:'',open:false,draft:1};
   if(o.appr==='offen') return {k:'wartet auf Freigabe',cls:'warn',open:true,appr:1};
   const items=(o.items||[]).filter(i=>!i.extra); const tot=items.reduce((a,i)=>a+(+i.qty||0),0), rec=items.reduce((a,i)=>a+Math.min(+i.recv||0,+i.qty||0),0);
   if(items.length && rec>=tot && tot>0) return {k:'geliefert',cls:'ok',open:false};
@@ -3026,10 +3035,10 @@ function ordersTable(os){
   if(!os.length) return '<div class="empty">Keine Bestellungen.</div>';
   os=os.slice().sort((a,b)=>(orderState(b).open-orderState(a).open)||(a.delivery||'9').localeCompare(b.delivery||'9'));
   return `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Lieferant</th><th>Projekt</th><th>Positionen</th><th>Liefertermin</th><th>Status</th><th></th></tr></thead><tbody>${os.map(o=>{ const st=orderState(o);
-    return `<tr class="clickable" data-act="editOrder" data-id="${o.id}"><td><b>${esc(o.supplier)}</b><div class="small muted">${esc([o.no,o.buyer?'über '+o.buyer:'',o.orderedBy?'von '+shortWho(o.orderedBy):''].filter(Boolean).join(' · '))}</div></td><td>${esc(projName(o.pid))}</td><td class="small">${(o.items||[]).slice(0,4).map(i=>`<div class="pos">${itemChip(i)} ${nf(i.qty)} ${esc(i.unit||'')} ${esc(i.art)}</div>`).join('')}${(o.items||[]).length>4?`<span class="muted">+${o.items.length-4} weitere</span>`:''}${(o.docs||[]).length?`<div class="muted" style="margin-top:3px">${o.docs.length} Beleg${o.docs.length>1?'e':''}</div>`:''}</td><td class="${st.late?'overdue':''}" style="white-space:nowrap">${fmtD(o.delivery)||'–'}${o.delivery&&st.open?`<div class="small muted">${relDay(o.delivery)}</div>`:''}</td><td><span class="pill ${st.cls}">${st.late&&st.cls===''?'überfällig':st.k}</span></td><td class="r">${o.appr==='offen'&&ordApprover()?`<button class="btn sun sm" data-act="ordApprove" data-id="${o.id}">✓ Freigeben</button><button class="btn ghost sm" data-act="ordStorno" data-id="${o.id}">Stornieren</button>`:''}${st.open&&o.appr!=='offen'?`<button class="btn sm" data-act="receive" data-id="${o.id}">${ic('truck')}Annahme</button>`:''}${unrouted(o).length?`<button class="btn sun sm" data-act="routeOrder" data-id="${o.id}" title="Angenommene Ware ins Lager oder auf die Kommissionierliste">${ic('stock')}Verteilen</button>`:''}</td></tr>`; }).join('')}</tbody></table></div>`;
+    return `<tr class="clickable" data-act="editOrder" data-id="${o.id}"><td><b>${esc(o.supplier)}</b><div class="small muted">${esc([o.no,o.buyer?'über '+o.buyer:'',o.orderedBy?'von '+shortWho(o.orderedBy):''].filter(Boolean).join(' · '))}</div></td><td>${esc(projName(o.pid))}</td><td class="small">${(o.items||[]).slice(0,4).map(i=>`<div class="pos">${itemChip(i)} ${nf(i.qty)} ${esc(i.unit||'')} ${esc(i.art)}</div>`).join('')}${(o.items||[]).length>4?`<span class="muted">+${o.items.length-4} weitere</span>`:''}${(o.docs||[]).length?`<div class="muted" style="margin-top:3px">${o.docs.length} Beleg${o.docs.length>1?'e':''}</div>`:''}</td><td class="${st.late?'overdue':''}" style="white-space:nowrap">${fmtD(o.delivery)||'–'}${o.delivery&&st.open?`<div class="small muted">${relDay(o.delivery)}</div>`:''}</td><td><span class="pill ${st.cls}">${st.late&&st.cls===''?'überfällig':st.k}</span></td><td class="r">${st.draft&&o.appr!=='offen'&&mayWrite('orders')?`<button class="btn sun sm" data-act="ordPlaced" data-id="${o.id}" title="Beim Lieferanten bestellt - zu den bestellten Bestellungen verschieben">✓ Jetzt bestellt</button>`:''}${o.appr==='offen'&&ordApprover()?`<button class="btn sun sm" data-act="ordApprove" data-id="${o.id}">✓ Freigeben</button><button class="btn ghost sm" data-act="ordStorno" data-id="${o.id}">Stornieren</button>`:''}${st.open&&o.appr!=='offen'?`<button class="btn sm" data-act="receive" data-id="${o.id}">${ic('truck')}Annahme</button>`:''}${unrouted(o).length?`<button class="btn sun sm" data-act="routeOrder" data-id="${o.id}" title="Angenommene Ware ins Lager oder auf die Kommissionierliste">${ic('stock')}Verteilen</button>`:''}</td></tr>`; }).join('')}</tbody></table></div>`;
 }
 function vOrders(){
-  const f=UI.orderFilter; let os=arr('orders');
+  const f=UI.orderFilter, drafts=arr('orders').filter(o=>ordDraft(o)&&o.appr!=='storno').sort((a,b)=>(a.appr==='offen'?0:1)-(b.appr==='offen'?0:1)||String(b.at||'').localeCompare(String(a.at||''))); let os=arr('orders').filter(o=>!ordDraft(o));
   // „Offen“ zeigt auch Gelieferte, deren Ware noch nicht ins Lager / auf die Baustelle verteilt ist
   if(f==='offen') os=os.filter(o=>orderState(o).open||unrouted(o).length); else if(f==='geliefert') os=os.filter(o=>!orderState(o).open);
   // Filter „Bestellt über“ (bestellende Firma)
@@ -3040,13 +3049,16 @@ function vOrders(){
   ordApprBanner()+dropZoneHtml('')+(dueDeliveries().length?`<div class="banner row"><span>${ic('truck','style="width:18px;height:18px;vertical-align:-3px"')} ${dueDeliveries().length} Lieferung${dueDeliveries().length>1?'en sind':' ist'} fällig und noch nicht gebucht.</span><span class="spacer"></span><button class="btn sun sm" data-act="checkDlv">Jetzt prüfen</button></div>`:'')+
   `<div class="chips">${[['offen','Offen'],['geliefert','Geliefert'],['alle','Alle']].map(([k,l])=>`<button class="chip ${f===k?'on':''}" data-act="orderFilter" data-v="${k}">${l}</button>`).join('')}</div>
   ${buyers.length?`<div class="chips"><span class="small muted" style="align-self:center">Bestellt über:</span>${[['','Alle'],...buyers.map(b=>[bk(b),b]),['__none','ohne Angabe']].map(([k,l])=>`<button class="chip ${fb===k?'on':''}" data-act="orderBuyer" data-v="${esc(k)}">${esc(l)}</button>`).join('')}</div>`:''}
-  <div class="card">${ordersTable(os)}</div>
+  ${drafts.length?`<div class="card ord-drafts"><div class="card-h"><h3>📝 Entwürfe – noch nicht bestellt <span class="cnt-b">${drafts.length}</span></h3><span class="small muted">Bestellanfragen: erst nach Freigabe beim Lieferanten bestellen, dann auf ✓ Jetzt bestellt klicken</span></div>${ordersTable(drafts)}</div>`:''}
+  <div class="card"><div class="card-h"><h3>Bestellt</h3><span class="small muted">bereits beim Lieferanten aufgegeben</span></div>${ordersTable(os)}</div>
   <div class="card"><div class="card-h"><h3>Letzte Warenannahmen</h3></div><div class="list">${recent.map(r=>`<div class="li clickable" data-act="editOrder" data-id="${r.o.id}"><span class="pill ${r.dmg?'bad':'ok'}">${r.dmg?'Schaden':'ok'}</span><div class="body"><div class="tt">${esc(r.o.supplier)} · ${esc(projName(r.o.pid))}</div><div class="mt"><span>${fmtD(r.date)}</span>${r.by?`<span>angenommen von ${esc(r.by)}</span>`:''}${r.ls?`<span>LS ${esc(r.ls)}</span>`:''}${r.note?`<span>${esc(r.note)}</span>`:''}${(r.lines||[]).filter(l=>l.st!=='da').length?`<span class="overdue">fehlt: ${esc(r.lines.filter(l=>l.st!=='da').map(l=>l.art).join(', '))}</span>`:''}</div></div></div>`).join('')||'<div class="empty">Noch keine Warenannahme erfasst.</div>'}</div></div>`;
 }
 
 /* ========== Bestellfreigabe: HH und AvE genehmigen, ändern, stornieren oder fassen mehrere beim selben Lieferanten zusammen ========== */
 const ORD_APPROVERS=['hh','ave'];
 const ordApprover=()=>!!ME&&ORD_APPROVERS.includes(String(meK()).toLowerCase());
+const ORD_NOAPPR=['hh','ave','ep']; // deren Entwuerfe brauchen keine Freigabe
+const ordNoAppr=()=>!!ME&&ORD_NOAPPR.includes(String(meK()).toLowerCase());
 const ordPending=()=>arr('orders').filter(o=>o.appr==='offen');
 const ordSupKey=o=>stNorm(o.supplier)||'?';
 function ordApprBanner(){ const P=ordPending(); if(!P.length) return '';
@@ -3060,13 +3072,13 @@ function ordApprSheet(){ const P=ordPending(); if(!P.length){ toast('Keine Beste
       <div class="row" style="gap:6px;margin-top:6px"><button type="button" class="btn sun sm" data-act="ordApprove" data-id="${o.id}">✓ Freigeben</button><button type="button" class="btn sm" data-act="ordEdit" data-id="${o.id}">Ändern</button><button type="button" class="btn ghost sm" data-act="ordStorno" data-id="${o.id}">Stornieren</button></div></div>`;
   openSheet({title:'Bestellungen zur Freigabe',wide:1,html:`<div class="fld full">${groups.map(g=>`<section class="ord-grp"><div class="ord-grp-h"><h3>${esc(g[0].supplier||'Lieferant fehlt')}</h3><span class="cnt-b">${g.length}</span>${g.length>1?`<button type="button" class="btn sun sm" data-act="ordMerge" data-ids="${g.map(o=>o.id).join(',')}">⇢ ${g.length} zu einer Bestellung zusammenfassen</button>`:''}</div>${g.map(card).join('')}</section>`).join('')}
     <div class="row" style="margin-top:10px"><button type="button" class="btn ghost sm" data-act="ordApproveAll">Alle ${P.length} freigeben</button>${'Notification' in window&&Notification.permission==='default'?'<button type="button" class="btn ghost sm" data-act="ordNotifyOn">🔔 Browser-Benachrichtigung einschalten</button>':''}</div></div>`,saveLabel:'Schließen',onSave:()=>{}}); }
-function ordSetAppr(id,appr,extra){ const o=clone(S.orders[id]); if(!o) return; o.appr=appr; o.apprBy=meK(); o.apprAt=new Date().toISOString(); Object.assign(o,extra||{}); put('orders',o); }
+function ordSetAppr(id,appr,extra){ const o=clone(S.orders[id]); if(!o) return; o.appr=appr; if(appr==='ok'&&o.status==='entwurf') o.status='freigegeben'; o.apprBy=meK(); o.apprAt=new Date().toISOString(); Object.assign(o,extra||{}); put('orders',o); }
 function ordRefresh(){ if(SHEET&&SHEET.title==='Bestellungen zur Freigabe'){ closeSheet(); if(ordPending().length) ordApprSheet(); } }
 // Mehrere offene Bestellungen beim selben Lieferanten → eine; Projekt je Position vermerkt, wenn verschieden
 function ordMerge(ids){ const os=ids.map(id=>S.orders[id]).filter(Boolean); if(os.length<2) return; const base=clone(os[0]), multi=new Set(os.map(o=>o.pid)).size>1;
   base.items=os.flatMap(o=>(o.items||[]).map(i=>({...i,art:multi&&o.pid&&!String(i.art).includes('['+projName(o.pid)+']')?i.art+' ['+projName(o.pid)+']':i.art})));
   base.notes=[...new Set(os.map(o=>o.notes).filter(Boolean))].join('\n'); base.mergedFrom=os.slice(1).map(o=>o.id); base.delivery=os.map(o=>o.delivery).filter(Boolean).sort()[0]||base.delivery;
-  base.docs=os.flatMap(o=>o.docs||[]); base.appr='ok'; base.apprBy=meK(); base.apprAt=new Date().toISOString();
+  base.docs=os.flatMap(o=>o.docs||[]); base.appr='ok'; if(base.status==='entwurf') base.status='freigegeben'; base.apprBy=meK(); base.apprAt=new Date().toISOString();
   if(multi) base.pids=[...new Set(os.map(o=>o.pid).filter(Boolean))];
   put('orders',base); os.slice(1).forEach(o=>del('orders',o.id)); toast(os.length+' Bestellungen bei „'+(base.supplier||'')+'“ zusammengefasst und freigegeben.'); ordRefresh(); }
 // Browser-Benachrichtigung (wenn erlaubt), z. B. wenn die App im Hintergrund offen ist
@@ -3079,6 +3091,7 @@ queueMicrotask(()=>Object.assign(A,{ /* A wird weiter unten angelegt */
    openSheet({title:'Bestellung stornieren',value:{why:''},fields:[{k:'info',label:'Bestellung',type:'html',html:`<b>${esc(o.supplier||'')}</b> · ${esc(projName(o.pid)||'')} · ${(o.items||[]).length} Pos.`},{k:'why',label:'Grund (sieht der Besteller)',type:'textarea'}],saveLabel:'Stornieren',
      onSave:v=>{ ordSetAppr(o.id,'storno',{status:'storniert',stornoWhy:String(v.why||'').trim()}); toast('Bestellung storniert.'); if(back&&ordPending().length) setTimeout(ordApprSheet,80); }}); },
  ordEdit:d=>{ closeSheet(); setTimeout(()=>A.editOrder({id:d.id}),50); },
+ ordPlaced:d=>{ const o=clone(S.orders[d.id]); if(!o) return; if(o.appr==='offen') return toast('Der Entwurf ist noch nicht freigegeben.'); o.status='bestellt'; o.ordered=TODAY(); o.placedBy=meK(); put('orders',o); toast('Als bestellt markiert - Liefertermin nicht vergessen.'); },
  ordMerge:d=>{ if(!ordApprover()) return; const ids=String(d.ids).split(','); confirmSheet(ids.length+' Bestellungen beim selben Lieferanten zu einer zusammenfassen und freigeben?',()=>ordMerge(ids)); },
  ordNotifyOn:()=>{ try{ Notification.requestPermission().then(p=>toast(p==='granted'?'Benachrichtigungen sind an.':'Benachrichtigungen wurden nicht erlaubt.')); }catch(e){} },
 }));
@@ -3395,10 +3408,12 @@ function docsHtml(o){
 }
 function orderForm(o,pre,forceNew){
   const isNew=forceNew!=null?forceNew:!o; o=o?clone(o):{id:uid(),status:'bestellt',ordered:TODAY(),items:[],receipts:[],docs:[],...(pre||{})};
+  if(isNew&&!o.otype) o.otype=o.status==='entwurf'||!ordNoAppr()?'entwurf':'bestellt';
   if(!o.orderedBy&&isNew&&ME) o.orderedBy=ME;
   CUR_ORDER=o; CUR_ORDER_NEW=isNew;
   openSheet({title:isNew?'Neue Bestellung':'Bestellung bearbeiten',wide:1,value:o,fields:[
-    ...(o.appr==='offen'||o.appr==='storno'?[{k:'apprx',label:'Freigabe',type:'html',html:o.appr==='storno'?`<div class="banner">Storniert von ${esc(o.apprBy||'')}${o.stornoWhy?': '+esc(o.stornoWhy):''}</div>`:`<div class="banner">Wartet auf Freigabe durch HH / AvE.</div>`}]:isNew&&!ordApprover()?[{k:'apprx',label:'Freigabe',type:'html',html:'<div class="small muted">Nach dem Speichern bekommen HH und AvE die Bestellung zur Freigabe.</div>'}]:[]),
+    ...(o.appr==='offen'||o.appr==='storno'?[{k:'apprx',label:'Freigabe',type:'html',html:o.appr==='storno'?`<div class="banner">Storniert von ${esc(o.apprBy||'')}${o.stornoWhy?': '+esc(o.stornoWhy):''}</div>`:`<div class="banner">Wartet auf Freigabe durch HH / AvE.</div>`}]:[]),
+    ...(isNew?[{k:'otype',label:'Art der Bestellung',type:'select',req:1,options:[['entwurf','Entwurf – noch nicht bestellt'+(ordNoAppr()?'':' (geht an HH / AvE zur Freigabe)')],['bestellt','Bereits beim Lieferanten bestellt']]}]:[]),
     {k:'mailin',label:'E-Mail- oder Bestelltext einfügen',type:'html',html:`<div class="mail-in"><textarea id="mailPaste" rows="3" placeholder="Mail in Outlook öffnen → Strg+A → Strg+C → hier klicken → Strg+V. Die Positionen werden sofort ausgelesen."></textarea><button type="button" class="btn sun sm" data-act="mailPasteGo">Positionen auslesen</button></div>`},
     {k:'docs',label:'Rechnungen & Belege',type:'html',html:docsHtml(o)},
     {k:'supplier',label:'Lieferant',req:1,list:'supplierList'},{k:'buyer',label:'Bestellt über (Firma)',list:'buyerList',ph:'z. B. Flexvolt GmbH & Co. KG'},{k:'orderedBy',label:'Bestellt von (Mitarbeiter)',type:'select',req:1,options:[['','– bitte wählen –'],...[...new Set([...staff().map(s=>s.name),...(o.orderedBy?[o.orderedBy]:[])])].map(n=>[n,n])]},{k:'no',label:'Bestell- / AB-Nummer'},{k:'pid',label:'Projekt (laufend)',type:'select',req:1,options:[['','– bitte wählen –'],[INTERN,'Haus intern (Lager / Büro)'],...arr('projects').filter(p=>catOf(p)==='laufend'||p.id===o.pid).sort((a,b)=>a.name.localeCompare(b.name)).map(p=>[p.id,p.name+(catOf(p)==='laufend'?'':' ('+CATS[catOf(p)]+')')])]},
@@ -3406,7 +3421,7 @@ function orderForm(o,pre,forceNew){
     {k:'address',label:'Lieferadresse',full:1,ph:'Baustelle oder Lager'},
     {k:'items',label:'Positionen',type:'lines',cols:ORDER_COLS},{k:'notes',label:'Notiz',type:'textarea'}],
     extraBtn:isNew?'':`${o.appr==='offen'&&ordApprover()?`<button type="button" class="btn sun" data-act="ordApprove" data-id="${o.id}">✓ Freigeben</button><button type="button" class="btn ghost" data-act="ordStorno" data-id="${o.id}">Stornieren</button>`:''}${unrouted(o).length?`<button type="button" class="btn sun" data-act="routeOrder" data-id="${o.id}">${ic('stock')}Ins Lager / Baustelle</button>`:''}<button type="button" class="btn" data-act="receive" data-id="${o.id}">${ic('truck')}Warenannahme</button>`,
-    onSave:v=>{ delete v.apprx; const old=o.items||[]; Object.assign(o,v); o.items=o.items.map((it,i)=>{ const same=old[i]&&old[i].art===it.art; return {...it,recv:same?old[i].recv||0:0,routed:same?old[i].routed||0:0,dmg:same?!!old[i].dmg:false,miss:same?!!old[i].miss:false,price:it.price===''||it.price==null?null:+it.price}; }); put('orders',o); CUR_ORDER=null; toast('Bestellung gespeichert.'); },
+    onSave:v=>{ delete v.apprx; if(isNew){ if(v.otype==='entwurf') v.status='entwurf'; else if(ordDraft(v)) v.status='bestellt'; delete o.otype; } delete v.otype; const old=o.items||[]; Object.assign(o,v); o.items=o.items.map((it,i)=>{ const same=old[i]&&old[i].art===it.art; return {...it,recv:same?old[i].recv||0:0,routed:same?old[i].routed||0:0,dmg:same?!!old[i].dmg:false,miss:same?!!old[i].miss:false,price:it.price===''||it.price==null?null:+it.price}; }); put('orders',o); CUR_ORDER=null; toast('Bestellung gespeichert.'); },
     onDelete:isNew?null:()=>{ del('orders',o.id); closeSheet(); }});
 }
 const itemOpen = it=>!it.extra && (+it.recv||0) < (+it.qty||0);
@@ -4358,8 +4373,8 @@ async function mappeBuild(o){ busy(1,'mappe'); toast('Kundenmappe wird erstellt 
   catch(e){ toast('Mappe konnte nicht erstellt werden: '+(e.message||e)); }
   finally{ busy(-1,'mappe'); } }
 // Bilder, die pdf-lib nicht direkt kann (webp, gif, heic …) → JPG über ein Canvas
-async function mappeToJpg(blob){ const url=URL.createObjectURL(blob); try{ const img=await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>rej(new Error('Bildformat nicht lesbar')); i.src=url; });
-    const s=Math.min(1,2400/Math.max(img.naturalWidth,img.naturalHeight)), c=document.createElement('canvas'); c.width=Math.round(img.naturalWidth*s); c.height=Math.round(img.naturalHeight*s); const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage(img,0,0,c.width,c.height);
+async function mappeToJpg(blob,max=2400){ const url=URL.createObjectURL(blob); try{ const img=await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>rej(new Error('Bildformat nicht lesbar')); i.src=url; });
+    const s=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)), c=document.createElement('canvas'); c.width=Math.round(img.naturalWidth*s); c.height=Math.round(img.naturalHeight*s); const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage(img,0,0,c.width,c.height);
     const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.88)); return new Uint8Array(await b.arrayBuffer()); } finally{ URL.revokeObjectURL(url); } }
 queueMicrotask(()=>{ Object.assign(A,{ /* A wird weiter unten angelegt */
   fileDl:d=>fileDl(d.id),
@@ -4588,9 +4603,15 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&DRAG) endDrag(); }
 
 /* ========== Menüs & Toast ========== */
 function closeMenu(){ const m=$('#menu'); if(m) m.remove(); }
+// Neu-Menue: ausgeblendete Eintraege je Person (Schluessel = Aktion + Art, ohne Projekt)
+var NEW_ANCHOR=null, NEW_SHOWHID=false;
+const newKey=r=>r[0]+'|'+String(r[3]||'').replace(/data-pid="[^"]*"/,'').trim();
+const NEW_HID_KEY=()=>'sonnenplan-newhide-'+(ME?meK():'');
+const newHidden=()=>{ try{ return JSON.parse(lsGet(NEW_HID_KEY())||'[]')||[]; }catch(e){ return []; } };
+const newHiddenSet=a=>{ try{ localStorage.setItem(NEW_HID_KEY(),JSON.stringify([...new Set(a)])); }catch(e){} };
 function showMenu(anchor,items){
   closeMenu(); const r=anchor.getBoundingClientRect(), m=document.createElement('div'); m.className='menu'; m.id='menu';
-  m.innerHTML=items.map(([act,l,i,extra])=>act==='_h'?`<div class="menu-h">${esc(l)}</div>`:`<button data-act="${act}" ${extra||''}>${ic(i)}${l}</button>`).join('');
+  m.innerHTML=items.map(([act,l,i,extra,mode,key])=>act==='_h'?`<div class="menu-h">${esc(l)}</div>`:mode?`<div class="menu-row"><button data-act="${act}" ${extra||''}>${ic(i)}${l}</button><button class="menu-x" data-act="${mode==='hide'?'newHide':'newUnhide'}" data-key="${esc(key)}" title="${mode==='hide'?'Ausblenden':'Wieder einblenden'}" aria-label="${mode==='hide'?'Ausblenden':'Einblenden'}: ${esc(l)}">${mode==='hide'?'−':'+'}</button></div>`:`<button data-act="${act}" ${extra||''}>${ic(i)}${l}</button>`).join('');
   document.body.appendChild(m);
   const w=m.offsetWidth, h=m.offsetHeight;
   let left=Math.min(r.right-w, window.innerWidth-w-12); left=Math.max(12,left);
@@ -4658,14 +4679,22 @@ const A = {
    onSave:v=>{ const items=((S.config||{}).checkItems||[]).concat([{id:'ci_'+uid(),t:v.t,ph:v.ph,r:v.r}]); saveTpl({checkItems:items}); checkSet(items[items.length-1].id,true); }}),
  openPick:d=>{ UI.stockTab='listen'; go('stock'); },
  // „+ Neu“: alles, was man schnell anlegen kann – gruppiert; im Projekt wird das Projekt gleich vorbelegt
- newMenu:(d,el)=>{ const pid=UI.view==='project'?UI.pid:'', P=pid?`data-pid="${pid}"`:'', sec=(l,rows)=>{ rows=rows.filter(Boolean); return rows.length?[['_h',l],...rows]:[]; };
-   showMenu(el,[
+ // Jeder kann einzelne Einträge mit „−“ ausblenden (je Person/Gerät); ganz unten „Ausgeblendet“ zum Wiedereinblenden
+ newMenu:(d,el)=>{ if(el&&el.dataset.act==='newMenu') NEW_ANCHOR=el; el=NEW_ANCHOR||el; const pid=UI.view==='project'?UI.pid:'', P=pid?`data-pid="${pid}"`:'', hid=newHidden(), sec=(l,rows)=>{ rows=rows.filter(Boolean); rows.forEach(r=>allRows.push(r)); rows=rows.filter(r=>!hid.includes(newKey(r))).map(r=>[r[0],r[1],r[2],r[3]||'','hide',newKey(r)]); return rows.length?[['_h',l],...rows]:[]; };
+   const allRows=[];
+   const items=[
      ...sec('Projekt & Aufgaben',[['newNote','Notiz schreiben','report',P],['newTask','To-Do','todo',P],['newEvent','Termin','cal',P],['newPlan','Einsatz (Wochenplanung)','truck'],['meetNew','Meeting','assign'],['newProject','Projekt','proj']]),
      ...sec('Material',[mayWrite('orders')&&['newOrder','Bestellung','box',P],['newReport','Tagesrapport','report',P],mayWrite('stock')&&['stockNew','Lagerartikel','box']]),
      ...sec('Verkauf',canSee('sales')?[['saleNew','Angebot','offer','data-type="angebot"'],['saleNew','Rechnung','offer','data-type="rechnung"'],['saleNew','Auftragsbestätigung','offer','data-type="auftrag"'],['saleNew','Lieferschein','offer','data-type="lieferschein"']]:[]),
      ...sec('Finanzen',finOk()?[['finNew','Ausgabe / Eingangsrechnung','report','data-kind="ausgabe"'],['finNew','Einnahme','report','data-kind="einnahme"']]:[]),
      ...sec('Stammdaten',canSee('stamm')?[['stEdit','Kunde','assign','data-k="kunden"'],['stEdit','Lieferant','truck','data-k="lieferanten"'],['stEdit','Artikel','box','data-k="artikel"']]:[]),
-     ...sec('Ich',[['hrAbsNew','Urlaub beantragen','cal','data-type="urlaub"'],['hrAbsNew','Krankmeldung','cal','data-type="krank"']])]); },
+     ...sec('Ich',[['hrAbsNew','Urlaub beantragen','cal','data-type="urlaub"'],['hrAbsNew','Krankmeldung','cal','data-type="krank"']])];
+   const hidRows=allRows.filter(r=>hid.includes(newKey(r)));
+   if(hidRows.length) items.push(...(NEW_SHOWHID?[['_h','Ausgeblendet'],...hidRows.map(r=>[r[0],r[1],r[2],r[3]||'','unhide',newKey(r)]),['newHidTg','Ausgeblendete zuklappen','more']]:[['newHidTg','Ausgeblendet ('+hidRows.length+')','more']]));
+   showMenu(el,items); },
+ newHide:d=>{ newHiddenSet([...newHidden(),d.key]); A.newMenu({}); },
+ newUnhide:d=>{ newHiddenSet(newHidden().filter(k=>k!==d.key)); A.newMenu({}); },
+ newHidTg:()=>{ NEW_SHOWHID=!NEW_SHOWHID; A.newMenu({}); },
  // Notiz ins Projekt-Tagebuch (heutige Tagesnotiz), auch ohne vorher ins Projekt zu gehen
  newNote:d=>openSheet({title:'Notiz schreiben',value:{pid:d.pid||'',t:''},fields:[{k:'pid',label:'Projekt',type:'select',options:[['','– Projekt wählen –'],...projOpts().filter(o=>o[0])],req:1},{k:'t',label:'Notiz',type:'textarea',req:1,ph:'Was ist passiert / was wurde besprochen?'}],
    onSave:v=>{ if(!v.pid||!String(v.t||'').trim()){ toast('Bitte Projekt und Text angeben.'); return false; } saveNote(v.pid,'notes',String(v.t).trim()); }}),
@@ -5133,10 +5162,10 @@ function gsearchHtml(q){
 // Startseite: EIN Feld für alles – tippen = sofort suchen, Enter/Sprechen = Claude fragen („Zeig mir das neueste Update zum Energiepark“),
 // Dateien, Mails und Text reinziehen = wie bisher erkennen und zuordnen
 function gsearchBox(){
-  return `<section class="gs-wrap ask-box smart-drop" aria-label="Suchen, fragen oder Dateien ablegen"><div class="gs-in">${ic('search')}<input id="gSearch" type="search" autocomplete="off" enterkeyhint="go" placeholder="${SAMPLE?'Suchen oder fragen – z. B. „Zeig mir das neueste Update zum Energiepark“':'Alles durchsuchen: Projekte, Notizen, To-Dos, Bestellungen, Dateien, Lager …'}" value="${esc(UI.gq||'')}" aria-label="Suchen oder fragen">${SRec?`<button type="button" class="gs-mic" data-act="gsVoice" title="Sprechen: suchen oder fragen" aria-label="Sprechen">🎙</button>`:''}${SAMPLE&&CAN_SPEAK?`<button type="button" class="gs-spk ${ASK_SPEAK?'on':''}" data-act="askSpkTog" title="${ASK_SPEAK?'Antworten werden vorgelesen – ausschalten':'Antworten laut vorlesen lassen'}" aria-label="Antworten vorlesen" aria-pressed="${ASK_SPEAK}">${ASK_SPEAK?'🔊':'🔈'}</button>`:''}<button type="button" class="btn sun sm ask-go" data-act="askGo">Los</button><kbd>Strg K</kbd></div>
+  return `<section class="gs-wrap ask-box smart-drop" aria-label="Suchen, fragen oder Dateien ablegen"><div class="gs-in">${ic('search')}<input id="gSearch" type="search" autocomplete="off" enterkeyhint="go" placeholder="${SAMPLE?'Suchen oder fragen – z. B. „Zeig mir das neueste Update zum Energiepark“':'Alles durchsuchen: Projekte, Notizen, To-Dos, Bestellungen, Dateien, Lager …'}" value="${esc(UI.gq||'')}" aria-label="Suchen oder fragen">${SRec?`<button type="button" class="gs-mic" data-act="gsVoice" title="Sprechen: suchen oder fragen" aria-label="Sprechen">🎙</button>`:''}<button type="button" class="gs-mic gs-cam" data-act="gsCam" title="Foto aufnehmen - z. B. Lieferschein, Rechnung, Notiz. Die App erkennt, was es ist." aria-label="Kamera">📷</button>${SAMPLE&&CAN_SPEAK?`<button type="button" class="gs-spk ${ASK_SPEAK?'on':''}" data-act="askSpkTog" title="${ASK_SPEAK?'Antworten werden vorgelesen – ausschalten':'Antworten laut vorlesen lassen'}" aria-label="Antworten vorlesen" aria-pressed="${ASK_SPEAK}">${ASK_SPEAK?'🔊':'🔈'}</button>`:''}<button type="button" class="btn sun sm ask-go" data-act="askGo">Los</button></div>
     <div class="ask-sub"><span>✨ Dateien, E-Mails (.msg/.eml), PDFs, Fotos oder Text hier reinziehen – die App erkennt, was es ist.</span><button type="button" class="lnk" data-act="smartPick">Datei wählen</button><button type="button" class="lnk" data-act="smartText">Text einfügen</button></div>
     <div id="askOut" class="ask-ans" role="status"></div>
-    <div id="gResults" class="gs-res" role="region" aria-live="polite">${gsearchHtml(UI.gq)}</div></section><input type="file" id="smartIn" multiple hidden>`;
+    <div id="gResults" class="gs-res" role="region" aria-live="polite">${gsearchHtml(UI.gq)}</div></section><input type="file" id="smartIn" multiple hidden><input type="file" id="camIn" accept="image/*" capture="environment" hidden>`;
 }
 let gT; document.addEventListener('input',e=>{ if(e.target.id!=='gSearch') return; UI.gq=e.target.value; const o=$('#askOut'); if(o) o.innerHTML=''; clearTimeout(gT); gT=setTimeout(()=>{ const r=$('#gResults'); if(r) r.innerHTML=gsearchHtml(UI.gq); },150); });
 document.addEventListener('keydown',e=>{ if(e.target&&e.target.id==='gSearch'&&e.key==='Enter'){ e.preventDefault(); askRun(e.target.value); } });
@@ -5537,7 +5566,7 @@ function findRelated(t){ const pw=t.projectId&&S.projects[t.projectId]?toks(S.pr
   return best; }
 function mtProjOpts(cur){ return fileProjOpts(cur).replace('– nicht zugeordnet –','– kein Projekt –'); }
 function mtRow(i,t){ const byK={}; staff().forEach(s=>{ byK[shortWho(s.name).toLowerCase()]=s.name; }); const who=byK[String(t.who||'').toLowerCase()]||'';
-  return `<div class="sug mt-row"><input type="checkbox" class="ck" id="mt_c${i}" checked aria-label="übernehmen"><input class="inp" id="mt_t${i}" value="${esc(String(t.title||'').slice(0,160))}" placeholder="Aufgabe" aria-label="Aufgabe">
+  return `<div class="sug mt-row"><input type="checkbox" class="ck" id="mt_c${i}" checked aria-label="übernehmen"><textarea class="inp autogrow mt-tt" id="mt_t${i}" rows="1" placeholder="Aufgabe" aria-label="Aufgabe">${esc(String(t.title||'').slice(0,400))}</textarea>
     <select class="inp mt-p ${t.projectId?'':'none'}" id="mt_p${i}" data-chg="mtRowP" aria-label="Projekt">${mtProjOpts(t.projectId||'')}</select>
     <select class="inp" id="mt_w${i}" aria-label="Zuständig"><option value="">– niemand –</option>${staff().map(s=>`<option value="${esc(s.name)}" ${s.name===who?'selected':''}>${esc(shortWho(s.name))}</option>`).join('')}</select>
     <input class="inp" type="date" id="mt_d${i}" value="${/^\d{4}-\d{2}-\d{2}$/.test(t.due||'')?t.due:''}" aria-label="Fällig">${prioSel('mt_r'+i,PRIO[t.prio]?t.prio:'normal')}<input class="inp" id="mt_e${i}" value="${esc(t.ext||'')}" placeholder="extern bei …" aria-label="Liegt extern bei">${t.rel&&S.tasks[t.rel]?(()=>{ const x=S.tasks[t.rel]; return `<div class="mt-rel" data-rel="${x.id}"><span>↔ Hängt vermutlich zusammen mit: <b>${esc(x.title)}</b> <span class="muted">· ${esc([projName(x.pid),x.who?shortWho(x.who):'niemand',x.due?'fällig '+fmtD(x.due):''].filter(Boolean).join(' · '))}${t.relBy?' · erkannt per '+t.relBy:''}</span></span><select class="inp" id="mt_a${i}" aria-label="Was tun?"><option value="update" ${t.relation==='update'?'selected':''}>Als Update zum bestehenden To-Do</option><option value="erledigt" ${t.relation==='erledigt'?'selected':''}>Bestehendes To-Do erledigt (mit Update)</option><option value="neu" ${t.relation==='neu'?'selected':''}>Trotzdem als neues To-Do anlegen</option></select></div>`; })():''}</div>`; }
@@ -5649,10 +5678,11 @@ async function smartDrop(files,text){
   if(!files.length&&text.trim().length<3){ toast('Bitte eine Datei, Mail oder Text ablegen.'); return; }
   toast(SAMPLE?'Claude schaut es sich an …':'Wird erkannt …');
   // Inhalt lesen
-  const f=files[0], items=[]; let mail=null, body='';
+  const f=files[0], items=[], imgs=[]; let mail=null, body='';
   for(const x of files.slice(0,6)){ const n=(x.name||'').toLowerCase();
     if(/\.(msg|eml)$/.test(n)||x.type==='message/rfc822'){ const m=await readMail([x],''); if(m){ mail=mail||m; items.push('E-Mail „'+m.subject+'“ von '+m.from+(m.att.length?' · Anhänge: '+m.att.join(', '):'')+'\n'+m.text.slice(0,2500)); } }
     else if(/pdf/.test(x.type)||n.endsWith('.pdf')){ const t=await pdfText(x); items.push('PDF „'+x.name+'“\n'+t.slice(0,2500)); }
+    else if(/^image\//.test(x.type||'')&&imgs.length<3){ try{ imgs.push(new Blob([await mappeToJpg(x,1600)],{type:'image/jpeg'})); }catch(e){} items.push('Foto „'+x.name+'“ (das Bild ist angehängt – Inhalt direkt aus dem Bild lesen: Absender, Nummern, Positionen, Projekt/Kommission)'); }
     else items.push('Datei „'+x.name+'“ ('+(x.type||'unbekannt')+')'); }
   if(!files.length){ body=text.trim(); if(/^(Von|From|Betreff|Subject)\s*:/im.test(body)) mail={...(await readMail([],body)),kind:'mail'}; items.push((mail?'Kopierte E-Mail':'Kopierter Text')+':\n'+body.slice(0,3000)); }
   const all=items.join('\n\n---\n\n');
@@ -5679,7 +5709,7 @@ Was ist das? Wähle genau einen Typ:
 Ordne ein Projekt zu, wenn eindeutig (Projektname, Nummer, Kommission, Adresse, Kunde); Lager/Büro: "intern"; sonst "". Bei Lieferschein/AB/Rechnung: passende offene Bestellung (orderId), falls Lieferant + Nummer/Positionen passen, sonst "".
 Prüfe außerdem: Ist das eine Rückmeldung, ein Fortschritt oder eine Erledigung zu einem der offenen To-Dos (gleiche Sache, nicht nur gleiches Projekt)? Dann in "related" aufnehmen: relation "update" (neue Info) oder "erledigt" (die Sache ist damit erledigt), update = 1 kurzer Satz, was neu ist. Sonst related leer.
 Antworte nur mit JSON: {"type":"","projectId":"","orderId":"","summary":"1 Satz, was es ist und worum es geht","why":"kurz","related":[{"id":"To-Do-ID","relation":"update|erledigt","update":"kurz"}]}`;
-    try{ const r=await SAMPLE.json(prompt,{modelTier:'default'});
+    try{ const r=await SAMPLE.json(prompt,{modelTier:'default',...(imgs.length?{images:imgs}:{})});
       if(r&&SMART_TYPES[r.type]) type=r.type; if(r&&r.projectId&&(S.projects[r.projectId]||r.projectId===INTERN)) pid=r.projectId; if(r&&r.orderId&&S.orders[r.orderId]) orderId=r.orderId; summary=r&&r.summary||''; why=r&&r.why||''; related=(r&&Array.isArray(r.related)?r.related:[]).filter(x=>x&&S.tasks[x.id]&&!S.tasks[x.id].done).slice(0,5).map(x=>({id:x.id,relation:x.relation==='erledigt'?'erledigt':'update',update:String(x.update||summary||'').slice(0,300),by:'Claude'})); }
     catch(e){ if(e&&e.code&&e.code!=='cancelled') toast(SAMPLE_ERR[e.code]||'Claude nicht erreichbar – einfache Erkennung.'); } }
   if(!orderId&&type==='lieferschein'){ const sup=openOrders.find(o=>o.supplier&&all.toLowerCase().includes(String(o.supplier).toLowerCase().split(' ')[0])&&(!pid||o.pid===pid)); if(sup) orderId=sup.id; }
@@ -5724,10 +5754,11 @@ function smartSheet(c){
 }
 Object.assign(A,{
  smartPick:()=>{ const f=$('#smartIn'); if(f){ f.value=''; f.click(); } },
+ gsCam:()=>{ const f=$('#camIn'); if(f){ f.value=''; f.click(); } },
  smartText:()=>openSheet({title:'Text einfügen',wide:1,html:`<div class="fld full"><textarea id="smartTxt" rows="10" class="inp" style="width:100%" placeholder="Mailtext, Aufgabenliste, Notiz, Bestelltext …"></textarea></div>`,saveLabel:'Erkennen',
    onSave:()=>{ const t=$('#smartTxt').value; if(t.trim().length<3){ toast('Bitte Text einfügen.'); return false; } setTimeout(()=>smartDrop([],t),50); }}),
 });
-document.addEventListener('change',e=>{ if(e.target.id==='smartIn'){ const fl=[...(e.target.files||[])]; if(fl.length) smartDrop(fl,''); } });
+document.addEventListener('change',e=>{ if(e.target.id==='camIn'){ const fl=[...(e.target.files||[])]; if(fl.length) smartDrop(fl.map((x,i)=>x.name&&!/^image\.(jpe?g|png|heic)$/i.test(x.name)?x:new File([x],'Foto_'+TODAY()+'_'+nowStamp().slice(9).replace(':','')+(i?'_'+i:'')+'.'+((x.type.split('/')[1]||'jpg').replace('jpeg','jpg')),{type:x.type})),''); return; } if(e.target.id==='smartIn'){ const fl=[...(e.target.files||[])]; if(fl.length) smartDrop(fl,''); } });
 document.addEventListener('drop',e=>{ const z=e.target.closest&&e.target.closest('.smart-drop'); if(!z) return; e.preventDefault(); e.stopImmediatePropagation(); z.classList.remove('over'); smartDrop(e.dataTransfer.files,e.dataTransfer.getData('text/plain')); },true);
 document.addEventListener('paste',e=>{ if(UI.view!=='dash'||SHEET) return; const tg=e.target; if(tg&&(tg.tagName==='TEXTAREA'||tg.tagName==='INPUT')) return;
   const files=[...(e.clipboardData.files||[])], text=e.clipboardData.getData('text/plain')||''; if(!files.length&&text.trim().length<3) return; e.preventDefault(); e.stopImmediatePropagation(); smartDrop(files,text); },true);
@@ -7121,7 +7152,7 @@ document.addEventListener('click',e=>{
   if(!a){ if(!e.target.closest('#menu')) closeMenu(); return; }
   if(a.tagName==='A') e.preventDefault();
   const fn=A[a.dataset.act]; if(!fn) return;
-  if(!['newMenu','moreMenu'].includes(a.dataset.act)) closeMenu();
+  if(!['newMenu','moreMenu','newHide','newUnhide','newHidTg'].includes(a.dataset.act)) closeMenu();
   fn({...a.dataset},a,e);
 });
 document.addEventListener('change',e=>{ if(e.target.id==='fdIn'){ const fl=[...(e.target.files||[])]; if(fl.length) ingestFiles(fl,'',e.target.dataset.pid||''); return; }
