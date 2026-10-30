@@ -570,6 +570,9 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .sl-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .menu-row{display:flex;align-items:stretch}.menu-row>button:first-child{flex:1;min-width:0}
 .menu .menu-x{flex:none;width:30px;justify-content:center;padding:0;color:var(--muted);font-size:17px;font-weight:700;opacity:.45}.menu .menu-row:hover .menu-x{opacity:1}.menu .menu-x:hover{color:var(--ink);background:var(--sunken)}
+.who-more-f{display:flex;flex-direction:column;gap:6px;justify-content:flex-end;min-height:100%}.who2-row{display:flex;gap:4px;align-items:center}.who2-row .inp{flex:1}
+.who-plus{align-self:flex-start;border:1px dashed var(--line);background:none;border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;color:var(--muted);cursor:pointer}.who-plus:hover{border-color:var(--ink);color:var(--ink)}
+.who-more{font-family:var(--f-mono);font-size:11px;color:var(--muted);align-self:center;white-space:nowrap;margin-right:4px}
 .ev-td{display:grid;grid-template-columns:minmax(120px,170px) minmax(0,1fr) 140px 32px;gap:6px;align-items:center;margin-bottom:6px}
 @media (max-width:700px){ .ev-td{grid-template-columns:1fr 32px} .ev-td .evt-t{grid-column:1/-1} .ev-td .evt-d{grid-column:1/2} }
 .ev-linked{margin-bottom:8px;border:1px solid var(--line);border-radius:10px}
@@ -2265,7 +2268,7 @@ function render(){
 /* ========== Übersicht ========== */
 function dashHero(t){
   const first=ME?ME.replace(/\s*\([^)]*\)$/,'').split(' ')[0]:'';
-  const mine=ME?arr('tasks').filter(x=>!x.done&&x.who===ME).length:0;
+  const mine=ME?arr('tasks').filter(x=>!x.done&&taskHas(x,ME)).length:0;
   return `<section class="hero hero-sm"><div class="hero-in">
     <div class="hero-t"><div class="hero-ey">${esc(fmtDL(t))}</div><h1>Guten Tag${first?', <span>'+esc(first)+'</span>':''}.</h1>${ME?`<div class="hero-sub">Du hast <b>${mine}</b> offene Aufgabe${mine===1?'':'n'}.</div>`:''}</div>
     <div class="hero-a"><button class="btn sun" data-act="newMenu">${ic('plus')}Neu</button>${ME&&mine?`<button class="btn ghost-l" data-act="myTasks">Meine Aufgaben</button>`:''}</div>
@@ -2288,7 +2291,7 @@ function vDash(){
       ${its.map(x=>`<div class="dev k-${x.k} ${ME&&x.who===ME?'me':''}" data-act="${x.act}" data-id="${x.id}"><span class="dev-bar"></span><div style="min-width:0"><div class="dev-t">${tim(x)?`<b class="mono">${esc(tim(x))}</b> `:''}${x.multi&&!x.first?'↳ ':''}${esc(x.t)}</div><div class="dev-m">${esc([x.who?shortWho(x.who):'',x.e&&x.e.pid?projName(x.e.pid):'',x.lbl||(x.k==='lief'?'Lieferung':x.k==='proj'?'Projekt':EV_KINDS[x.k]||'')].filter(Boolean).join(' · '))}</div></div>${ME&&x.who===ME?'<span class="me-tag">Du</span>':''}</div>`).join('')||'<div class="dev-empty">Nichts eingetragen</div>'}
       <button class="btn ghost sm" data-act="newPlan" data-date="${d}" data-who="${esc(ME||'')}">${ic('plus')}Eintrag</button></div>`; };
   // 2) Meine To-Dos
-  const my=ME?arr('tasks').filter(x=>!x.done&&x.who===ME).sort(byDue):[];
+  const my=ME?arr('tasks').filter(x=>!x.done&&taskHas(x,ME)).sort(byDue):[];
   const myLate=my.filter(x=>x.due&&x.due<t).length;
   // 3) Offene Lieferungen
   const dl=arr('orders').filter(o=>orderState(o).open).sort((a,b)=>(a.delivery||'9999').localeCompare(b.delivery||'9999'));
@@ -2600,10 +2603,15 @@ function taskUpdInline(t){ const u=(t.upd2||[]).slice().sort((a,b)=>updKey(b).lo
   const line=x=>`<div class="tu"><b class="mono">${esc(updStamp(x))}</b> <span class="who-chip">${esc(x.by||'?')}</span> ${esc(x.t)}</div>`;
   // zugeklappt nur eine kurze Zeile – Updates erst beim Aufklappen (neuestes oben)
   return `<details class="tu-inl" data-stop="1"><summary><span class="tu-sum">💬 ${u.length} Update${u.length>1?'s':''} · zuletzt ${esc(updStamp(u[0]))} · ${esc(u[0].by||'?')}</span></summary>${u.map(line).join('')}</details>`; }
+// Bis zu 3 Zuständige: who = Hauptperson, who2 = bis zu 2 weitere
+function taskWhos(t){ return [t.who,...(t.who2||[])].filter(Boolean); }
+function taskHas(t,n){ return !!n&&taskWhos(t).includes(n); }
+function whoMoreHtml(t){ const ex=t.who2||[]; return `<div id="who_more" class="who-more-f">${ex.map(n=>whoMoreRow(n)).join('')}<button type="button" class="who-plus" data-act="whoMoreAdd" title="Weitere Person zuständig machen (max. 3)" ${ex.length>=2?'hidden':''}>+ weitere Person</button></div>`; }
+const whoMoreRow=n=>`<div class="who2-row"><input class="inp who2-in" list="staffList" value="${esc(n||'')}" placeholder="weitere Person" aria-label="Weitere zuständige Person"><button type="button" class="icon-btn" data-act="whoMoreDel" aria-label="Entfernen">✕</button></div>`;
 function taskLi(t){  const late=t.due&&t.due<TODAY()&&!t.done;
   const bsel=UI.bulk&&['todos','pool'].includes(UI.view);
   return `<div class="li ${t.done?'done':''} ${bsel&&SEL.has(t.id)?'sel':''}" data-drag="task:${t.id}"${t.done?'':` data-drop-task="${t.id}"`}>${bsel?`<input type="checkbox" class="sel-ck" data-chg="selTask" data-id="${t.id}" ${SEL.has(t.id)?'checked':''} aria-label="Auswählen: ${esc(t.title)}" title="Für Mehrfachbearbeitung auswählen">`:''}<input type="checkbox" class="ck" data-chg="toggleTask" data-id="${t.id}" ${t.done?'checked':''} aria-label="Erledigt"><div class="body clickable" data-act="editTask" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="mt">${t.ext?`<span class="pill ext-pill" title="Liegt extern">extern: ${esc(t.ext)}</span>`:''}${t.pid?`<span>${esc(projName(t.pid))}</span>`:''}${t.due?`<span class="${late?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${t.wv&&!t.done?`<span class="pill wv-pill ${t.wv<=TODAY()?'bad':''}" title="${esc(t.wvNote||'Wiedervorlage')}">🔔 WV ${t.wv<=TODAY()?(t.wv===TODAY()?'heute':'seit '+fmtD(t.wv).slice(0,6)):fmtD(t.wv).slice(0,6)}</span>`:''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?`<span class="pill ${PRIO[t.prio][2]}">${PRIO[t.prio][0]}</span>`:''}${t.pool?'<span class="pill">allgemein</span>':''}${t.by&&t.by!=='?'?`<span class="by-line">angelegt ${esc(t.by)} ${esc(fmtD((t.at||'').slice(0,10)).slice(3))}</span>`:''}${t.done?`<span class="done-by">✓ erledigt von <b>${esc(t.doneBy||t.updBy||'?')}</b>${t.doneAt?' · '+esc(stampTxt(t.doneAt)):''}${t.doneNote?' – '+esc(t.doneNote):''}</span>`:''}</div>${taskUpdInline(t)}</div>
-    <select class="who-sel ${t.who?'':'none'}" data-chg="taskWho" data-id="${t.id}" aria-label="Zuständig für: ${esc(t.title)}" title="Zuständigkeit ändern"><option value="">offen</option>${[...new Set([...staff().map(s=>s.name),...(t.who?[t.who]:[])])].map(n=>`<option value="${esc(n)}" ${n===t.who?'selected':''}>${esc(shortWho(n))}</option>`).join('')}<option value="__ext">→ liegt extern …</option>${t.ext?'<option value="__int">→ wieder intern</option>':''}</select>${isAdmin()?`<button type="button" class="icon-btn task-del" title="Aufgabe löschen" aria-label="Aufgabe löschen: ${esc(t.title)}" data-act="taskDel" data-id="${t.id}">${ic('x')}</button>`:''}</div>`;
+    ${(t.who2||[]).length?`<span class="who-more" title="Ebenfalls zuständig: ${esc(t.who2.join(', '))}">+ ${esc(t.who2.map(shortWho).join(' '))}</span>`:''}<select class="who-sel ${t.who?'':'none'}" data-chg="taskWho" data-id="${t.id}" aria-label="Zuständig für: ${esc(t.title)}" title="Zuständigkeit ändern"><option value="">offen</option>${[...new Set([...staff().map(s=>s.name),...(t.who?[t.who]:[])])].map(n=>`<option value="${esc(n)}" ${n===t.who?'selected':''}>${esc(shortWho(n))}</option>`).join('')}<option value="__ext">→ liegt extern …</option>${t.ext?'<option value="__int">→ wieder intern</option>':''}</select>${isAdmin()?`<button type="button" class="icon-btn task-del" title="Aufgabe löschen" aria-label="Aufgabe löschen: ${esc(t.title)}" data-act="taskDel" data-id="${t.id}">${ic('x')}</button>`:''}</div>`;
 }
 
 /* ========== Projekte ========== */
@@ -2932,17 +2940,17 @@ function todoGroups(open,dateGroups){
   return [['Alle offenen · '+TODO_SORTS[k][0],()=>true,srt]];
 }
 function vTodos(){  const t=TODAY(), who=UI.todoWho;
-  let ts=arr('tasks').filter(x=>!(x.pool&&!x.who)); if(who==='-') ts=ts.filter(x=>!x.who); else if(who) ts=ts.filter(x=>x.who===who);
+  let ts=arr('tasks').filter(x=>!(x.pool&&!x.who)); if(who==='-') ts=ts.filter(x=>!x.who); else if(who) ts=ts.filter(x=>taskHas(x,who));
   const open=ts.filter(x=>!x.done), done=ts.filter(x=>x.done); VIS_TASKS=open.map(x=>x.id);
   const groups=[['Überfällig',x=>x.due&&x.due<t],['Heute',x=>x.due===t],['Diese Woche',x=>x.due>t&&x.due<=addDays(t,7)],['Später',x=>x.due>addDays(t,7)],['Ohne Datum',x=>!x.due]];
   const people=[...new Set([...staff().map(s=>s.name),...arr('tasks').map(x=>x.who).filter(Boolean)])];
-  const byPerson = people.map(n=>[n,arr('tasks').filter(x=>!x.done&&x.who===n).length]);
+  const byPerson = people.map(n=>[n,arr('tasks').filter(x=>!x.done&&taskHas(x,n)).length]);
   const modeSw=`<div class="seg-mode light">${[['liste','Liste'],['board','Nach Mitarbeiter']].map(([k,l])=>`<button class="${(UI.todoMode||'liste')===k?'on':''}" data-act="todoMode" data-v="${k}">${l}</button>`).join('')}</div><button class="btn ${UI.bulk?'pri':''}" data-act="bulkOn" title="To-Dos markieren und gemeinsam bearbeiten">${UI.bulk?'Mehrfachauswahl beenden':'☑ Mehrere bearbeiten'}</button>`;
   if(UI.todoMode==='board'){
     const cols=[...staff().map(s=>s.name),'']; const all=arr('tasks').filter(x=>(UI.todoShowDone||!x.done)&&!(x.pool&&!x.who)); VIS_TASKS=all.filter(x=>!x.done).map(x=>x.id);
     return head('To-Dos', arr('tasks').filter(x=>!x.done).length+' offen · Aufgabe auf eine Person ziehen, um sie neu zuzuweisen', modeSw)+mailTodoDropHtml()+
       `<div class="row"><label class="tog-sw"><input type="checkbox" data-chg="toggleDoneSw" ${UI.todoShowDone?'checked':''}><span class="sw" aria-hidden="true"></span><span>Erledigte einblenden</span></label><span class="spacer"></span>${todoSortSel()}</div>
-      <div class="tboard">${cols.map(n=>{ const its=all.filter(x=>(x.who||'')===n).sort((TODO_SORTS[UI.todoSort]||TODO_SORTS.due)[1]); return `<div class="tcol" data-drop-who="${n?esc(n):'__none'}"><h4><span>${n?esc(shortWho(n)):'Nicht zugewiesen'}</span><span class="who-chip ${n?'':'open'}">${n?esc(shortWho(n)):'–'} ${its.filter(x=>!x.done).length}</span></h4><div class="list">${its.map(taskLi).join('')||'<div class="small muted tc-empty">Hierher ziehen</div>'}</div></div>`; }).join('')}</div>`+(UI.bulk?bulkBar():'');
+      <div class="tboard">${cols.map(n=>{ const its=all.filter(x=>n?taskHas(x,n):!x.who).sort((TODO_SORTS[UI.todoSort]||TODO_SORTS.due)[1]); return `<div class="tcol" data-drop-who="${n?esc(n):'__none'}"><h4><span>${n?esc(shortWho(n)):'Nicht zugewiesen'}</span><span class="who-chip ${n?'':'open'}">${n?esc(shortWho(n)):'–'} ${its.filter(x=>!x.done).length}</span></h4><div class="list">${its.map(taskLi).join('')||'<div class="small muted tc-empty">Hierher ziehen</div>'}</div></div>`; }).join('')}</div>`+(UI.bulk?bulkBar():'');
   }
   return head('To-Dos', open.length+' offen'+(who?' · '+(who==='-'?'nicht zugewiesen':who):''), modeSw)+mailTodoDropHtml()+
   `<div class="chips"><button class="chip ${!who?'on':''}" data-act="todoWho" data-v="">Alle</button>${byPerson.map(([n,c])=>`<button class="chip ${who===n?'on':''}" data-act="todoWho" data-v="${esc(n)}" data-drop-who="${esc(n)}" title="Aufgabe hierher ziehen, um sie ${esc(n)} zuzuweisen">${esc(shortWho(n))} <span class="mono small">${c}</span></button>`).join('')}<button class="chip ${who==='-'?'on':''}" data-act="todoWho" data-v="-" data-drop-who="__none">Nicht zugewiesen</button></div>
@@ -3333,12 +3341,15 @@ function projectForm(p,pre,after){
       if(isNew){ UI.ptab='status'; go('project',p.id); toast('Projekt angelegt. Standardablauf mit '+progress(p).tot+' Schritten erstellt.'); } },
     onDelete:isNew?null:()=>confirmSheet('Projekt „'+p.name+'“ löschen? To-Dos, Bestellungen und Termine bleiben ohne Projektbezug erhalten.',()=>{ del('projects',p.id); go('projects'); })});
 }
+queueMicrotask(()=>Object.assign(A,{ /* A wird weiter unten angelegt */
+  whoMoreAdd:()=>{ const b=$('#who_more'); if(!b) return; const n=b.querySelectorAll('.who2-row').length; if(n>=2) return; b.querySelector('.who-plus').insertAdjacentHTML('beforebegin',whoMoreRow('')); b.querySelectorAll('.who2-in')[n].focus(); if(n+1>=2) b.querySelector('.who-plus').hidden=true; },
+  whoMoreDel:(d,el)=>{ const r=el.closest('.who2-row'); if(r) r.remove(); const p=document.querySelector('#who_more .who-plus'); if(p) p.hidden=false; } }));
 /* ---------- Wiedervorlage: To-Do an einem bestimmten Tag wieder vorlegen ---------- */
 // Felder am To-Do: wv (JJJJ-MM-TT), wvNote. Am Tag erscheint es oben bei „Meine To-Dos“, in der To-Do-Liste und einmal täglich als Erinnerungsfenster.
 const WV_QUICK=[['Morgen',1],['+3 Tage',3],['Nächste Woche','mo'],['+2 Wochen',14],['+1 Monat',30]];
 const wvDate=k=>k==='mo'?addDays(mondayOf(TODAY()),7):addDays(TODAY(),+k);
 const wvQuickHtml=()=>`<div class="chips wv-q">${WV_QUICK.map(([l,k])=>`<button type="button" class="chip" data-act="wvQuick" data-k="${k}">${l}</button>`).join('')}<button type="button" class="chip" data-act="wvQuick" data-k="">keine</button></div>`;
-const wvMine=t=>!!ME&&(t.who===ME||(!t.who&&t.by===meK()));
+const wvMine=t=>!!ME&&(taskHas(t,ME)||(!t.who&&t.by===meK()));
 const wvDue=(list,onlyMine)=>(list||arr('tasks')).filter(t=>!t.done&&t.wv&&t.wv<=TODAY()&&(!onlyMine||wvMine(t))).sort((a,b)=>a.wv.localeCompare(b.wv));
 const wvRow=t=>`<div class="wv-row"><div class="wv-b clickable" data-act="editTask" data-id="${t.id}"><b>${esc(t.title)}</b><div class="small muted">${esc([t.wvNote,projName(t.pid),t.who?shortWho(t.who):'',t.wv<TODAY()?'seit '+fmtD(t.wv):'heute'].filter(Boolean).join(' · '))}</div></div>
   <div class="wv-a"><button type="button" class="btn sm" data-act="wvDone" data-id="${t.id}" title="Wiedervorlage erledigt, To-Do bleibt offen">✓ Gesehen</button><select class="inp wv-sn" data-chg="wvSnooze" data-id="${t.id}" aria-label="Neue Wiedervorlage"><option value="">↻ neue WV …</option>${WV_QUICK.map(([l,k])=>`<option value="${k}">${l}</option>`).join('')}</select><button type="button" class="btn ghost sm" data-act="wvTaskDone" data-id="${t.id}" title="To-Do ist erledigt">To-Do erledigt</button></div></div>`;
@@ -3359,13 +3370,13 @@ queueMicrotask(()=>{ Object.assign(A,{ /* A wird weiter unten angelegt */
 function taskForm(t,pre){
   const isNew=!t; t=t?clone(t):{id:uid(),done:false,prio:'normal',...(pre||{})};
   openSheet({title:isNew?'Neues To-Do':'To-Do bearbeiten',value:t,fields:[
-    {k:'title',label:'Aufgabe',req:1,full:1},{k:'who',label:'Zuständig bei uns (verfolgt die Aufgabe)',list:'staffList'},{k:'due',label:'Fällig am',type:'date'},
+    {k:'title',label:'Aufgabe',req:1,full:1},{k:'who',label:'Zuständig bei uns (verfolgt die Aufgabe)',list:'staffList'},{k:'who2x',label:'',type:'html',html:whoMoreHtml(t)},{k:'due',label:'Fällig am',type:'date'},
     {k:'wv',label:'Wiedervorlage am',type:'date'},{k:'wvq',label:'Schnell',type:'html',html:wvQuickHtml()},{k:'wvNote',label:'Woran erinnern? (Wiedervorlage)',ph:'z. B. nachfassen, ob Angebot angekommen ist',full:1},
     {k:'ext',label:'Liegt extern bei (Firma / Person)',ph:'leer = intern, z. B. Westnetz, Gerüstbauer, Kunde'},
     {k:'pid',label:'Projekt',type:'select',options:projOpts()},{k:'prio',label:'Dringlichkeit',type:'select',options:Object.entries(PRIO).map(([k,v])=>[k,v[0]])},{k:'notes',label:'Notiz',type:'textarea'},
     ...(isNew?[]:[{k:'updbox',label:'Updates mit Datum',type:'html',html:taskUpdHtml(t)}])],
     extraBtn:!isNew&&SAMPLE?`<button type="button" class="btn sun" data-act="taskAi" data-id="${t.id}" title="Fertige E-Mail, Telefonnummer mit Gesprächsleitfaden oder Lösungsweg">✨ KI-Vorschlag</button>`:'',
-    onSave:v=>{ delete v.updbox; delete v.wvq; if(v.wv!==t.wv) delete t.wvShown; if(!v.wv) delete v.wvNote; Object.assign(t,v); const cur=S.tasks[t.id]; if(cur&&cur.upd2) t.upd2=cur.upd2; put('tasks',t); toast(isNew?'To-Do angelegt.':'Gespeichert.'); },
+    onSave:v=>{ delete v.updbox; delete v.wvq; delete v.who2x; { const ex=[...document.querySelectorAll('#who_more .who2-in')].map(e=>e.value.trim()).filter(Boolean); if(!v.who&&ex.length) v.who=ex.shift(); const w2=[...new Set(ex.filter(n=>n!==v.who))].slice(0,2); if(w2.length) v.who2=w2; else { delete v.who2; delete t.who2; } } if(v.wv!==t.wv) delete t.wvShown; if(!v.wv) delete v.wvNote; Object.assign(t,v); const cur=S.tasks[t.id]; if(cur&&cur.upd2) t.upd2=cur.upd2; put('tasks',t); toast(isNew?'To-Do angelegt.':'Gespeichert.'); },
     onDelete:isNew?null:()=>{ del('tasks',t.id); closeSheet(); }});
 }
 /* ---------- Termin → To-Dos für Mitarbeiter (z. B. „Kamil Bescheid sagen“) ---------- */
@@ -5076,7 +5087,7 @@ function monteurPage(name,ws){
   // Material: offene Kommissionierlisten der Projekte dieser Woche bzw. für diese Person
   const picks=arr('picks').filter(k=>k.status!=='uebergeben'&&(k.who===name||pids.has(k.pid)));
   const matRows=picks.flatMap(k=>(k.items||[]).map(it=>({...it,pid:k.pid,date:k.date,packed:it.ok})));
-  const tasks=arr('tasks').filter(t=>!t.done&&t.who===name&&!t.pool&&(!t.due||t.due<=end)).sort(byPrio);
+  const tasks=arr('tasks').filter(t=>!t.done&&taskHas(t,name)&&!t.pool&&(!t.due||t.due<=end)).sort(byPrio);
   const pool=arr('tasks').filter(t=>t.pool&&!t.done&&(!t.who||t.who===name)).sort((a,b)=>(a.who?0:1)-(b.who?0:1)||String(a.pcat||'').localeCompare(String(b.pcat||'')));
   const box='<span class="mp-box">☐</span>';
   const body=`<table class="pr-tbl mp-week">${dd.map(dayBlock).join('')}</table>
