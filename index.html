@@ -514,6 +514,9 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .ch-from{font-size:11px;font-weight:700;color:#7a6a00;margin-bottom:2px}
 .ch-t{font-size:10.5px;color:var(--muted);text-align:right;margin-top:2px}
 .ch-pid{font-size:12px;margin-top:4px}
+/* Chat sieht auf allen Geräten gleich aus – auch im Dunkelmodus: helle Blasen mit dunkler Schrift */
+.ch-b{color:#1a1a1a}.ch-b a,.ch-b .lnk{color:#5a4a00}.ch-b .ch-t,.ch-b .ch-del{color:#6b6b6b}.ch-b .ch-pid,.ch-b .muted,.ch-b .small{color:#4a4a4a}
+.ch-room.on{color:#111}.ch-room.on .who-chip{background:#fff;color:#111}.ch-room:hover:not(.on){background:rgba(244,219,2,.18)}
 .ch-del{background:none;border:0;color:var(--muted);cursor:pointer;font-size:10px;padding:0 2px}
 .ch-in{display:grid;grid-template-columns:minmax(0,1fr) 170px auto;gap:8px;padding:10px;border-top:1px solid var(--line)}
 .ch-in textarea{resize:none;min-height:40px}
