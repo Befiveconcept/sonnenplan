@@ -568,6 +568,21 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .sl-form label{display:block;font-size:12.5px;color:var(--muted);margin:10px 0 3px}
 .sl-head{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .sl-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ev-td{display:grid;grid-template-columns:minmax(120px,170px) minmax(0,1fr) 140px 32px;gap:6px;align-items:center;margin-bottom:6px}
+@media (max-width:700px){ .ev-td{grid-template-columns:1fr 32px} .ev-td .evt-t{grid-column:1/-1} .ev-td .evt-d{grid-column:1/2} }
+.ev-linked{margin-bottom:8px;border:1px solid var(--line);border-radius:10px}
+.wv-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:9px 16px;border-top:1px solid var(--line)}.wv-b{flex:1;min-width:200px}.wv-a{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.wv-sn{width:auto;padding:5px 8px;font-size:12.5px}
+.wv-card{border-left:4px solid var(--sun)}.wv-strip{border-left:4px solid var(--sun)}.wv-pill.bad{font-weight:700}.wv-q{margin-top:-4px}
+#fselBar{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:46;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;background:var(--night);color:#fff;padding:10px 14px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.3);max-width:calc(100vw - 24px)}
+#fselBar .btn.ghost{color:#fff;border-color:rgba(255,255,255,.3)}
+@media (max-width:900px){ #fselBar{bottom:calc(72px + env(safe-area-inset-bottom,0px))} }
+.fl.sel{background:var(--sun-soft)}.fl-ck{margin:0}.fl-act{display:flex;flex-wrap:nowrap;justify-content:flex-end}.fl-dl svg{width:17px;height:17px}
+.mp-list{border:1px solid var(--line);border-radius:10px;overflow:hidden}.mp-it{display:grid;grid-template-columns:26px auto minmax(0,1fr) auto auto auto;gap:8px;align-items:center;padding:6px 10px;border-top:1px solid var(--line)}.mp-it:first-child{border-top:0}.mp-n{font-weight:700;color:var(--muted)}.mp-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ord-grp{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px}.ord-grp-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}.ord-grp-h h3{margin:0;font-size:15px}.ord-grp-h .btn{margin-left:auto}
+.ord-ap{border-top:1px solid var(--line);padding:8px 0}.ord-ap-h{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;margin-bottom:3px}
+.ord-appr-b{border-left:4px solid var(--sun)}
+#menu{max-height:calc(100vh - 24px);overflow-y:auto}
+.menu-h{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:8px 12px 2px}
 .since-sum{margin-bottom:10px;line-height:1.7}.since-g{border:1px solid var(--line);border-radius:10px;margin-bottom:8px;padding:6px 10px}.since-g summary{cursor:pointer;padding:4px 0}
 .since-it{display:grid;grid-template-columns:auto auto 1fr;gap:8px;align-items:start;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:7px 2px;font:inherit;font-size:13px;color:inherit;cursor:pointer}.since-it:hover{background:var(--sunken)}
 @media (max-width:600px){ .since-it{grid-template-columns:auto 1fr} .since-it>.mono{grid-column:1/-1} }
@@ -1040,7 +1055,7 @@ body.stock-dragging .pick{outline:2px dashed rgba(244,219,2,.8);outline-offset:2
 .task-del{flex:none;opacity:.55}
 .task-del:hover{opacity:1;color:#C0392B}
 .fl-list{display:flex;flex-direction:column}
-.fl{display:grid;grid-template-columns:110px minmax(220px,1fr) minmax(140px,210px) 130px 64px;gap:10px;align-items:center;padding:10px 16px;border-top:1px solid var(--line)}
+.fl{display:grid;grid-template-columns:20px 110px minmax(220px,1fr) minmax(140px,210px) 130px 104px;gap:10px;align-items:center;padding:10px 16px;border-top:1px solid var(--line)}
 .fl.unassigned{background:rgba(244,219,2,.08)}
 .fl-k{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;border-radius:8px;padding:4px 8px;background:#efefe9;color:#444;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fl-k.k-rechnung{background:#FDE7E3;color:#8a2a17}.fl-k.k-angebot{background:#E5EFFC;color:#1d4f91}.fl-k.k-ab,.fl-k.k-bestellung{background:#EDE6FA;color:#5a3596}.fl-k.k-lieferschein{background:#E4F4E8;color:#1f6b38}.fl-k.k-mail{background:#FFF6C2;color:#6b5a00}
@@ -1048,7 +1063,7 @@ body.stock-dragging .pick{outline:2px dashed rgba(244,219,2,.8);outline-offset:2
 .linkish{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-decoration:underline;text-decoration-color:var(--sun);text-decoration-thickness:2px}
 .fl-why{font-size:11.5px;color:#7a6a00;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .fl-filter{gap:8px}.fl-filter .inp{flex:1;min-width:180px}
-@media (max-width:900px){ .fl{grid-template-columns:minmax(0,1fr) auto;padding:10px 12px} .fl-k{grid-column:1/-1;justify-self:start} .fl-n{grid-column:1/-1} .fl-p,.fl-kind{grid-column:span 1} }
+@media (max-width:900px){ .fl{grid-template-columns:22px minmax(0,1fr) auto;padding:10px 12px} .fl-k{grid-column:2/-1;justify-self:start} .fl-n{grid-column:1/-1} .fl-p,.fl-kind{grid-column:span 1} }
 .help-ol{margin:0 0 0 20px;padding:0;display:flex;flex-direction:column;gap:4px;font-size:14px}
 .rd-panel.crit{border-color:rgba(214,64,46,.35);background:linear-gradient(180deg,rgba(214,64,46,.05),rgba(255,255,255,.9) 60%)}
 .rd-ev,.rd-cr{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;align-items:center;padding:7px 6px;border-radius:10px;cursor:pointer}
@@ -1845,7 +1860,7 @@ const MAT_KABEL = ['1,5mm²','2,5mm²','4mm²','6mm²','10mm²','16mm²','5x4mm�
 const MAT_DC = ['PV-Kabel 6mm² rot','PV-Kabel 6mm² schwarz','Erdung 16mm² starr','Erdung 16mm² flexibel','Dachhaken','Schienen Alu 3m','Schienen Alu 6m','Schienenverbinder','Kreuzverbinder','Endklemmen','Mittelklemmen','Stockschrauben'];
 const CREW_ROLES = ['Meister','Vorarbeiter','Facharbeiter','Hilfsarbeiter','Auszubildender'];
 const EV_KINDS = {bau:'Baustelle',kunde:'Kundentermin',evu:'EVU / Zählersetzung',lief:'Lieferung',intern:'Intern'};
-const ORDER_ST = {angefragt:'angefragt',bestellt:'bestellt',bestaetigt:'bestätigt'};
+const ORDER_ST = {angefragt:'angefragt',bestellt:'bestellt',bestaetigt:'bestätigt',storniert:'storniert'};
 const OFFER_ST = {entwurf:'Entwurf',versendet:'versendet',nachfassen:'nachfassen',beauftragt:'beauftragt',abgelehnt:'abgelehnt'};
 
 /* ========== Hilfsfunktionen ========== */
@@ -1863,7 +1878,7 @@ const nf = (n,d=0)=>(+n||0).toLocaleString('de-DE',{maximumFractionDigits:d,mini
 // Mengen: ganze Zahlen ohne Nachkomma, sonst bis 2 Stellen
 const qn = n=>(+n||0).toLocaleString('de-DE',{maximumFractionDigits:2});
 const relDay = s=>{ if(!s) return ''; const diff=Math.round((new Date(s+'T12:00')-new Date(TODAY()+'T12:00'))/864e5); if(diff===0) return 'heute'; if(diff===1) return 'morgen'; if(diff===-1) return 'gestern'; return diff<0? 'vor '+(-diff)+' Tg.' : 'in '+diff+' Tg.' };
-const ICONS = {
+const ICONS = {download:'<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>',
  dash:'<path d="M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z"/>',
  proj:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
  todo:'<path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
@@ -1977,6 +1992,7 @@ function put(coll,obj){
   if(!ME&&MODE==='cloud') askMe();
   const what=describeChange(coll,prev,obj);
   obj.upd=now; obj.updBy=meK(); if(!prev){ obj.at=obj.at||now; obj.by=obj.by||meK(); }
+  if(coll==='orders'&&!prev&&!obj.appr&&!obj.example) obj.appr=ordApprover()?'ok':'offen'; // Bestellfreigabe durch HH / AvE
   if(what) obj.hist=(obj.hist||[]).concat([{at:now,by:meK(),a:what}]).slice(-150);
   S[coll][obj.id]=obj; scheduleRender(); if(coll==='tasks'&&!prev&&!obj.done&&!obj.relOk) relQueue(obj.id); // neues To-Do: gegen bestehende prüfen
   if(MODE!=='cloud'){ saveLocal(); return; }
@@ -2139,6 +2155,8 @@ function activeProjects(){ return arr('projects').filter(p=>!isIntern(p)&&['plan
 const isIntern=p=>!!p&&(p.id===INTERN||p.internal);
 function ensureIntern(){ if(MODE!=='cloud'||!mayWrite('projects')||S.projects[INTERN]) return; put('projects',{id:INTERN,name:'Haus intern',internal:true,cat:'laufend',status:'aktiv',type:'sonst',flow:'service',scope:'Allgemeines Projekt für alles ohne Kundenbezug: Lager, Büro, Werkstatt, Fahrzeuge, Material fürs Haus, interne Korrespondenz.'}); }
 function orderState(o){
+  if(o.status==='storniert'||o.appr==='storno') return {k:'storniert',cls:'',open:false};
+  if(o.appr==='offen') return {k:'wartet auf Freigabe',cls:'warn',open:true,appr:1};
   const items=(o.items||[]).filter(i=>!i.extra); const tot=items.reduce((a,i)=>a+(+i.qty||0),0), rec=items.reduce((a,i)=>a+Math.min(+i.recv||0,+i.qty||0),0);
   if(items.length && rec>=tot && tot>0) return {k:'geliefert',cls:'ok',open:false};
   const miss=items.filter(i=>i.miss&&itemOpen(i)).length;
@@ -2194,7 +2212,7 @@ function navSide(cur,cnt){ NAV_CUR=cur; const pins=navPins();
   return navGroups().map(([g,l,items])=>{ const html=items.map(n=>navItem(n,cur,cnt)).join(''); if(!g) return html+pinHtml;
   const open=navGrpOpen(g,items,cur), c=items.reduce((a,n)=>a+(+cnt[n[0]]||0),0);
   return `<div class="nav-grp ${open?'open':''}"><button class="nav-gh" data-act="navGrp" data-g="${g}" aria-expanded="${open?'true':'false'}"><span>${l}</span>${!open&&c?`<span class="cnt">${c}</span>`:''}<span class="nav-gc" aria-hidden="true">▾</span></button>${open?html:''}</div>`; }).join(''); }function renderShell(){  const openTodos=arr('tasks').filter(t=>!t.done&&!(t.pool&&!t.who)).length, openOrders=arr('orders').filter(o=>orderState(o).open).length;
-  const cnt={projects:activeProjects().length,todos:openTodos,orders:openOrders,chat:chatUnreadAll(),private:Object.values(S.priv||{}).filter(t=>!t.done).length,pool:arr('tasks').filter(t=>t.pool&&!t.done&&!t.who).length};
+  const cnt={projects:activeProjects().length,todos:openTodos,orders:ordApprover()?ordPending().length||openOrders:openOrders,chat:chatUnreadAll(),private:Object.values(S.priv||{}).filter(t=>!t.done).length,pool:arr('tasks').filter(t=>t.pool&&!t.done&&!t.who).length};
   const cur = UI.view==='sales'?'vk:'+(UI.vkTab||'rechnung'):UI.view==='fin'?'fi:'+(UI.fiTab||'bank'):UI.view==='stamm'?'st:'+(UI.stTab||'kunden'):UI.view==='project'?'projects':UI.view==='calendar'?'week':UI.view==='files'&&UI.fkind?'f:'+UI.fkind:UI.view==='offers'?'f:angebot':UI.view==='reports'?'f:rapport':UI.view;
   $('#side').innerHTML = `<div class="brand"><div class="wordmark"><span class="y">NUTZ DIE</span> <span class="g">SONNE</span></div><small>Projektsteuerung</small></div>`+
     navSide(cur,cnt)+
@@ -2211,6 +2229,7 @@ function navSide(cur,cnt){ NAV_CUR=cur; const pins=navPins();
   stLists();
   $('#stockArtList').innerHTML = arr('stock').map(s=>`<option value="${esc(s.art)}">`).join('');
   $('#locList').innerHTML =[...new Set(['Lager','Container',...arr('stock').map(s=>s.loc).filter(Boolean)])].map(s=>`<option value="${esc(s)}">`).join('');
+  setTimeout(fselBar,0); // Auswahlleiste der Datenablage ein-/ausblenden
 }
 function head(title,sub,actions=''){
   return `<div class="topbar"><div class="t"><div class="eyebrow">${sub||''}</div><h1>${title}</h1></div><div class="row">${actions}<button class="btn sun desk" data-act="newMenu">${ic('plus')}Neu</button></div></div>`;
@@ -2271,7 +2290,7 @@ function vDash(){
   // 4) Noch zu bestellen, je Projekt gebündelt
   const nd=needAll(), ndP=[...new Set(nd.map(n=>n.pid))].map(pid=>({pid,its:nd.filter(n=>n.pid===pid)})).sort((a,b)=>b.its.length-a.its.length);
   const ndRow=g=>`<div class="nd-row"><div style="min-width:0" class="clickable" data-act="openAt" data-id="${g.pid}" data-at="material"><div class="tt">${esc(projName(g.pid)||'ohne Projekt')}</div><div class="small muted nd-its">${g.its.slice(0,3).map(n=>esc((n.qty?qn(n.qty)+' '+(n.unit||'')+' ':'')+n.art)).join(' · ')}${g.its.length>3?' · +'+(g.its.length-3):''}</div></div><button class="btn sun sm" data-act="needOrder" data-pid="${g.pid}">Bestellen</button></div>`;
-  return dashHero(t)+hrDashStrip()+gsearchBox()+`<div class="dash-grid">
+  return dashHero(t)+hrDashStrip()+wvDashStrip()+(ordApprover()?ordApprBanner():'')+gsearchBox()+`<div class="dash-grid">
     <section class="card dash-todo"><div class="card-h"><h2>Meine offenen To-Dos <span class="cnt-b">${my.length}</span></h2>${myLate?`<span class="pill bad">${myLate} überfällig</span>`:''}<button class="btn ghost sm" data-act="myTasks">Alle</button></div>
       ${ME?`<div class="list">${my.slice(0,7).map(taskLi).join('')||'<div class="empty"><b>Alles erledigt</b>Du hast keine offenen Aufgaben.</div>'}</div>${my.length>7?`<button class="btn ghost sm more-b" data-act="myTasks">+ ${my.length-7} weitere anzeigen</button>`:''}`:'<div class="empty">Unten links „Wer bist du?“ wählen, dann erscheinen hier deine Aufgaben.</div>'}</section>
     <section class="card dash-dl"><div class="card-h"><h2>Offene Lieferungen <span class="cnt-b">${dl.length}</span></h2><button class="btn ghost sm" data-act="nav" data-v="orders">Alle</button></div>
@@ -2574,7 +2593,7 @@ function taskUpdInline(t){ const u=(t.upd2||[]).slice().sort((a,b)=>updKey(b).lo
   return `<details class="tu-inl" data-stop="1"><summary><span class="tu-sum">💬 ${u.length} Update${u.length>1?'s':''} · zuletzt ${esc(updStamp(u[0]))} · ${esc(u[0].by||'?')}</span></summary>${u.map(line).join('')}</details>`; }
 function taskLi(t){  const late=t.due&&t.due<TODAY()&&!t.done;
   const bsel=UI.bulk&&['todos','pool'].includes(UI.view);
-  return `<div class="li ${t.done?'done':''} ${bsel&&SEL.has(t.id)?'sel':''}" data-drag="task:${t.id}"${t.done?'':` data-drop-task="${t.id}"`}>${bsel?`<input type="checkbox" class="sel-ck" data-chg="selTask" data-id="${t.id}" ${SEL.has(t.id)?'checked':''} aria-label="Auswählen: ${esc(t.title)}" title="Für Mehrfachbearbeitung auswählen">`:''}<input type="checkbox" class="ck" data-chg="toggleTask" data-id="${t.id}" ${t.done?'checked':''} aria-label="Erledigt"><div class="body clickable" data-act="editTask" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="mt">${t.ext?`<span class="pill ext-pill" title="Liegt extern">extern: ${esc(t.ext)}</span>`:''}${t.pid?`<span>${esc(projName(t.pid))}</span>`:''}${t.due?`<span class="${late?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?`<span class="pill ${PRIO[t.prio][2]}">${PRIO[t.prio][0]}</span>`:''}${t.pool?'<span class="pill">allgemein</span>':''}${t.by&&t.by!=='?'?`<span class="by-line">angelegt ${esc(t.by)} ${esc(fmtD((t.at||'').slice(0,10)).slice(3))}</span>`:''}${t.done?`<span class="done-by">✓ erledigt von <b>${esc(t.doneBy||t.updBy||'?')}</b>${t.doneAt?' · '+esc(stampTxt(t.doneAt)):''}${t.doneNote?' – '+esc(t.doneNote):''}</span>`:''}</div>${taskUpdInline(t)}</div>
+  return `<div class="li ${t.done?'done':''} ${bsel&&SEL.has(t.id)?'sel':''}" data-drag="task:${t.id}"${t.done?'':` data-drop-task="${t.id}"`}>${bsel?`<input type="checkbox" class="sel-ck" data-chg="selTask" data-id="${t.id}" ${SEL.has(t.id)?'checked':''} aria-label="Auswählen: ${esc(t.title)}" title="Für Mehrfachbearbeitung auswählen">`:''}<input type="checkbox" class="ck" data-chg="toggleTask" data-id="${t.id}" ${t.done?'checked':''} aria-label="Erledigt"><div class="body clickable" data-act="editTask" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="mt">${t.ext?`<span class="pill ext-pill" title="Liegt extern">extern: ${esc(t.ext)}</span>`:''}${t.pid?`<span>${esc(projName(t.pid))}</span>`:''}${t.due?`<span class="${late?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${t.wv&&!t.done?`<span class="pill wv-pill ${t.wv<=TODAY()?'bad':''}" title="${esc(t.wvNote||'Wiedervorlage')}">🔔 WV ${t.wv<=TODAY()?(t.wv===TODAY()?'heute':'seit '+fmtD(t.wv).slice(0,6)):fmtD(t.wv).slice(0,6)}</span>`:''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?`<span class="pill ${PRIO[t.prio][2]}">${PRIO[t.prio][0]}</span>`:''}${t.pool?'<span class="pill">allgemein</span>':''}${t.by&&t.by!=='?'?`<span class="by-line">angelegt ${esc(t.by)} ${esc(fmtD((t.at||'').slice(0,10)).slice(3))}</span>`:''}${t.done?`<span class="done-by">✓ erledigt von <b>${esc(t.doneBy||t.updBy||'?')}</b>${t.doneAt?' · '+esc(stampTxt(t.doneAt)):''}${t.doneNote?' – '+esc(t.doneNote):''}</span>`:''}</div>${taskUpdInline(t)}</div>
     <select class="who-sel ${t.who?'':'none'}" data-chg="taskWho" data-id="${t.id}" aria-label="Zuständig für: ${esc(t.title)}" title="Zuständigkeit ändern"><option value="">offen</option>${[...new Set([...staff().map(s=>s.name),...(t.who?[t.who]:[])])].map(n=>`<option value="${esc(n)}" ${n===t.who?'selected':''}>${esc(shortWho(n))}</option>`).join('')}<option value="__ext">→ liegt extern …</option>${t.ext?'<option value="__int">→ wieder intern</option>':''}</select>${isAdmin()?`<button type="button" class="icon-btn task-del" title="Aufgabe löschen" aria-label="Aufgabe löschen: ${esc(t.title)}" data-act="taskDel" data-id="${t.id}">${ic('x')}</button>`:''}</div>`;
 }
 
@@ -2920,7 +2939,7 @@ function vTodos(){  const t=TODAY(), who=UI.todoWho;
   `<div class="chips"><button class="chip ${!who?'on':''}" data-act="todoWho" data-v="">Alle</button>${byPerson.map(([n,c])=>`<button class="chip ${who===n?'on':''}" data-act="todoWho" data-v="${esc(n)}" data-drop-who="${esc(n)}" title="Aufgabe hierher ziehen, um sie ${esc(n)} zuzuweisen">${esc(shortWho(n))} <span class="mono small">${c}</span></button>`).join('')}<button class="chip ${who==='-'?'on':''}" data-act="todoWho" data-v="-" data-drop-who="__none">Nicht zugewiesen</button></div>
   <div class="small muted">Tipp: Eine Aufgabe auf einen Namen ziehen, um die Zuständigkeit zu ändern.</div>
   <div class="row"><label class="tog-sw"><input type="checkbox" data-chg="toggleDoneSw" ${UI.todoShowDone?'checked':''}><span class="sw" aria-hidden="true"></span><span>Erledigte einblenden${done.length?` <span class="mono small muted">(${done.length})</span>`:''}</span></label><span class="spacer"></span>${todoSortSel()}</div>
-  <div class="card">${todoGroups(open,groups).map(([l,f,srt])=>{ const g=open.filter(f).sort(srt); return g.length?`<div class="grp-h">${l} · ${g.length}</div><div class="list">${g.map(taskLi).join('')}</div>`:''; }).join('')||'<div class="empty"><b>Keine offenen To-Dos</b>Neue To-Dos über „Neu“ oder direkt aus einer Projekt-Checkliste zuweisen.</div>'}</div>
+  ${wvCard(open)}<div class="card">${todoGroups(open,groups).map(([l,f,srt])=>{ const g=open.filter(f).sort(srt); return g.length?`<div class="grp-h">${l} · ${g.length}</div><div class="list">${g.map(taskLi).join('')}</div>`:''; }).join('')||'<div class="empty"><b>Keine offenen To-Dos</b>Neue To-Dos über „Neu“ oder direkt aus einer Projekt-Checkliste zuweisen.</div>'}</div>
   ${UI.todoShowDone?`<div class="card"><div class="card-h"><h3>Erledigt · ${done.length}</h3><span class="small muted">Haken entfernen öffnet die Aufgabe wieder</span></div>${done.length?`<div class="list">${done.sort((a,b)=>(b.doneAt||b.upd||'').localeCompare(a.doneAt||a.upd||'')).slice(0,200).map(taskLi).join('')}</div>`:'<div class="empty">Noch keine erledigten Aufgaben.</div>'}</div>`:''}`+(UI.bulk?bulkBar():'');
 }
 
@@ -3007,7 +3026,7 @@ function ordersTable(os){
   if(!os.length) return '<div class="empty">Keine Bestellungen.</div>';
   os=os.slice().sort((a,b)=>(orderState(b).open-orderState(a).open)||(a.delivery||'9').localeCompare(b.delivery||'9'));
   return `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Lieferant</th><th>Projekt</th><th>Positionen</th><th>Liefertermin</th><th>Status</th><th></th></tr></thead><tbody>${os.map(o=>{ const st=orderState(o);
-    return `<tr class="clickable" data-act="editOrder" data-id="${o.id}"><td><b>${esc(o.supplier)}</b><div class="small muted">${esc([o.no,o.buyer?'über '+o.buyer:'',o.orderedBy?'von '+shortWho(o.orderedBy):''].filter(Boolean).join(' · '))}</div></td><td>${esc(projName(o.pid))}</td><td class="small">${(o.items||[]).slice(0,4).map(i=>`<div class="pos">${itemChip(i)} ${nf(i.qty)} ${esc(i.unit||'')} ${esc(i.art)}</div>`).join('')}${(o.items||[]).length>4?`<span class="muted">+${o.items.length-4} weitere</span>`:''}${(o.docs||[]).length?`<div class="muted" style="margin-top:3px">${o.docs.length} Beleg${o.docs.length>1?'e':''}</div>`:''}</td><td class="${st.late?'overdue':''}" style="white-space:nowrap">${fmtD(o.delivery)||'–'}${o.delivery&&st.open?`<div class="small muted">${relDay(o.delivery)}</div>`:''}</td><td><span class="pill ${st.cls}">${st.late&&st.cls===''?'überfällig':st.k}</span></td><td class="r">${st.open?`<button class="btn sm" data-act="receive" data-id="${o.id}">${ic('truck')}Annahme</button>`:''}${unrouted(o).length?`<button class="btn sun sm" data-act="routeOrder" data-id="${o.id}" title="Angenommene Ware ins Lager oder auf die Kommissionierliste">${ic('stock')}Verteilen</button>`:''}</td></tr>`; }).join('')}</tbody></table></div>`;
+    return `<tr class="clickable" data-act="editOrder" data-id="${o.id}"><td><b>${esc(o.supplier)}</b><div class="small muted">${esc([o.no,o.buyer?'über '+o.buyer:'',o.orderedBy?'von '+shortWho(o.orderedBy):''].filter(Boolean).join(' · '))}</div></td><td>${esc(projName(o.pid))}</td><td class="small">${(o.items||[]).slice(0,4).map(i=>`<div class="pos">${itemChip(i)} ${nf(i.qty)} ${esc(i.unit||'')} ${esc(i.art)}</div>`).join('')}${(o.items||[]).length>4?`<span class="muted">+${o.items.length-4} weitere</span>`:''}${(o.docs||[]).length?`<div class="muted" style="margin-top:3px">${o.docs.length} Beleg${o.docs.length>1?'e':''}</div>`:''}</td><td class="${st.late?'overdue':''}" style="white-space:nowrap">${fmtD(o.delivery)||'–'}${o.delivery&&st.open?`<div class="small muted">${relDay(o.delivery)}</div>`:''}</td><td><span class="pill ${st.cls}">${st.late&&st.cls===''?'überfällig':st.k}</span></td><td class="r">${o.appr==='offen'&&ordApprover()?`<button class="btn sun sm" data-act="ordApprove" data-id="${o.id}">✓ Freigeben</button><button class="btn ghost sm" data-act="ordStorno" data-id="${o.id}">Stornieren</button>`:''}${st.open&&o.appr!=='offen'?`<button class="btn sm" data-act="receive" data-id="${o.id}">${ic('truck')}Annahme</button>`:''}${unrouted(o).length?`<button class="btn sun sm" data-act="routeOrder" data-id="${o.id}" title="Angenommene Ware ins Lager oder auf die Kommissionierliste">${ic('stock')}Verteilen</button>`:''}</td></tr>`; }).join('')}</tbody></table></div>`;
 }
 function vOrders(){
   const f=UI.orderFilter; let os=arr('orders');
@@ -3018,12 +3037,55 @@ function vOrders(){
   if(fb==='__none') os=os.filter(o=>!bk(o.buyer)); else if(fb) os=os.filter(o=>bk(o.buyer)===fb);
   const recent=arr('orders').flatMap(o=>(o.receipts||[]).map(r=>({...r,o}))).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,8);
   return head('Bestellungen & Wareneingänge', arr('orders').filter(o=>orderState(o).open).length+' Lieferungen offen', `${ASSETS||SAMPLE?`<button class="btn sun" data-act="newOrderFromInvoice">${ic('plus')}Aus Rechnung anlegen</button>`:''}<button class="btn" data-act="newOrder">${ic('plus')}Bestellung</button>`)+
-  dropZoneHtml('')+(dueDeliveries().length?`<div class="banner row"><span>${ic('truck','style="width:18px;height:18px;vertical-align:-3px"')} ${dueDeliveries().length} Lieferung${dueDeliveries().length>1?'en sind':' ist'} fällig und noch nicht gebucht.</span><span class="spacer"></span><button class="btn sun sm" data-act="checkDlv">Jetzt prüfen</button></div>`:'')+
+  ordApprBanner()+dropZoneHtml('')+(dueDeliveries().length?`<div class="banner row"><span>${ic('truck','style="width:18px;height:18px;vertical-align:-3px"')} ${dueDeliveries().length} Lieferung${dueDeliveries().length>1?'en sind':' ist'} fällig und noch nicht gebucht.</span><span class="spacer"></span><button class="btn sun sm" data-act="checkDlv">Jetzt prüfen</button></div>`:'')+
   `<div class="chips">${[['offen','Offen'],['geliefert','Geliefert'],['alle','Alle']].map(([k,l])=>`<button class="chip ${f===k?'on':''}" data-act="orderFilter" data-v="${k}">${l}</button>`).join('')}</div>
   ${buyers.length?`<div class="chips"><span class="small muted" style="align-self:center">Bestellt über:</span>${[['','Alle'],...buyers.map(b=>[bk(b),b]),['__none','ohne Angabe']].map(([k,l])=>`<button class="chip ${fb===k?'on':''}" data-act="orderBuyer" data-v="${esc(k)}">${esc(l)}</button>`).join('')}</div>`:''}
   <div class="card">${ordersTable(os)}</div>
   <div class="card"><div class="card-h"><h3>Letzte Warenannahmen</h3></div><div class="list">${recent.map(r=>`<div class="li clickable" data-act="editOrder" data-id="${r.o.id}"><span class="pill ${r.dmg?'bad':'ok'}">${r.dmg?'Schaden':'ok'}</span><div class="body"><div class="tt">${esc(r.o.supplier)} · ${esc(projName(r.o.pid))}</div><div class="mt"><span>${fmtD(r.date)}</span>${r.by?`<span>angenommen von ${esc(r.by)}</span>`:''}${r.ls?`<span>LS ${esc(r.ls)}</span>`:''}${r.note?`<span>${esc(r.note)}</span>`:''}${(r.lines||[]).filter(l=>l.st!=='da').length?`<span class="overdue">fehlt: ${esc(r.lines.filter(l=>l.st!=='da').map(l=>l.art).join(', '))}</span>`:''}</div></div></div>`).join('')||'<div class="empty">Noch keine Warenannahme erfasst.</div>'}</div></div>`;
 }
+
+/* ========== Bestellfreigabe: HH und AvE genehmigen, ändern, stornieren oder fassen mehrere beim selben Lieferanten zusammen ========== */
+const ORD_APPROVERS=['hh','ave'];
+const ordApprover=()=>!!ME&&ORD_APPROVERS.includes(String(meK()).toLowerCase());
+const ordPending=()=>arr('orders').filter(o=>o.appr==='offen');
+const ordSupKey=o=>stNorm(o.supplier)||'?';
+function ordApprBanner(){ const P=ordPending(); if(!P.length) return '';
+  if(!ordApprover()) return `<div class="banner">${P.length} Bestellung${P.length>1?'en warten':' wartet'} auf Freigabe durch HH / AvE.</div>`;
+  const dupSup=Object.values(P.reduce((m,o)=>{ (m[ordSupKey(o)]=m[ordSupKey(o)]||[]).push(o); return m; },{})).filter(g=>g.length>1).length;
+  return `<div class="banner row ord-appr-b"><span><b>${P.length} Bestellung${P.length>1?'en':''} zur Freigabe</b>${dupSup?` · ${dupSup}× mehrere beim selben Lieferanten – zusammenfassen möglich`:''}</span><span class="spacer"></span><button class="btn sun sm" data-act="ordAppr">Jetzt prüfen</button></div>`; }
+function ordApprSheet(){ const P=ordPending(); if(!P.length){ toast('Keine Bestellungen zur Freigabe.'); return; }
+  const groups=Object.values(P.reduce((m,o)=>{ (m[ordSupKey(o)]=m[ordSupKey(o)]||[]).push(o); return m; },{})).sort((a,b)=>b.length-a.length);
+  const card=o=>`<div class="ord-ap"><div class="ord-ap-h"><b>${esc(projName(o.pid)||'ohne Projekt')}</b><span class="small muted">${esc([o.orderedBy?'von '+shortWho(o.orderedBy):'',o.ordered?fmtD(o.ordered):'',o.delivery?'Liefertermin '+fmtD(o.delivery):'',o.buyer?'über '+o.buyer:''].filter(Boolean).join(' · '))}</span></div>
+      <div class="small">${(o.items||[]).map(i=>`<div>${nf(i.qty)} ${esc(i.unit||'')} ${esc(i.art)}${i.price!=null&&i.price!==''?` <span class="muted">à ${euro(+i.price)}</span>`:''}</div>`).join('')||'<span class="muted">keine Positionen</span>'}${o.notes?`<div class="muted">Notiz: ${esc(o.notes)}</div>`:''}</div>
+      <div class="row" style="gap:6px;margin-top:6px"><button type="button" class="btn sun sm" data-act="ordApprove" data-id="${o.id}">✓ Freigeben</button><button type="button" class="btn sm" data-act="ordEdit" data-id="${o.id}">Ändern</button><button type="button" class="btn ghost sm" data-act="ordStorno" data-id="${o.id}">Stornieren</button></div></div>`;
+  openSheet({title:'Bestellungen zur Freigabe',wide:1,html:`<div class="fld full">${groups.map(g=>`<section class="ord-grp"><div class="ord-grp-h"><h3>${esc(g[0].supplier||'Lieferant fehlt')}</h3><span class="cnt-b">${g.length}</span>${g.length>1?`<button type="button" class="btn sun sm" data-act="ordMerge" data-ids="${g.map(o=>o.id).join(',')}">⇢ ${g.length} zu einer Bestellung zusammenfassen</button>`:''}</div>${g.map(card).join('')}</section>`).join('')}
+    <div class="row" style="margin-top:10px"><button type="button" class="btn ghost sm" data-act="ordApproveAll">Alle ${P.length} freigeben</button>${'Notification' in window&&Notification.permission==='default'?'<button type="button" class="btn ghost sm" data-act="ordNotifyOn">🔔 Browser-Benachrichtigung einschalten</button>':''}</div></div>`,saveLabel:'Schließen',onSave:()=>{}}); }
+function ordSetAppr(id,appr,extra){ const o=clone(S.orders[id]); if(!o) return; o.appr=appr; o.apprBy=meK(); o.apprAt=new Date().toISOString(); Object.assign(o,extra||{}); put('orders',o); }
+function ordRefresh(){ if(SHEET&&SHEET.title==='Bestellungen zur Freigabe'){ closeSheet(); if(ordPending().length) ordApprSheet(); } }
+// Mehrere offene Bestellungen beim selben Lieferanten → eine; Projekt je Position vermerkt, wenn verschieden
+function ordMerge(ids){ const os=ids.map(id=>S.orders[id]).filter(Boolean); if(os.length<2) return; const base=clone(os[0]), multi=new Set(os.map(o=>o.pid)).size>1;
+  base.items=os.flatMap(o=>(o.items||[]).map(i=>({...i,art:multi&&o.pid&&!String(i.art).includes('['+projName(o.pid)+']')?i.art+' ['+projName(o.pid)+']':i.art})));
+  base.notes=[...new Set(os.map(o=>o.notes).filter(Boolean))].join('\n'); base.mergedFrom=os.slice(1).map(o=>o.id); base.delivery=os.map(o=>o.delivery).filter(Boolean).sort()[0]||base.delivery;
+  base.docs=os.flatMap(o=>o.docs||[]); base.appr='ok'; base.apprBy=meK(); base.apprAt=new Date().toISOString();
+  if(multi) base.pids=[...new Set(os.map(o=>o.pid).filter(Boolean))];
+  put('orders',base); os.slice(1).forEach(o=>del('orders',o.id)); toast(os.length+' Bestellungen bei „'+(base.supplier||'')+'“ zusammengefasst und freigegeben.'); ordRefresh(); }
+// Browser-Benachrichtigung (wenn erlaubt), z. B. wenn die App im Hintergrund offen ist
+function ordNotify(o){ try{ if(!('Notification' in window)||Notification.permission!=='granted') return; const n=new Notification('Bestellung zur Freigabe',{body:(o.supplier||'')+' · '+(projName(o.pid)||'')+' · '+(o.items||[]).length+' Pos.'+(o.orderedBy?' · von '+shortWho(o.orderedBy):''),tag:'ord-'+o.id}); n.onclick=()=>{ window.focus(); ordApprSheet(); }; }catch(e){} }
+queueMicrotask(()=>Object.assign(A,{ /* A wird weiter unten angelegt */
+ ordAppr:()=>ordApprSheet(),
+ ordApprove:d=>{ if(!ordApprover()) return toast('Freigeben können HH und AvE.'); ordSetAppr(d.id,'ok'); toast('Bestellung freigegeben.'); ordRefresh(); },
+ ordApproveAll:()=>{ if(!ordApprover()) return; const P=ordPending(); P.forEach(o=>ordSetAppr(o.id,'ok')); toast(P.length+' Bestellungen freigegeben.'); closeSheet(); },
+ ordStorno:d=>{ if(!ordApprover()) return toast('Stornieren können HH und AvE.'); const o=S.orders[d.id]; if(!o) return; const back=SHEET&&SHEET.title==='Bestellungen zur Freigabe';
+   openSheet({title:'Bestellung stornieren',value:{why:''},fields:[{k:'info',label:'Bestellung',type:'html',html:`<b>${esc(o.supplier||'')}</b> · ${esc(projName(o.pid)||'')} · ${(o.items||[]).length} Pos.`},{k:'why',label:'Grund (sieht der Besteller)',type:'textarea'}],saveLabel:'Stornieren',
+     onSave:v=>{ ordSetAppr(o.id,'storno',{status:'storniert',stornoWhy:String(v.why||'').trim()}); toast('Bestellung storniert.'); if(back&&ordPending().length) setTimeout(ordApprSheet,80); }}); },
+ ordEdit:d=>{ closeSheet(); setTimeout(()=>A.editOrder({id:d.id}),50); },
+ ordMerge:d=>{ if(!ordApprover()) return; const ids=String(d.ids).split(','); confirmSheet(ids.length+' Bestellungen beim selben Lieferanten zu einer zusammenfassen und freigeben?',()=>ordMerge(ids)); },
+ ordNotifyOn:()=>{ try{ Notification.requestPermission().then(p=>toast(p==='granted'?'Benachrichtigungen sind an.':'Benachrichtigungen wurden nicht erlaubt.')); }catch(e){} },
+}));
+// Neue Bestellung eines Kollegen → HH / AvE sofort informieren (Live-Meldung kommt ohnehin; zusätzlich Browser-Benachrichtigung)
+let ORD_SEEN=null;
+setInterval(()=>{ if(!ordApprover()||MODE!=='cloud'||!LIVE_READY.orders) return; const P=ordPending(); if(ORD_SEEN===null){ ORD_SEEN=new Set(P.map(o=>o.id)); return; }
+  P.filter(o=>!ORD_SEEN.has(o.id)&&o.by!==meK()).forEach(o=>{ ORD_SEEN.add(o.id); ordNotify(o); toast('Neue Bestellung zur Freigabe: '+(o.supplier||'')+' · '+(projName(o.pid)||'')); }); },3000);
 
 /* ========== Angebote ========== */
 function offersTable(os){
@@ -3258,23 +3320,65 @@ function projectForm(p,pre,after){
       if(isNew){ UI.ptab='status'; go('project',p.id); toast('Projekt angelegt. Standardablauf mit '+progress(p).tot+' Schritten erstellt.'); } },
     onDelete:isNew?null:()=>confirmSheet('Projekt „'+p.name+'“ löschen? To-Dos, Bestellungen und Termine bleiben ohne Projektbezug erhalten.',()=>{ del('projects',p.id); go('projects'); })});
 }
+/* ---------- Wiedervorlage: To-Do an einem bestimmten Tag wieder vorlegen ---------- */
+// Felder am To-Do: wv (JJJJ-MM-TT), wvNote. Am Tag erscheint es oben bei „Meine To-Dos“, in der To-Do-Liste und einmal täglich als Erinnerungsfenster.
+const WV_QUICK=[['Morgen',1],['+3 Tage',3],['Nächste Woche','mo'],['+2 Wochen',14],['+1 Monat',30]];
+const wvDate=k=>k==='mo'?addDays(mondayOf(TODAY()),7):addDays(TODAY(),+k);
+const wvQuickHtml=()=>`<div class="chips wv-q">${WV_QUICK.map(([l,k])=>`<button type="button" class="chip" data-act="wvQuick" data-k="${k}">${l}</button>`).join('')}<button type="button" class="chip" data-act="wvQuick" data-k="">keine</button></div>`;
+const wvMine=t=>!!ME&&(t.who===ME||(!t.who&&t.by===meK()));
+const wvDue=(list,onlyMine)=>(list||arr('tasks')).filter(t=>!t.done&&t.wv&&t.wv<=TODAY()&&(!onlyMine||wvMine(t))).sort((a,b)=>a.wv.localeCompare(b.wv));
+const wvRow=t=>`<div class="wv-row"><div class="wv-b clickable" data-act="editTask" data-id="${t.id}"><b>${esc(t.title)}</b><div class="small muted">${esc([t.wvNote,projName(t.pid),t.who?shortWho(t.who):'',t.wv<TODAY()?'seit '+fmtD(t.wv):'heute'].filter(Boolean).join(' · '))}</div></div>
+  <div class="wv-a"><button type="button" class="btn sm" data-act="wvDone" data-id="${t.id}" title="Wiedervorlage erledigt, To-Do bleibt offen">✓ Gesehen</button><select class="inp wv-sn" data-chg="wvSnooze" data-id="${t.id}" aria-label="Neue Wiedervorlage"><option value="">↻ neue WV …</option>${WV_QUICK.map(([l,k])=>`<option value="${k}">${l}</option>`).join('')}</select><button type="button" class="btn ghost sm" data-act="wvTaskDone" data-id="${t.id}" title="To-Do ist erledigt">To-Do erledigt</button></div></div>`;
+function wvCard(open){ const due=wvDue(open); return due.length?`<div class="card wv-card"><div class="card-h"><h3>🔔 Wiedervorlage fällig · ${due.length}</h3></div>${due.map(wvRow).join('')}</div>`:''; }
+function wvDashStrip(){ const due=wvDue(null,true); return due.length?`<div class="hr-strip wv-strip"><b>🔔 ${due.length} Wiedervorlage${due.length>1?'n':''} für dich</b><span class="small muted">${esc(due.slice(0,2).map(t=>t.title).join(' · '))}${due.length>2?' …':''}</span><span class="spacer"></span><button class="btn sun sm" data-act="wvShow">Ansehen</button></div>`:''; }
+function wvRemind(force){ const due=wvDue(null,true); if(!due.length){ if(force) toast('Keine Wiedervorlagen fällig.'); return; }
+  const key='sonnenplan-wv-'+meK(); if(!force&&lsGet(key)===TODAY()) return; if(SHEET){ setTimeout(()=>wvRemind(force),2000); return; }
+  try{ localStorage.setItem(key,TODAY()); }catch(e){}
+  openSheet({title:'🔔 Wiedervorlage',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Diese To-Dos hast du dir für heute (oder früher) wieder vorgelegt:</div><div id="wv_list">${due.map(wvRow).join('')}</div></div>`,saveLabel:'Schließen',onSave:()=>{}}); }
+function wvUpd(id,fn,msg){ const t=clone(S.tasks[id]); if(!t) return; fn(t); put('tasks',t); if(msg) toast(msg); const l=$('#wv_list'); if(l){ const due=wvDue(null,true); l.innerHTML=due.map(wvRow).join('')||'<div class="small muted">Alles erledigt. 👍</div>'; } }
+const WV_T=setInterval(()=>{ if(!ME||!LIVE_READY.tasks&&MODE==='cloud') return; if(MODE==='init') return; clearInterval(WV_T); setTimeout(()=>wvRemind(),4000); },1500);
+queueMicrotask(()=>{ Object.assign(A,{ /* A wird weiter unten angelegt */
+  wvQuick:d=>{ const e=$('#f_wv'); if(e) e.value=d.k?wvDate(d.k):''; },
+  wvShow:()=>wvRemind(true),
+  wvDone:d=>wvUpd(d.id,t=>{ t.upd2=[...(t.upd2||[]),{d:TODAY(),tm:nowStamp().slice(9),by:meK(),t:'Wiedervorlage vom '+fmtD(t.wv)+' gesehen'+(t.wvNote?': '+t.wvNote:''),at:new Date().toISOString()}]; delete t.wv; delete t.wvNote; },'Wiedervorlage erledigt.'),
+  wvTaskDone:d=>wvUpd(d.id,t=>{ t.done=true; t.doneAt=new Date().toISOString(); t.doneBy=meK(); delete t.wv; },'To-Do erledigt.') });
+  Object.assign(CHG,{ wvSnooze:(d,el)=>{ if(!el.value) return; const nd=wvDate(el.value); wvUpd(d.id,t=>{ t.wv=nd; },'Neue Wiedervorlage am '+fmtD(nd)+'.'); } }); });
 function taskForm(t,pre){
   const isNew=!t; t=t?clone(t):{id:uid(),done:false,prio:'normal',...(pre||{})};
   openSheet({title:isNew?'Neues To-Do':'To-Do bearbeiten',value:t,fields:[
     {k:'title',label:'Aufgabe',req:1,full:1},{k:'who',label:'Zuständig bei uns (verfolgt die Aufgabe)',list:'staffList'},{k:'due',label:'Fällig am',type:'date'},
+    {k:'wv',label:'Wiedervorlage am',type:'date'},{k:'wvq',label:'Schnell',type:'html',html:wvQuickHtml()},{k:'wvNote',label:'Woran erinnern? (Wiedervorlage)',ph:'z. B. nachfassen, ob Angebot angekommen ist',full:1},
     {k:'ext',label:'Liegt extern bei (Firma / Person)',ph:'leer = intern, z. B. Westnetz, Gerüstbauer, Kunde'},
     {k:'pid',label:'Projekt',type:'select',options:projOpts()},{k:'prio',label:'Dringlichkeit',type:'select',options:Object.entries(PRIO).map(([k,v])=>[k,v[0]])},{k:'notes',label:'Notiz',type:'textarea'},
     ...(isNew?[]:[{k:'updbox',label:'Updates mit Datum',type:'html',html:taskUpdHtml(t)}])],
     extraBtn:!isNew&&SAMPLE?`<button type="button" class="btn sun" data-act="taskAi" data-id="${t.id}" title="Fertige E-Mail, Telefonnummer mit Gesprächsleitfaden oder Lösungsweg">✨ KI-Vorschlag</button>`:'',
-    onSave:v=>{ delete v.updbox; Object.assign(t,v); const cur=S.tasks[t.id]; if(cur&&cur.upd2) t.upd2=cur.upd2; put('tasks',t); toast(isNew?'To-Do angelegt.':'Gespeichert.'); },
+    onSave:v=>{ delete v.updbox; delete v.wvq; if(v.wv!==t.wv) delete t.wvShown; if(!v.wv) delete v.wvNote; Object.assign(t,v); const cur=S.tasks[t.id]; if(cur&&cur.upd2) t.upd2=cur.upd2; put('tasks',t); toast(isNew?'To-Do angelegt.':'Gespeichert.'); },
     onDelete:isNew?null:()=>{ del('tasks',t.id); closeSheet(); }});
 }
+/* ---------- Termin → To-Dos für Mitarbeiter (z. B. „Kamil Bescheid sagen“) ---------- */
+// Im Terminfenster beliebig viele Zeilen: Wer + Aufgabe + Fällig. Beim Speichern werden daraus To-Dos (mit Verweis evId auf den Termin).
+function evTodoText(kind){ const g=id=>(($('#f_'+id)||{}).value||'').trim(), t=g('title')||'Termin', d=g('date'), tm=g('time'), pl=g('place'), pid=g('pid');
+  const when=[d?fmtD(d):'',tm?tm+' Uhr':''].filter(Boolean).join(' ');
+  const what=t+(when?' am '+when:'')+(pl?' ('+pl+')':pid&&S.projects[pid]?' ('+projName(pid)+')':'');
+  return kind==='info'?'Info / bitte einplanen: '+what:kind==='prep'?'Vorbereiten: '+what:'Termin wahrnehmen: '+what; }
+const evTodoDue=()=>{ const d=(($('#f_date')||{}).value||''); if(!d) return TODAY(); const b=addDays(d,-1); return b>=TODAY()?b:TODAY(); };
+const evTodoRow=(r)=>`<div class="ev-td"><select class="inp evt-w" aria-label="Für wen"><option value="">– wer? –</option>${staff().map(s=>`<option value="${esc(s.name)}" ${s.name===r.who?'selected':''}>${esc(shortWho(s.name))} · ${esc(s.name.replace(/\s*\([^)]*\)$/,''))}</option>`).join('')}</select><input class="inp evt-t" value="${esc(r.title||'')}" placeholder="Aufgabe"><input class="inp evt-d" type="date" value="${esc(r.due||'')}" aria-label="Fällig"><button type="button" class="icon-btn" data-act="evTodoDel" aria-label="Zeile entfernen">✕</button></div>`;
+function evTodoHtml(e){ const linked=arr('tasks').filter(t=>t.evId===e.id);
+  return `${linked.length?`<div class="list ev-linked">${linked.map(taskLi).join('')}</div>`:''}<div id="ev_td"></div>
+    <div class="chips"><span class="small muted" style="align-self:center">+ To-Do daraus:</span><button type="button" class="chip" data-act="evTodoAdd" data-k="info">Mitarbeiter informieren</button><button type="button" class="chip" data-act="evTodoAdd" data-k="go">Termin wahrnehmen</button><button type="button" class="chip" data-act="evTodoAdd" data-k="prep">Vorbereiten</button></div>`; }
+function evTodoSave(e){ let n=0; document.querySelectorAll('#ev_td .ev-td').forEach(r=>{ const who=r.querySelector('.evt-w').value, title=r.querySelector('.evt-t').value.trim(), due=r.querySelector('.evt-d').value; if(!title) return;
+    const t={id:uid(),title,who,pid:e.pid||'',due:due||'',done:false,prio:'normal',evId:e.id,src:'termin',created:TODAY(),relOk:1,notes:'Aus Termin „'+(e.title||'')+'“'+(e.date?' am '+fmtD(e.date)+(e.time?' '+e.time:''):'')+(e.place?' · '+e.place:'')};
+    if(!t.due) delete t.due; put('tasks',t); n++; }); return n; }
+queueMicrotask(()=>Object.assign(A,{ /* A wird weiter unten angelegt */
+  evTodoAdd:d=>{ const box=$('#ev_td'); if(!box) return; const who=d.k==='go'?((($('#f_who')||{}).value)||''):''; box.insertAdjacentHTML('beforeend',evTodoRow({who,title:evTodoText(d.k),due:d.k==='go'?((($('#f_date')||{}).value)||''):evTodoDue()})); const r=box.lastElementChild; (who?r.querySelector('.evt-t'):r.querySelector('.evt-w')).focus(); },
+  evTodoDel:(d,el)=>{ const r=el.closest('.ev-td'); if(r) r.remove(); } }));
 function eventForm(e,pre){
   const isNew=!e; e=e?clone(e):{id:uid(),date:TODAY(),kind:'bau',...(pre||{})};
   openSheet({title:isNew?'Neuer Termin':'Termin bearbeiten',value:e,fields:[
     {k:'title',label:'Titel',req:1,full:1,ph:'z. B. Zählersetzung Westnetz'},{k:'kind',label:'Art',type:'select',options:Object.entries(EV_KINDS)},{k:'pid',label:'Projekt',type:'select',options:projOpts()},
-    {k:'date',label:'Datum',type:'date',req:1},{k:'end',label:'bis (bei mehreren Tagen)',type:'date'},{k:'time',label:'Uhrzeit',type:'time'},{k:'who',label:'Wer',type:'select',options:[['','– alle / niemand –'],...staff().map(s=>[s.name,s.name])]},{k:'place',label:'Ort'},{k:'notes',label:'Notiz',type:'textarea'}],
-    onSave:v=>{ Object.assign(e,v); put('events',e); toast('Termin gespeichert.'); },
+    {k:'date',label:'Datum',type:'date',req:1},{k:'end',label:'bis (bei mehreren Tagen)',type:'date'},{k:'time',label:'Uhrzeit',type:'time'},{k:'who',label:'Wer',type:'select',options:[['','– alle / niemand –'],...staff().map(s=>[s.name,s.name])]},{k:'place',label:'Ort'},{k:'notes',label:'Notiz',type:'textarea'},
+    {k:'evtd',label:'To-Dos zu diesem Termin',type:'html',full:1,html:evTodoHtml(e)}],
+    onSave:v=>{ delete v.evtd; Object.assign(e,v); put('events',e); const n=evTodoSave(e); toast('Termin gespeichert'+(n?' · '+n+' To-Do'+(n>1?'s':'')+' angelegt':'')+'.'); },
     onDelete:isNew?null:()=>{ del('events',e.id); closeSheet(); }});
 }
 const ORDER_COLS=[{k:'qty',label:'Menge',type:'number',w:'64px'},{k:'unit',label:'Einh.',w:'58px',options:['Stk','m','kWp','Pal','psch']},{k:'artNr',label:'Art.-Nr.',w:'0.45fr'},{k:'art',label:'Artikel',w:'1fr',options:[...MAT_DC,...MAT_AC,...MAT_KABEL,'PV-Module','Wechselrichter','Unterkonstruktion','Speichersystem','Ladesäule','Zählerschrank','Wandlermessschrank','Trafostation','EZA-Regler']},{k:'price',label:'EP netto €',type:'number',w:'86px'},{k:'extra',label:'Zusatz',type:'check',w:'48px'}];
@@ -3294,14 +3398,15 @@ function orderForm(o,pre,forceNew){
   if(!o.orderedBy&&isNew&&ME) o.orderedBy=ME;
   CUR_ORDER=o; CUR_ORDER_NEW=isNew;
   openSheet({title:isNew?'Neue Bestellung':'Bestellung bearbeiten',wide:1,value:o,fields:[
+    ...(o.appr==='offen'||o.appr==='storno'?[{k:'apprx',label:'Freigabe',type:'html',html:o.appr==='storno'?`<div class="banner">Storniert von ${esc(o.apprBy||'')}${o.stornoWhy?': '+esc(o.stornoWhy):''}</div>`:`<div class="banner">Wartet auf Freigabe durch HH / AvE.</div>`}]:isNew&&!ordApprover()?[{k:'apprx',label:'Freigabe',type:'html',html:'<div class="small muted">Nach dem Speichern bekommen HH und AvE die Bestellung zur Freigabe.</div>'}]:[]),
     {k:'mailin',label:'E-Mail- oder Bestelltext einfügen',type:'html',html:`<div class="mail-in"><textarea id="mailPaste" rows="3" placeholder="Mail in Outlook öffnen → Strg+A → Strg+C → hier klicken → Strg+V. Die Positionen werden sofort ausgelesen."></textarea><button type="button" class="btn sun sm" data-act="mailPasteGo">Positionen auslesen</button></div>`},
     {k:'docs',label:'Rechnungen & Belege',type:'html',html:docsHtml(o)},
     {k:'supplier',label:'Lieferant',req:1,list:'supplierList'},{k:'buyer',label:'Bestellt über (Firma)',list:'buyerList',ph:'z. B. Flexvolt GmbH & Co. KG'},{k:'orderedBy',label:'Bestellt von (Mitarbeiter)',type:'select',req:1,options:[['','– bitte wählen –'],...[...new Set([...staff().map(s=>s.name),...(o.orderedBy?[o.orderedBy]:[])])].map(n=>[n,n])]},{k:'no',label:'Bestell- / AB-Nummer'},{k:'pid',label:'Projekt (laufend)',type:'select',req:1,options:[['','– bitte wählen –'],[INTERN,'Haus intern (Lager / Büro)'],...arr('projects').filter(p=>catOf(p)==='laufend'||p.id===o.pid).sort((a,b)=>a.name.localeCompare(b.name)).map(p=>[p.id,p.name+(catOf(p)==='laufend'?'':' ('+CATS[catOf(p)]+')')])]},
     {k:'status',label:'Status',type:'select',options:Object.entries(ORDER_ST)},{k:'ordered',label:'Bestellt am',type:'date'},{k:'delivery',label:'Liefertermin',type:'date'},
     {k:'address',label:'Lieferadresse',full:1,ph:'Baustelle oder Lager'},
     {k:'items',label:'Positionen',type:'lines',cols:ORDER_COLS},{k:'notes',label:'Notiz',type:'textarea'}],
-    extraBtn:isNew?'':`${unrouted(o).length?`<button type="button" class="btn sun" data-act="routeOrder" data-id="${o.id}">${ic('stock')}Ins Lager / Baustelle</button>`:''}<button type="button" class="btn" data-act="receive" data-id="${o.id}">${ic('truck')}Warenannahme</button>`,
-    onSave:v=>{ const old=o.items||[]; Object.assign(o,v); o.items=o.items.map((it,i)=>{ const same=old[i]&&old[i].art===it.art; return {...it,recv:same?old[i].recv||0:0,routed:same?old[i].routed||0:0,dmg:same?!!old[i].dmg:false,miss:same?!!old[i].miss:false,price:it.price===''||it.price==null?null:+it.price}; }); put('orders',o); CUR_ORDER=null; toast('Bestellung gespeichert.'); },
+    extraBtn:isNew?'':`${o.appr==='offen'&&ordApprover()?`<button type="button" class="btn sun" data-act="ordApprove" data-id="${o.id}">✓ Freigeben</button><button type="button" class="btn ghost" data-act="ordStorno" data-id="${o.id}">Stornieren</button>`:''}${unrouted(o).length?`<button type="button" class="btn sun" data-act="routeOrder" data-id="${o.id}">${ic('stock')}Ins Lager / Baustelle</button>`:''}<button type="button" class="btn" data-act="receive" data-id="${o.id}">${ic('truck')}Warenannahme</button>`,
+    onSave:v=>{ delete v.apprx; const old=o.items||[]; Object.assign(o,v); o.items=o.items.map((it,i)=>{ const same=old[i]&&old[i].art===it.art; return {...it,recv:same?old[i].recv||0:0,routed:same?old[i].routed||0:0,dmg:same?!!old[i].dmg:false,miss:same?!!old[i].miss:false,price:it.price===''||it.price==null?null:+it.price}; }); put('orders',o); CUR_ORDER=null; toast('Bestellung gespeichert.'); },
     onDelete:isNew?null:()=>{ del('orders',o.id); closeSheet(); }});
 }
 const itemOpen = it=>!it.extra && (+it.recv||0) < (+it.qty||0);
@@ -4159,14 +4264,111 @@ function allFiles(){
 }
 function fileProjOpts(cur){ return `<option value="">– nicht zugeordnet –</option><option value="${INTERN}" ${cur===INTERN?'selected':''}>Haus intern</option>`+arr('projects').filter(p=>!isIntern(p)).filter(p=>catOf(p)!=='abgesagt'||p.id===cur).sort((a,b)=>(catOf(a)==='laufend'?0:1)-(catOf(b)==='laufend'?0:1)||a.name.localeCompare(b.name)).map(p=>`<option value="${p.id}" ${p.id===cur?'selected':''}>${esc(p.name)}${catOf(p)==='laufend'?'':' ('+CATS[catOf(p)]+')'}</option>`).join(''); }
 function filesTable(list,inProject){
-  if(!list.length) return '<div class="empty">Noch keine Dateien. Einfach Dateien oder Mails hier ablegen.</div>';
+  if(!list.length) return '<div class="empty">Noch keine Dateien. Einfach Dateien oder Mails hier ablegen.</div>'; setTimeout(fselBar,0);
   return `<div class="fl-list">${list.map(f=>{ const link=f.asset?`<a href="/_blob/${esc(f.asset)}" target="_blank" rel="noopener">${esc(f.name)}</a>`:f.virtual?`<button type="button" class="linkish" data-act="${f.vact}" data-id="${esc(f.vid)}">${esc(f.name)}</button>`:`<button type="button" class="linkish" data-act="fileOpen" data-id="${esc(f.id)}">${esc(f.name)}</button>`;
-    return `<div class="fl ${f.pid?'':'unassigned'}"><span class="fl-k k-${f.kind}">${esc(FILE_KINDS[f.kind]||'Datei')}</span>
+    return `<div class="fl ${f.pid?'':'unassigned'} ${fselHas(f.id)?'sel':''}"><input type="checkbox" class="ck fl-ck" data-chg="fileSel" data-id="${esc(f.id)}" ${fselHas(f.id)?'checked':''} aria-label="Auswählen"><span class="fl-k k-${f.kind}">${esc(FILE_KINDS[f.kind]||'Datei')}</span>
       <div class="fl-n">${link}<div class="small muted">${esc([fmtD(f.date),f.by||f.updBy,f.from,f.virtual?f.src:'',f.parent?'Anhang':'',f.atts&&f.atts.length?f.atts.length+' Anhang/Anhänge':'',f.note].filter(Boolean).join(' · '))}</div>${f.why&&!inProject?`<div class="fl-why">${f.pid?'✓':'?'} ${esc(f.why)}</div>`:''}</div>
       ${f.virtual?`<span class="small muted">${esc(projName(f.pid)||'–')}</span><span></span>`:`${inProject?'':`<select class="inp fl-p" data-chg="filePid" data-id="${esc(f.id)}" aria-label="Projekt">${fileProjOpts(f.pid)}</select>`}
       <select class="inp fl-kind" data-chg="fileKind" data-id="${esc(f.id)}" aria-label="Art">${Object.entries(FILE_KINDS).map(([k,l])=>`<option value="${k}" ${k===f.kind?'selected':''}>${l}</option>`).join('')}</select>`}
-      ${f.virtual?`<button class="icon-btn" title="Öffnen" data-act="${f.vact}" data-id="${esc(f.vid)}">${ic(f.vact==='editOrder'?'box':f.vact==='editReport'?'report':'offer')}</button>`:`<span class="row" style="flex-wrap:nowrap;gap:0"><button class="icon-btn" title="Umbenennen (Datum_Thema_Detail)" data-act="fileRename" data-id="${esc(f.id)}">${ic('edit')}</button><button class="icon-btn" title="Eintrag löschen" data-act="fileDel" data-id="${esc(f.id)}">${ic('x')}</button></span>`}</div>`; }).join('')}</div><datalist id="kindList">${Object.values(FILE_KINDS).map(k=>`<option value="${esc(k)}">`).join('')}</datalist>`;
+      <span class="fl-act">${fileDlBtn(f)}${f.virtual?`<button class="icon-btn" title="Öffnen" data-act="${f.vact}" data-id="${esc(f.vid)}">${ic(f.vact==='editOrder'?'box':f.vact==='editReport'?'report':'offer')}</button>`:`<button class="icon-btn" title="Umbenennen (Datum_Thema_Detail)" data-act="fileRename" data-id="${esc(f.id)}">${ic('edit')}</button><button class="icon-btn" title="Eintrag löschen" data-act="fileDel" data-id="${esc(f.id)}">${ic('x')}</button>`}</span></div>`; }).join('')}</div><datalist id="kindList">${Object.values(FILE_KINDS).map(k=>`<option value="${esc(k)}">`).join('')}</datalist>`;
 }
+/* ---------- Download je Datei, Mehrfachauswahl, Kundenmappe (ein schönes PDF zum Verschicken) ---------- */
+const EXT_OF_MIME={'application/pdf':'.pdf','image/jpeg':'.jpg','image/png':'.png','image/webp':'.webp','image/heic':'.heic','application/vnd.ms-outlook':'.msg','text/plain':'.txt'};
+const fileDlName=f=>{ const n=String(f.orig||f.name||'Datei').replace(/[\\/:*?"<>|]+/g,'_'); return /\.[a-z0-9]{2,5}$/i.test(n)?n:n+(EXT_OF_MIME[f.mime]||(f.asset?'':'.txt')); };
+function fileDlBtn(f){ const dl=ic('download');
+  if(f.asset) return `<button class="icon-btn fl-dl" title="Herunterladen" data-act="fileDl" data-id="${esc(f.id)}">${dl}</button>`;
+  if(f.vact==='saleEdit') return `<button class="icon-btn fl-dl" title="Als PDF speichern (Drucken)" data-act="salePrint" data-id="${esc(f.vid)}">${dl}</button>`;
+  if(f.vact==='editReport') return `<button class="icon-btn fl-dl" title="Als PDF speichern (Drucken)" data-act="rptPrintId" data-id="${esc(f.vid)}">${dl}</button>`;
+  if(f.text) return `<button class="icon-btn fl-dl" title="Als Textdatei herunterladen" data-act="fileDl" data-id="${esc(f.id)}">${dl}</button>`;
+  return '<span></span>'; }
+const fileById=id=>allFiles().find(f=>f.id===id);
+async function fileBlob(f){ if(f.asset){ const r=await fetch('/_blob/'+f.asset); if(!r.ok) throw new Error('Datei nicht erreichbar'); return await r.blob(); } return new Blob([String(f.text||'')],{type:'text/plain;charset=utf-8'}); }
+function saveBlob(b,name){ const u=URL.createObjectURL(b), a=document.createElement('a'); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),8000); }
+async function fileDl(id){ const f=fileById(id); if(!f) return; try{ busy(1,'dl'); saveBlob(await fileBlob(f),fileDlName(f)); }catch(e){ toast('Herunterladen ging nicht: '+(e.message||e)); }finally{ busy(-1,'dl'); } }
+// Auswahl (über Ansichten hinweg gemerkt, bis man sie aufhebt)
+var FSEL=new Set(); const fselHas=id=>FSEL.has(id);
+function fselBar(){ let b=$('#fselBar'); const show=FSEL.size&&(UI.view==='files'||UI.view==='project');
+  if(!show){ if(b) b.remove(); return; } if(!b){ b=document.createElement('div'); b.id='fselBar'; document.body.appendChild(b); }
+  const fs=[...FSEL].map(fileById).filter(Boolean), n=fs.length;
+  b.innerHTML=`<b>${n} ausgewählt</b><button type="button" class="btn sun sm" data-act="mappeNew">📘 Kundenmappe erstellen</button><button type="button" class="btn sm" data-act="fselDl">⬇ Alle herunterladen</button><button type="button" class="btn ghost sm" data-act="fselClear">Auswahl aufheben</button>`; }
+// ---- Kundenmappe ----
+const MAPPE_OK=f=>!!f&&(f.asset&&(/pdf|image\//.test(f.mime||'')||/\.(pdf|jpe?g|png|webp|gif)$/i.test(f.name||''))||(!f.asset&&!f.virtual&&f.text));
+function mappeForm(){ const fs=[...FSEL].map(fileById).filter(Boolean); if(!fs.length) return toast('Bitte zuerst Dateien auswählen.');
+  const ok=fs.filter(MAPPE_OK), no=fs.filter(f=>!MAPPE_OK(f)); if(!ok.length) return toast('Keine der ausgewählten Dateien kann in die Mappe (nur PDF, Bilder und Mails).');
+  const pids=[...new Set(ok.map(f=>f.pid).filter(Boolean))], p=S.projects[pids[0]]||{}, kd=typeof stKunde==='function'&&p.customer?stKunde(p.customer):null;
+  MAPPE_ORDER=ok.map(f=>f.id);
+  openSheet({title:'Kundenmappe erstellen',wide:1,value:{title:'Projektmappe',proj:p.name||'',cust:p.customer||'',addr:p.custAddress||(kd?[kd.street,[kd.zip,kd.city].filter(Boolean).join(' ')].filter(Boolean).join(', '):'')||p.place||'',intro:'Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie die Unterlagen zu Ihrem Projekt übersichtlich in einer Mappe zusammengestellt. Bei Fragen sind wir jederzeit gern für Sie da.\n\nMit sonnigen Grüßen\n'+(ME?ME.replace(/\s*\([^)]*\)$/,''):'')+'\nnutz die Sonne GmbH',toc:true,save:!!ASSETS},fields:[
+    {k:'title',label:'Titel',req:1},{k:'proj',label:'Projekt'},{k:'cust',label:'Kunde'},{k:'addr',label:'Anschrift / Standort'},
+    {k:'intro',label:'Anschreiben auf dem Deckblatt (optional)',type:'textarea',full:1},
+    {k:'ord',label:'Reihenfolge der Dokumente',type:'html',full:1,html:`<div id="mp_list" class="mp-list">${mappeListHtml()}</div>${no.length?`<div class="small muted" style="margin-top:6px">Nicht enthalten (kein PDF/Bild): ${esc(no.map(f=>f.name).join(', '))}${no.some(f=>f.vact==='saleEdit')?' – Rechnungen/Angebote aus „Verkauf“ bitte über Drucken als PDF speichern und in die Ablage legen.':''}</div>`:''}`},
+    {k:'opts',label:'Optionen',type:'html',full:1,html:`<label class="mt-opt"><input type="checkbox" class="ck" id="mp_toc" checked><span>Inhaltsverzeichnis</span></label>${ASSETS?'<label class="mt-opt"><input type="checkbox" class="ck" id="mp_save" checked><span>Mappe auch in der Datenablage des Projekts speichern</span></label>':''}`}],
+    saveLabel:'📘 Mappe als PDF erstellen',onSave:v=>{ delete v.ord; delete v.opts; if(!MAPPE_ORDER.length){ toast('Keine Dokumente in der Mappe.'); return false; } mappeBuild({...v,toc:!!($('#mp_toc')||{}).checked,save:!!($('#mp_save')||{}).checked,pid:pids[0]||'',ids:MAPPE_ORDER.slice()}); }}); }
+var MAPPE_ORDER=[];
+const mappeListHtml=()=>MAPPE_ORDER.map((id,i)=>{ const f=fileById(id); return f?`<div class="mp-it"><span class="mp-n">${i+1}</span><span class="fl-k k-${f.kind}">${esc(FILE_KINDS[f.kind]||'Datei')}</span><span class="mp-t">${esc(f.name)}</span><button type="button" class="icon-btn" data-act="mappeMv" data-i="${i}" data-d="-1" ${i?'':'disabled'} aria-label="nach oben">▲</button><button type="button" class="icon-btn" data-act="mappeMv" data-i="${i}" data-d="1" ${i<MAPPE_ORDER.length-1?'':'disabled'} aria-label="nach unten">▼</button><button type="button" class="icon-btn" data-act="mappeRm" data-i="${i}" aria-label="entfernen">✕</button></div>`:''; }).join('');
+// Text so umbauen, dass die PDF-Standardschrift (WinAnsi) ihn darstellen kann
+const pdfSafe=s=>String(s||'').replace(/[\u2018\u2019]/g,"'").replace(/[\u2028\u2029]/g,'\n').replace(/[\u2192\u21E2]/g,'->').replace(/[^\x09\x0A\x0D\x20-\x7E\u00A0-\u00FF\u20AC\u201A\u201E\u201C\u201D\u2013\u2014\u2022\u2026]/g,'');
+async function mappeBuild(o){ busy(1,'mappe'); toast('Kundenmappe wird erstellt …');
+  try{ if(!window.PDFLib) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js');
+    const {PDFDocument,StandardFonts,rgb}=window.PDFLib, W=595.28, H=841.89, M=56;
+    const out=await PDFDocument.create(), F=await out.embedFont(StandardFonts.Helvetica), FB=await out.embedFont(StandardFonts.HelveticaBold);
+    const INK=rgb(.07,.07,.07), SUN=rgb(.957,.859,.008), GREY=rgb(.45,.45,.45), LINE=rgb(.86,.86,.86);
+    const wrap=(txt,font,size,maxW)=>{ const lines=[]; pdfSafe(txt).split('\n').forEach(par=>{ let cur=''; par.split(/\s+/).forEach(w=>{ const t=cur?cur+' '+w:w; if(font.widthOfTextAtSize(t,size)>maxW&&cur){ lines.push(cur); cur=w; } else cur=t; }); lines.push(cur); }); return lines; };
+    // 1) Dokumente laden (für Seitenzahlen im Inhaltsverzeichnis)
+    const docs=[]; for(const id of o.ids){ const f=fileById(id); if(!f) continue;
+      try{ if(!f.asset){ docs.push({f,text:f.text||''}); continue; }
+        const b=await fileBlob(f), bytes=new Uint8Array(await b.arrayBuffer()), isPdf=/pdf/.test(b.type||f.mime||'')||/\.pdf$/i.test(f.name||'')||(bytes[0]===0x25&&bytes[1]===0x50);
+        if(isPdf){ const src=await PDFDocument.load(bytes,{ignoreEncryption:true}); docs.push({f,src}); }
+        else { let jpg=bytes, png=null; const ty=b.type||f.mime||''; if(/png/.test(ty)) { png=bytes; jpg=null; } else if(!/jpe?g/.test(ty)){ jpg=await mappeToJpg(b); } docs.push({f,jpg,png}); } }
+      catch(e){ docs.push({f,err:String(e.message||e)}); } }
+    const pagesOf=d=>d.src?d.src.getPageCount():d.text!=null?Math.max(1,Math.ceil(wrap(d.text,F,10,W-2*M).length/62)):1;
+    // 2) Deckblatt
+    const logo=await out.embedPng(await (await fetch(NDS_LOGO)).arrayBuffer());
+    const cv=out.addPage([W,H]);
+    cv.drawRectangle({x:0,y:0,width:W,height:H,color:rgb(1,1,1)});
+    cv.drawCircle({x:W-40,y:H-60,size:210,color:SUN}); cv.drawCircle({x:W-40,y:H-60,size:250,borderColor:SUN,borderWidth:1.2,opacity:0,borderOpacity:.6});
+    cv.drawRectangle({x:0,y:0,width:14,height:H,color:INK});
+    const lw=170, lh=lw*logo.height/logo.width; cv.drawImage(logo,{x:M,y:H-M-lh,width:lw,height:lh});
+    let y=H*0.52; cv.drawRectangle({x:M,y:y+70,width:60,height:5,color:SUN});
+    wrap(o.title||'Projektmappe',FB,38,W-2*M).forEach(l=>{ cv.drawText(l,{x:M,y:y+20,size:38,font:FB,color:INK}); y-=44; });
+    if(o.proj){ wrap(o.proj,FB,17,W-2*M).forEach(l=>{ cv.drawText(l,{x:M,y,size:17,font:FB,color:INK}); y-=22; }); }
+    y-=6; [o.cust&&'für '+o.cust,o.addr,'Stand: '+dDE(TODAY())].filter(Boolean).forEach(l=>{ wrap(l,F,12,W-2*M).forEach(x=>{ cv.drawText(x,{x:M,y,size:12,font:F,color:GREY}); y-=17; }); });
+    if(o.intro&&o.intro.trim()){ y-=20; cv.drawLine({start:{x:M,y:y+8},end:{x:W-M,y:y+8},thickness:.6,color:LINE}); y-=10; wrap(o.intro.trim(),F,10.5,W-2*M).slice(0,22).forEach(l=>{ cv.drawText(l,{x:M,y,size:10.5,font:F,color:INK}); y-=14.5; }); }
+    const foot=pdfSafe([NDS.name,NDS.street,NDS.city,NDS.tel,NDS.mail].join('  ·  '));
+    cv.drawLine({start:{x:M,y:M+14},end:{x:W-M,y:M+14},thickness:.6,color:LINE}); cv.drawText(foot,{x:M,y:M,size:8,font:F,color:GREY});
+    // 3) Inhaltsverzeichnis
+    const tocPages=o.toc?1:0; let pageNo=1+tocPages+1; const entries=docs.map(d=>{ const e={d,start:pageNo,n:pagesOf(d)}; pageNo+=e.n; return e; });
+    if(o.toc){ const tp=out.addPage([W,H]); let ty=H-M-20; tp.drawRectangle({x:0,y:0,width:14,height:H,color:INK}); tp.drawRectangle({x:M,y:ty+34,width:40,height:4,color:SUN});
+      tp.drawText('Inhalt',{x:M,y:ty,size:26,font:FB,color:INK}); ty-=46;
+      entries.forEach((e,i)=>{ if(ty<M+40) return; const kind=pdfSafe(FILE_KINDS[e.d.f.kind]||'Dokument'), nm=wrap(String(e.d.f.name).replace(/\.[a-z0-9]{2,5}$/i,'').replace(/_/g,' ').replace(/^\d{8}\s+/,''),F,10.5,W-2*M-90)[0];
+        tp.drawText(String(i+1).padStart(2,'0'),{x:M,y:ty,size:13,font:FB,color:SUN}); tp.drawText(kind,{x:M+34,y:ty+4,size:8,font:FB,color:GREY}); tp.drawText(nm,{x:M+34,y:ty-9,size:10.5,font:F,color:INK});
+        const pn='Seite '+e.start; tp.drawText(pn,{x:W-M-F.widthOfTextAtSize(pn,10),y:ty-3,size:10,font:F,color:GREY}); tp.drawLine({start:{x:M,y:ty-18},end:{x:W-M,y:ty-18},thickness:.4,color:LINE}); ty-=36; }); }
+    // 4) Dokumente anhängen
+    for(const e of entries){ const d=e.d;
+      if(d.src){ const pg=await out.copyPages(d.src,d.src.getPageIndices()); pg.forEach(p=>out.addPage(p)); continue; }
+      if(d.jpg||d.png){ const im=d.png?await out.embedPng(d.png):await out.embedJpg(d.jpg); const p=out.addPage([W,H]); const s=Math.min((W-2*M)/im.width,(H-2*M-30)/im.height); p.drawImage(im,{x:(W-im.width*s)/2,y:(H-im.height*s)/2+8,width:im.width*s,height:im.height*s}); p.drawText(pdfSafe(d.f.name),{x:M,y:H-M+18,size:9,font:FB,color:GREY}); continue; }
+      const lines=d.err?['Dieses Dokument konnte nicht eingebunden werden: '+d.err]:wrap(d.text,F,10,W-2*M); for(let i=0;i<Math.max(1,lines.length);i+=62){ const p=out.addPage([W,H]); let ty=H-M; if(!i){ p.drawText(pdfSafe(d.f.name),{x:M,y:ty,size:13,font:FB,color:INK}); ty-=24; } lines.slice(i,i+62).forEach(l=>{ p.drawText(l,{x:M,y:ty,size:10,font:F,color:INK}); ty-=12.4; }); } }
+    // 5) Fußzeile mit Seitenzahl auf allen Seiten außer dem Deckblatt
+    const all=out.getPages(), tot=all.length, ft=pdfSafe('nutz die Sonne GmbH  ·  '+(o.title||'Projektmappe')+(o.proj?'  ·  '+o.proj:''));
+    all.forEach((p,i)=>{ if(!i) return; const {width:pw}=p.getSize(), s='Seite '+(i+1)+' von '+tot; p.drawText(ft,{x:28,y:16,size:7.5,font:F,color:GREY}); p.drawText(s,{x:pw-28-F.widthOfTextAtSize(s,7.5),y:16,size:7.5,font:F,color:GREY}); });
+    out.setTitle(pdfSafe((o.title||'Projektmappe')+(o.proj?' – '+o.proj:''))); out.setAuthor('nutz die Sonne GmbH'); out.setCreator('Sonnenplan');
+    const bytes=await out.save(), blob=new Blob([bytes],{type:'application/pdf'}), name=stdName(TODAY(),'sonst',('Kundenmappe '+(o.proj||o.cust||'')).trim(),'.pdf');
+    saveBlob(blob,name);
+    if(o.save&&ASSETS){ try{ const file=new File([blob],name,{type:'application/pdf'}); const r=await ASSETS.upload(file,{type:'application/pdf'}); put('files',{id:uid(),name,mime:'application/pdf',size:blob.size,asset:r.id,kind:'sonst',pid:o.pid||'',date:TODAY(),at:new Date().toISOString(),note:'Kundenmappe ('+docs.length+' Dokumente)'}); }catch(e){ toast('PDF erstellt, aber nicht in der Ablage gespeichert.'); } }
+    toast('Kundenmappe erstellt: '+tot+' Seiten.'+(docs.some(d=>d.err)?' Hinweis: '+docs.filter(d=>d.err).length+' Dokument(e) nicht lesbar.':'')); }
+  catch(e){ toast('Mappe konnte nicht erstellt werden: '+(e.message||e)); }
+  finally{ busy(-1,'mappe'); } }
+// Bilder, die pdf-lib nicht direkt kann (webp, gif, heic …) → JPG über ein Canvas
+async function mappeToJpg(blob){ const url=URL.createObjectURL(blob); try{ const img=await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>rej(new Error('Bildformat nicht lesbar')); i.src=url; });
+    const s=Math.min(1,2400/Math.max(img.naturalWidth,img.naturalHeight)), c=document.createElement('canvas'); c.width=Math.round(img.naturalWidth*s); c.height=Math.round(img.naturalHeight*s); const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage(img,0,0,c.width,c.height);
+    const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.88)); return new Uint8Array(await b.arrayBuffer()); } finally{ URL.revokeObjectURL(url); } }
+queueMicrotask(()=>{ Object.assign(A,{ /* A wird weiter unten angelegt */
+  fileDl:d=>fileDl(d.id),
+  fselDl:async()=>{ const fs=[...FSEL].map(fileById).filter(f=>f&&(f.asset||f.text)); if(!fs.length) return toast('Keine herunterladbaren Dateien ausgewählt.'); for(const f of fs){ await fileDl(f.id); await new Promise(r=>setTimeout(r,350)); } },
+  fselClear:()=>{ FSEL.clear(); render(); fselBar(); },
+  mappeNew:()=>mappeForm(),
+  mappeMv:d=>{ const i=+d.i, j=i+(+d.d); if(j<0||j>=MAPPE_ORDER.length) return; [MAPPE_ORDER[i],MAPPE_ORDER[j]]=[MAPPE_ORDER[j],MAPPE_ORDER[i]]; $('#mp_list').innerHTML=mappeListHtml(); },
+  mappeRm:d=>{ MAPPE_ORDER.splice(+d.i,1); $('#mp_list').innerHTML=mappeListHtml(); } });
+  Object.assign(CHG,{ fileSel:(d,el)=>{ el.checked?FSEL.add(d.id):FSEL.delete(d.id); const r=el.closest('.fl'); if(r) r.classList.toggle('sel',el.checked); fselBar(); } }); });
 function fileDropHtml(pid){
   return `<div class="dropz fdrop" data-fdrop="${esc(pid||'')}" tabindex="0" aria-label="Dateien ablegen">
     <div class="dz-ic">${ic('files')}</div><div><b>Dateien & E-Mails hierher ziehen</b><div class="small muted">Angebote, Rechnungen, Lieferscheine, Pläne, Fotos, Outlook-Mails (.msg) mit Anhängen. ${pid?'Alles landet in diesem Projekt.':'Art und Projekt werden automatisch erkannt und lassen sich ändern.'} Kopierten Mailtext: hier klicken und Strg+V.</div></div>
@@ -4455,7 +4657,18 @@ const A = {
  tplChkNew:()=>openSheet({title:'Eigener Checklistenpunkt',fields:[{k:'t',label:'Punkt',req:1,full:1},{k:'ph',label:'Phase',type:'select',options:PHASES.map(p=>[p.id,p.n])},{k:'r',label:'Rolle',type:'select',options:Object.entries(ROLES)}],
    onSave:v=>{ const items=((S.config||{}).checkItems||[]).concat([{id:'ci_'+uid(),t:v.t,ph:v.ph,r:v.r}]); saveTpl({checkItems:items}); checkSet(items[items.length-1].id,true); }}),
  openPick:d=>{ UI.stockTab='listen'; go('stock'); },
- newMenu:(d,el)=>showMenu(el,[['newProject','Projekt','proj'],['newTask','To-Do','todo'],['newEvent','Termin','cal'],['newOrder','Bestellung','box'],['newOffer','Angebot','offer'],['newReport','Tagesrapport','report']].map(x=>{ if(UI.view==='project'&&x[0]!=='newProject') x[3]=`data-pid="${UI.pid}"`; return x; })),
+ // „+ Neu“: alles, was man schnell anlegen kann – gruppiert; im Projekt wird das Projekt gleich vorbelegt
+ newMenu:(d,el)=>{ const pid=UI.view==='project'?UI.pid:'', P=pid?`data-pid="${pid}"`:'', sec=(l,rows)=>{ rows=rows.filter(Boolean); return rows.length?[['_h',l],...rows]:[]; };
+   showMenu(el,[
+     ...sec('Projekt & Aufgaben',[['newNote','Notiz schreiben','report',P],['newTask','To-Do','todo',P],['newEvent','Termin','cal',P],['newPlan','Einsatz (Wochenplanung)','truck'],['meetNew','Meeting','assign'],['newProject','Projekt','proj']]),
+     ...sec('Material',[mayWrite('orders')&&['newOrder','Bestellung','box',P],['newReport','Tagesrapport','report',P],mayWrite('stock')&&['stockNew','Lagerartikel','box']]),
+     ...sec('Verkauf',canSee('sales')?[['saleNew','Angebot','offer','data-type="angebot"'],['saleNew','Rechnung','offer','data-type="rechnung"'],['saleNew','Auftragsbestätigung','offer','data-type="auftrag"'],['saleNew','Lieferschein','offer','data-type="lieferschein"']]:[]),
+     ...sec('Finanzen',finOk()?[['finNew','Ausgabe / Eingangsrechnung','report','data-kind="ausgabe"'],['finNew','Einnahme','report','data-kind="einnahme"']]:[]),
+     ...sec('Stammdaten',canSee('stamm')?[['stEdit','Kunde','assign','data-k="kunden"'],['stEdit','Lieferant','truck','data-k="lieferanten"'],['stEdit','Artikel','box','data-k="artikel"']]:[]),
+     ...sec('Ich',[['hrAbsNew','Urlaub beantragen','cal','data-type="urlaub"'],['hrAbsNew','Krankmeldung','cal','data-type="krank"']])]); },
+ // Notiz ins Projekt-Tagebuch (heutige Tagesnotiz), auch ohne vorher ins Projekt zu gehen
+ newNote:d=>openSheet({title:'Notiz schreiben',value:{pid:d.pid||'',t:''},fields:[{k:'pid',label:'Projekt',type:'select',options:[['','– Projekt wählen –'],...projOpts().filter(o=>o[0])],req:1},{k:'t',label:'Notiz',type:'textarea',req:1,ph:'Was ist passiert / was wurde besprochen?'}],
+   onSave:v=>{ if(!v.pid||!String(v.t||'').trim()){ toast('Bitte Projekt und Text angeben.'); return false; } saveNote(v.pid,'notes',String(v.t).trim()); }}),
  // Handy-Menü „Mehr“ = dieselben Rubriken wie die Seitenleiste am Desktop (ohne die 4 Tabs unten)
  moreMenu:()=>navDrawer(!document.body.classList.contains('nav-open')),
  moreMenuOld:(d,el)=>showMenu(el,[['meProfile','Mein Profil ('+(ME?meK():'?')+'): Farbe, Passwort','assign'],
@@ -4839,7 +5052,7 @@ function monteurPage(name,ws){
   const box='<span class="mp-box">☐</span>';
   const body=`<table class="pr-tbl mp-week">${dd.map(dayBlock).join('')}</table>
     <h3>Material – was von wo mitnehmen</h3>${matRows.length?`<table class="pr-tbl"><tr><th style="width:5%"></th><th style="width:12%">Menge</th><th>Material</th><th style="width:24%">Projekt</th><th style="width:22%">Woher</th></tr>${matRows.map(m=>`<tr><td>${m.packed?'☑':box}</td><td>${esc(qn(m.qty)+' '+(m.unit||''))}</td><td>${esc(m.art)}${m.artNr?' <small>'+esc(m.artNr)+'</small>':''}</td><td>${esc(projName(m.pid)||'')}</td><td>${esc(matSource(m))}</td></tr>`).join('')}</table>`:'<p class="mp-free">Keine offenen Kommissionierlisten. Material steht ggf. bei den Einsätzen oben.</p>'}
-    ${tasks.length?`<h3>Deine To-Dos</h3><table class="pr-tbl">${tasks.slice(0,15).map(t=>`<tr><td style="width:5%">${box}</td><td>${esc(t.title)}${t.pid?' <small>· '+esc(projName(t.pid))+'</small>':''}</td><td style="width:16%">${t.due?esc(fmtD(t.due)):''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?' <b>'+esc(PRIO[t.prio][0])+'</b>':''}</td></tr>`).join('')}</table>`:''}
+    ${tasks.length?`<h3>Deine To-Dos</h3><table class="pr-tbl">${tasks.slice(0,15).map(t=>`<tr><td style="width:5%">${box}</td><td>${esc(t.title)}${t.pid?' <small>· '+esc(projName(t.pid))+'</small>':''}</td><td style="width:16%">${t.due?esc(fmtD(t.due)):''}${t.wv&&!t.done?`<span class="pill wv-pill ${t.wv<=TODAY()?'bad':''}" title="${esc(t.wvNote||'Wiedervorlage')}">🔔 WV ${t.wv<=TODAY()?(t.wv===TODAY()?'heute':'seit '+fmtD(t.wv).slice(0,6)):fmtD(t.wv).slice(0,6)}</span>`:''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?' <b>'+esc(PRIO[t.prio][0])+'</b>':''}</td></tr>`).join('')}</table>`:''}
     <h3>Lückenfüller – wenn nichts ansteht</h3>${pool.length?`<table class="pr-tbl">${pool.slice(0,14).map(t=>`<tr><td style="width:5%">${box}</td><td>${esc(t.title)}${t.notes?' <small>· '+esc(String(t.notes).slice(0,80))+'</small>':''}</td><td style="width:20%">${esc((POOL_CATS[t.pcat]||'')+(t.dur?' · '+t.dur:''))}</td></tr>`).join('')}</table>`:'<p class="mp-free">Keine allgemeinen Aufgaben im Pool.</p>'}
     <h3>Notizen / Rückmeldung</h3><div class="pr-line"></div><div class="pr-line"></div><div class="pr-line"></div>`;
   return ['Wochenplan '+name.replace(/\s*\([^)]*\)$/,''),'KW '+kwOf(ws)+' · '+fmtD(ws)+' – '+fmtD(dd[dd.length-1]),body];
@@ -5031,7 +5244,7 @@ const aicDate=d=>/^\d{4}-\d{2}-\d{2}$/.test(d||'')?d:'';
 const aicPid=p=>S.projects[p]||p===INTERN?p:'';
 const AIC_ACT={
  task:{l:'To-Do anlegen',form:1,desc:a=>[a.title,a.who&&'→ '+a.who,aicDate(a.due)&&'fällig '+fmtD(a.due),projName(aicPid(a.pid))].filter(Boolean).join(' · '),
-   run:a=>taskForm(null,{title:String(a.title||'').slice(0,300),who:aicWho(a.who),due:aicDate(a.due),pid:aicPid(a.pid),prio:PRIO[a.prio]?a.prio:'normal',notes:a.notes||'',src:'ki',created:TODAY()})},
+   run:a=>taskForm(null,{title:String(a.title||'').slice(0,300),who:aicWho(a.who),due:aicDate(a.due),pid:aicPid(a.pid),prio:PRIO[a.prio]?a.prio:'normal',notes:a.notes||'',wv:aicDate(a.wv),wvNote:a.wvNote||'',src:'ki',created:TODAY()})},
  task_update:{l:'Update zum To-Do',desc:a=>((S.tasks[a.task]||{}).title||'?')+': '+(a.text||''),
    run:a=>{ const k=clone(S.tasks[a.task]||null); if(!k||!String(a.text||'').trim()) return toast('To-Do nicht gefunden.'),false; k.upd2=[...(k.upd2||[]),{d:TODAY(),tm:nowStamp().slice(9),by:meK(),t:fixNames(String(a.text).trim()),at:new Date().toISOString()}]; put('tasks',k); toast('Update gespeichert.'); }},
  task_done:{l:'To-Do erledigt',desc:a=>((S.tasks[a.task]||{}).title||'?')+(a.text?' – '+a.text:''),
@@ -5122,7 +5335,7 @@ Regeln:
 - chart: nur wenn ein Diagramm gewünscht ist oder Zahlen sich klar besser zeigen lassen: {"type":"bar|line|pie","title":"…","labels":["…"],"series":[{"name":"…","data":[Zahlen]}],"unit":""}. Werte exakt aus den Daten zählen/summieren.
 - table: {"cols":["…"],"rows":[["…"]]}
 - actions: Soll etwas in der App ANGELEGT oder GEÄNDERT werden (Termin eintragen, To-Do anlegen, Update/Notiz schreiben, To-Do erledigen, Bestellung erfassen, Ware annehmen, Einsatz in der Wochenplanung), dann je Vorgang eine Aktion – der Nutzer prüft und speichert sie selbst. Behaupte nie, es sei schon gespeichert; in say kurz sagen, was vorbereitet ist. Mitarbeiter als Kürzel, Daten als JJJJ-MM-TT (relative Angaben wie „morgen“, „Freitag“, „nächste Woche“ ab heute ausrechnen), pid/task/order nur mit ids aus den Daten. Typen:
-  {"type":"task","title":"…","who":"Kürzel","pid":"","due":"","prio":"normal|hoch|dringend|niedrig","notes":""}
+  {"type":"task","title":"…","who":"Kürzel","pid":"","due":"","prio":"normal|hoch|dringend|niedrig","notes":"","wv":"Wiedervorlage JJJJ-MM-TT, nur wenn gewünscht (z. B. 'leg mir das am Freitag wieder vor')","wvNote":""}
   {"type":"task_update","task":"To-Do-id","text":"…"}
   {"type":"task_done","task":"To-Do-id","text":"was wurde gemacht"}
   {"type":"note","pid":"","text":"…"}  (Projekt-Notiz)
