@@ -528,7 +528,11 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .big-nav.r{right:max(4px,calc(16px + (100vw - 232px - 32px - 1240px) / 2 - 66px))}
 .big-nav .bn-t{position:absolute;top:100%;margin-top:6px;font-size:11px;width:140px;text-align:center;color:var(--muted);pointer-events:none;opacity:0;transition:opacity .15s}
 .big-nav:hover .bn-t{opacity:1}
-@media (max-width:900px){ .big-nav{width:40px;height:64px;top:auto;bottom:84px;transform:none} .big-nav.l{left:6px} .big-nav svg{width:24px;height:24px} }
+/* Handy: keine Pfeile – zum nächsten/vorigen Projekt wischen */
+@media (max-width:900px){ .big-nav{display:none} .proj-hero .hero-k{display:none} }
+.swipe-out-l{animation:swOutL .16s ease-in forwards}.swipe-out-r{animation:swOutR .16s ease-in forwards}
+@keyframes swOutL{to{transform:translateX(-40px);opacity:0}}@keyframes swOutR{to{transform:translateX(40px);opacity:0}}
+.swipe-hint{position:fixed;top:50%;transform:translateY(-50%);z-index:40;background:var(--night);color:var(--sun);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:22px;opacity:0;pointer-events:none;transition:opacity .1s}
 .ext-pill{background:#EDE6FA;color:#5a3596}
 .firm-pill{background:var(--sunken);color:var(--ink);white-space:nowrap}
 /* Globale Suche */
@@ -564,6 +568,9 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .sl-form label{display:block;font-size:12.5px;color:var(--muted);margin:10px 0 3px}
 .sl-head{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .sl-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.since-sum{margin-bottom:10px;line-height:1.7}.since-g{border:1px solid var(--line);border-radius:10px;margin-bottom:8px;padding:6px 10px}.since-g summary{cursor:pointer;padding:4px 0}
+.since-it{display:grid;grid-template-columns:auto auto 1fr;gap:8px;align-items:start;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:7px 2px;font:inherit;font-size:13px;color:inherit;cursor:pointer}.since-it:hover{background:var(--sunken)}
+@media (max-width:600px){ .since-it{grid-template-columns:auto 1fr} .since-it>.mono{grid-column:1/-1} }
 #liveBox{position:fixed;right:16px;bottom:16px;z-index:9000;display:flex;flex-direction:column;gap:8px;max-width:min(360px,calc(100vw - 32px));pointer-events:none}
 .live-t{pointer-events:auto;display:flex;gap:8px;align-items:flex-start;text-align:left;background:var(--surface,#fff);color:var(--ink,#111);border:1px solid var(--line,#ddd);border-left:4px solid var(--sun,#F4DB02);border-radius:10px;padding:9px 12px;box-shadow:0 6px 22px rgba(0,0,0,.18);font:inherit;font-size:12.5px;cursor:pointer;animation:liveIn .25s ease-out;transition:opacity .4s,transform .4s}
 .live-t.out{opacity:0;transform:translateX(20px)}.live-tx{min-width:0;line-height:1.35}
@@ -760,8 +767,7 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .aic-fab{position:fixed;right:18px;bottom:18px;z-index:44;width:52px;height:52px;border-radius:50%;border:0;background:var(--night);color:var(--sun);font-size:22px;box-shadow:0 6px 20px rgba(0,0,0,.3);cursor:pointer}
 .aic-fab[hidden]{display:none}
 @media (max-width:760px){ .aic{inset:0;width:auto;height:auto;border-radius:0;border:0} .aic-fab{bottom:calc(76px + env(safe-area-inset-bottom,0px))} }
-/* Handy im Projekt: Blätter-Pfeile sitzen unten rechts – KI-Knopf darüber, damit nichts überlappt */
-@media (max-width:900px){ body:has(.big-nav.r) .aic-fab{bottom:calc(158px + env(safe-area-inset-bottom,0px));right:10px} }
+
 .gs-spk{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:15px;line-height:1;display:grid;place-items:center;cursor:pointer;padding:0;opacity:.7}
 .gs-spk.on{background:var(--sun-soft);border-color:var(--sun);opacity:1}
 .ask-spk{display:inline-block;margin-top:6px;color:var(--sun);cursor:pointer;font-weight:600;font-size:13px}
@@ -2043,6 +2049,33 @@ setInterval(livePush,2500);
 document.addEventListener('input',e=>{ if(!e.target.matches||!e.target.matches('input,textarea,[contenteditable]')) return; const fresh=Date.now()-LIVE_TY>5000; LIVE_TY=Date.now(); if(fresh) livePush(); },true);
 setTimeout(()=>{ if(window.SB_PRES) window.SB_PRES.on(st=>{ const me=meK(); LIVE_PEERS=Object.values(st||{}).map(a=>a[a.length-1]).filter(x=>x&&x.k&&x.k!==me); const el=$('#livePeers'); if(el) el.innerHTML=livePeersHtml(); }); },3000);
 const livePeersHtml=()=>LIVE_PEERS.length?`<div class="live-h">● Gerade online</div>`+LIVE_PEERS.map(x=>`<div class="live-p" title="${esc(x.w||'')}"><span class="who-chip">${esc(x.k)}</span><span>${x.ty?'<b>tippt</b> · ':''}${esc(x.w||'')}</span></div>`).join(''):'';
+/* ---------- „Seit deinem letzten Besuch“: Zusammenfassung, was andere eingetragen/geändert haben ---------- */
+// Merkt sich je Person und Gerät, wann die App zuletzt offen war. Beim nächsten Öffnen (oder Rückkehr nach > 2 Std.) kommt ein Fenster.
+const SEEN_KEY=()=>'sonnenplan-seen-'+meK();
+const seenGet=()=>lsGet(SEEN_KEY())||'', seenSet=()=>{ if(ME&&MODE==='cloud') try{ localStorage.setItem(SEEN_KEY(),new Date().toISOString()); }catch(e){} };
+let SINCE_DONE=false;
+function sinceItems(last){ const me=meK(), out=[];
+  Object.keys(LIVE_COLL).forEach(k=>{ if((k==='sales'&&!canSee('sales'))||(k==='hrabs'&&!isAdmin())) return;
+    arr(k).forEach(x=>{ if(!x||!x.upd||x.upd<=last||!x.updBy||x.updBy===me||x.updBy==='?'||x.example) return;
+      const hs=(x.hist||[]).filter(h=>h.at>last&&h.by&&h.by!==me), lbl=k==='projects'?x.name:k==='plan'?'KW '+String(x.id).slice(2):k==='sales'?((SALE_T[x.type]||[''])[0]+' '+(x.nr||'Entwurf')):x.title||x.name||x.art||x.supplier||'';
+      const isNew=x.at&&x.at>last&&x.by!==me;
+      out.push({c:k,id:x.id,pid:k==='projects'?x.id:x.pid||'',at:x.upd,by:[...new Set([...hs.map(h=>h.by),x.updBy])].join(', '),t:LIVE_COLL[k]+(lbl?' „'+String(lbl).slice(0,60)+'“':''),a:isNew?'neu angelegt':hs.length?hs.slice(-3).map(h=>h.a).join(' · '):'geändert'}); }); });
+  return out.sort((a,b)=>String(b.at).localeCompare(String(a.at))); }
+var SINCE_FROM=''; // Stand beim Öffnen – für „Was ist neu?“ im Profil
+function sinceShow(force,from){ if(!ME) return; const last=from||seenGet(); if(!last){ seenSet(); return; } if(!from) SINCE_FROM=last; if(!force&&Date.now()-new Date(last).getTime()<20*60*1000) return;
+  const its=sinceItems(last); if(!its.length){ seenSet(); if(force) toast('Seit deinem letzten Besuch hat niemand etwas geändert.'); return; }
+  if(SHEET){ setTimeout(()=>sinceShow(force,from),1500); return; }
+  const ago=(()=>{ const m=Math.round((Date.now()-new Date(last).getTime())/60000); return m<90?m+' Min.':m<36*60?Math.round(m/60)+' Std.':Math.round(m/1440)+' Tagen'; })();
+  const groups={}; its.forEach(x=>{ const g=x.pid&&S.projects[x.pid]?projName(x.pid):x.c==='plan'?'Wochenplanung':x.c==='sales'?'Verkauf':x.c==='stock'?'Lager':'Allgemein'; (groups[g]=groups[g]||[]).push(x); });
+  const who=[...new Set(its.flatMap(x=>x.by.split(', ')))];
+  openSheet({title:'Seit deinem letzten Besuch',wide:1,html:`<div class="fld full"><div class="since-sum">Vor ${esc(ago)} warst du zuletzt hier. Seitdem: <b>${its.length} Änderung${its.length>1?'en':''}</b> von ${who.map(k=>`<span class="who-chip">${esc(k)}</span>`).join(' ')}</div>
+    ${Object.entries(groups).sort((a,b)=>b[1].length-a[1].length).map(([g,xs])=>`<details class="since-g" ${Object.keys(groups).length<=4||xs.length>=3?'open':''}><summary><b>${esc(g)}</b> <span class="cnt-b">${xs.length}</span></summary>${xs.slice(0,25).map(x=>`<button type="button" class="since-it" data-act="openRec" data-c="${x.c}" data-id="${esc(x.id)}"><span class="mono small muted">${esc(new Date(x.at).toLocaleString('de-DE',{weekday:'short',hour:'2-digit',minute:'2-digit'}))}</span><span class="who-chip">${esc(x.by)}</span><span><b>${esc(x.t)}</b><br><span class="small muted">${esc(String(x.a).slice(0,160))}</span></span></button>`).join('')}${xs.length>25?`<div class="small muted">+ ${xs.length-25} weitere</div>`:''}</details>`).join('')}</div>`,
+    saveLabel:'Gelesen',onSave:()=>{ seenSet(); }});
+  seenSet(); }
+setInterval(()=>{ if(document.visibilityState==='visible'&&SINCE_DONE) seenSet(); },60000);
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'){ if(SINCE_DONE) seenSet(); } else if(SINCE_DONE&&Date.now()-new Date(seenGet()||0).getTime()>2*3600*1000) setTimeout(()=>sinceShow(),2500); });
+// erst wenn die Daten da sind und klar ist, wer man ist
+const SINCE_T=setInterval(()=>{ if(MODE!=='cloud'||!ME||!LIVE_READY.tasks||!LIVE_READY.projects) return; clearInterval(SINCE_T); SINCE_DONE=true; setTimeout(()=>sinceShow(),1500); },1000);
 /* ---------- Mein Profil (unten in der Seitenleiste): Kürzel-Farbe, Passwort, Person wechseln ---------- */
 const K_COLS=['#F4DB02','#FFB74D','#FF8A65','#E57373','#F06292','#BA68C8','#9575CD','#7986CB','#64B5F6','#4FC3F7','#4DD0E1','#4DB6AC','#81C784','#AED581','#DCE775','#A1887F','#90A4AE','#1E1E1E'];
 const kCols=()=>((S.config||{}).kColors||{});
@@ -2054,9 +2087,9 @@ function meProfile(){ if(!ME){ askMe(true); return; } const k=meK(), cur=kCols()
   openSheet({title:'Mein Profil',html:`<div class="fld full"><div class="me-prof"><span class="who-chip me-big" id="me_prev" style="${cur?`background:${cur};color:${inkOn(cur)}`:''}">${esc(k)}</span><div><b>${esc(ME.replace(/\s*\([^)]*\)$/,''))}</b>${USER_EMAIL?`<div class="small muted">${esc(USER_EMAIL)}</div>`:''}</div></div>
     <label>Farbe für mein Kürzel <span class="small muted">(sehen alle im Team)</span></label><div class="me-cols">${K_COLS.map(h=>`<button type="button" class="me-col ${h===cur?'on':''}" style="background:${h}" data-act="meCol" data-v="${h}" aria-label="Farbe ${h}"></button>`).join('')}<input type="color" id="me_colc" value="${cur||'#F4DB02'}" title="Eigene Farbe" aria-label="Eigene Farbe"><button type="button" class="lnk" data-act="meCol" data-v="">Standard</button></div>
     ${window.SB_SETPW?`<label>Passwort ändern</label><div class="sl-2"><input class="inp" type="password" id="me_pw1" autocomplete="new-password" placeholder="Neues Passwort (mind. 8 Zeichen)"><input class="inp" type="password" id="me_pw2" autocomplete="new-password" placeholder="Wiederholen"></div><button type="button" class="btn sm" data-act="mePw" style="margin-top:6px">Passwort speichern</button><div class="small" id="me_pwmsg" role="status"></div>`:''}
-    <div class="row" style="margin-top:14px"><button type="button" class="btn ghost sm" data-act="askMe">Andere Person / Kürzel wählen</button></div></div>`,saveLabel:'Schließen',onSave:()=>{}});
+    <div class="row" style="margin-top:14px"><button type="button" class="btn ghost sm" data-act="sinceShow">Was ist neu seit meinem letzten Besuch?</button><button type="button" class="btn ghost sm" data-act="askMe">Andere Person / Kürzel wählen</button></div></div>`,saveLabel:'Schließen',onSave:()=>{}});
   const cc=$('#me_colc'); if(cc) cc.addEventListener('change',()=>A.meCol({v:cc.value})); }
-queueMicrotask(()=>Object.assign(A,{ meProfile:()=>meProfile(), /* A wird weiter unten angelegt */
+queueMicrotask(()=>Object.assign(A,{ meProfile:()=>meProfile(), sinceShow:()=>{ closeSheet(); sinceShow(true,SINCE_FROM||seenGet()); }, /* A wird weiter unten angelegt */
   meCol:d=>{ const k=meK(); if(!k) return; const cfg=clone(S.config||{}); cfg.kColors={...(cfg.kColors||{})}; if(d.v) cfg.kColors[k]=d.v; else delete cfg.kColors[k]; putConfig(cfg);
     const p=$('#me_prev'); if(p){ p.style.background=d.v||''; p.style.color=d.v?inkOn(d.v):''; } document.querySelectorAll('.me-col').forEach(b=>b.classList.toggle('on',b.dataset.v===d.v)); setTimeout(kColorPaint,50); },
   mePw:async()=>{ const a=$('#me_pw1').value, b=$('#me_pw2').value, m=$('#me_pwmsg'), say=(t,ok)=>{ m.textContent=t; m.style.color=ok?'#2E7D4A':'#C0352B'; };
@@ -2610,7 +2643,7 @@ function vProjects(){
   const all=arr('projects').filter(p=>!isIntern(p)), cc=k=>all.filter(p=>catOf(p)===k).length, openT=arr('tasks').filter(t=>!t.done).length;
   const mwp=all.filter(p=>['planung','laufend'].includes(catOf(p))&&PV.includes(p.type)).reduce((a,p)=>a+(+p.kwp||0),0)/1000;
   const kpi=(v,l,k,hi)=>`<button class="hk ${hi?'hi':''}" ${k?`data-act="projFilter" data-v="${k}"`:''}><span class="hv">${v}</span><span class="hl">${l}</span></button>`;
-  const hero=`<section class="hero"><div class="hero-in">
+  const hero=`<section class="hero proj-hero"><div class="hero-in">
      <div class="hero-t"><div class="hero-ey">Projektübersicht · ${esc(fmtDL(TODAY()))}</div><h1>Die Sonne arbeitet.<br><span>Wir auch.</span></h1></div>
      <div class="hero-k">${kpi(cc('laufend'),'Laufend','laufend',1)}${kpi(cc('planung'),'In Planung','planung')}${kpi(cc('onhold'),'Onhold','onhold')}${kpi(openT,'Offene Aufgaben','')}${mwp?kpi(nf(mwp,1),'MWp in Arbeit',''):kpi(cc('erledigt'),'Erledigt','erledigt')}</div>
      <div class="hero-a"><button class="btn sun" data-act="newProject">${ic('plus')}Neues Projekt</button><div class="seg-mode">${[['karten','Karten'],['liste','Liste'],['board','Board']].map(([k,l])=>`<button class="${UI.projMode===k?'on':''}" data-act="projMode" data-v="${k}">${l}</button>`).join('')}</div></div>
@@ -6859,6 +6892,14 @@ document.addEventListener('drop',e=>{ const z=e.target.closest&&e.target.closest
 document.addEventListener('paste',e=>{ if(UI.view!=='todos'||SHEET) return; const tg=e.target; if(tg&&(tg.tagName==='TEXTAREA'||tg.tagName==='INPUT')) return;
   const files=[...(e.clipboardData.files||[])], text=e.clipboardData.getData('text/plain')||''; if(!files.length&&text.trim().length<30) return; e.preventDefault(); e.stopImmediatePropagation(); mailToTodos(files,text); },true);
 
+// Handy: im Projekt nach links/rechts wischen = nächstes/voriges Projekt (wie die Pfeile am Desktop)
+(()=>{ let x0=0,y0=0,t0=0,ok=false; const NO='input,textarea,select,[contenteditable],.rail,.tbl-wrap,.chips,.sl-items,.dcols,.board,.hscroll,.sheet,#scrim,.aic,.side';
+  document.addEventListener('touchstart',e=>{ ok=false; if(UI.view!=='project'||innerWidth>900||e.touches.length!==1||SHEET||document.body.classList.contains('nav-open')) return; if(e.target.closest&&e.target.closest(NO)) return;
+    const t=e.touches[0]; x0=t.clientX; y0=t.clientY; t0=Date.now(); ok=x0>16&&x0<innerWidth-16; },{passive:true}); // Ränder frei lassen (Zurück-Geste des Handys)
+  document.addEventListener('touchend',e=>{ if(!ok) return; ok=false; const t=e.changedTouches[0], dx=t.clientX-x0, dy=t.clientY-y0;
+    if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.8||Date.now()-t0>700) return;
+    const b=document.querySelector(dx<0?'.big-nav.r':'.big-nav.l'); if(!b||b.disabled||!b.dataset.id) return toast(dx<0?'Das ist das letzte Projekt.':'Das ist das erste Projekt.');
+    const v=$('#view'); if(v){ v.classList.add(dx<0?'swipe-out-l':'swipe-out-r'); setTimeout(()=>{ v.classList.remove('swipe-out-l','swipe-out-r'); b.click(); },150); } else b.click(); },{passive:true}); })();
 // Handy-Schublade: Seitenleiste ein-/ausblenden (Abdunklung dahinter schließt sie)
 function navDrawer(on){ let s=$('#navScrim'); if(!s){ s=document.createElement('div'); s.id='navScrim'; s.onclick=()=>navDrawer(false); document.body.appendChild(s); } document.body.classList.toggle('nav-open',!!on); if(on){ const c=document.querySelector('#side .nav-btn.on'); if(c) c.scrollIntoView({block:'center'}); } }
 document.addEventListener('click',e=>{
