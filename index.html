@@ -1973,11 +1973,23 @@ const permOf=n=>(((S&&S.config)||{}).perms||{})[n]||null;
 const isAdmin=()=>isBaseAdmin()||!!(permOf(ME)||{}).admin;
 const AREAS=[['dash','Übersicht'],['projects','Projekte'],['todos','To-Dos'],['private','Private To-Dos'],['chat','Chat'],['week','Kalender & Wochenplanung'],['orders','Bestellungen & Wareneingänge'],['stock','Lagerverwaltung'],['files','Datenablage'],['offers','Angebote'],['reports','Tagesrapporte'],['templates','Vorlagen'],['sales','Verkauf (Angebote, Rechnungen …)'],['stamm','Stammdaten (Kunden, Lieferanten, Artikel)'],['hr','HR (Stempeluhr, Urlaub)'],['settings','Team & Einstellungen'],['activity','Aktivität']];
 const defaultViews=n=>AREAS.map(a=>a[0]).filter(v=>v!=='activity'||shortWho(n)==='EP');
+// Rollen-Voreinstellungen fuer die Rechteverteilung (danach pro Person anpassbar)
+const ROLE_PRESETS={
+ monteur:{l:'Monteur',views:['dash','todos','private','week','orders','stock','hr'],ownTodos:true,admin:false,info:'Terminplan, eigene + allgemeine To-Dos, Material & Lager, eigene Stempeluhr'},
+ buero:{l:'Büro',views:['dash','projects','todos','private','chat','week','files','offers','reports','orders','stock','sales','stamm','hr'],ownTodos:false,admin:false,info:'Projekte & Planung, Material & Lager, Verkauf, eigene HR-Seite'},
+ buchhaltung:{l:'Buchhaltung',views:AREAS.map(a=>a[0]).filter(v=>!['templates','settings','activity'].includes(v)),ownTodos:false,admin:true,info:'alles außer Vorlagen, Team & Einstellungen, Aktivität und Rechte'},
+ admin:{l:'Admin',views:AREAS.map(a=>a[0]),ownTodos:false,admin:true,info:'alles'}};
+const ROLE_DEFAULT_BY_K={as:'monteur',moji:'monteur',hh:'buero',mk:'buero',js:'buero',pr:'buero',jp:'buchhaltung',ep:'admin',ave:'admin'};
+const ownTodosOnly=()=>!isAdmin()&&!!(permOf(ME)||{}).ownTodos;
+// Rolle anwenden: Sehen + Bearbeiten wie die Voreinstellung, Admin-Häkchen, „nur eigene To-Dos“
+function rolePerm(role,old){ const R=ROLE_PRESETS[role]; if(!R) return {...(old||{}),role:''};
+  return {...(old||{}),role,views:R.views.slice(),edit:R.views.filter(v=>!['dash','activity'].includes(v)),admin:!!R.admin,ownTodos:!!R.ownTodos}; }
+queueMicrotask(()=>{ A.permPresetAll=()=>CHG.permPresetAll(); }); /* Knopf „Voreinstellungen übernehmen“ (A wird weiter unten angelegt) */
 const viewsOf=n=>{ const p=permOf(n); return p&&Array.isArray(p.views)?p.views:defaultViews(n); };
 const editsOf=n=>{ const p=permOf(n); return p&&Array.isArray(p.edit)?p.edit:viewsOf(n); };
 const canEdit=a=>isAdmin()||(!!ME&&editsOf(ME).includes(a)&&viewsOf(ME).includes(a));
 function canSee(v){ if(v==='rights') return isBaseAdmin(); if(v==='hr') return true; /* Stempeln und Urlaub: für alle */ if(String(v).startsWith('f:')) v='files'; if(String(v).startsWith('st:')) v='stamm'; if(v==='fin'||String(v).startsWith('fi:')) return finOk(); if(String(v).startsWith('vk:')) v='sales'; if(v==='dash') return true; if(!ME) return v!=='activity'; const vs=viewsOf(ME);
-  if(v==='project') return vs.includes('projects'); if(v==='pool'||v==='meetings') return vs.includes('todos'); if(v==='calendar') return vs.includes('week'); return vs.includes(v); }
+  if(v==='project') return vs.includes('projects'); if(v==='pool') return vs.includes('todos'); if(v==='meetings') return vs.includes('todos')&&!ownTodosOnly(); if(v==='calendar') return vs.includes('week'); return vs.includes(v); }
 const canSeeActivity=()=>canSee('activity');
 const META=['upd','updBy','hist','at','by'];
 const strip=o=>{ const c={}; Object.keys(o||{}).forEach(k=>{ if(!META.includes(k)) c[k]=o[k]; }); return JSON.stringify(c); };
@@ -2980,7 +2992,7 @@ function todoGroups(open,dateGroups){
   return [['Alle offenen · '+TODO_SORTS[k][0],()=>true,srt]];
 }
 function vTodos(){  const t=TODAY(), who=UI.todoWho;
-  let ts=arr('tasks').filter(x=>!(x.pool&&!x.who)); if(who==='-') ts=ts.filter(x=>!x.who); else if(who) ts=ts.filter(x=>taskHas(x,who));
+  let ts=arr('tasks').filter(x=>!(x.pool&&!x.who)); if(ownTodosOnly()) ts=ts.filter(x=>taskHas(x,ME)); if(who==='-') ts=ts.filter(x=>!x.who); else if(who) ts=ts.filter(x=>taskHas(x,who));
   const open=ts.filter(x=>!x.done), done=ts.filter(x=>x.done); VIS_TASKS=open.map(x=>x.id);
   const groups=[['Überfällig',x=>x.due&&x.due<t],['Heute',x=>x.due===t],['Diese Woche',x=>x.due>t&&x.due<=addDays(t,7)],['Später',x=>x.due>addDays(t,7)],['Ohne Datum',x=>!x.due]];
   const people=[...new Set([...staff().map(s=>s.name),...arr('tasks').map(x=>x.who).filter(Boolean)])];
@@ -4106,10 +4118,10 @@ document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target&&e.target.
 function vRights(){
   if(!isBaseAdmin()) return head('Rechte','')+'<div class="card"><div class="empty">Nur EP und AvE können Rechte verteilen.</div></div>';
   const st=staff();
-  return head('Admin: Rechte','Wer sieht welche Rubrik – und wer darf alles bearbeiten und löschen')+
-   `<div class="card"><div class="tbl-wrap"><table class="tbl rights"><thead><tr><th>Mitarbeiter</th><th title="Alles bearbeiten und löschen (wie EP/AvE)">Admin</th>${AREAS.map(([k,l])=>`<th class="rt-h"><span>${esc(l)}</span></th>`).join('')}</tr></thead><tbody>
+  return head('Admin: Rechte','Wer sieht welche Rubrik – und wer darf alles bearbeiten und löschen',`<button class="btn sun" data-act="permPresetAll" title="AS, Moji = Monteur · HH, MK, JS, PR = Büro · JP = Buchhaltung · EP, AvE = Admin">Voreinstellungen übernehmen</button>`)+`<div class="card rt-presets"><div class="card-b">${Object.values(ROLE_PRESETS).map(r=>`<div><b>${esc(r.l)}</b> <span class="small muted">${esc(r.info)}</span></div>`).join('')}<div class="small muted" style="margin-top:6px">Rolle wählen setzt die Häkchen; danach kann man pro Person einzeln anpassen (dann steht dort individuell).</div></div></div>`+
+   `<div class="card"><div class="tbl-wrap"><table class="tbl rights"><thead><tr><th>Mitarbeiter</th><th>Rolle</th><th title="Alles bearbeiten und löschen (wie EP/AvE)">Admin</th>${AREAS.map(([k,l])=>`<th class="rt-h"><span>${esc(l)}</span></th>`).join('')}</tr></thead><tbody>
    ${st.map(s=>{ const base=ADMINS.includes(shortWho(s.name)), p=permOf(s.name)||{}, vs=viewsOf(s.name), es=editsOf(s.name), adm=base||p.admin;
-     return `<tr><td><b>${esc(s.name)}</b><div class="small muted">${esc(ROLES[s.role]||s.role||'')}</div></td>
+     return `<tr><td><b>${esc(s.name)}</b><div class="small muted">${esc(ROLES[s.role]||s.role||'')}</div></td><td>${base?'<span class="pill sun">Admin</span>':`<select class="inp rt-role" data-chg="permRole" data-n="${esc(s.name)}" aria-label="Rolle: ${esc(s.name)}"><option value="">individuell</option>${Object.entries(ROLE_PRESETS).map(([k,r])=>`<option value="${k}" ${p.role===k?'selected':''}>${esc(r.l)}</option>`).join('')}</select>`}</td>
        <td class="c">${base?'<span class="pill sun">immer</span>':`<input type="checkbox" class="ck" data-chg="permAdmin" data-n="${esc(s.name)}" ${p.admin?'checked':''} aria-label="Admin: ${esc(s.name)}">`}</td>
        ${AREAS.map(([k,l])=>k==='dash'?'<td class="c"><span class="pm">👁 ✓</span></td>':`<td class="c"><label class="pm" title="sehen"><input type="checkbox" class="ck" data-chg="permView" data-n="${esc(s.name)}" data-v="${k}" ${vs.includes(k)?'checked':''} ${base?'disabled':''} aria-label="${esc(l)} sehen: ${esc(s.name)}">👁</label>${['private','activity','dash'].includes(k)?'':`<label class="pm" title="bearbeiten / löschen"><input type="checkbox" class="ck" data-chg="permEdit" data-n="${esc(s.name)}" data-v="${k}" ${adm||es.includes(k)?'checked':''} ${adm||!vs.includes(k)?'disabled':''} aria-label="${esc(l)} bearbeiten: ${esc(s.name)}">✎</label>`}</td>`).join('')}</tr>`; }).join('')}
    </tbody></table></div>
@@ -4949,8 +4961,10 @@ function applyMs(p,i,val){
 }
 function setMs(pid,i,val){ const p=clone(S.projects[pid]); const msg=applyMs(p,i,val); put('projects',p); if(msg) toast(msg); }
 const CHG = {
- permView:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; const p={...(perms[d.n]||{})}; const vs=new Set(viewsOf(d.n)); if(el.checked) vs.add(d.v); else vs.delete(d.v); p.views=[...vs]; perms[d.n]=p; putConfig({...(S.config||{}),perms}); },
+ permView:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; const p={...(perms[d.n]||{}),role:''}; const vs=new Set(viewsOf(d.n)); if(el.checked) vs.add(d.v); else vs.delete(d.v); p.views=[...vs]; perms[d.n]=p; putConfig({...(S.config||{}),perms}); },
  permEdit:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; const p={...(perms[d.n]||{}),views:viewsOf(d.n)}; const es=new Set(editsOf(d.n)); if(el.checked) es.add(d.v); else es.delete(d.v); p.edit=[...es]; perms[d.n]=p; putConfig({...(S.config||{}),perms}); },
+ permRole:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; perms[d.n]=rolePerm(el.value,perms[d.n]); putConfig({...(S.config||{}),perms}); toast(shortWho(d.n)+': '+(el.value?ROLE_PRESETS[el.value].l:'individuell')+'.'); },
+ permPresetAll:()=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}, done=[]; staff().forEach(s=>{ const k=String(shortWho(s.name)).toLowerCase(), r=ROLE_DEFAULT_BY_K[k]; if(!r||ADMINS.includes(shortWho(s.name))) return; perms[s.name]=rolePerm(r,perms[s.name]); done.push(shortWho(s.name)+' = '+ROLE_PRESETS[r].l); }); putConfig({...(S.config||{}),perms}); toast(done.length?'Übernommen: '+done.join(', '):'Keine passenden Kürzel gefunden.'); },
  permAdmin:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; perms[d.n]={...(perms[d.n]||{}),views:viewsOf(d.n),admin:el.checked}; putConfig({...(S.config||{}),perms}); toast(shortWho(d.n)+(el.checked?' ist jetzt Admin.':' ist kein Admin mehr.')); },
  wvlDate:(d,el)=>{ const p=clone(S.projects[d.id]); if(!p||!el.value) return; p.wvl=el.value; put('projects',p); toast('Neue Wiedervorlage: '+fmtD(el.value)); },
  privToggle:(d,el)=>{ const t=S.priv[d.id]; if(!t) return; privPut({...t,done:el.checked,doneAt:el.checked?new Date().toISOString():''}); },
