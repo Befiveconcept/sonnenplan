@@ -610,6 +610,16 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .ev-td{display:grid;grid-template-columns:minmax(120px,170px) minmax(0,1fr) 140px 32px;gap:6px;align-items:center;margin-bottom:6px}
 @media (max-width:700px){ .ev-td{grid-template-columns:1fr 32px} .ev-td .evt-t{grid-column:1/-1} .ev-td .evt-d{grid-column:1/2} }
 .ev-linked{margin-bottom:8px;border:1px solid var(--line);border-radius:10px}
+.pc-cover{margin:-16px -16px 2px;height:120px;overflow:hidden;background:var(--sunken)}.pc-cover img,.proj-cover img,.pf-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.proj-cover{height:180px;border-radius:16px;overflow:hidden;margin:0 0 12px;background:var(--sunken)}.pf-cover{height:140px;border:1px dashed var(--line);border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--sunken)}
+@media (max-width:760px){ .proj-cover{height:130px} }
+.sl-chain{border:1px solid var(--line);border-left:4px solid var(--sun);border-radius:12px;padding:8px 12px;margin-bottom:12px;background:var(--surface)}.sl-chain summary{cursor:pointer}
+.sc-list{display:flex;flex-direction:column;gap:4px;margin-top:8px}.sc-it{display:grid;grid-template-columns:minmax(0,1.4fr) 110px 90px 110px auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:none;font:inherit;font-size:13px;text-align:left;cursor:pointer;color:inherit}.sc-it.on{background:var(--sun-soft);border-color:var(--sun)}.sc-it.st{opacity:.55;text-decoration:line-through}.sc-it .mono:last-of-type{text-align:right}.sc-t{font-weight:600}
+.sc-sum{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px;font-size:12.5px;color:var(--muted)}.sc-sum b{color:var(--ink)}
+@media (max-width:700px){ .sc-it{grid-template-columns:1fr auto} }
+.q-box{border:1px solid var(--line);border-left:4px solid var(--sun);border-radius:12px;padding:10px 14px;background:var(--surface)}.q-box .nb-eb{display:flex;justify-content:space-between;gap:8px}
+.q-it{padding:4px 0;font-size:13.5px;line-height:1.4}.q-it .lnk{font-size:12px;margin-left:4px}.q-it.done{color:var(--muted)}.q-it.done s{text-decoration-thickness:1.5px}
+.wv-flash{outline:3px solid var(--sun);background:var(--sun-soft)!important;transition:outline .3s}
 .wv-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:9px 16px;border-top:1px solid var(--line)}.wv-b{flex:1;min-width:200px}.wv-a{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.wv-sn{width:auto;padding:5px 8px;font-size:12.5px}
 .wv-card{border-left:4px solid var(--sun)}.wv-strip{border-left:4px solid var(--sun)}.wv-pill.bad{font-weight:700}.wv-q{margin-top:-4px}
 #fselBar{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:46;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;background:var(--night);color:#fff;padding:10px 14px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.3);max-width:calc(100vw - 24px)}
@@ -1449,7 +1459,11 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
   h1{font-size:24px}
 }
 @media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(16px);opacity:.6}}}
-</style>
+/* Hell/Dunkel: Bereiche mit fest hellen Hintergründen behalten auch im Dunkelmodus ihre helle Farbwelt mit dunkler Schrift
+   (Meilensteine/Timeline, Projekt-Radar, Vorlagen-Chips, Lager-Liste, Belegvorschau, Druck-Tabellen …) */
+.radar,.rd-panel,.rd-stats>div,.tlc,.tl-c,.tl-todo,.tl-head,.tlh.we,.tll-n,.tph,.tchip,.tdrop-over,.pst-angefangen .pst,.pst-offen .pst,.pvrow.erledigt,.pvrow.angefangen,.ls-rep.bad,.mail-in textarea,.ss-it,.pick.over,.art-kpi .bad,.lt-subt td,.sl-paper,.hr-tbl tr.hr-warn td,.pr-meta th,.pr-tbl th,.tbl tr.low td,.kx-week td.warn{--ink:#111;--muted:#666;--line:#e2dfd2;--surface:#fff;--sunken:#f4f3ee;--sun-soft:#FFF6B8;color:#1d1d1d;color-scheme:light}
+.radar{background:#FBFAF5}
+.gs-mic{color:#111}</style>
 
 <div class="app" id="app">
   <aside class="side" id="side"></aside>
@@ -2050,6 +2064,7 @@ function put(coll,obj){
   if(!ME&&MODE==='cloud') askMe();
   const what=describeChange(coll,prev,obj);
   obj.upd=now; obj.updBy=meK(); if(!prev){ obj.at=obj.at||now; obj.by=obj.by||meK(); }
+  if(coll==='tasks') wvAuto(obj); // Text wie "Wiedervorlage in 2 Wochen" setzt das Datum
   if(coll==='orders'&&!prev&&!obj.appr&&!obj.example) obj.appr=obj.status==='entwurf'&&!ordNoAppr()?'offen':'ok'; // nur Entwuerfe brauchen die Freigabe durch HH / AvE
   if(what) obj.hist=(obj.hist||[]).concat([{at:now,by:meK(),a:what}]).slice(-150);
   S[coll][obj.id]=obj; scheduleRender(); if(coll==='tasks'&&!prev&&!obj.done&&!obj.relOk) relQueue(obj.id); // neues To-Do: gegen bestehende prüfen
@@ -2157,10 +2172,14 @@ const kCols=()=>((S.config||{}).kColors||{});
 const inkOn=h=>{ const m=String(h).match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i); if(!m) return ''; const [r,g,b]=m.slice(1).map(x=>parseInt(x,16)); return (r*299+g*587+b*114)/1000>140?'#111':'#fff'; };
 // Alle Kürzel-Chips (überall in der App) in der Farbe einfärben, die sich die Person ausgesucht hat
 let KC_T=0; function kColorPaint(){ KC_T=0; const c=kCols(); if(!Object.keys(c).length) return; document.querySelectorAll('.who-chip:not(.open)').forEach(e=>{ const k=String(e.textContent).trim().split(/\s+/)[0], h=c[k]; if(h){ if(e.style.background!==h){ e.style.background=h; e.style.color=inkOn(h); } } else if(e.style.background){ e.style.background=''; e.style.color=''; } }); }
+// Bilder aus der Ablage (Titelbilder, Fotos): <img data-blob="id"> wird über fetch geladen (in der Supabase-Version mit signiertem Link)
+const BLOB_URL={}; let BL_T=0;
+function blobImgs(){ BL_T=0; document.querySelectorAll('img[data-blob]:not([data-bl])').forEach(img=>{ const id=img.dataset.blob; img.dataset.bl=1;
+  if(BLOB_URL[id]){ img.src=BLOB_URL[id]; return; } fetch('/_blob/'+id).then(r=>r.ok?r.blob():Promise.reject()).then(b=>{ BLOB_URL[id]=URL.createObjectURL(b); document.querySelectorAll(`img[data-blob="${CSS.escape(id)}"]`).forEach(x=>x.src=BLOB_URL[id]); }).catch(()=>{ img.classList.add('bl-err'); }); }); }
 const autoGrow=el=>{ el.style.height='0px'; el.style.height=Math.max(40,Math.min(260,el.scrollHeight+2))+'px'; };
 let AG_T=0; const autoGrowAll=()=>{ AG_T=0; document.querySelectorAll('textarea.autogrow').forEach(el=>{ if(!el.dataset.ag){ el.dataset.ag=1; autoGrow(el); } }); };
 document.addEventListener('input',e=>{ if(e.target.classList&&e.target.classList.contains('autogrow')) autoGrow(e.target); });
-new MutationObserver(()=>{ if(!KC_T) KC_T=requestAnimationFrame(kColorPaint); if(!AG_T) AG_T=requestAnimationFrame(autoGrowAll); }).observe(document.documentElement,{childList:true,subtree:true});
+new MutationObserver(()=>{ if(!KC_T) KC_T=requestAnimationFrame(kColorPaint); if(!AG_T) AG_T=requestAnimationFrame(autoGrowAll); if(!BL_T) BL_T=setTimeout(blobImgs,30); }).observe(document.documentElement,{childList:true,subtree:true});
 function meProfile(){ if(!ME){ askMe(true); return; } const k=meK(), cur=kCols()[k]||'';
   openSheet({title:'Mein Profil',html:`<div class="fld full"><div class="me-prof"><span class="who-chip me-big" id="me_prev" style="${cur?`background:${cur};color:${inkOn(cur)}`:''}">${esc(k)}</span><div><b>${esc(ME.replace(/\s*\([^)]*\)$/,''))}</b>${USER_EMAIL?`<div class="small muted">${esc(USER_EMAIL)}</div>`:''}</div></div>
     <label>Farbe für mein Kürzel <span class="small muted">(sehen alle im Team)</span></label><div class="me-cols">${K_COLS.map(h=>`<button type="button" class="me-col ${h===cur?'on':''}" style="background:${h}" data-act="meCol" data-v="${h}" aria-label="Farbe ${h}"></button>`).join('')}<input type="color" id="me_colc" value="${cur||'#F4DB02'}" title="Eigene Farbe" aria-label="Eigene Farbe"><button type="button" class="lnk" data-act="meCol" data-v="">Standard</button></div>
@@ -2706,7 +2725,7 @@ function navList(){ const l=filterProjects(UI.q.trim()?'alle':UI.projFilter); re
 function projCard(p){
   const pp=pipe(p), cat=catOf(p), nw=nowOf(p), active=['planung','laufend'].includes(cat), pct=pp.pct, nt=openTasks(p.id).length;
   const own=UI.sort==='own'&&ME;
-  return `<article class="pcard c-${cat}" data-act="openProject" data-id="${p.id}" tabindex="0"${own?` data-drag="proj:${p.id}" data-drop-proj="${p.id}"`:''}>
+  return `<article class="pcard c-${cat} ${p.cover?'has-cover':''}" data-act="openProject" data-id="${p.id}" tabindex="0"${own?` data-drag="proj:${p.id}" data-drop-proj="${p.id}"`:''}>${p.cover?`<div class="pc-cover"><img data-blob="${esc(p.cover)}" alt="" loading="lazy"></div>`:''}
     <div class="pc-top"><span class="type t-${p.type} hot" data-act="openAt" data-id="${p.id}" data-at="infos" title="Projektdaten öffnen">${TYPES[p.type]||''}</span><span class="pill ${CAT_CLS[cat]}">${CATS[cat]}</span></div>
     <div class="pc-head"><div class="ring hot" data-act="openAt" data-id="${p.id}" data-at="status" title="Statusverlauf öffnen" style="--p:${pct}" role="img" aria-label="${pp.work} von ${pp.total} Statusschritten"><span>${pp.work}<small>/${pp.total}</small></span></div>
       <div style="min-width:0"><h3>${esc(p.name)}</h3><div class="sub hot" data-act="openAt" data-id="${p.id}" data-at="infos" title="Projektdaten öffnen">${esc([p.nr,p.pl?shortWho(p.pl):''].filter(Boolean).join(' · ')||'Projektdaten ergänzen')}</div></div></div>
@@ -2778,7 +2797,7 @@ function vProject(){
     <button class="icon-btn" data-act="openProject" data-keep="1" data-id="${next?next.id:''}" ${next?'':'disabled'} title="${next?'Nächstes: '+esc(next.name):''}" aria-label="Nächstes Projekt">${ic('right')}</button>
     <select class="catsel jump" data-chg="jumpProject" aria-label="Projekt wählen">${Object.entries(CATS).map(([k,l])=>{ const g=allAz.filter(x=>catOf(x)===k); return g.length?`<optgroup label="${l} (${g.length})">${g.map(x=>`<option value="${x.id}" ${x.id===p.id?'selected':''}>${esc(x.name)}${x.nr?' · '+esc(x.nr):''}</option>`).join('')}</optgroup>`:''; }).join('')}</select></div>`;
   const bigNav=`<button class="big-nav l" data-act="openProject" data-keep="1" data-id="${prev?prev.id:''}" ${prev?'':'disabled'} aria-label="Vorheriges Projekt${prev?': '+esc(prev.name):''}">${ic('left')}${prev?`<span class="bn-t">${esc(prev.name)}</span>`:''}</button><button class="big-nav r" data-act="openProject" data-keep="1" data-id="${next?next.id:''}" ${next?'':'disabled'} aria-label="Nächstes Projekt${next?': '+esc(next.name):''}">${ic('right')}${next?`<span class="bn-t">${esc(next.name)}</span>`:''}</button>`;
-  return bigNav+pnav+`<div class="topbar"><div class="t"><div class="eyebrow"><a href="#" data-act="nav" data-v="projects" style="color:inherit">Projekte</a> / ${esc(p.nr||'')}</div><h1>${esc(p.name)}</h1>
+  return bigNav+pnav+(p.cover?`<div class="proj-cover"><img data-blob="${esc(p.cover)}" alt=""></div>`:'')+`<div class="topbar"><div class="t"><div class="eyebrow"><a href="#" data-act="nav" data-v="projects" style="color:inherit">Projekte</a> / ${esc(p.nr||'')}</div><h1>${esc(p.name)}</h1>
      <div class="row small" style="margin-top:6px"><select class="catsel" data-chg="setCat" data-pid="${p.id}" aria-label="Kategorie">${Object.entries(CATS).map(([k,l])=>`<option value="${k}" ${cat===k?'selected':''}>${l}</option>`).join('')}</select><span class="type t-${p.type}">${TYPES[p.type]||''}</span><span class="muted">${esc([p.customer,p.place,sizeLbl(p)].filter(Boolean).join(' · '))}</span>${p.pl?`<span class="role">PL ${esc(p.pl)}</span>`:''}${p.wartung?'<span class="pill ok">Wartungsvertrag</span>':''}${p.example?'<span class="pill">Beispiel</span>':''}</div></div>
      <div class="row"><button class="btn" data-act="editProject" data-id="${p.id}">${ic('edit')}Bearbeiten</button><button class="btn sun desk" data-act="newMenu">${ic('plus')}Neu</button></div></div>
     ${isIntern(p)?'<div class="hint" style="margin-bottom:12px">Allgemeines Projekt ohne Statusablauf: Notizen, To-Dos, Bestellungen, Material und Dateien für alles ohne Kundenbezug (Lager, Büro, Werkstatt, Fahrzeuge).</div>':''}<section class="rail-wrap" ${isIntern(p)?'hidden':''}>
@@ -3383,16 +3402,49 @@ const F_PROJECT=[
  {k:'questions',label:'Zu klärende Fragen',type:'textarea'},
  {k:'notes',label:'Notizen',type:'textarea'},
  {k:'updates',label:'Updates',type:'textarea'}];
+/* ---------- Zu klärende Fragen → To-Dos; geklärte Fragen durchgestrichen mit Verweis aufs To-Do ---------- */
+// Jede Zeile im Feld „Zu klärende Fragen“ wird ein To-Do im Projekt (mit KI als kurze, sinnvolle Aufgabe formuliert).
+// Zuordnung Frage → To-Do steht in p.qTasks (Schlüssel = normalisierte Zeile).
+/* ---------- Projekt-Titelbild (optional) ---------- */
+var PF_COVER=null; // im Formular gewählte Datei (oder 'del')
+const projCoverHtml=p=>`<div class="pf-cover" id="pf_cover">${p.cover?`<img data-blob="${esc(p.cover)}" alt="Titelbild">`:'<span class="small muted">Kein Titelbild – erscheint dann auf der Projektkachel und oben im Projekt.</span>'}</div>
+  <div class="row" style="gap:6px;margin-top:6px">${ASSETS?`<button type="button" class="btn sm" data-act="pcPick">🖼 Bild wählen</button>${p.cover?'<button type="button" class="btn ghost sm" data-act="pcDel">Entfernen</button>':''}`:'<span class="small muted">Bild-Upload geht nur in der veröffentlichten App.</span>'}</div><input type="file" id="pcIn" accept="image/*" hidden>`;
+async function projCoverUpload(pid,file){ try{ busy(1,'cover'); const jpg=new File([await mappeToJpg(file,1600)],'titelbild.jpg',{type:'image/jpeg'}); const r=await ASSETS.upload(jpg,{type:'image/jpeg'}); const p=clone(S.projects[pid]); if(!p) return; p.cover=r.id; put('projects',p); toast('Titelbild gespeichert.'); }
+  catch(e){ toast('Titelbild konnte nicht hochgeladen werden.'); } finally{ busy(-1,'cover'); } }
+document.addEventListener('change',e=>{ if(e.target.id!=='pcIn') return; const f=(e.target.files||[])[0]; if(!f) return; PF_COVER=f; const box=$('#pf_cover'); if(box){ box.innerHTML=`<img src="${URL.createObjectURL(f)}" alt="Titelbild">`; } });
+queueMicrotask(()=>Object.assign(A,{ /* A wird weiter unten angelegt */
+  pcPick:()=>{ const i=$('#pcIn'); if(i){ i.value=''; i.click(); } },
+  pcDel:()=>{ PF_COVER='del'; const box=$('#pf_cover'); if(box) box.innerHTML='<span class="small muted">Titelbild wird beim Speichern entfernt.</span>'; } }));
+const qLines=txt=>String(txt||'').split(/\n+/).map(l=>l.replace(/^\s*(?:[-•*·]|\d+[.)])\s*/,'').trim()).filter(l=>l.length>2);
+const qKey=l=>l.toLowerCase().replace(/[^a-z0-9äöüß]+/g,' ').trim().slice(0,120);
+async function qToTasks(pid,quiet){ const p=S.projects[pid]; if(!p) return 0; const map=p.qTasks||{}, open=qLines(p.questions).filter(l=>!(map[qKey(l)]&&S.tasks[map[qKey(l)]])); if(!open.length){ if(!quiet) toast('Alle Fragen haben schon ein To-Do.'); return 0; }
+  let todos=open.map(l=>({q:l,title:/\?$/.test(l)?'Klären: '+l.replace(/\?+$/,''):l,who:''}));
+  if(SAMPLE) try{ const r=await SAMPLE.json(`Projekt „${p.name}“ (Solar-Installationsbetrieb). Mache aus jeder offenen Frage ein kurzes, konkretes To-Do im Imperativ (max. 12 Wörter, z. B. „Feldeigentümer ermitteln und Kontakt herstellen“). Wenn eine Person/ein Kürzel genannt ist, setze who auf das Kürzel aus der Liste: ${staff().map(s=>shortWho(s.name)).join(', ')}; sonst leer.
+Fragen (Nr | Text):\n${open.map((l,i)=>(i+1)+' | '+l).join('\n')}
+Antworte nur mit JSON: {"todos":[{"nr":1,"title":"","who":""}]}`,{modelTier:'quick',bg:true}); (r&&Array.isArray(r.todos)?r.todos:[]).forEach(x=>{ const t=todos[(+x.nr||0)-1]; if(t&&String(x.title||'').trim()){ t.title=String(x.title).trim().slice(0,200); t.who=x.who||''; } }); }catch(e){}
+  const byK={}; staff().forEach(s=>byK[shortWho(s.name).toLowerCase()]=s.name);
+  const p2=clone(S.projects[pid]); p2.qTasks={...(p2.qTasks||{})};
+  todos.forEach(x=>{ const t={id:uid(),title:x.title,who:byK[String(x.who).toLowerCase()]||p.pl&&staff().find(s=>s.name===p.pl||shortWho(s.name)===p.pl)?.name||'',pid,done:false,prio:'normal',src:'frage',relOk:1,created:TODAY(),notes:'Aus „Zu klärende Fragen“: '+x.q}; if(!t.who) delete t.who; put('tasks',t); p2.qTasks[qKey(x.q)]=t.id; });
+  put('projects',p2); if(!quiet||todos.length) toast(todos.length+' To-Do'+(todos.length>1?'s':'')+' aus den offenen Fragen angelegt.'); return todos.length; }
+// Anzeige: offene Fragen mit Link zum To-Do, geklärte durchgestrichen
+function qHtml(p){ const map=p.qTasks||{}; let unmapped=0;
+  const rows=qLines(p.questions).map(l=>{ const t=S.tasks[map[qKey(l)]]; if(!t){ unmapped++; return `<div class="q-it">❓ ${esc(l)}</div>`; }
+    return t.done?`<div class="q-it done"><s>${esc(l)}</s> <button type="button" class="lnk" data-act="editTask" data-id="${t.id}" title="${esc(t.title)}">✓ geklärt${t.doneBy?' von '+esc(t.doneBy):''}${t.doneAt?' am '+esc(fmtD(String(t.doneAt).slice(0,10))):''} – To-Do ansehen</button></div>`
+      :`<div class="q-it">❓ ${esc(l)} <button type="button" class="lnk" data-act="editTask" data-id="${t.id}">→ To-Do: ${esc(t.title.slice(0,60))}${t.who?' ('+esc(shortWho(t.who))+')':''}</button></div>`; }).join('');
+  return `<div class="q-list">${rows}${unmapped&&mayWrite('tasks')?`<button type="button" class="btn sm" data-act="qToTasks" data-pid="${p.id}" style="margin-top:6px">✨ ${unmapped} offene Frage${unmapped>1?'n':''} als To-Do anlegen</button>`:''}</div>`; }
+queueMicrotask(()=>{ A.qToTasks=d=>qToTasks(d.pid); }); /* A wird weiter unten angelegt */
 function projectForm(p,pre,after){
   const isNew=!p; p=p?clone(p):{id:uid(),cat:'planung',type:'dach',checks:{},ms:{m1:TODAY()},created:TODAY(),nr:nextProjNr(),...(pre||{})};
   p.cat=catOf(p); p.wartungSel=p.wartung?'ja':'nein';
   // Bestehende Notizen bearbeiten nur Admins (EP, AvE); alle anderen sehen sie schreibgeschützt
   const NOTE_F=['scope','questions','notes','updates'], lock=!isNew&&!isAdmin();
-  const fields=F_PROJECT.map(f=>NOTE_F.includes(f.k)&&lock?{...f,ro:1,label:f.label+' (nur Admin)'}:f);
+  // Neues Projekt: kein Feld „Updates“ (Updates kommen später in Notizen und To-Dos); Fragen werden automatisch To-Dos
+  PF_COVER=null; const fields=[{k:'coverx',label:'Titelbild (optional)',type:'html',full:1,html:projCoverHtml(p)},...F_PROJECT].filter(f=>!(isNew&&f.k==='updates')).map(f=>f.k==='questions'?{...f,label:'Zu klärende Fragen (eine pro Zeile – wird automatisch zu To-Dos)'}:f).map(f=>NOTE_F.includes(f.k)&&lock?{...f,ro:1,label:f.label+' (nur Admin)'}:f);
   const before={}; NOTE_F.forEach(k=>before[k]=p[k]||'');
   openSheet({title:isNew?'Neues Projekt':'Projekt bearbeiten',wide:1,fields,value:p,
-    onSave:v=>{ if(lock) NOTE_F.forEach(k=>{ v[k]=before[k]; }); Object.assign(p,v); p.wartung=v.wartungSel==='ja'; delete p.wartungSel; p.status={erledigt:'abgeschlossen',abgesagt:'abgeschlossen',onhold:'pausiert'}[p.cat]||'aktiv'; put('projects',p); if(after) after(p);
-      if(!isNew&&!lock){ const added=['updates','notes','questions'].map(k=>addedText(before[k],p[k]||'')).filter(Boolean).join('\n'); if(added) suggestTodos(p.id,added); }
+    onSave:v=>{ delete v.coverx; if(lock) NOTE_F.forEach(k=>{ v[k]=before[k]; }); if(PF_COVER==='del') delete p.cover; Object.assign(p,v); if(PF_COVER&&PF_COVER!=='del') projCoverUpload(p.id,PF_COVER); p.wartung=v.wartungSel==='ja'; delete p.wartungSel; p.status={erledigt:'abgeschlossen',abgesagt:'abgeschlossen',onhold:'pausiert'}[p.cat]||'aktiv'; put('projects',p); if(after) after(p);
+      if(!isNew&&!lock){ const added=['updates','notes'].map(k=>addedText(before[k],p[k]||'')).filter(Boolean).join('\n'); if(added) suggestTodos(p.id,added); }
+      if(!lock&&qLines(p.questions).length&&(p.questions||'')!==before.questions) setTimeout(()=>qToTasks(p.id,true),300);
       if(isNew){ UI.ptab='status'; go('project',p.id); toast('Projekt angelegt. Standardablauf mit '+progress(p).tot+' Schritten erstellt.'); } },
     onDelete:isNew?null:()=>confirmSheet('Projekt „'+p.name+'“ löschen? To-Dos, Bestellungen und Termine bleiben ohne Projektbezug erhalten.',()=>{ del('projects',p.id); go('projects'); })});
 }
@@ -3401,6 +3453,24 @@ queueMicrotask(()=>Object.assign(A,{ /* A wird weiter unten angelegt */
   whoMoreDel:(d,el)=>{ const r=el.closest('.who2-row'); if(r) r.remove(); const p=document.querySelector('#who_more .who-plus'); if(p) p.hidden=false; } }));
 /* ---------- Wiedervorlage: To-Do an einem bestimmten Tag wieder vorlegen ---------- */
 // Felder am To-Do: wv (JJJJ-MM-TT), wvNote. Am Tag erscheint es oben bei „Meine To-Dos“, in der To-Do-Liste und einmal täglich als Erinnerungsfenster.
+// Text-Erkennung: „mach eine Wiedervorlage in 3 Wochen“, „WV übermorgen“, „wieder vorlegen am Freitag“, „Wiedervorlage am 12.11.“ …
+const WV_NUM={ein:1,eins:1,eine:1,einen:1,einer:1,einem:1,zwei:2,drei:3,vier:4,'fünf':5,fuenf:5,sechs:6,sieben:7,acht:8,neun:9,zehn:10,elf:11,'zwölf':12,zwoelf:12};
+const WV_WD={sonntag:0,montag:1,dienstag:2,mittwoch:3,donnerstag:4,freitag:5,samstag:6};
+function wvParse(txt){ const s=String(txt||'').toLowerCase(), m=s.match(/(wiedervorlage|wieder\s*vorleg\w*|\bwv\b|erinnere?\s+mich|erinnerung)([^\n]{0,60})/); if(!m) return null; const r=m[2], t0=TODAY(); let d='';
+  let x=r.match(/in\s+(\d{1,3}|[a-zäöüß]+)\s+(tag|tage|tagen|woche|wochen|monat|monate|monaten)\b/);
+  if(x){ const n=/^\d+$/.test(x[1])?+x[1]:WV_NUM[x[1]]; if(n){ d=x[2].startsWith('tag')?addDays(t0,n):x[2].startsWith('woche')?addDays(t0,7*n):(()=>{ const z=new Date(t0+'T12:00'); z.setMonth(z.getMonth()+n); return z.toISOString().slice(0,10); })(); } }
+  if(!d&&/übermorgen|uebermorgen/.test(r)) d=addDays(t0,2); else if(!d&&/\bmorgen\b/.test(r)) d=addDays(t0,1);
+  if(!d&&/(nächste|naechste|kommende)n?\s+woche/.test(r)) d=addDays(mondayOf(t0),7);
+  if(!d&&/(nächsten|naechsten|kommenden)\s+monat/.test(r)){ const z=new Date(t0+'T12:00'); z.setMonth(z.getMonth()+1,1); d=z.toISOString().slice(0,10); }
+  if(!d){ x=r.match(/(?:am|bis|zum)?\s*(\d{1,2})\.(\d{1,2})\.?(\d{2,4})?/); if(x){ let y=x[3]?+x[3]:+t0.slice(0,4); if(y<100) y+=2000; let c=y+'-'+String(+x[2]).padStart(2,'0')+'-'+String(+x[1]).padStart(2,'0'); if(!x[3]&&c<t0) c=(y+1)+c.slice(4); if(!isNaN(new Date(c))) d=c; } }
+  if(!d){ x=r.match(/(?:am|nächsten|naechsten|kommenden)?\s*(sonntag|montag|dienstag|mittwoch|donnerstag|freitag|samstag)/); if(x){ const w=WV_WD[x[1]], cur=new Date(t0+'T12:00').getDay(); let k=(w-cur+7)%7; if(!k) k=7; d=addDays(t0,k); } }
+  return d?{d,phrase:(m[1]+m[2]).trim().replace(/[.,;!]+$/,'').slice(0,80)}:null; }
+// Beim Speichern eines To-Dos (Formular, Update, Sprache, KI): Text nach Wiedervorlage durchsuchen – je Fundstelle nur einmal
+function wvAuto(o){ const keep=o&&o._wvForm; if(o) delete o._wvForm; if(!o||o.done) return; const texts=[o.title,o.notes,...((o.upd2||[]).slice(-2).map(u=>u.t))]; o.wvSig=o.wvSig||[];
+  for(const tx of texts){ const p=wvParse(tx); if(!p) continue; const sig=p.phrase+'|'+String(tx).slice(0,40); if(o.wvSig.includes(sig)) continue; o.wvSig=[...o.wvSig,sig].slice(-10); if(keep) continue; /* im Formular schon live uebernommen, Feld zaehlt */ o.wv=p.d; if(!o.wvNote) o.wvNote=p.phrase.charAt(0).toUpperCase()+p.phrase.slice(1); delete o.wvShown; setTimeout(()=>toast('🔔 Wiedervorlage am '+fmtD(p.d)+' eingetragen.'),50); } }
+// Im To-Do-Fenster: beim Tippen sofort das Feld „Wiedervorlage am“ füllen
+document.addEventListener('input',e=>{ const id=e.target&&e.target.id; if(!['f_title','f_notes','tu_t'].includes(id)) return; const f=$('#f_wv'); if(!f) return; const p=wvParse(e.target.value); if(!p||f.value===p.d) return;
+  f.value=p.d; f.classList.add('wv-flash'); setTimeout(()=>f.classList.remove('wv-flash'),1500); const n=$('#f_wvNote'); if(n&&!n.value) n.value=p.phrase.charAt(0).toUpperCase()+p.phrase.slice(1); });
 const WV_QUICK=[['Morgen',1],['+3 Tage',3],['Nächste Woche','mo'],['+2 Wochen',14],['+1 Monat',30]];
 const wvDate=k=>k==='mo'?addDays(mondayOf(TODAY()),7):addDays(TODAY(),+k);
 const wvQuickHtml=()=>`<div class="chips wv-q">${WV_QUICK.map(([l,k])=>`<button type="button" class="chip" data-act="wvQuick" data-k="${k}">${l}</button>`).join('')}<button type="button" class="chip" data-act="wvQuick" data-k="">keine</button></div>`;
@@ -3431,7 +3501,7 @@ function taskForm(t,pre){
     {k:'pid',label:'Projekt',type:'select',options:projOpts()},{k:'prio',label:'Dringlichkeit',type:'select',options:Object.entries(PRIO).map(([k,v])=>[k,v[0]])},{k:'notes',label:'Notiz',type:'textarea'},
     ...(isNew?[]:[{k:'updbox',label:'Updates mit Datum',type:'html',html:taskUpdHtml(t)}])],
     extraBtn:!isNew&&SAMPLE?`<button type="button" class="btn sun" data-act="taskAi" data-id="${t.id}" title="Fertige E-Mail, Telefonnummer mit Gesprächsleitfaden oder Lösungsweg">✨ KI-Vorschlag</button>`:'',
-    onSave:v=>{ delete v.updbox; delete v.wvq; delete v.who2x; { const ex=[...document.querySelectorAll('#who_more .who2-in')].map(e=>e.value.trim()).filter(Boolean); if(!v.who&&ex.length) v.who=ex.shift(); const w2=[...new Set(ex.filter(n=>n!==v.who))].slice(0,2); if(w2.length) v.who2=w2; else { delete v.who2; delete t.who2; } } if(v.wv!==t.wv) delete t.wvShown; if(!v.wv) delete v.wvNote; Object.assign(t,v); const cur=S.tasks[t.id]; if(cur&&cur.upd2) t.upd2=cur.upd2; put('tasks',t); toast(isNew?'To-Do angelegt.':'Gespeichert.'); },
+    onSave:v=>{ delete v.updbox; delete v.wvq; delete v.who2x; t._wvForm=1; { const ex=[...document.querySelectorAll('#who_more .who2-in')].map(e=>e.value.trim()).filter(Boolean); if(!v.who&&ex.length) v.who=ex.shift(); const w2=[...new Set(ex.filter(n=>n!==v.who))].slice(0,2); if(w2.length) v.who2=w2; else { delete v.who2; delete t.who2; } } if(v.wv!==t.wv) delete t.wvShown; if(!v.wv) delete v.wvNote; Object.assign(t,v); const cur=S.tasks[t.id]; if(cur&&cur.upd2) t.upd2=cur.upd2; put('tasks',t); toast(isNew?'To-Do angelegt.':'Gespeichert.'); },
     onDelete:isNew?null:()=>{ del('tasks',t.id); closeSheet(); }});
 }
 /* ---------- Termin → To-Dos für Mitarbeiter (z. B. „Kamil Bescheid sagen“) ---------- */
@@ -6153,7 +6223,7 @@ function hrTabTeam2(){ if(!isAdmin()) return ''; const t=TODAY(), y=+t.slice(0,4
   const list=all.filter(n=>{ const st=hrStaffOf(n); return (!q||[n,st.dept,st.position,st.persNr].join(' ').toLowerCase().includes(q))&&(!fd||st.dept===fd)&&(!fk||st.kind===fk)&&(!fs||stOf(n)===fs); });
   const ST_L={an:['Angemeldet','ok'],pause:['Pause','warn'],ab:['Abgemeldet',''],urlaub:['Urlaub','pri'],krank:['Krank','bad']};
   const rows=list.map(n=>{ const st=hrStaffOf(n), mp=hrMonthPct(n), vc=hrVac(n,y), ov=hrSaldo(n,hrYearStart(n),addDays(t,-1))+(+st.ovStart||0)*60, so=stOf(n), cs=hrStatus(n), c=kCols()[shortWho(n)];
-    return `<tr class="clickable" data-act="hrPerson" data-n="${esc(n)}"><td><span class="hr-av" style="${c?`background:${c};color:${inkOn(c)}`:''}">${st.photo?`<img src="/_blob/${esc(st.photo)}" alt="">`:esc(shortWho(n))}</span></td><td><b>${esc(n.replace(/\s*\([^)]*\)$/,''))}</b><div class="small muted">${esc([st.dept||'Keine Abteilung',st.position].filter(Boolean).join(' · '))}</div></td>
+    return `<tr class="clickable" data-act="hrPerson" data-n="${esc(n)}"><td><span class="hr-av" style="${c?`background:${c};color:${inkOn(c)}`:''}">${st.photo?`<img data-blob="${esc(st.photo)}" alt="">`:esc(shortWho(n))}</span></td><td><b>${esc(n.replace(/\s*\([^)]*\)$/,''))}</b><div class="small muted">${esc([st.dept||'Keine Abteilung',st.position].filter(Boolean).join(' · '))}</div></td>
       <td><div class="hr-pct"><span class="mono small">${mp.pct}%</span><div class="kx-mini big"><i style="width:${Math.min(100,mp.pct)}%"></i></div></div><div class="small muted">${hrHM(mp.ist)} von ${hrHM(mp.soll)} h</div></td>
       <td><span class="pill ${ST_L[so][1]}">${ST_L[so][0]}</span>${so==='an'?` <span class="small muted">${esc(cs.l)}</span>`:''}</td><td class="mono">${String(vc.rest).replace('.',',')} / ${vc.ent+vc.carry}</td><td class="mono ${ov<0?'bad-t':''}">${hrHM(ov)}</td><td>${esc(HR_KIND[st.kind]||'–')}</td></tr>`; }).join('');
   return `<section class="card"><div class="card-h"><h3>Mitarbeiter <span class="cnt-b">${list.length}</span></h3><span class="small muted">Klick öffnet die Mitarbeiterakte</span></div>
@@ -6180,7 +6250,7 @@ function hpInput([k,l,ty],st){ const v=st[k]??'', id='hp_'+k;
 function hrTabPerson(){ if(!isAdmin()) return ''; const n=UI.hrPerson; if(!n||!staff().some(s=>s.name===n)){ UI.hrTab='team'; return hrTabTeam2(); }
   const st=hrStaffOf(n), tab=UI.hpTab||'daten', t=TODAY(), y=+t.slice(0,4), c=kCols()[shortWho(n)];
   const TABS=[['daten','Mitarbeiterdaten'],['plan','Arbeitsplan'],['abw','Abwesenheiten'],['akte','Personalakte']];
-  const head2=`<div class="hp-head"><button class="lnk" data-act="hrGo" data-tab="team">‹ Zurück zur Liste</button><div class="hp-title"><span class="hr-av big" style="${c?`background:${c};color:${inkOn(c)}`:''}">${st.photo?`<img src="/_blob/${esc(st.photo)}" alt="">`:esc(shortWho(n))}</span><h2>${esc(n.replace(/\s*\([^)]*\)$/,''))}</h2><select class="inp" data-chg="hrPersonSel" aria-label="Mitarbeiter wechseln" style="width:auto">${staff().map(s=>`<option ${s.name===n?'selected':''}>${esc(s.name)}</option>`).join('')}</select><span class="spacer"></span>${tab==='daten'||tab==='plan'?`<button class="btn pri" data-act="hpSave">Speichern</button>`:''}</div>
+  const head2=`<div class="hp-head"><button class="lnk" data-act="hrGo" data-tab="team">‹ Zurück zur Liste</button><div class="hp-title"><span class="hr-av big" style="${c?`background:${c};color:${inkOn(c)}`:''}">${st.photo?`<img data-blob="${esc(st.photo)}" alt="">`:esc(shortWho(n))}</span><h2>${esc(n.replace(/\s*\([^)]*\)$/,''))}</h2><select class="inp" data-chg="hrPersonSel" aria-label="Mitarbeiter wechseln" style="width:auto">${staff().map(s=>`<option ${s.name===n?'selected':''}>${esc(s.name)}</option>`).join('')}</select><span class="spacer"></span>${tab==='daten'||tab==='plan'?`<button class="btn pri" data-act="hpSave">Speichern</button>`:''}</div>
     <div class="vk-st">${TABS.map(([k,l])=>`<button class="${tab===k?'on':''}" data-act="hpTab" data-v="${k}">${l}${k==='akte'?` <span class="mono">${arr('hrdocs').filter(x=>x.who===n).length}</span>`:''}</button>`).join('')}</div></div>`;
   if(tab==='plan') return head2+hpPlan(n,st); if(tab==='abw') return head2+hpAbw(n); if(tab==='akte') return head2+hpAkte(n);
   const mp=hrMonthPct(n), ov=hrSaldo(n,hrYearStart(n),addDays(t,-1))+(+st.ovStart||0)*60, vc=hrVac(n,y);
@@ -6520,7 +6590,7 @@ function vSales(){
   const kpi=(v,l,k)=>`<button class="hk" ${k?`data-act="vkGo" data-tab="${k[0]}" data-st="${k[1]||''}"`:''}><span class="hv">${v}</span><span class="hl">${l}</span></button>`;
   const rows=list.map(s=>{ const m=saleSums(s), st=SALE_ST[s.status]||[s.status,''], ov=saleOver(s);
     const due=inv2&&s.status!=='entwurf'?saleDue(s):'';
-    return `<tr class="clickable" data-act="saleEdit" data-id="${s.id}"><td class="mono">${esc(s.nr||'Entwurf')}</td><td>${esc(SALE_T[s.type][0])}${s.dunLevel?` <span class="pill bad small">${s.dunLevel}. Mahnung</span>`:''}</td><td>${esc(dDE(s.date))}</td>${inv2?`<td class="${ov?'neg':''}">${due?esc(dDE(due)):''}</td>`:''}<td><b>${esc((s.cust&&s.cust.name)||'–')}</b>${s.subject?`<div class="small muted">${esc(s.subject)}</div>`:''}</td><td class="small">${esc(projName(s.pid)||'')}</td>${tab==='lieferschein'?'':`<td class="mono r">${euro(m.net)}</td>`}<td class="mono r">${s.type==='lieferschein'?'':euro(isInv(s.type)?m.pay:m.gross)}</td><td><span class="pill ${ov?'bad':st[1]}">${ov?'überfällig':esc(st[0])}</span>${isInv(s.type)&&m.paid&&m.open>0.005?`<div class="small muted">offen ${euro(m.open)}</div>`:''}${s.type==='lieferschein'&&s.invoiced?`<div class="small muted">berechnet</div>`:''}${ov?` <button type="button" class="btn ghost sm" data-act="saleDun" data-id="${s.id}">Mahnen</button>`:''}</td></tr>`; }).join('');
+    return `<tr class="clickable" data-act="saleEdit" data-id="${s.id}"><td class="mono">${esc(s.nr||'Entwurf')}</td><td>${esc((s.type==='abschlag'||s.title==='Schlussrechnung')&&s.title?s.title:SALE_T[s.type][0])}${s.from&&S.sales[s.from]&&['abschlag','rechnung'].includes(s.type)?`<div class="small muted">zu ${esc(SALE_T[S.sales[s.from].type][1]+' '+(S.sales[s.from].nr||'Entwurf'))}</div>`:''}${s.xrAt?' <span class="pill small" title="E-Rechnung erstellt">XML</span>':''}${s.dunLevel?` <span class="pill bad small">${s.dunLevel}. Mahnung</span>`:''}</td><td>${esc(dDE(s.date))}</td>${inv2?`<td class="${ov?'neg':''}">${due?esc(dDE(due)):''}</td>`:''}<td><b>${esc((s.cust&&s.cust.name)||'–')}</b>${s.subject?`<div class="small muted">${esc(s.subject)}</div>`:''}</td><td class="small">${esc(projName(s.pid)||'')}</td>${tab==='lieferschein'?'':`<td class="mono r">${euro(m.net)}</td>`}<td class="mono r">${s.type==='lieferschein'?'':euro(isInv(s.type)?m.pay:m.gross)}</td><td><span class="pill ${ov?'bad':st[1]}">${ov?'überfällig':esc(st[0])}</span>${isInv(s.type)&&m.paid&&m.open>0.005?`<div class="small muted">offen ${euro(m.open)}</div>`:''}${s.type==='lieferschein'&&s.invoiced?`<div class="small muted">berechnet</div>`:''}${ov?` <button type="button" class="btn ghost sm" data-act="saleDun" data-id="${s.id}">Mahnen</button>`:''}</td></tr>`; }).join('');
   const sm=list.filter(s=>s.status!=='storniert').reduce((a,s)=>{ const m=saleSums(s); a.n+=m.net; a.g+=isInv(s.type)?m.pay:m.gross; a.o+=isInv(s.type)&&s.status!=='entwurf'?Math.max(0,m.open):0; return a; },{n:0,g:0,o:0});
   const cols=inv2?10:tab==='lieferschein'?7:8;
   const newBtns=tab==='rechnung'?`<button class="btn pri" data-act="saleNew" data-type="rechnung">${ic('plus')}Rechnung</button><button class="btn" data-act="saleNew" data-type="abschlag">${ic('plus')}Abschlagsrechnung</button><button class="btn ghost" data-act="saleNew" data-type="gutschrift">${ic('plus')}Rechnungskorrektur</button>`:tab==='lieferschein'?`<button class="btn pri" data-act="saleNew" data-type="lieferschein">${ic('plus')}Lieferschein</button><button class="btn sun" data-act="saleCollect">Sammelrechnung erstellen</button>`:`<button class="btn pri" data-act="saleNew" data-type="${tab}">${ic('plus')}${SALE_T[tab][0]}</button>`;
@@ -6570,11 +6640,11 @@ function saleSumsHtml(s){ const m=saleSums(s); if(s.type==='lieferschein') retur
 function saleForm(s){
   stLoad(); const isNew=!S.sales||!S.sales[s.id]; s=clone(s); const ro=saleLocked(s), T=SALE_T[s.type], m=saleSums(s);
   const custOpts=`<input class="inp" id="sl_cn" list="kundenList" value="${esc(s.cust.name||'')}" placeholder="Kunde (aus Stammdaten oder neu)" ${ro?'disabled':''}>`;
-  const succ=s.type==='angebot'?[['auftrag','→ Auftragsbestätigung'],['rechnung','→ Rechnung']]:s.type==='auftrag'?[['lieferschein','→ Lieferschein'],['abschlag','→ Abschlagsrechnung'],['rechnung','→ Schlussrechnung']]:s.type==='lieferschein'?[['rechnung','→ Rechnung']]:[];
+  const succ=s.type==='angebot'?[['auftrag','→ Auftragsbestätigung'],['abschlag','→ Abschlagsrechnung'],['rechnung','→ Rechnung']]:s.type==='auftrag'?[['lieferschein','→ Lieferschein'],['abschlag','→ Abschlagsrechnung'],['rechnung','→ Schlussrechnung']]:s.type==='lieferschein'?[['rechnung','→ Rechnung']]:[];
   const add=(k,l)=>`<button type="button" class="btn ghost sm" data-act="slAddK" data-k="${k}">${l}</button>`;
   openSheet({title:(isNew?'Neue ':'')+T[0]+(s.nr?' '+s.nr:''),wide:1,html:`<div class="fld full sl-split ${UI.slPrev===false?'noprev':''}"><div class="sl-form">
     ${s.firm?`<div class="banner">Ausstellende Firma laut Auftrag: <b>${esc(s.firm)}</b>. Das Briefpapier ist bisher nur für ${esc(NDS.name)} hinterlegt – bitte vor dem Versand prüfen.</div>`:''}
-    ${ro?`<div class="banner">Diese ${T[0]} ist fertiggestellt und kann nicht mehr geändert werden (GoBD). Korrektur über „Stornieren“.</div>`:''}
+    ${saleChainHtml(s)}${ro?`<div class="banner">Diese ${T[0]} ist fertiggestellt und kann nicht mehr geändert werden (GoBD). Korrektur über „Stornieren“.</div>`:''}
     <div class="sl-head"><div class="sl-col"><label>Kunde</label>${custOpts}<label>Anschrift</label><textarea class="inp" id="sl_ca" rows="3" placeholder="Straße&#10;PLZ Ort" ${ro?'disabled':''}>${esc(s.cust.addr||'')}</textarea></div>
       <div class="sl-col"><label>Kunden-Nr.</label><input class="inp" id="sl_cnr" value="${esc(s.custNr||'')}" ${ro?'disabled':''}><label>Projekt</label><select class="inp" id="sl_pid" ${ro?'disabled':''}><option value="">– ohne Projekt –</option>${arr('projects').filter(p=>!isIntern(p)).sort((a,b)=>a.name.localeCompare(b.name,'de')).map(p=>`<option value="${p.id}" ${p.id===s.pid?'selected':''}>${esc(p.name)}</option>`).join('')}</select>
         <div class="sl-2"><div><label>Datum</label><input class="inp" type="date" id="sl_d" value="${esc(s.date||'')}" ${ro?'disabled':''}></div><div><label>${s.type==='angebot'?'Gültig bis':'Leistung'}</label>${s.type==='angebot'?`<input class="inp" type="date" id="sl_pf" value="${esc(s.perfFrom||'')}" ${ro?'disabled':''}>`:`<select class="inp" id="sl_pm" ${ro?'disabled':''}><option value="datum" ${s.perfMode!=='zeitraum'?'selected':''}>Leistungsdatum</option><option value="zeitraum" ${s.perfMode==='zeitraum'?'selected':''}>Leistungszeitraum</option></select>`}</div></div>
@@ -6593,10 +6663,11 @@ function saleForm(s){
     <details class="sl-more" ${s.note||s.dun?'open':''}><summary>Buchhaltung, Mahnung & Anmerkungen</summary>
       ${isInv(s.type)?`<label class="mt-opt" style="margin-top:8px"><input type="checkbox" class="ck" id="sl_dun" ${s.dun?'checked':''} ${ro?'':''}><span>Automatische Mahnung: bei Überfälligkeit auf der Startseite erinnern und Zahlungserinnerung anbieten</span></label>`:''}
       <label>Erlöskonten (SKR03)</label><div class="sl-3"><select class="inp" id="sl_a0" ${ro?'disabled':''}>${[['8100','8100 Steuerfreie Umsätze § 4 Nr. 8 ff'],['8338','8338 Erlöse 0 % PV (§ 12 Abs. 3)'],['8337','8337 Erlöse § 13b'],['8200','8200 Erlöse']].map(([v,l])=>`<option value="${v}" ${(s.acc0||'8338')===v?'selected':''}>${l}</option>`).join('')}</select><select class="inp" id="sl_a19" ${ro?'disabled':''}>${[['8400','8400 Erlöse 19 % USt'],['8401','8401 Erlöse 19 % USt'],['8315','8315 Erl. im Inl. stpfl. EU 19 %'],['8191','8191 Umsätze §§ 25, 25a UStG']].map(([v,l])=>`<option value="${v}" ${(s.acc19||'8400')===v?'selected':''}>${l}</option>`).join('')}</select><select class="inp" id="sl_a7" ${ro?'disabled':''}>${[['8300','8300 Erlöse 7 % USt']].map(([v,l])=>`<option value="${v}" selected>${l}</option>`).join('')}</select></div>
+      ${isInv(s.type)?`<label>E-Rechnung (XRechnung)</label><div class="sl-3"><input class="inp" id="sl_cm" type="email" value="${esc(s.custMail||'')}" placeholder="E-Mail des Kunden" ${ro?'disabled':''}><input class="inp" id="sl_lw" value="${esc(s.leitweg||'')}" placeholder="Leitweg-ID / Käuferreferenz" ${ro?'disabled':''}><input class="inp" id="sl_cvat" value="${esc(s.custVat||'')}" placeholder="USt-IdNr. des Kunden (bei § 13b)" ${ro?'disabled':''}></div>`:''}
       <label>Anmerkungen (intern, erscheinen nicht auf dem Beleg)</label><textarea class="inp" id="sl_note" rows="2">${esc(s.note||'')}</textarea></details>
     <div class="sl-2"><div></div><div><label>Status</label><select class="inp" id="sl_st">${Object.entries(SALE_ST).filter(([k])=>isInv(s.type)?['entwurf','offen','versendet','teilbezahlt','bezahlt','storniert'].includes(k)&&(k!=='entwurf'||!ro):!['entwurf','teilbezahlt','bezahlt'].includes(k)).map(([k,[l]])=>`<option value="${k}" ${s.status===k?'selected':''}>${l}</option>`).join('')}</select></div></div>
     ${isInv(s.type)&&!isNew&&s.status!=='entwurf'?`<div class="sl-pays"><b>Zahlungen</b> ${(s.paid||[]).map(p=>`<span class="chip">${esc(dDE(p.d))}: ${euro(p.amt)}${p.acc?' · '+esc(p.acc):''}</span>`).join(' ')||'<span class="small muted">noch keine</span>'} ${m.open>0.005&&s.status!=='storniert'?`<button type="button" class="btn sun sm" data-act="salePay" data-id="${s.id}">Zahlung erfassen (offen ${euro(m.open)})</button>`:''}</div>`:''}
-    <div class="row sl-act">${!isNew||ro?`<button type="button" class="btn" data-act="salePrint" data-id="${s.id}">${ic('report')}Drucken / PDF</button><button type="button" class="btn" data-act="saleMail" data-id="${s.id}">✉ E-Mail-Text</button>`:''}
+    <div class="row sl-act">${!isNew||ro?`<button type="button" class="btn" data-act="salePrint" data-id="${s.id}">${ic('report')}Drucken / PDF</button><button type="button" class="btn" data-act="saleMail" data-id="${s.id}">✉ E-Mail-Text</button>${isInv(s.type)||s.type==='storno'?`<button type="button" class="btn" data-act="saleXRech" data-id="${s.id}" title="XRechnung 3.0 (XML nach EN 16931) herunterladen und in der Datenablage speichern">🧾 E-Rechnung${s.xrAt?' ✓':''}</button>`:''}`:''}
       ${!isNew?succ.map(([t,l])=>`<button type="button" class="btn ghost" data-act="saleNext" data-id="${s.id}" data-type="${t}">${l}</button>`).join(''):''}
       ${ro&&s.type!=='storno'&&s.status!=='storniert'?`<button type="button" class="btn danger" data-act="saleStorno" data-id="${s.id}">Stornieren</button>`:''}
       ${!isNew?`<button type="button" class="btn ghost" data-act="saleCopy" data-id="${s.id}">Kopieren</button>`:''}<button type="button" class="btn ghost sl-prevtg" data-act="slPrevTg">👁 ${UI.slPrev===false?'Vorschau zeigen':'Vorschau ausblenden'}</button></div>
@@ -6612,8 +6683,11 @@ let SALE_CUR=null, SL_PICK_ROW=null, slPrevT=null;
 function saleDraft(s){ if(saleLocked(s)) return clone(S.sales[s.id]||s); const g=id=>{ const e=$('#'+id); return e?e.value:''; };
   const pm=g('sl_pm')||(s.type==='angebot'?'datum':s.perfMode||'datum'), pf=g('sl_pf'), pt=g('sl_pt');
   const v={...clone(s),cust:{name:g('sl_cn').trim(),addr:g('sl_ca').trim()},custNr:g('sl_cnr').trim(),pid:g('sl_pid'),date:g('sl_d')||TODAY(),perfMode:pm,perfFrom:pf,perfTo:pt,perf:pm==='zeitraum'&&pf&&pt&&pt!==pf?dDE(pf)+' – '+dDE(pt):dDE(pf),title:g('sl_title').trim()||SALE_T[s.type][0],subject:g('sl_sub').trim(),intro:g('sl_in'),outro:g('sl_out'),items:saleReadLines(),status:g('sl_st')||s.status,
-    termId:g('sl_term'),payText:$('#sl_paytxt')?g('sl_paytxt'):s.payText,note:g('sl_note'),dun:!!($('#sl_dun')&&$('#sl_dun').checked),acc0:g('sl_a0')||s.acc0,acc19:g('sl_a19')||s.acc19,acc7:g('sl_a7')||s.acc7,brutto:!!($('#sl_items')&&$('#sl_items').dataset.brutto==='1'),textId:SALE_CUR&&SALE_CUR.textId||s.textId};
-  if($('#sl_pay')) v.payDays=+g('sl_pay')||0; return v; }
+    custMail:$('#sl_cm')?g('sl_cm').trim():s.custMail||'',leitweg:$('#sl_lw')?g('sl_lw').trim():s.leitweg||'',custVat:$('#sl_cvat')?g('sl_cvat').trim():s.custVat||'',termId:g('sl_term'),payText:$('#sl_paytxt')?g('sl_paytxt'):s.payText,note:g('sl_note'),dun:!!($('#sl_dun')&&$('#sl_dun').checked),acc0:g('sl_a0')||s.acc0,acc19:g('sl_a19')||s.acc19,acc7:g('sl_a7')||s.acc7,brutto:!!($('#sl_items')&&$('#sl_items').dataset.brutto==='1'),textId:SALE_CUR&&SALE_CUR.textId||s.textId};
+  if($('#sl_pay')) v.payDays=+g('sl_pay')||0;
+  // Rechnung mit eigenen Abschlagsrechnungen = Schlussrechnung: fertige Abschläge automatisch abziehen
+  if(v.type==='rechnung'){ const own=arr('sales').filter(a=>a.type==='abschlag'&&a.from===v.id&&a.nr&&a.status!=='storniert').map(a=>a.id); if(own.length){ v.deduct=[...new Set([...(v.deduct||[]),...own])]; if(!v.title||v.title==='Rechnung') v.title='Schlussrechnung'; } }
+  return v; }
 function saleRead(s){ const st=$('#sl_st')?$('#sl_st').value:s.status; if(saleLocked(s)){ return {...clone(S.sales[s.id]||s),status:st==='entwurf'?s.status:st}; }
   const v=saleDraft(s); if(!v.cust.name){ toast('Bitte einen Kunden eintragen.'); return false; }
   if(!isInv(v.type)&&!v.nr) v.nr=saleNr(v.type);
@@ -6628,7 +6702,7 @@ function saleBind(){ const box=$('#sl_items'); if(!box) return;
     clearTimeout(slPrevT); slPrevT=setTimeout(slPreview,250); };
   SALE_CUR.upd=upd;
   const form=box.closest('.sl-form'); form.addEventListener('input',upd); form.addEventListener('change',e=>{ if(e.target.classList.contains('sl-art')){ const a=Object.values(S.artikel||{}).find(x=>x.name===e.target.value); if(a) slApplyArt(e.target.closest('.sl-row'),a); } upd(); });
-  const cn=$('#sl_cn'); if(cn) cn.addEventListener('change',()=>{ const k=stKunde(cn.value); if(!k) return; if(!$('#sl_ca').value.trim()) $('#sl_ca').value=[k.street,[k.zip,k.city].filter(Boolean).join(' ')].filter(Boolean).join('\n'); if(!$('#sl_cnr').value) $('#sl_cnr').value=k.nr||''; upd(); });
+  const cn=$('#sl_cn'); if(cn) cn.addEventListener('change',()=>{ const k=stKunde(cn.value); if(!k) return; if(!$('#sl_ca').value.trim()) $('#sl_ca').value=[k.street,[k.zip,k.city].filter(Boolean).join(' ')].filter(Boolean).join('\n'); if(!$('#sl_cnr').value) $('#sl_cnr').value=k.nr||''; if($('#sl_cm')&&!$('#sl_cm').value) $('#sl_cm').value=k.email||''; upd(); });
   const ps=$('#sl_pid'); if(ps) ps.addEventListener('change',()=>{ const p=S.projects[ps.value]; if(!p) return; if(!$('#sl_cn').value&&p.customer){ $('#sl_cn').value=p.customer; $('#sl_cn').dispatchEvent(new Event('change')); if(!$('#sl_ca').value&&p.custAddress) $('#sl_ca').value=p.custAddress.replace(/,\s*/,'\n'); } if(!$('#sl_sub').value) $('#sl_sub').value=p.name+(p.nr?' (Projekt '+p.nr+')':''); upd(); });
   const pq=$('#sl_pq'); if(pq) pq.addEventListener('input',slPickList);
   const pm=$('#sl_pm'); if(pm) pm.addEventListener('change',()=>{ const z=pm.value==='zeitraum', w=$('#sl_ptw'); if(w) w.hidden=!z; const l=$('#sl_pf')&&$('#sl_pf').previousElementSibling; if(l) l.textContent=z?'von':'am'; if(z&&$('#sl_pt')&&!$('#sl_pt').value) $('#sl_pt').value=$('#sl_pf').value; });
@@ -6652,8 +6726,96 @@ Object.assign(A,{
  slPrevTg:()=>{ UI.slPrev=UI.slPrev===false?true:false; const sp=document.querySelector('.sl-split'); if(sp) sp.classList.toggle('noprev',UI.slPrev===false); const b=document.querySelector('.sl-prevtg'); if(b) b.textContent='👁 '+(UI.slPrev===false?'Vorschau zeigen':'Vorschau ausblenden'); if(UI.slPrev!==false) slPreview(); },
 });
 // Nachfolger anlegen: Angebot → Auftrag → Lieferschein / Abschlag / Schlussrechnung
-function saleNext(id,type){ const s=S.sales[id]; if(!s) return; const base={cust:clone(s.cust),custNr:s.custNr,pid:s.pid,subject:s.subject,from:s.id};
-  if(type==='abschlag'){ const m=saleSums(s); openSheet({title:'Abschlagsrechnung zu '+s.nr,fields:[{k:'pct',label:'Abschlag in % der Auftragssumme',type:'number',step:'any'},{k:'amt',label:'oder fester Betrag netto (€)',type:'number',step:'any'},{k:'txt',label:'Bezeichnung',full:1}],value:{pct:30,txt:'Abschlag gemäß Vereinbarung zu '+SALE_T[s.type][0]+' '+s.nr},
+/* ========== Vorgang: Angebot → Auftrag → 1., 2., 3. Abschlagsrechnung → Schlussrechnung (alles verknüpft über „from“) ========== */
+const saleRootOf=s=>{ let x=s, i=0; while(x&&x.from&&S.sales[x.from]&&i<20){ x=S.sales[x.from]; i++; } return x; };
+function saleChain(s){ const root=saleRootOf(s); if(!root) return []; const out=[root], seen=new Set([root.id]); let grow=true;
+  while(grow){ grow=false; arr('sales').forEach(x=>{ if(!seen.has(x.id)&&x.from&&seen.has(x.from)){ seen.add(x.id); out.push(x); grow=true; } }); }
+  return out.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.at||'').localeCompare(String(b.at||''))); }
+// Abrechnungs-Basis eines Vorgangs: Auftrag vor Angebot; sonst die (Entwurfs-)Rechnung selbst
+const saleBase=s=>{ const ch=saleChain(s); return ch.find(x=>x.type==='auftrag'&&x.status!=='storniert')||ch.find(x=>x.type==='angebot')||ch.find(x=>x.type==='rechnung'&&!x.deduct?.length)||s; };
+const saleAbsOf=s=>saleChain(s).filter(x=>x.type==='abschlag'&&x.status!=='storniert');
+const saleFinalOf=s=>saleChain(s).find(x=>x.type==='rechnung'&&x.status!=='storniert'&&(x.deduct||[]).length);
+function saleAbschlag(id){ const s=S.sales[id]; if(!s) return; const base=saleBase(s), m=saleSums({...base,deduct:[]}), abs=saleAbsOf(s), n=abs.length+1, done=r2(abs.reduce((a,x)=>a+saleSums({...x,deduct:[]}).net,0)), rest=r2(m.net-done);
+  openSheet({title:n+'. Abschlagsrechnung zu '+SALE_T[base.type][0]+' '+(base.nr||'(Entwurf)'),
+    fields:[{k:'ov',label:'',type:'html',full:1,html:`<div class="hr-kpis">${[['Auftragssumme netto',euro(m.net)],['bisher abgerechnet',euro(done)+' ('+(m.net?Math.round(done/m.net*100):0)+' %)'],['noch offen',euro(rest)]].map(([l,v])=>`<div class="hk"><span class="hv">${v}</span><span class="hl">${l}</span></div>`).join('')}</div>`},{k:'pct',label:'Abschlag in % der Auftragssumme',type:'number',step:'any'},{k:'amt',label:'oder fester Betrag netto (€)',type:'number',step:'any'},{k:'txt',label:'Bezeichnung',full:1}],
+    value:{pct:abs.length?'':30,txt:n+'. Abschlag gemäß Vereinbarung zu '+SALE_T[base.type][0]+' '+(base.nr||'')},
+    onSave:v=>{ const amt=v.amt?+String(v.amt).replace(',','.'):0, pct=+String(v.pct||'').replace(',','.')||0, net=amt||r2(m.net*pct/100); if(!net){ toast('Bitte % oder Betrag angeben.'); return false; } if(net>rest+0.01&&!confirm('Der Abschlag ist höher als der noch offene Betrag ('+euro(rest)+'). Trotzdem anlegen?')) return false;
+      // auf die Steuersätze der Basis aufteilen (z. B. 0 % PV und 19 % Zubehör)
+      const ks=Object.keys(m.by).filter(k=>m.by[k].net), items=ks.map(k=>({art:String(v.txt||'Abschlag')+(ks.length>1?' ('+vatPct(k)+' %)':''),desc:amt?'':pct+' % von '+euro(m.by[k].net)+' netto',qty:1,unit:'psch.',price:r2(net*(m.by[k].net/m.net)),vat:k}));
+      setTimeout(()=>saleForm(saleNew('abschlag',{cust:clone(base.cust),custNr:base.custNr,pid:base.pid,subject:base.subject,from:base.id,title:n+'. Abschlagsrechnung',abschlagNr:n,items:items.length?items:[{art:String(v.txt),qty:1,unit:'psch.',price:net,vat:'19'}],custMail:base.custMail||'',leitweg:base.leitweg||''})),60); }}); }
+function saleSchluss(id){ const s=S.sales[id]; if(!s) return; const base=saleBase(s), abs=saleAbsOf(s), fin=abs.filter(a=>a.nr), drafts=abs.filter(a=>!a.nr), ex=saleFinalOf(s);
+  if(ex) return confirmSheet('Zu diesem Vorgang gibt es schon die Schlussrechnung '+(ex.nr||'(Entwurf)')+'. Öffnen?',()=>setTimeout(()=>saleForm(ex),80));
+  const go=()=>{ if(base.type==='rechnung'&&!saleLocked(base)){ const v={...clone(base),deduct:fin.map(a=>a.id),title:'Schlussrechnung'}; salePut(v); setTimeout(()=>saleForm(v),80); return; }
+    setTimeout(()=>saleForm(saleNew('rechnung',{cust:clone(base.cust),custNr:base.custNr,pid:base.pid,subject:base.subject,from:base.id,title:fin.length?'Schlussrechnung':'Rechnung',items:clone(base.items||[]),deduct:fin.map(a=>a.id),custMail:base.custMail||'',leitweg:base.leitweg||''})),80); };
+  if(drafts.length) confirmSheet(drafts.length+' Abschlagsrechnung(en) sind noch Entwurf und werden in der Schlussrechnung nicht abgezogen. Trotzdem jetzt die Schlussrechnung erstellen?',go); else go(); }
+// Übersicht im Beleg: der ganze Weg mit Summen
+function saleChainHtml(s){ if(!S.sales||(!S.sales[s.id]&&!s.from)) return ''; const ch=saleChain(s); if(ch.length<2&&!['angebot','auftrag'].includes(s.type)&&!(s.type==='rechnung'&&!saleLocked(s))) return '';
+  const base=saleBase(s), mb=saleSums({...base,deduct:[]}), abs=saleAbsOf(s), absG=r2(abs.filter(a=>a.nr).reduce((a,x)=>a+saleSums({...x,deduct:[]}).gross,0)), fin=saleFinalOf(s);
+  const paid=r2(ch.filter(x=>isInv(x.type)&&x.status!=='storniert').reduce((a,x)=>a+saleSums(x).paid,0));
+  const row=x=>{ const m=saleSums(x), st=SALE_ST[x.status]||[x.status,''], t=x.title&&x.type!=='angebot'&&x.type!=='auftrag'?x.title:SALE_T[x.type][0];
+    return `<button type="button" class="sc-it ${x.id===s.id?'on':''} ${x.status==='storniert'?'st':''}" data-act="saleEdit" data-id="${x.id}"><span class="sc-t">${esc(t)}</span><span class="mono small">${esc(x.nr||'Entwurf')}</span><span class="small muted">${esc(dDE(x.date))}</span><span class="mono">${x.type==='lieferschein'?'':euro(isInv(x.type)?m.pay:m.gross)}</span><span class="pill ${st[1]}">${esc(st[0])}</span></button>`; };
+  const can=!saleLocked(s)||isInv(s.type);
+  return `<details class="sl-chain" ${ch.length>1?'open':''}><summary><b>Vorgang</b> · ${ch.length} Beleg${ch.length>1?'e':''}${abs.length?' · '+abs.length+' Abschlag'+(abs.length>1?'e':''):''}${fin?' · Schlussrechnung '+esc(fin.nr||'Entwurf'):''}</summary>
+    <div class="sc-list">${ch.map(row).join('')}</div>
+    <div class="sc-sum"><span>Auftragssumme <b>${euro(mb.gross)}</b></span><span>abgerechnet (Abschläge) <b>${euro(absG)}</b></span><span>bezahlt <b>${euro(paid)}</b></span><span>noch abzurechnen <b>${euro(r2(mb.gross-absG))}</b></span></div>
+    ${can&&!fin?`<div class="row" style="gap:6px;margin-top:8px"><button type="button" class="btn sm" data-act="saleAbs" data-id="${s.id}">${ic('plus')}${abs.length+1}. Abschlagsrechnung</button><button type="button" class="btn sun sm" data-act="saleSchluss" data-id="${s.id}">Schlussrechnung erstellen</button></div>`:''}</details>`; }
+
+/* ========== E-Rechnung: XRechnung 3.0 (UN/CEFACT CII, EN 16931) ========== */
+const xe=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const xa=v=>(Math.round((+v||0)*100)/100).toFixed(2), xd=d=>String(d||TODAY()).replace(/-/g,'').slice(0,8), xdt=d=>`<udt:DateTimeString format="102">${xd(d)}</udt:DateTimeString>`;
+const X_UNIT=u=>{ const s=String(u||'').toLowerCase().replace(/\.$/,''); return ({stk:'H87',stück:'H87',st:'H87',m:'MTR',lfm:'MTR','m²':'MTK',m2:'MTK',qm:'MTK','m³':'MTQ',kg:'KGM',t:'TNE',l:'LTR',std:'HUR',h:'HUR',stunde:'HUR',stunden:'HUR',tag:'DAY',tage:'DAY',km:'KMT',psch:'LS',pauschal:'LS',pausch:'LS',satz:'SET',set:'SET',pal:'PF',kwp:'KWT',kw:'KWT',kwh:'KWH',wp:'C62'})[s]||'C62'; };
+// Steuerkategorie: 19/7 % = S, 0 % PV (§ 12 Abs. 3) = Z, § 13b = AE, sonst steuerfrei = E
+const X_CAT=k=>k==='19'||k==='7'?['S',vatPct(k),'']:k==='0p'?['Z',0,'']:k==='0r'?['AE',0,'Steuerschuldnerschaft des Leistungsempfängers (§ 13b UStG)']:['E',0,'Steuerbefreite Leistung'];
+const X_TYPE=s=>s.type==='abschlag'?'326':s.type==='storno'||s.type==='gutschrift'?'384':'380';
+function saleAddr(txt){ const L=String(txt||'').split(/\n|,\s*/).map(x=>x.trim()).filter(Boolean); let zip='',city='',street=''; const i=L.findIndex(l=>/^\d{5}\s+\S/.test(l)); if(i>=0){ const m=L[i].match(/^(\d{5})\s+(.+)$/); zip=m[1]; city=m[2]; street=L.filter((_,k)=>k!==i&&k<i).pop()||''; } else { street=L[0]||''; city=L[1]||''; } return {street,zip,city}; }
+function saleXmlCheck(s){ const miss=[]; if(!s.nr) miss.push('Rechnungsnummer (Beleg erst fertigstellen)'); if(!(s.cust&&s.cust.name)) miss.push('Kundenname'); const a=saleAddr(s.cust&&s.cust.addr); if(!a.zip||!a.city) miss.push('Kundenanschrift mit PLZ und Ort'); if(!s.custMail&&!s.leitweg) miss.push('E-Mail des Kunden oder Leitweg-ID (Buchhaltung, Mahnung & Anmerkungen)'); if(!(s.items||[]).some(i=>(i.k||'pos')==='pos'&&!i.opt)) miss.push('mindestens eine Position'); return miss; }
+function saleXml(s){ const m=saleSums(s), a=saleAddr(s.cust&&s.cust.addr), nd=saleAddr(NDS.street+'\n'+NDS.city), due=saleDue(s), who=ME?ME.replace(/\s*\([^)]*\)$/,''):NDS.gf;
+  const pos=(s.items||[]).filter(i=>(i.k||(i.text?'text':'pos'))==='pos'&&!i.opt); let n=0;
+  const lines=pos.map(i=>{ const [cat,rate]=X_CAT(i.vat||'19'), net=xa((+i.qty||0)*(+i.price||0));
+    return `<ram:IncludedSupplyChainTradeLineItem><ram:AssociatedDocumentLineDocument><ram:LineID>${++n}</ram:LineID></ram:AssociatedDocumentLineDocument><ram:SpecifiedTradeProduct><ram:Name>${xe(String(i.art||i.desc||'Position').slice(0,250))}</ram:Name>${i.desc&&i.art?`<ram:Description>${xe(i.desc)}</ram:Description>`:''}</ram:SpecifiedTradeProduct>
+<ram:SpecifiedLineTradeAgreement><ram:NetPriceProductTradePrice><ram:ChargeAmount>${(+i.price||0).toFixed(4).replace(/0{1,2}$/,'')}</ram:ChargeAmount></ram:NetPriceProductTradePrice></ram:SpecifiedLineTradeAgreement>
+<ram:SpecifiedLineTradeDelivery><ram:BilledQuantity unitCode="${X_UNIT(i.unit)}">${+i.qty||0}</ram:BilledQuantity></ram:SpecifiedLineTradeDelivery>
+<ram:SpecifiedLineTradeSettlement><ram:ApplicableTradeTax><ram:TypeCode>VAT</ram:TypeCode><ram:CategoryCode>${cat}</ram:CategoryCode><ram:RateApplicablePercent>${rate}</ram:RateApplicablePercent></ram:ApplicableTradeTax><ram:SpecifiedTradeSettlementLineMonetarySummation><ram:LineTotalAmount>${net}</ram:LineTotalAmount></ram:SpecifiedTradeSettlementLineMonetarySummation></ram:SpecifiedLineTradeSettlement></ram:IncludedSupplyChainTradeLineItem>`; }).join('\n');
+  const lineSum=r2(pos.reduce((x,i)=>x+r2((+i.qty||0)*(+i.price||0)),0));
+  const taxes=Object.entries(m.by).map(([k,v])=>{ const [cat,rate,why]=X_CAT(k); return `<ram:ApplicableTradeTax><ram:CalculatedAmount>${xa(v.vat)}</ram:CalculatedAmount><ram:TypeCode>VAT</ram:TypeCode>${why?`<ram:ExemptionReason>${xe(why)}</ram:ExemptionReason>`:''}<ram:BasisAmount>${xa(v.net)}</ram:BasisAmount><ram:CategoryCode>${cat}</ram:CategoryCode>${cat==='AE'?'<ram:ExemptionReasonCode>VATEX-EU-AE</ram:ExemptionReasonCode>':cat==='E'?'<ram:ExemptionReasonCode>VATEX-EU-132</ram:ExemptionReasonCode>':''}<ram:RateApplicablePercent>${rate}</ram:RateApplicablePercent></ram:ApplicableTradeTax>`; }).join('');
+  const allow=m.disc?Object.entries(m.by).map(([k,v])=>{ const [cat,rate]=X_CAT(k), basis=r2(v.net/(1-m.disc/100)), amt=r2(basis-v.net); return amt?`<ram:SpecifiedTradeAllowanceCharge><ram:ChargeIndicator><udt:Indicator>false</udt:Indicator></ram:ChargeIndicator><ram:CalculationPercent>${m.disc}</ram:CalculationPercent><ram:BasisAmount>${xa(basis)}</ram:BasisAmount><ram:ActualAmount>${xa(amt)}</ram:ActualAmount><ram:Reason>Rabatt</ram:Reason><ram:CategoryTradeTax><ram:TypeCode>VAT</ram:TypeCode><ram:CategoryCode>${cat}</ram:CategoryCode><ram:RateApplicablePercent>${rate}</ram:RateApplicablePercent></ram:CategoryTradeTax></ram:SpecifiedTradeAllowanceCharge>`:''; }).join(''):'';
+  const allowSum=r2(lineSum-m.net), period=s.perfMode==='zeitraum'&&s.perfFrom&&s.perfTo&&s.perfTo!==s.perfFrom;
+  const refs=(s.deduct||[]).map(id=>S.sales[id]).filter(Boolean).map(x=>`<ram:InvoiceReferencedDocument><ram:IssuerAssignedID>${xe(x.nr)}</ram:IssuerAssignedID><ram:FormattedIssueDateTime><qdt:DateTimeString format="102">${xd(x.date)}</qdt:DateTimeString></ram:FormattedIssueDateTime></ram:InvoiceReferencedDocument>`).join('')
+    +((s.type==='storno'||s.type==='gutschrift')&&s.from&&S.sales[s.from]&&S.sales[s.from].nr?`<ram:InvoiceReferencedDocument><ram:IssuerAssignedID>${xe(S.sales[s.from].nr)}</ram:IssuerAssignedID><ram:FormattedIssueDateTime><qdt:DateTimeString format="102">${xd(S.sales[s.from].date)}</qdt:DateTimeString></ram:FormattedIssueDateTime></ram:InvoiceReferencedDocument>`:'');
+  const note=[s.subject?'Betreff: '+s.subject:'',s.intro,s.outro,s.type==='abschlag'?'Abschlagsrechnung':''].filter(Boolean).join('\n\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rsm:CrossIndustryInvoice xmlns:rsm="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100" xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100" xmlns:qdt="urn:un:unece:uncefact:data:standard:QualifiedDataType:100" xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100">
+<rsm:ExchangedDocumentContext><ram:BusinessProcessSpecifiedDocumentContextParameter><ram:ID>urn:fdc:peppol.eu:2017:poacc:billing:01:1.0</ram:ID></ram:BusinessProcessSpecifiedDocumentContextParameter><ram:GuidelineSpecifiedDocumentContextParameter><ram:ID>urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0</ram:ID></ram:GuidelineSpecifiedDocumentContextParameter></rsm:ExchangedDocumentContext>
+<rsm:ExchangedDocument><ram:ID>${xe(s.nr)}</ram:ID><ram:TypeCode>${X_TYPE(s)}</ram:TypeCode><ram:IssueDateTime>${xdt(s.date)}</ram:IssueDateTime>${note?`<ram:IncludedNote><ram:Content>${xe(note)}</ram:Content></ram:IncludedNote>`:''}<ram:IncludedNote><ram:Content>${xe(NDS.name+' · Geschäftsführer: '+NDS.gf+' · '+NDS.hrb)}</ram:Content><ram:SubjectCode>REG</ram:SubjectCode></ram:IncludedNote></rsm:ExchangedDocument>
+<rsm:SupplyChainTradeTransaction>
+${lines}
+<ram:ApplicableHeaderTradeAgreement><ram:BuyerReference>${xe(s.leitweg||s.custNr||s.cust.name)}</ram:BuyerReference>
+<ram:SellerTradeParty><ram:Name>${xe(NDS.name)}</ram:Name><ram:SpecifiedLegalOrganization><ram:ID>${xe(NDS.hrb)}</ram:ID></ram:SpecifiedLegalOrganization><ram:DefinedTradeContact><ram:PersonName>${xe(who)}</ram:PersonName><ram:TelephoneUniversalCommunication><ram:CompleteNumber>${xe(NDS.tel)}</ram:CompleteNumber></ram:TelephoneUniversalCommunication><ram:EmailURIUniversalCommunication><ram:URIID>${xe(NDS.mail)}</ram:URIID></ram:EmailURIUniversalCommunication></ram:DefinedTradeContact><ram:PostalTradeAddress><ram:PostcodeCode>${xe(nd.zip)}</ram:PostcodeCode><ram:LineOne>${xe(nd.street)}</ram:LineOne><ram:CityName>${xe(nd.city)}</ram:CityName><ram:CountryID>DE</ram:CountryID></ram:PostalTradeAddress><ram:URIUniversalCommunication><ram:URIID schemeID="EM">${xe(NDS.mail)}</ram:URIID></ram:URIUniversalCommunication><ram:SpecifiedTaxRegistration><ram:ID schemeID="VA">${xe(NDS.ustid)}</ram:ID></ram:SpecifiedTaxRegistration></ram:SellerTradeParty>
+<ram:BuyerTradeParty>${s.custNr?`<ram:ID>${xe(s.custNr)}</ram:ID>`:''}<ram:Name>${xe(s.cust.name)}</ram:Name><ram:PostalTradeAddress><ram:PostcodeCode>${xe(a.zip)}</ram:PostcodeCode><ram:LineOne>${xe(a.street)}</ram:LineOne><ram:CityName>${xe(a.city)}</ram:CityName><ram:CountryID>DE</ram:CountryID></ram:PostalTradeAddress>${s.custMail?`<ram:URIUniversalCommunication><ram:URIID schemeID="EM">${xe(s.custMail)}</ram:URIID></ram:URIUniversalCommunication>`:''}${s.custVat?`<ram:SpecifiedTaxRegistration><ram:ID schemeID="VA">${xe(s.custVat)}</ram:ID></ram:SpecifiedTaxRegistration>`:''}</ram:BuyerTradeParty>
+</ram:ApplicableHeaderTradeAgreement>
+<ram:ApplicableHeaderTradeDelivery>${!period?`<ram:ActualDeliverySupplyChainEvent><ram:OccurrenceDateTime>${xdt(s.perfFrom||s.date)}</ram:OccurrenceDateTime></ram:ActualDeliverySupplyChainEvent>`:''}</ram:ApplicableHeaderTradeDelivery>
+<ram:ApplicableHeaderTradeSettlement><ram:PaymentReference>${xe(s.nr)}</ram:PaymentReference><ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>
+<ram:SpecifiedTradeSettlementPaymentMeans><ram:TypeCode>58</ram:TypeCode><ram:PayeePartyCreditorFinancialAccount><ram:IBANID>${xe(String(NDS.iban).replace(/\s/g,''))}</ram:IBANID><ram:AccountName>${xe(NDS.name)}</ram:AccountName></ram:PayeePartyCreditorFinancialAccount><ram:PayeeSpecifiedCreditorFinancialInstitution><ram:BICID>${xe(NDS.bic)}</ram:BICID></ram:PayeeSpecifiedCreditorFinancialInstitution></ram:SpecifiedTradeSettlementPaymentMeans>
+${taxes}${period?`<ram:BillingSpecifiedPeriod><ram:StartDateTime>${xdt(s.perfFrom)}</ram:StartDateTime><ram:EndDateTime>${xdt(s.perfTo)}</ram:EndDateTime></ram:BillingSpecifiedPeriod>`:''}${allow}
+<ram:SpecifiedTradePaymentTerms><ram:Description>${xe((s.payText?fillPh(s.payText,s):'')||('Zahlbar bis '+dDE(due)+' ohne Abzug.'))}</ram:Description>${due?`<ram:DueDateDateTime>${xdt(due)}</ram:DueDateDateTime>`:''}</ram:SpecifiedTradePaymentTerms>
+<ram:SpecifiedTradeSettlementHeaderMonetarySummation><ram:LineTotalAmount>${xa(lineSum)}</ram:LineTotalAmount>${allowSum?`<ram:AllowanceTotalAmount>${xa(allowSum)}</ram:AllowanceTotalAmount>`:''}<ram:TaxBasisTotalAmount>${xa(m.net)}</ram:TaxBasisTotalAmount><ram:TaxTotalAmount currencyID="EUR">${xa(m.vat)}</ram:TaxTotalAmount><ram:GrandTotalAmount>${xa(m.gross)}</ram:GrandTotalAmount>${m.dedGross?`<ram:TotalPrepaidAmount>${xa(m.dedGross)}</ram:TotalPrepaidAmount>`:''}<ram:DuePayableAmount>${xa(m.pay)}</ram:DuePayableAmount></ram:SpecifiedTradeSettlementHeaderMonetarySummation>
+${refs}
+</ram:ApplicableHeaderTradeSettlement>
+</rsm:SupplyChainTradeTransaction>
+</rsm:CrossIndustryInvoice>`; }
+async function saleXRech(id){ const s=S.sales[id]; if(!s) return; const miss=saleXmlCheck(s); if(miss.length){ openSheet({title:'E-Rechnung: Angaben fehlen',html:`<div class="fld full"><div>Für eine gültige XRechnung fehlt noch:</div><ul>${miss.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`,saveLabel:'OK',onSave:()=>{}}); return; }
+  const xml=saleXml(s), name='XRechnung_'+String(s.nr).replace(/[^\w-]+/g,'_')+'.xml', blob=new Blob([xml],{type:'application/xml'}); saveBlob(blob,name);
+  if(ASSETS&&s.pid) try{ const r=await ASSETS.upload(new File([blob],name,{type:'application/xml'}),{type:'application/xml'}); put('files',{id:uid(),name,mime:'application/xml',size:blob.size,asset:r.id,kind:'rechnung',pid:s.pid,date:TODAY(),at:new Date().toISOString(),note:'E-Rechnung (XRechnung) zu '+SALE_T[s.type][0]+' '+s.nr}); }catch(e){}
+  salePut({...clone(s),xrAt:new Date().toISOString(),xrBy:meK()}); toast('E-Rechnung (XRechnung) erstellt'+(s.pid?' und in der Datenablage gespeichert':'')+'.'); }
+queueMicrotask(()=>Object.assign(A,{ /* A wird weiter unten angelegt */
+  saleAbs:d=>{ if(SHEET&&SALE_CUR&&!saleLocked(SALE_CUR)){ const v=saleRead({...SALE_CUR}); if(v!==false){ salePut(v); SALE_CUR=v; } } closeSheet(); setTimeout(()=>saleAbschlag(d.id),80); },
+  saleSchluss:d=>{ if(SHEET&&SALE_CUR&&!saleLocked(SALE_CUR)){ const v=saleRead({...SALE_CUR}); if(v!==false){ salePut(v); SALE_CUR=v; } } closeSheet(); setTimeout(()=>saleSchluss(d.id),80); },
+  saleXRech:d=>{ if(SHEET&&SALE_CUR&&!saleLocked(SALE_CUR)){ const v=saleRead({...SALE_CUR}); if(v!==false){ salePut(v); SALE_CUR=v; } } saleXRech(d.id); } }));
+
+function saleNext(id,type){ const s=S.sales[id]; if(!s) return; const base={cust:clone(s.cust),custNr:s.custNr,pid:s.pid,subject:s.subject,from:s.id,custMail:s.custMail||'',leitweg:s.leitweg||'',custVat:s.custVat||''};
+  if(type==='abschlag'){ closeSheet(); setTimeout(()=>saleAbschlag(id),60); return; }
+  if(type==='schluss'||(type==='rechnung'&&['auftrag','angebot'].includes(s.type)&&saleAbsOf(s).length)){ closeSheet(); setTimeout(()=>saleSchluss(id),60); return; }
+  if(false){ const m=saleSums(s); openSheet({title:'Abschlagsrechnung zu '+s.nr,fields:[{k:'pct',label:'Abschlag in % der Auftragssumme',type:'number',step:'any'},{k:'amt',label:'oder fester Betrag netto (€)',type:'number',step:'any'},{k:'txt',label:'Bezeichnung',full:1}],value:{pct:30,txt:'Abschlag gemäß Vereinbarung zu '+SALE_T[s.type][0]+' '+s.nr},
       onSave:v=>{ const vat=Object.keys(m.by)[0]||'19', net=v.amt?+String(v.amt).replace(',','.'):r2(m.net*(+v.pct||0)/100); if(!net){ toast('Bitte % oder Betrag angeben.'); return false; } setTimeout(()=>saleForm(saleNew('abschlag',{...base,items:[{art:String(v.txt||'Abschlag'),desc:(v.amt?'':(+v.pct)+' % von '+euro(m.net)+' netto'),qty:1,unit:'psch.',price:r2(net),vat}]})),60); }}); return; }
   const items=clone(s.items||[]), pre={...base,items};
   if(type==='rechnung'&&s.type==='auftrag') pre.deduct=arr('sales').filter(a=>a.type==='abschlag'&&a.from===s.id&&a.nr&&a.status!=='storniert').map(a=>a.id);
@@ -7319,10 +7481,10 @@ function dyCard(p,x,adm){
 function projVerlauf(p,adm){
   if(SAMPLE) setTimeout(()=>diaryHeads(p.id),400);
   const days=diaryDays(p), top=days.slice(0,5), rest=days.slice(5);
-  return `<div class="nb-list">${top.map(x=>dyCard(p,x,adm)).join('')||'<div class="empty">Noch keine Notizen.</div>'}</div>
-    ${rest.length||p.questions||p.scope?`<details class="nb-more" ${UI.nbAll?'open':''} data-nball="1"><summary>${rest.length?`Ältere Notizen (${rest.length} Tage)`:'Weitere Einträge'}${p.questions?' · offene Fragen':''}${p.scope?' · Auftrag':''} anzeigen</summary>
+  return `<div class="nb-list">${p.questions?`<div class="q-box"><div class="eyebrow nb-eb"><span>Zu klärende Fragen</span><span class="small muted">${qLines(p.questions).filter(l=>{ const x=S.tasks[(p.qTasks||{})[qKey(l)]]; return x&&x.done; }).length} von ${qLines(p.questions).length} geklärt</span></div>${qHtml(p)}</div>`:''}${top.map(x=>dyCard(p,x,adm)).join('')||'<div class="empty">Noch keine Notizen.</div>'}</div>
+    ${rest.length||p.scope?`<details class="nb-more" ${UI.nbAll?'open':''} data-nball="1"><summary>${rest.length?`Ältere Notizen (${rest.length} Tage)`:'Weitere Einträge'}${p.scope?' · Auftrag':''} anzeigen</summary>
       <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px"><div class="nb-list">${rest.map(x=>dyCard(p,x,adm)).join('')}</div>
-      ${p.questions?`<div><div class="eyebrow nb-eb"><span>Zu klärende Fragen</span></div><div class="longtext">${esc(p.questions)}</div></div>`:''}${p.scope?`<div><div class="eyebrow nb-eb"><span>Auftrag Inhalt</span></div><div class="longtext">${esc(p.scope)}</div></div>`:''}</div></details>`:''}`;
+      ${p.scope?`<div><div class="eyebrow nb-eb"><span>Auftrag Inhalt</span></div><div class="longtext">${esc(p.scope)}</div></div>`:''}</div></details>`:''}`;
 }
 // Claude: kurze Überschrift je Tag (im Hintergrund, ohne Sonne)
 var DY_RUN={}, DY_TRIED={}, DY_BUSY=new Set(); // var: wird schon beim ersten Zeichnen gelesen; DY_BUSY = Tage, die gerade zusammengefasst werden
