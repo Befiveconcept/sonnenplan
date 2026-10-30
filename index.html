@@ -568,6 +568,9 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .sl-form label{display:block;font-size:12.5px;color:var(--muted);margin:10px 0 3px}
 .sl-head{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .sl-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nav-btn .cnt.alert,.nav-btn.on .cnt.alert{background:#E5383B;color:#fff;font-weight:700;animation:cntPulse 1.8s ease-out infinite}
+@keyframes cntPulse{0%{box-shadow:0 0 0 0 rgba(229,56,59,.65)}70%{box-shadow:0 0 0 7px rgba(229,56,59,0)}100%{box-shadow:0 0 0 0 rgba(229,56,59,0)}}
+.tabbar button{position:relative}.tb-dot{position:absolute;top:4px;left:calc(50% + 6px);min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:#E5383B;color:#fff;font-size:10.5px;font-weight:700;line-height:17px;text-align:center}
 .menu-row{display:flex;align-items:stretch}.menu-row>button:first-child{flex:1;min-width:0}
 .menu .menu-x{flex:none;width:30px;justify-content:center;padding:0;color:var(--muted);font-size:17px;font-weight:700;opacity:.45}.menu .menu-row:hover .menu-x{opacity:1}.menu .menu-x:hover{color:var(--ink);background:var(--sunken)}
 .who-more-f{display:flex;flex-direction:column;gap:6px;justify-content:flex-end;min-height:100%}.who2-row{display:flex;gap:4px;align-items:center}.who2-row .inp{flex:1}
@@ -1869,6 +1872,10 @@ const CREW_ROLES = ['Meister','Vorarbeiter','Facharbeiter','Hilfsarbeiter','Ausz
 const EV_KINDS = {bau:'Baustelle',kunde:'Kundentermin',evu:'EVU / Zählersetzung',lief:'Lieferung',intern:'Intern'};
 const ORDER_ST = {entwurf:'Entwurf (noch nicht bestellt)',freigegeben:'freigegeben – noch bestellen',angefragt:'angefragt',bestellt:'bestellt',bestaetigt:'bestätigt',storniert:'storniert'};
 const ordDraft=o=>o.status==='entwurf'||o.status==='freigegeben';
+// Wartet die Bestellung auf Freigabe? Nicht, wenn EP, HH oder AvE sie angelegt bzw. bestellt haben
+const ORD_NOAPPR_K=['hh','ave','ep'];
+const ordByNoAppr=o=>[o.by,o.orderedBy?shortWho(o.orderedBy):''].some(k=>k&&ORD_NOAPPR_K.includes(String(k).toLowerCase()));
+const ordWait=o=>!!o&&o.appr==='offen'&&!ordByNoAppr(o);
 const OFFER_ST = {entwurf:'Entwurf',versendet:'versendet',nachfassen:'nachfassen',beauftragt:'beauftragt',abgelehnt:'abgelehnt'};
 
 /* ========== Hilfsfunktionen ========== */
@@ -2054,7 +2061,8 @@ async function initMe(){
 // liveDiff vergleicht jeden Datenbank-Stand mit dem vorigen: neue/geänderte Einträge von anderen erscheinen als kleine Live-Meldung (klickbar)
 var LIVE_READY={}, LIVE_FEED=[], LIVE_PEERS=[];
 const LIVE_COLL={tasks:'To-Do',projects:'Projekt',orders:'Bestellung',events:'Termin',plan:'Wochenplanung',reports:'Rapport',offers:'Angebot',meetings:'Meeting',sales:'Beleg',stock:'Lager',hrabs:'Abwesenheit',picks:'Kommissionierung',files:'Datei'};
-function liveDiff(k,old,neu){ if(!LIVE_READY[k]){ LIVE_READY[k]=1; return; } if(!LIVE_COLL[k]||!ME) return; const me=meK(), hits=[];
+function liveDiff(k,old,neu){ if(!LIVE_READY[k]){ LIVE_READY[k]=1; return; }
+  if(k==='chat'&&ME){ const rooms=myRooms(); Object.values(neu).filter(m=>m&&!(old&&old[m.id])&&m.from&&m.from!==ME&&rooms.includes(m.room)&&!(UI.view==='chat'&&UI.room===m.room&&document.visibilityState==='visible')).slice(0,3).forEach(m=>liveToast({c:'chat',id:m.room,by:shortWho(m.from),t:'💬 Neue Chat-Nachricht',a:String(m.text||'').slice(0,90),pid:'',at:Date.now()})); return; } if(!LIVE_COLL[k]||!ME) return; const me=meK(), hits=[];
   Object.entries(neu).forEach(([id,x])=>{ const p=old&&old[id]; if(!x||(p&&p.upd===x.upd)||!x.updBy||x.updBy===me) return; if((k==='sales'&&!canSee('sales'))||(k==='hrabs'&&!isAdmin())) return;
     const h=(x.hist||[]).slice(-1)[0], what=h&&h.by===x.updBy&&h.at===x.upd?h.a:(p?'geändert':'neu angelegt');
     const lbl=k==='projects'?x.name:k==='plan'?'KW '+String(id).slice(2):k==='sales'?((SALE_T[x.type]||[''])[0]+' '+(x.nr||'Entwurf')+' · '+((x.cust&&x.cust.name)||'')):x.title||x.name||x.art||x.supplier||'';
@@ -2167,8 +2175,8 @@ const isIntern=p=>!!p&&(p.id===INTERN||p.internal);
 function ensureIntern(){ if(MODE!=='cloud'||!mayWrite('projects')||S.projects[INTERN]) return; put('projects',{id:INTERN,name:'Haus intern',internal:true,cat:'laufend',status:'aktiv',type:'sonst',flow:'service',scope:'Allgemeines Projekt für alles ohne Kundenbezug: Lager, Büro, Werkstatt, Fahrzeuge, Material fürs Haus, interne Korrespondenz.'}); }
 function orderState(o){
   if(o.status==='storniert'||o.appr==='storno') return {k:'storniert',cls:'',open:false};
-  if(ordDraft(o)) return o.appr==='offen'?{k:'Entwurf · wartet auf Freigabe',cls:'warn',open:false,draft:1,appr:1}:o.status==='freigegeben'?{k:'freigegeben – bitte bestellen',cls:'pri',open:false,draft:1}:{k:'Entwurf',cls:'',open:false,draft:1};
-  if(o.appr==='offen') return {k:'wartet auf Freigabe',cls:'warn',open:true,appr:1};
+  if(ordDraft(o)) return ordWait(o)?{k:'Entwurf · wartet auf Freigabe',cls:'warn',open:false,draft:1,appr:1}:o.status==='freigegeben'?{k:'freigegeben – bitte bestellen',cls:'pri',open:false,draft:1}:{k:'Entwurf',cls:'',open:false,draft:1};
+  if(ordWait(o)) return {k:'wartet auf Freigabe',cls:'warn',open:true,appr:1};
   const items=(o.items||[]).filter(i=>!i.extra); const tot=items.reduce((a,i)=>a+(+i.qty||0),0), rec=items.reduce((a,i)=>a+Math.min(+i.recv||0,+i.qty||0),0);
   if(items.length && rec>=tot && tot>0) return {k:'geliefert',cls:'ok',open:false};
   const miss=items.filter(i=>i.miss&&itemOpen(i)).length;
@@ -2216,7 +2224,7 @@ const navPins=()=>{ try{ return (JSON.parse(lsGet(NAV_PIN_KEY())||'[]')||[]).fil
 const navLabel=v=>{ const n=NAV.find(x=>x[0]===v); if(!n) return v; const p=n[3]&&NAV.find(x=>x[0]===n[3]); return (p?p[1]+' · ':'')+n[1]; };
 function navItem([v,l,i],cur,cnt){ const kids=NAV.filter(n=>n[3]===v&&canSee(n[0])), open=kids.length&&navSubOpen(v,kids,cur), pins=navPins();
   const pin=x=>`<button class="nav-pin ${pins.includes(x)?'on':''}" data-act="navPin" data-v="${x}" title="${pins.includes(x)?'Nicht mehr oben anheften':'Oben anheften (max. 3)'}" aria-label="Anheften">☀</button>`;
-  return `<div class="nav-row"><button class="nav-btn ${cur===v?'on':''}" data-act="nav" data-v="${v}">${ic(i)}<span>${l}</span>${cnt[v]?`<span class="cnt">${cnt[v]}</span>`:''}</button>${v!=='dash'?pin(v):''}${kids.length?`<button class="nav-tg ${open?'open':''}" data-act="navToggle" data-v="${v}" aria-label="${open?'Zuklappen':'Aufklappen'}" aria-expanded="${open?'true':'false'}">▾</button>`:''}</div>`+
+  return `<div class="nav-row"><button class="nav-btn ${cur===v?'on':''}" data-act="nav" data-v="${v}">${ic(i)}<span>${l}</span>${cnt[v]?`<span class="cnt ${v==='chat'?'alert':''}">${cnt[v]}</span>`:''}</button>${v!=='dash'?pin(v):''}${kids.length?`<button class="nav-tg ${open?'open':''}" data-act="navToggle" data-v="${v}" aria-label="${open?'Zuklappen':'Aufklappen'}" aria-expanded="${open?'true':'false'}">▾</button>`:''}</div>`+
     (open?kids.map(([kv,kl,ki])=>`<div class="nav-row sub"><button class="nav-btn sub ${cur===kv?'on':''}" data-act="nav" data-v="${kv}">${ic(ki)}<span>${kl}</span>${cnt[kv]?`<span class="cnt">${cnt[kv]}</span>`:''}</button>${pin(kv)}</div>`).join(''):''); }
 var NAV_CUR='dash';
 function navSide(cur,cnt){ NAV_CUR=cur; const pins=navPins();
@@ -2232,7 +2240,8 @@ function navSide(cur,cnt){ NAV_CUR=cur; const pins=navPins();
   $('#mtop').innerHTML = (UI.view==='project'?`<button class="icon-btn" data-act="nav" data-v="projects" aria-label="Zurück">${ic('back')}</button>`:'<div class="wordmark"><span class="y">NUTZ DIE</span> <span class="g">SONNE</span></div>')+`<b>${UI.view==='dash'?'':VIEW_T[UI.view]||''}</b><button class="btn sun sm" data-act="newMenu">${ic('plus')}Neu</button>`;
   const tb=[['dash','Übersicht','dash'],['projects','Projekte','proj'],['week','Kalender','cal'],['todos','To-Dos','todo']];
   const inMore=!tb.some(t=>t[0]===cur);
-  $('#tabbar').innerHTML = tb.map(([v,l,i])=>`<button class="${cur===v?'on':''}" data-act="nav" data-v="${v}">${ic(i)}${l}</button>`).join('')+`<button class="${inMore?'on':''}" data-act="moreMenu">${ic('more')}Mehr</button>`;
+  $('#tabbar').innerHTML = tb.map(([v,l,i])=>`<button class="${cur===v?'on':''}" data-act="nav" data-v="${v}">${ic(i)}${l}</button>`).join('')+`<button class="${inMore?'on':''}" data-act="moreMenu">${ic('more')}Mehr${cnt.chat?`<span class="tb-dot" aria-label="${cnt.chat} ungelesene Chat-Nachrichten">${cnt.chat}</span>`:''}</button>`;
+  document.title=(cnt.chat?'('+cnt.chat+') ':'')+'Sonnenplan Projektsteuerung';
   $('#staffList').innerHTML = staff().map(s=>`<option value="${esc(s.name)}">`).join('');
   const sup=[...new Set(arr('orders').map(o=>o.supplier).filter(Boolean))];
   $('#supplierList').innerHTML = sup.map(s=>`<option value="${esc(s)}">`).join('');
@@ -3043,10 +3052,10 @@ function ordersTable(os){
   if(!os.length) return '<div class="empty">Keine Bestellungen.</div>';
   os=os.slice().sort((a,b)=>(orderState(b).open-orderState(a).open)||(a.delivery||'9').localeCompare(b.delivery||'9'));
   return `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Lieferant</th><th>Projekt</th><th>Positionen</th><th>Liefertermin</th><th>Status</th><th></th></tr></thead><tbody>${os.map(o=>{ const st=orderState(o);
-    return `<tr class="clickable" data-act="editOrder" data-id="${o.id}"><td><b>${esc(o.supplier)}</b><div class="small muted">${esc([o.no,o.buyer?'über '+o.buyer:'',o.orderedBy?'von '+shortWho(o.orderedBy):''].filter(Boolean).join(' · '))}</div></td><td>${esc(projName(o.pid))}</td><td class="small">${(o.items||[]).slice(0,4).map(i=>`<div class="pos">${itemChip(i)} ${nf(i.qty)} ${esc(i.unit||'')} ${esc(i.art)}</div>`).join('')}${(o.items||[]).length>4?`<span class="muted">+${o.items.length-4} weitere</span>`:''}${(o.docs||[]).length?`<div class="muted" style="margin-top:3px">${o.docs.length} Beleg${o.docs.length>1?'e':''}</div>`:''}</td><td class="${st.late?'overdue':''}" style="white-space:nowrap">${fmtD(o.delivery)||'–'}${o.delivery&&st.open?`<div class="small muted">${relDay(o.delivery)}</div>`:''}</td><td><span class="pill ${st.cls}">${st.late&&st.cls===''?'überfällig':st.k}</span></td><td class="r">${st.draft&&o.appr!=='offen'&&mayWrite('orders')?`<button class="btn sun sm" data-act="ordPlaced" data-id="${o.id}" title="Beim Lieferanten bestellt - zu den bestellten Bestellungen verschieben">✓ Jetzt bestellt</button>`:''}${o.appr==='offen'&&ordApprover()?`<button class="btn sun sm" data-act="ordApprove" data-id="${o.id}">✓ Freigeben</button><button class="btn ghost sm" data-act="ordStorno" data-id="${o.id}">Stornieren</button>`:''}${st.open&&o.appr!=='offen'?`<button class="btn sm" data-act="receive" data-id="${o.id}">${ic('truck')}Annahme</button>`:''}${unrouted(o).length?`<button class="btn sun sm" data-act="routeOrder" data-id="${o.id}" title="Angenommene Ware ins Lager oder auf die Kommissionierliste">${ic('stock')}Verteilen</button>`:''}</td></tr>`; }).join('')}</tbody></table></div>`;
+    return `<tr class="clickable" data-act="editOrder" data-id="${o.id}"><td><b>${esc(o.supplier)}</b><div class="small muted">${esc([o.no,o.buyer?'über '+o.buyer:'',o.orderedBy?'von '+shortWho(o.orderedBy):''].filter(Boolean).join(' · '))}</div></td><td>${esc(projName(o.pid))}</td><td class="small">${(o.items||[]).slice(0,4).map(i=>`<div class="pos">${itemChip(i)} ${nf(i.qty)} ${esc(i.unit||'')} ${esc(i.art)}</div>`).join('')}${(o.items||[]).length>4?`<span class="muted">+${o.items.length-4} weitere</span>`:''}${(o.docs||[]).length?`<div class="muted" style="margin-top:3px">${o.docs.length} Beleg${o.docs.length>1?'e':''}</div>`:''}</td><td class="${st.late?'overdue':''}" style="white-space:nowrap">${fmtD(o.delivery)||'–'}${o.delivery&&st.open?`<div class="small muted">${relDay(o.delivery)}</div>`:''}</td><td><span class="pill ${st.cls}">${st.late&&st.cls===''?'überfällig':st.k}</span></td><td class="r">${st.draft&&!ordWait(o)&&mayWrite('orders')?`<button class="btn sun sm" data-act="ordPlaced" data-id="${o.id}" title="Beim Lieferanten bestellt - zu den bestellten Bestellungen verschieben">✓ Jetzt bestellt</button>`:''}${ordWait(o)&&ordApprover()?`<button class="btn sun sm" data-act="ordApprove" data-id="${o.id}">✓ Freigeben</button><button class="btn ghost sm" data-act="ordStorno" data-id="${o.id}">Stornieren</button>`:''}${st.open&&!ordWait(o)?`<button class="btn sm" data-act="receive" data-id="${o.id}">${ic('truck')}Annahme</button>`:''}${unrouted(o).length?`<button class="btn sun sm" data-act="routeOrder" data-id="${o.id}" title="Angenommene Ware ins Lager oder auf die Kommissionierliste">${ic('stock')}Verteilen</button>`:''}</td></tr>`; }).join('')}</tbody></table></div>`;
 }
 function vOrders(){
-  const f=UI.orderFilter, drafts=arr('orders').filter(o=>ordDraft(o)&&o.appr!=='storno').sort((a,b)=>(a.appr==='offen'?0:1)-(b.appr==='offen'?0:1)||String(b.at||'').localeCompare(String(a.at||''))); let os=arr('orders').filter(o=>!ordDraft(o));
+  const f=UI.orderFilter, drafts=arr('orders').filter(o=>ordDraft(o)&&o.appr!=='storno').sort((a,b)=>(ordWait(a)?0:1)-(ordWait(b)?0:1)||String(b.at||'').localeCompare(String(a.at||''))); let os=arr('orders').filter(o=>!ordDraft(o));
   // „Offen“ zeigt auch Gelieferte, deren Ware noch nicht ins Lager / auf die Baustelle verteilt ist
   if(f==='offen') os=os.filter(o=>orderState(o).open||unrouted(o).length); else if(f==='geliefert') os=os.filter(o=>!orderState(o).open);
   // Filter „Bestellt über“ (bestellende Firma)
@@ -3067,7 +3076,7 @@ const ORD_APPROVERS=['hh','ave'];
 const ordApprover=()=>!!ME&&ORD_APPROVERS.includes(String(meK()).toLowerCase());
 const ORD_NOAPPR=['hh','ave','ep']; // deren Entwuerfe brauchen keine Freigabe
 const ordNoAppr=()=>!!ME&&ORD_NOAPPR.includes(String(meK()).toLowerCase());
-const ordPending=()=>arr('orders').filter(o=>o.appr==='offen');
+const ordPending=()=>arr('orders').filter(o=>ordWait(o));
 const ordSupKey=o=>stNorm(o.supplier)||'?';
 function ordApprBanner(){ const P=ordPending(); if(!P.length) return '';
   if(!ordApprover()) return `<div class="banner">${P.length} Bestellung${P.length>1?'en warten':' wartet'} auf Freigabe durch HH / AvE.</div>`;
@@ -3099,10 +3108,13 @@ queueMicrotask(()=>Object.assign(A,{ /* A wird weiter unten angelegt */
    openSheet({title:'Bestellung stornieren',value:{why:''},fields:[{k:'info',label:'Bestellung',type:'html',html:`<b>${esc(o.supplier||'')}</b> · ${esc(projName(o.pid)||'')} · ${(o.items||[]).length} Pos.`},{k:'why',label:'Grund (sieht der Besteller)',type:'textarea'}],saveLabel:'Stornieren',
      onSave:v=>{ ordSetAppr(o.id,'storno',{status:'storniert',stornoWhy:String(v.why||'').trim()}); toast('Bestellung storniert.'); if(back&&ordPending().length) setTimeout(ordApprSheet,80); }}); },
  ordEdit:d=>{ closeSheet(); setTimeout(()=>A.editOrder({id:d.id}),50); },
- ordPlaced:d=>{ const o=clone(S.orders[d.id]); if(!o) return; if(o.appr==='offen') return toast('Der Entwurf ist noch nicht freigegeben.'); o.status='bestellt'; o.ordered=TODAY(); o.placedBy=meK(); put('orders',o); toast('Als bestellt markiert - Liefertermin nicht vergessen.'); },
+ ordPlaced:d=>{ const o=clone(S.orders[d.id]); if(!o) return; if(ordWait(o)) return toast('Der Entwurf ist noch nicht freigegeben.'); o.status='bestellt'; o.ordered=TODAY(); o.placedBy=meK(); put('orders',o); toast('Als bestellt markiert - Liefertermin nicht vergessen.'); },
  ordMerge:d=>{ if(!ordApprover()) return; const ids=String(d.ids).split(','); confirmSheet(ids.length+' Bestellungen beim selben Lieferanten zu einer zusammenfassen und freigeben?',()=>ordMerge(ids)); },
  ordNotifyOn:()=>{ try{ Notification.requestPermission().then(p=>toast(p==='granted'?'Benachrichtigungen sind an.':'Benachrichtigungen wurden nicht erlaubt.')); }catch(e){} },
 }));
+// Aufräumen: alte Bestellungen von EP / HH / AvE, die noch als „wartet auf Freigabe“ gespeichert sind, einmal freigeben
+const ORD_FIX_T=setInterval(()=>{ if(MODE!=='cloud'||!ME||!LIVE_READY.orders||!mayWrite('orders')) return; clearInterval(ORD_FIX_T);
+  const fix=arr('orders').filter(o=>o.appr==='offen'&&ordByNoAppr(o)); fix.forEach(o=>put('orders',{...clone(o),appr:'ok',apprBy:'auto',apprAt:new Date().toISOString()})); },3000);
 // Neue Bestellung eines Kollegen → HH / AvE sofort informieren (Live-Meldung kommt ohnehin; zusätzlich Browser-Benachrichtigung)
 let ORD_SEEN=null;
 setInterval(()=>{ if(!ordApprover()||MODE!=='cloud'||!LIVE_READY.orders) return; const P=ordPending(); if(ORD_SEEN===null){ ORD_SEEN=new Set(P.map(o=>o.id)); return; }
@@ -3423,7 +3435,7 @@ function orderForm(o,pre,forceNew){
   if(!o.orderedBy&&isNew&&ME) o.orderedBy=ME;
   CUR_ORDER=o; CUR_ORDER_NEW=isNew;
   openSheet({title:isNew?'Neue Bestellung':'Bestellung bearbeiten',wide:1,value:o,fields:[
-    ...(o.appr==='offen'||o.appr==='storno'?[{k:'apprx',label:'Freigabe',type:'html',html:o.appr==='storno'?`<div class="banner">Storniert von ${esc(o.apprBy||'')}${o.stornoWhy?': '+esc(o.stornoWhy):''}</div>`:`<div class="banner">Wartet auf Freigabe durch HH / AvE.</div>`}]:[]),
+    ...(ordWait(o)||o.appr==='storno'?[{k:'apprx',label:'Freigabe',type:'html',html:o.appr==='storno'?`<div class="banner">Storniert von ${esc(o.apprBy||'')}${o.stornoWhy?': '+esc(o.stornoWhy):''}</div>`:`<div class="banner">Wartet auf Freigabe durch HH / AvE.</div>`}]:[]),
     ...(isNew?[{k:'otype',label:'Art der Bestellung',type:'select',req:1,options:[['entwurf','Entwurf – noch nicht bestellt'+(ordNoAppr()?'':' (geht an HH / AvE zur Freigabe)')],['bestellt','Bereits beim Lieferanten bestellt']]}]:[]),
     {k:'mailin',label:'E-Mail- oder Bestelltext einfügen',type:'html',html:`<div class="mail-in"><textarea id="mailPaste" rows="3" placeholder="Mail in Outlook öffnen → Strg+A → Strg+C → hier klicken → Strg+V. Die Positionen werden sofort ausgelesen."></textarea><button type="button" class="btn sun sm" data-act="mailPasteGo">Positionen auslesen</button></div>`},
     {k:'docs',label:'Rechnungen & Belege',type:'html',html:docsHtml(o)},
@@ -3431,7 +3443,7 @@ function orderForm(o,pre,forceNew){
     {k:'status',label:'Status',type:'select',options:Object.entries(ORDER_ST)},{k:'ordered',label:'Bestellt am',type:'date'},{k:'delivery',label:'Liefertermin',type:'date'},
     {k:'address',label:'Lieferadresse',full:1,ph:'Baustelle oder Lager'},
     {k:'items',label:'Positionen',type:'lines',cols:ORDER_COLS},{k:'notes',label:'Notiz',type:'textarea'}],
-    extraBtn:isNew?'':`${o.appr==='offen'&&ordApprover()?`<button type="button" class="btn sun" data-act="ordApprove" data-id="${o.id}">✓ Freigeben</button><button type="button" class="btn ghost" data-act="ordStorno" data-id="${o.id}">Stornieren</button>`:''}${unrouted(o).length?`<button type="button" class="btn sun" data-act="routeOrder" data-id="${o.id}">${ic('stock')}Ins Lager / Baustelle</button>`:''}<button type="button" class="btn" data-act="receive" data-id="${o.id}">${ic('truck')}Warenannahme</button>`,
+    extraBtn:isNew?'':`${ordWait(o)&&ordApprover()?`<button type="button" class="btn sun" data-act="ordApprove" data-id="${o.id}">✓ Freigeben</button><button type="button" class="btn ghost" data-act="ordStorno" data-id="${o.id}">Stornieren</button>`:''}${unrouted(o).length?`<button type="button" class="btn sun" data-act="routeOrder" data-id="${o.id}">${ic('stock')}Ins Lager / Baustelle</button>`:''}<button type="button" class="btn" data-act="receive" data-id="${o.id}">${ic('truck')}Warenannahme</button>`,
     onSave:v=>{ delete v.apprx; if(isNew){ if(v.otype==='entwurf') v.status='entwurf'; else if(ordDraft(v)) v.status='bestellt'; delete o.otype; } delete v.otype; const old=o.items||[]; Object.assign(o,v); o.items=o.items.map((it,i)=>{ const same=old[i]&&old[i].art===it.art; return {...it,recv:same?old[i].recv||0:0,routed:same?old[i].routed||0:0,dmg:same?!!old[i].dmg:false,miss:same?!!old[i].miss:false,price:it.price===''||it.price==null?null:+it.price}; }); put('orders',o); CUR_ORDER=null; toast('Bestellung gespeichert.'); },
     onDelete:isNew?null:()=>{ del('orders',o.id); closeSheet(); }});
 }
@@ -4807,7 +4819,7 @@ const A = {
    setTimeout(()=>{ const t=$('#f_t'); if(t){ t.style.minHeight='50vh'; } },20); },
  actWho:d=>{ UI.actWho=d.v; render(); }, actRange:d=>{ UI.actRange=d.v; render(); },
  askMe:()=>askMe(true),
- openRec:d=>{ const c=d.c, id=d.id; if(c==='projects') A.openProject({id}); else if(c==='tasks') A.editTask({id}); else if(c==='orders') A.editOrder({id}); else if(c==='offers') A.editOffer({id}); else if(c==='events') A.editEvent({id}); else if(c==='reports') A.editReport({id}); else if(c==='plan'){ UI.week=String(id).slice(2); go('week'); } else if(c==='sales'&&S.sales&&S.sales[id]) saleForm(S.sales[id]); else if(c==='meetings') A.meetGo({id}); else if(c==='stock') go('stock'); else if(c==='hrabs') go('hr'); },
+ openRec:d=>{ const c=d.c, id=d.id; if(c==='chat'){ UI.room=id; return go('chat'); } if(c==='projects') A.openProject({id}); else if(c==='tasks') A.editTask({id}); else if(c==='orders') A.editOrder({id}); else if(c==='offers') A.editOffer({id}); else if(c==='events') A.editEvent({id}); else if(c==='reports') A.editReport({id}); else if(c==='plan'){ UI.week=String(id).slice(2); go('week'); } else if(c==='sales'&&S.sales&&S.sales[id]) saleForm(S.sales[id]); else if(c==='meetings') A.meetGo({id}); else if(c==='stock') go('stock'); else if(c==='hrabs') go('hr'); },
  pickInvoice:()=>{ const f=$('#fileIn'); f.value=''; f.click(); },
  newOrderFromInvoice:()=>{ orderForm(null,{}); const f=$('#fileIn'); f.value=''; f.click(); },
  msSkip:d=>{ const p=clone(S.projects[d.pid]); if(!p) return; p.skip={...(p.skip||{})}; if(d.v==='1') p.skip['m'+d.i]=true; else delete p.skip['m'+d.i]; put('projects',p); toast('„'+PIPE[d.i-1]+'“ '+(d.v==='1'?'entfällt bei diesem Projekt.':'ist wieder im Ablauf.')); },
