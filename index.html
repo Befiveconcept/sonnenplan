@@ -745,39 +745,45 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 @media print{ body.print-letter #printArea .pr-letter{display:block;page:letter} body.print-letter .lt-foot{position:fixed} }
 /* Angebotsmappe (Druck): A4-Seiten im nutz-die-Sonne-Design – schwarz, Sonnengelb, weiß */
 @page mappe{size:A4;margin:0}
-.pr-mappe{font-family:Arial,Helvetica,sans-serif;color:#111;counter-reset:mp}
+.pr-mappe{font-family:var(--mp-font,Arial,Helvetica,sans-serif);color:#111;counter-reset:mp}
 @media print{ body.print-mappe .lt-foot{position:absolute!important} body.print-mappe .mp-letter{break-before:page;break-after:page} body.print-mappe .mp-letter .pr-letter{position:relative;min-height:297mm} }
 .mp-pg{width:210mm;height:297mm;position:relative;overflow:hidden;box-sizing:border-box;padding:24mm 16mm 20mm;break-after:page;page-break-after:always;page:mappe;counter-increment:mp;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .mp-hd{position:absolute;top:8mm;left:16mm;right:16mm;display:flex;justify-content:space-between;align-items:center;font-size:8pt;color:#555;border-bottom:.4pt solid #ddd;padding-bottom:2.5mm}.mp-hd img{height:9mm}
-.mp-ft{position:absolute;left:0;right:0;bottom:0;height:11mm;background:#111;color:#ddd;display:flex;justify-content:space-between;align-items:center;padding:0 16mm;font-size:7pt;border-top:1.6mm solid #F4DB02}
-.mp-pn::after{content:counter(mp);color:#F4DB02;font-weight:700;font-size:9pt}
-.mp-h{font-size:24pt;font-weight:800;letter-spacing:-.02em;margin:0 0 5mm;line-height:1.1}.mp-h::after{content:'';display:block;width:22mm;height:2mm;background:#F4DB02;margin-top:3mm}
+.mp-ft{position:absolute;left:0;right:0;bottom:0;height:11mm;background:#111;color:#ddd;display:flex;justify-content:space-between;align-items:center;padding:0 16mm;font-size:7pt;border-top:1.6mm solid var(--mp-acc,#F4DB02)}
+.mp-pn::after{content:counter(mp);color:var(--mp-acc,#F4DB02);font-weight:700;font-size:9pt}
+.mp-h{font-size:24pt;font-weight:800;letter-spacing:-.02em;margin:0 0 5mm;line-height:1.1}.mp-h::after{content:'';display:block;width:22mm;height:2mm;background:var(--mp-acc,#F4DB02);margin-top:3mm}
 .mp-p{font-size:10.5pt;line-height:1.5;color:#333;margin:0 0 5mm;max-width:165mm}
 .mp-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:3mm;margin:4mm 0 6mm}
-.mp-tile{background:#111;color:#fff;border-radius:3mm;padding:4mm 4mm 3.5mm;border-bottom:1.6mm solid #F4DB02}.mp-tile b{display:block;font-size:17pt;color:#F4DB02;line-height:1.1}.mp-tile b small{font-size:9pt;color:#fff;font-weight:400}.mp-tile span{font-size:8pt;color:#ccc}
-.mp-bars{margin-top:4mm}.mp-bar-l{font-size:9.5pt;font-weight:700;margin:5mm 0 1.5mm}.mp-bar{display:flex;height:9mm;border-radius:2mm;overflow:hidden;background:#eee}.mp-bar i{background:#F4DB02}.mp-bar em{background:#111}.mp-bar em.g{background:#bdbdb6}
-.mp-leg{display:flex;gap:6mm;font-size:8.5pt;margin-top:1.5mm;color:#333}.mp-leg span::before{content:'';display:inline-block;width:3mm;height:3mm;border-radius:1mm;margin-right:1.5mm;vertical-align:-.3mm;background:#F4DB02}.mp-leg .b::before{background:#111}.mp-leg .c::before{background:#bdbdb6}
+.mp-tile{background:#111;color:#fff;border-radius:3mm;padding:4mm 4mm 3.5mm;border-bottom:1.6mm solid var(--mp-acc,#F4DB02)}.mp-tile b{display:block;font-size:17pt;color:var(--mp-acc,#F4DB02);line-height:1.1}.mp-tile b small{font-size:9pt;color:#fff;font-weight:400}.mp-tile span{font-size:8pt;color:#ccc}
+.mp-bars{margin-top:4mm}.mp-bar-l{font-size:9.5pt;font-weight:700;margin:5mm 0 1.5mm}.mp-bar{display:flex;height:9mm;border-radius:2mm;overflow:hidden;background:#eee}.mp-bar i{background:var(--mp-acc,#F4DB02)}.mp-bar em{background:#111}.mp-bar em.g{background:#bdbdb6}
+.mp-leg{display:flex;gap:6mm;font-size:8.5pt;margin-top:1.5mm;color:#333}.mp-leg span::before{content:'';display:inline-block;width:3mm;height:3mm;border-radius:1mm;margin-right:1.5mm;vertical-align:-.3mm;background:var(--mp-acc,#F4DB02)}.mp-leg .b::before{background:#111}.mp-leg .c::before{background:#bdbdb6}
 .mp-svg{width:100%;height:auto;margin:2mm 0 4mm}
 .mp-2col{display:grid;grid-template-columns:1fr 1fr;gap:5mm}
 .mp-tb{width:100%;border-collapse:collapse;font-size:8pt}.mp-tb th{text-align:right;border-bottom:.6pt solid #111;padding:1mm 1.2mm}.mp-tb th:first-child,.mp-tb td:first-child{text-align:left}.mp-tb td{text-align:right;padding:.8mm 1.2mm;border-bottom:.3pt solid #e2e2e2}.mp-tb .neg{color:#9b2c2c}.mp-tb .pos{color:#111;font-weight:700}.mp-tb.wide td{text-align:left;font-size:9.5pt;padding:2mm}
 .mp-note{font-size:7.5pt;color:#666;margin-top:4mm;line-height:1.4}
-.mp-comps{display:grid;grid-template-columns:1fr 1fr;gap:4mm}.mp-comp{border:.4pt solid #ddd;border-left:1.6mm solid #F4DB02;border-radius:2mm;padding:3.5mm 4mm}.mp-comp-h{display:flex;justify-content:space-between;gap:3mm}.mp-comp-h b{font-size:10.5pt}.mp-comp-h span{font-size:8.5pt;color:#666;white-space:nowrap}.mp-comp-d{font-size:8.5pt;color:#444;margin-top:1.5mm;line-height:1.4}
+.mp-comps{display:grid;grid-template-columns:1fr 1fr;gap:4mm}.mp-comp{border:.4pt solid #ddd;border-left:1.6mm solid var(--mp-acc,#F4DB02);border-radius:2mm;padding:3.5mm 4mm}.mp-comp-h{display:flex;justify-content:space-between;gap:3mm}.mp-comp-h b{font-size:10.5pt}.mp-comp-h span{font-size:8.5pt;color:#666;white-space:nowrap}.mp-comp-d{font-size:8.5pt;color:#444;margin-top:1.5mm;line-height:1.4}
 .mp-hero{height:80mm;border-radius:3mm;overflow:hidden;margin:0 0 5mm;background:#eee}.mp-hero img{width:100%;height:100%;object-fit:cover}
 .mp-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm}.mp-cards.two{grid-template-columns:1fr 1fr}.mp-card{background:#F6F6F3;border-radius:3mm;padding:5mm 4.5mm;position:relative}.mp-card b{display:block;font-size:11pt;margin:2mm 0 1.5mm}.mp-card p{font-size:8.8pt;color:#444;line-height:1.45;margin:0}
-.mp-num{display:inline-grid;place-items:center;width:8mm;height:8mm;border-radius:50%;background:#F4DB02;font-weight:800;font-size:10pt}
+.mp-num{display:inline-grid;place-items:center;width:8mm;height:8mm;border-radius:50%;background:var(--mp-acc,#F4DB02);font-weight:800;font-size:10pt}
 .mp-refs{display:grid;grid-template-columns:1fr 1fr;gap:5mm}.mp-ref img,.mp-ref .mp-ph{width:100%;height:52mm;object-fit:cover;border-radius:3mm;background:#e8e8e2;display:block}.mp-ref b{display:block;font-size:10.5pt;margin-top:2mm}.mp-ref span{font-size:8.8pt;color:#555}
-.mp-steps{display:flex;flex-direction:column;gap:4mm;margin-top:2mm}.mp-step{display:flex;gap:5mm;align-items:flex-start}.mp-step>span{flex:none;width:11mm;height:11mm;border-radius:50%;background:#111;color:#F4DB02;display:grid;place-items:center;font-weight:800;font-size:13pt}.mp-step b{font-size:11.5pt}.mp-step p{margin:1mm 0 0;font-size:9.5pt;color:#444}
-.mp-contact{margin-top:10mm;background:#F4DB02;border-radius:3mm;padding:5mm 6mm;font-size:10.5pt}
+.mp-steps{display:flex;flex-direction:column;gap:4mm;margin-top:2mm}.mp-step{display:flex;gap:5mm;align-items:flex-start}.mp-step>span{flex:none;width:11mm;height:11mm;border-radius:50%;background:#111;color:var(--mp-acc,#F4DB02);display:grid;place-items:center;font-weight:800;font-size:13pt}.mp-step b{font-size:11.5pt}.mp-step p{margin:1mm 0 0;font-size:9.5pt;color:#444}
+.mp-contact{margin-top:10mm;background:var(--mp-acc,#F4DB02);border-radius:3mm;padding:5mm 6mm;font-size:10.5pt}
 .mp-cover{background:#111;color:#fff;padding:0}
-.mp-sun{position:absolute;right:-40mm;top:-40mm;width:140mm;height:140mm;border-radius:50%;background:#F4DB02}
+.mp-sun{position:absolute;right:-40mm;top:-40mm;width:140mm;height:140mm;border-radius:50%;background:var(--mp-acc,#F4DB02)}
 .mp-cv-logo{position:absolute;left:16mm;top:16mm;background:#fff;border-radius:3mm;padding:3mm 5mm}.mp-cv-logo img{height:14mm;display:block}
 .mp-cv-t{position:absolute;left:16mm;right:16mm;top:56mm;font-size:34pt;font-weight:800;line-height:1.05;letter-spacing:-.02em;margin:0;color:#fff;max-width:150mm}
-.mp-cv-s{position:absolute;left:16mm;top:98mm;font-size:13pt;color:#F4DB02;font-weight:700}
+.mp-cv-s{position:absolute;left:16mm;top:98mm;font-size:13pt;color:var(--mp-acc,#F4DB02);font-weight:700}
 .mp-cv-img{position:absolute;left:16mm;right:16mm;top:112mm;height:104mm;border-radius:4mm;overflow:hidden;background:#222}.mp-cv-img img{width:100%;height:100%;object-fit:cover}
 .mp-cv-img.empty{background:repeating-linear-gradient(135deg,#1c1c1c 0 8mm,#222 8mm 16mm)}
-.mp-cv-foot{position:absolute;left:16mm;right:16mm;bottom:16mm;display:flex;justify-content:space-between;gap:8mm;font-size:10pt;line-height:1.45}.mp-cv-foot span{display:block;color:#F4DB02;font-size:8pt;text-transform:uppercase;letter-spacing:.1em}.mp-cv-foot b{font-size:14pt}
-.mp-cv-meta{margin-top:2mm;color:#bbb;font-size:9pt}.mp-cv-c{background:#F4DB02;color:#111;border-radius:3mm;padding:4mm 5mm;min-width:62mm}.mp-cv-c span{color:#111;opacity:.7}
+.mp-cv-foot{position:absolute;left:16mm;right:16mm;bottom:16mm;display:flex;justify-content:space-between;gap:8mm;font-size:10pt;line-height:1.45}.mp-cv-foot span{display:block;color:var(--mp-acc,#F4DB02);font-size:8pt;text-transform:uppercase;letter-spacing:.1em}.mp-cv-foot b{font-size:14pt}
+.mp-cv-meta{margin-top:2mm;color:#bbb;font-size:9pt}.mp-cv-c{background:var(--mp-acc,#F4DB02);color:#111;border-radius:3mm;padding:4mm 5mm;min-width:62mm}.mp-cv-c span{color:#111;opacity:.7}
+.pr-mappe.cover-hell .mp-cover{background:#fff;color:#111}.pr-mappe.cover-hell .mp-cv-t{color:#111}.pr-mappe.cover-hell .mp-cv-logo{background:#F6F6F3}.pr-mappe.cover-hell .mp-cv-meta{color:#666}.pr-mappe.cover-hell .mp-cv-foot span{color:#111;opacity:.6}.pr-mappe.cover-hell .mp-cv-img.empty{background:repeating-linear-gradient(135deg,#f1f1ec 0 8mm,#e8e8e2 8mm 16mm)}
+.pr-mappe.cover-hell .mp-cv-s{color:#111;border-left:2mm solid var(--mp-acc,#F4DB02);padding-left:3mm}
+.pr-mappe.tiles-hell .mp-tile{background:#F6F6F3;color:#111}.pr-mappe.tiles-hell .mp-tile b{color:#111}.pr-mappe.tiles-hell .mp-tile b small{color:#555}.pr-mappe.tiles-hell .mp-tile span{color:#555}
 /* Vorlagen-Reiter „Angebotsmappe“ */
+.mp-ai{background:var(--sun-soft);border-radius:12px;padding:10px 12px}.mp-ai-row{display:flex;gap:8px}.mp-ai-row .inp{flex:1}
+.gx-pop{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px}.gx-in{background:var(--surface);color:var(--ink);border-radius:16px;padding:16px;width:min(760px,100%);max-height:92vh;overflow:auto;box-shadow:var(--shadow)}
+.gx-prev{min-height:120px;border:1px dashed var(--line);border-radius:12px;display:grid;place-items:center;padding:8px;background:#fff}.gx-prev img{max-width:100%;max-height:360px}
 .mp-list{display:flex;flex-direction:column;gap:6px}.mp-row{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:var(--surface)}.mp-row.off{opacity:.55}
 .mp-n{width:22px;text-align:center;color:var(--muted)}.mp-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.mp-a{display:flex;gap:4px;align-items:center}
 .mp-thumbs{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}.mp-thumbs img{width:56px;height:40px;object-fit:cover;border-radius:6px;background:var(--sunken)}.mp-thumbs.big img{width:120px;height:80px}
@@ -7197,18 +7203,94 @@ const mpItems=t=>String(t||'').split('\n').map(l=>l.trim()).filter(Boolean).map(
 // Vorlagen-Reiter „Angebotsmappe“
 function tplMappe(){ const L=mpSections();
   return `<div class="card"><div class="card-h"><h3>Angebotsmappe</h3><span class="small muted">So sieht jedes Angebot als Mappe aus: vorne das Angebot mit den Zahlen, hinten das Infomaterial. Reihenfolge mit ↑↓, Häkchen = drin.</span></div>
-    <div class="card-b"><div class="row" style="margin-bottom:10px"><button class="btn sun" data-act="mpPreview">${ic('report')}Vorschau mit Beispieldaten (PDF)</button><button class="btn" data-act="mpAddText">${ic('plus')}Freie Seite</button><span class="spacer"></span><button class="btn ghost sm" data-act="mpReset">Auf Standard zurücksetzen</button></div>
+    <div class="card-b"><div class="row" style="margin-bottom:10px"><button class="btn sun" data-act="mpPreview">${ic('report')}Vorschau mit Beispieldaten (PDF)</button><button class="btn" data-act="mpAddText">${ic('plus')}Freie Seite</button><button class="btn" data-act="mpDesign">🎨 Gestaltung</button>${SAMPLE?`<button class="btn sun" data-act="mpAiAll">✨ Alle Texte mit KI</button>`:''}<span class="spacer"></span><button class="btn ghost sm" data-act="mpReset">Auf Standard zurücksetzen</button></div>
     <div class="mp-list">${L.map((x,i)=>`<div class="mp-row ${x.on?'':'off'}"><input type="checkbox" class="ck" data-chg="mpOn" data-i="${i}" ${x.on?'checked':''} aria-label="${esc(MP_KINDS[x.kind])} verwenden"><span class="mp-n mono">${i+1}</span><div class="mp-t"><b>${esc(x.title||MP_KINDS[x.kind])}</b><span class="small muted">${esc(MP_KINDS[x.kind])} – ${esc(MP_INFO[x.kind]||'')}</span>${(x.imgs||[]).length?`<div class="mp-thumbs">${x.imgs.map(id=>`<img data-blob="${esc(id)}" alt="">`).join('')}</div>`:''}</div>
       <div class="mp-a"><button class="icon-btn" data-act="mpMove" data-i="${i}" data-v="-1" ${i?'':'disabled'} aria-label="Nach oben">↑</button><button class="icon-btn" data-act="mpMove" data-i="${i}" data-v="1" ${i<L.length-1?'':'disabled'} aria-label="Nach unten">↓</button>${x.kind==='offer'?'':`<button class="btn sm" data-act="mpEdit" data-i="${i}">${ic('edit')}Bearbeiten</button>`}${x.kind==='text'?`<button class="icon-btn" data-act="mpDel" data-i="${i}" aria-label="Seite entfernen">${ic('x')}</button>`:''}</div></div>`).join('')}</div>
     <div class="small muted" style="margin-top:10px">Im Angebot (Verkauf → Angebot öffnen) über „Angebotsmappe“ drucken. Dort trägst du die Anlagendaten ein (kWp, Verbrauch, Strompreis …), daraus rechnet die Mappe Kennzahlen und Wirtschaftlichkeit.</div></div></div>`; }
 var MP_IMGS=[];
 function mpEdit(i){ const L=mpSections(), x=L[i]; if(!x) return; MP_IMGS=(x.imgs||[]).slice(); const hasItems=['about','services','refs','process','promise','sheets'].includes(x.kind), hasImg=['cover','about','refs','text','services'].includes(x.kind), noText=['services','refs','promise','sheets','offer'].includes(x.kind);
+  MP_EDIT_KIND=x.kind;
   openSheet({title:'Angebotsmappe · '+MP_KINDS[x.kind],wide:1,html:`<div class="fld full"><div class="small muted">${esc(MP_INFO[x.kind]||'')}</div></div>
+    ${SAMPLE?`<div class="fld full mp-ai"><label for="mp_ai">✨ Mit KI bearbeiten – was soll passieren?</label><div class="mp-ai-row"><input id="mp_ai" class="inp" placeholder="z. B. „Schreib einen freundlichen Text über uns“, „kürzer und überzeugender“, „6 Leistungen ergänzen“"><button type="button" class="btn sun" data-act="mpAiText">✨ Los</button></div>
+      <div class="chips" style="margin-top:6px">${['Text neu schreiben','Kürzer','Überzeugender','Einfacher für Privatkunden','Einträge ergänzen','Rechtschreibung prüfen'].map(q=>`<button type="button" class="chip" data-act="mpAiQuick" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>
+      <div class="small muted" style="margin-top:4px">Die KI füllt die Felder unten – erst „Speichern“ übernimmt es. Echte Zahlen und Namen bitte prüfen.</div></div>`:''}
     <div class="fld full"><label for="mp_t">Überschrift</label><input id="mp_t" class="inp" value="${esc(x.title||'')}"></div>
     ${noText?'':`<div class="fld full"><label for="mp_x">Text</label><textarea id="mp_x" class="inp" rows="4">${esc(x.text||'')}</textarea></div>`}
     ${hasItems?`<div class="fld full"><label for="mp_i">Einträge – eine Zeile pro Eintrag: Überschrift | Text</label><textarea id="mp_i" class="inp" rows="8" style="font-family:var(--f-mono);font-size:12.5px">${esc(x.items||'')}</textarea></div>`:''}
-    ${hasImg?`<div class="fld full"><label>Bilder${x.kind==='refs'?' (in der Reihenfolge der Referenzen)':x.kind==='cover'?' (Titelbild)':''}</label><div id="mp_imgs" class="mp-thumbs big">${mpImgsHtml()}</div><button type="button" class="btn sm" data-act="mpImgPick" style="margin-top:6px">${ic('plus')}Bild hochladen</button><input type="file" id="mp_file" accept="image/*" multiple hidden></div>`:''}`,saveLabel:'Speichern',
+    ${hasImg?`<div class="fld full"><label>Bilder${x.kind==='refs'?' (in der Reihenfolge der Referenzen)':x.kind==='cover'?' (Titelbild)':''}</label><div id="mp_imgs" class="mp-thumbs big">${mpImgsHtml()}</div><div class="row" style="margin-top:6px"><button type="button" class="btn sm" data-act="mpImgPick">${ic('plus')}Bild hochladen</button>${SAMPLE?`<button type="button" class="btn sm sun" data-act="mpAiGfx">🎨 Grafik mit KI erstellen</button>`:''}</div><input type="file" id="mp_file" accept="image/*" multiple hidden></div>`:''}`,saveLabel:'Speichern',
     onSave:()=>{ const L2=mpSections(), y=L2[i]; y.title=$('#mp_t').value.trim(); if($('#mp_x')) y.text=$('#mp_x').value; if($('#mp_i')) y.items=$('#mp_i').value; if(hasImg) y.imgs=MP_IMGS.slice(); mpSave(L2); toast('Gespeichert.'); }}); }
+var MP_EDIT_KIND='';
+/* ---------- Angebotsmappe mit KI: Texte je Abschnitt, alle Texte auf einmal, Grafiken (SVG → Bild), Gestaltung ---------- */
+const MP_CO=()=>`Firma: ${NDS.name}, ${NDS.street}, ${NDS.city} – Solar-Fachbetrieb (Photovoltaik, Stromspeicher, Wallboxen) für Privat- und Gewerbekunden.`;
+async function mpAiText(q){ q=String(q||($('#mp_ai')||{}).value||'').trim(); if(!q) return toast('Bitte kurz schreiben, was die KI tun soll.'); if(!SAMPLE) return;
+  const cur={title:($('#mp_t')||{}).value||'',text:($('#mp_x')||{}).value||'',items:($('#mp_i')||{}).value||''}, k=MP_EDIT_KIND, hasItems=!!$('#mp_i'), hasText=!!$('#mp_x');
+  toast('✨ Die KI schreibt …');
+  try{ const r=await SAMPLE.json(`Du gestaltest die Angebotsmappe eines Solar-Installationsbetriebs (Kunden bekommen sie mit dem Angebot). ${MP_CO()}
+Abschnitt: ${MP_KINDS[k]} – ${MP_INFO[k]||''}
+Aktuell: Überschrift: "${cur.title}"${hasText?`\nText: """${cur.text.slice(0,2500)}"""`:''}${hasItems?`\nEinträge (eine Zeile je Eintrag, Format "Überschrift | Text"):\n"""${cur.items.slice(0,3000)}"""`:''}
+Auftrag: """${q.slice(0,600)}"""
+Regeln: Deutsch, Sie-Form, warm und klar, kurze Sätze, keine Übertreibungen. Erfinde KEINE konkreten Firmenzahlen, Jahreszahlen, Kundennamen oder Zertifikate – wo so etwas hingehört, schreibe einen Platzhalter in eckigen Klammern, z. B. [Anzahl] oder [Kundenname]. Bestehende echte Angaben übernehmen.
+Antworte nur mit JSON: {"title":"…"${hasText?',"text":"…"':''}${hasItems?',"items":"Zeile 1 | Text\\nZeile 2 | Text"':''}}`,{modelTier:'default'});
+    if(!r) return; if(r.title&&$('#mp_t')) $('#mp_t').value=String(r.title).slice(0,140); if(hasText&&r.text!=null) $('#mp_x').value=String(r.text).slice(0,4000); if(hasItems&&r.items!=null) $('#mp_i').value=(Array.isArray(r.items)?r.items.join('\n'):String(r.items)).slice(0,4000);
+    toast('✨ Vorschlag eingetragen – prüfen und speichern.'); }
+  catch(e){ toast(SAMPLE_ERR[e&&e.code]||'KI gerade nicht erreichbar.'); } }
+// Alle Info-Abschnitte auf einmal schreiben lassen (Angaben zur Firma als Grundlage)
+function mpAiAll(){ if(!SAMPLE) return toast('Die KI ist gerade nicht verfügbar.');
+  openSheet({title:'✨ Alle Mappentexte mit KI',wide:1,html:`<div class="fld full"><label for="mpa_f">Was soll die KI über uns wissen? (Fakten, Stil, Zielgruppe)</label><textarea id="mpa_f" class="inp" rows="6" placeholder="z. B. Gegründet 2019, Sitz Köln, eigene Montageteams, Schwerpunkt Einfamilienhäuser und Gewerbe im Rheinland, Festpreis, Ansprechpartner bleibt von Beratung bis Inbetriebnahme gleich …"></textarea></div>
+    <div class="fld full"><label class="mt-opt"><input type="checkbox" class="ck" id="mpa_keep" checked><span>Nur Abschnitte mit Platzhaltern [ … ] oder leerem Text neu schreiben</span></label></div>`,saveLabel:'✨ Texte schreiben',
+    onSave:()=>{ const facts=$('#mpa_f').value.trim(), keep=$('#mpa_keep').checked; setTimeout(()=>mpAiAllRun(facts,keep),60); }}); }
+async function mpAiAllRun(facts,keep){ const L=mpSections(), todo=L.filter(x=>['cover','about','services','refs','process','promise','econ','comps','text'].includes(x.kind)&&(!keep||/\[|^\s*$/.test((x.text||'')+(x.items||''))||!(x.text||x.items)));
+  if(!todo.length) return toast('Keine Abschnitte mit Platzhaltern gefunden.'); toast('✨ Die KI schreibt '+todo.length+' Abschnitte …');
+  try{ const r=await SAMPLE.json(`Schreibe die Texte einer Angebotsmappe für Photovoltaik-Angebote. ${MP_CO()}
+Angaben der Firma: """${String(facts||'').slice(0,3000)}"""
+Abschnitte (id | Art | Beschreibung | aktueller Stand):
+${todo.map(x=>x.id+' | '+MP_KINDS[x.kind]+' | '+(MP_INFO[x.kind]||'')+' | Titel: '+(x.title||'')+(x.text?' · Text: '+x.text.slice(0,300):'')+(x.items?' · Einträge: '+x.items.replace(/\n/g,' / ').slice(0,400):'')).join('\n')}
+Regeln: Deutsch, Sie-Form, warm, klar, kurz. Nur Fakten aus den Angaben verwenden – fehlende Zahlen, Namen, Jahre als Platzhalter in eckigen Klammern. Einträge als Zeilen "Überschrift | Text". Leistungen: 6 Einträge, Ablauf: 4–6 Schritte, Versprechen: 3–4, Referenzen: 4 (Platzhalter).
+Antworte nur mit JSON: {"sections":[{"id":"…","title":"…","text":"…","items":"…"}]}`,{modelTier:'default'});
+    const got=(r&&Array.isArray(r.sections)?r.sections:[]); let n=0; const L2=mpSections();
+    got.forEach(g=>{ const y=L2.find(x=>x.id===g.id); if(!y||!todo.some(t=>t.id===g.id)) return; if(g.title) y.title=String(g.title).slice(0,140); if(g.text!=null&&!['services','refs','promise','sheets'].includes(y.kind)) y.text=String(g.text).slice(0,4000); if(g.items!=null&&['about','services','refs','process','promise'].includes(y.kind)) y.items=(Array.isArray(g.items)?g.items.join('\n'):String(g.items)).slice(0,4000); n++; });
+    if(n){ mpSave(L2); toast('✨ '+n+' Abschnitte geschrieben – bitte prüfen (Vorschau).'); } else toast('Die KI hat nichts Verwertbares geliefert.'); }
+  catch(e){ toast(SAMPLE_ERR[e&&e.code]||'KI gerade nicht erreichbar.'); } }
+// Grafik: Die KI zeichnet eine SVG-Illustration in unseren Farben, die als Bild (PNG) in den Abschnitt kommt
+async function mpSvgPng(svg,w=1600,h=1000){ const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'})); try{ const im=await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>rej(new Error('svg')); i.src=url; });
+  const c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,w,h); x.drawImage(im,0,0,w,h); return await new Promise(r=>c.toBlob(r,'image/png')); } finally{ URL.revokeObjectURL(url); } }
+const mpSvgClean=s=>{ s=String(s||''); const a=s.indexOf('<svg'), b=s.lastIndexOf('</svg>'); if(a<0||b<0) return ''; s=s.slice(a,b+6); return /<script|on\w+=|<foreignObject|href=["']?(?:https?|javascript):/i.test(s)?'':s; };
+function mpAiGfx(){ if(!SAMPLE) return; const acc=mpDesign().acc;
+  const html=`<div class="fld full"><label for="gx_p">Was soll die Grafik zeigen?</label><input id="gx_p" class="inp" placeholder="z. B. Haus mit Solardach und Speicher, Sonne, Stromfluss ins Haus"></div>
+    <div class="fld"><label for="gx_s">Stil</label><select id="gx_s" class="inp"><option>flache Illustration</option><option>Icons in einer Reihe</option><option>Infografik mit Pfeilen</option><option>abstraktes Muster / Hintergrund</option></select></div>
+    <div class="fld"><label>&nbsp;</label><button type="button" class="btn sun" data-act="mpAiGfxRun">🎨 Entwerfen</button></div><div class="fld full"><div id="gx_prev" class="gx-prev"><span class="small muted">Noch kein Entwurf.</span></div></div>`;
+  const box=document.createElement('div'); box.className='gx-pop'; box.innerHTML=`<div class="gx-in"><div class="row" style="justify-content:space-between"><b>🎨 Grafik mit KI · Farben: Schwarz, ${esc(acc)}, Weiß</b><button type="button" class="icon-btn" data-act="mpAiGfxX" aria-label="Schließen">✕</button></div><div class="sheet-grid">${html}</div><div class="row" style="justify-content:flex-end;margin-top:8px"><button type="button" class="btn pri" data-act="mpAiGfxUse" disabled id="gx_use">Als Bild übernehmen</button></div></div>`;
+  document.body.appendChild(box); setTimeout(()=>{ const i=$('#gx_p'); if(i) i.focus(); },50); }
+var MP_GFX='';
+async function mpAiGfxRun(){ const p=($('#gx_p')||{}).value||'', st=($('#gx_s')||{}).value||'', acc=mpDesign().acc, pv=$('#gx_prev'); if(!p.trim()) return toast('Bitte beschreiben, was die Grafik zeigen soll.'); if(pv) pv.innerHTML='<span class="small muted">✨ Die KI zeichnet …</span>';
+  try{ const r=await SAMPLE(`Zeichne eine SVG-Grafik (viewBox="0 0 1600 1000", Querformat) für die Angebotsmappe eines Solarbetriebs. Motiv: ${p.slice(0,500)}. Stil: ${st}. Farben nur: Schwarz #111111, Akzent ${acc}, Weiß #FFFFFF, Hellgrau #F2F2EE, Mittelgrau #BDBDB6. Klare flache Formen, keine Verläufe-Orgie, kein Text außer höchstens 1–3 kurzen deutschen Wörtern in einer Systemschrift. Keine Skripte, keine externen Bilder oder Links. Antworte NUR mit dem SVG-Code.`,{modelTier:'complex'});
+    const svg=mpSvgClean(r&&r.text); if(!svg){ if(pv) pv.innerHTML='<span class="small muted">Die KI hat keine gültige Grafik geliefert – bitte nochmal versuchen.</span>'; return; }
+    MP_GFX=svg; if(pv) pv.innerHTML=`<img src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}" alt="Entwurf">`; const u=$('#gx_use'); if(u) u.disabled=false; }
+  catch(e){ if(pv) pv.innerHTML=''; toast(SAMPLE_ERR[e&&e.code]||'KI gerade nicht erreichbar.'); } }
+async function mpAiGfxUse(){ if(!MP_GFX) return; if(!ASSETS) return toast('Bilder speichern geht nur in der Online-Version.'); try{ const png=await mpSvgPng(MP_GFX); const r=await ASSETS.upload(new File([png],'grafik.png',{type:'image/png'}),{type:'image/png'}); MP_IMGS.push(r.id); const b=$('#mp_imgs'); if(b) b.innerHTML=mpImgsHtml(); const g=$('.gx-pop'); if(g) g.remove(); MP_GFX=''; toast('Grafik übernommen – mit „Speichern“ in den Abschnitt.'); }
+  catch(e){ toast('Grafik konnte nicht gespeichert werden.'); } }
+// Gestaltung der Mappe: Akzentfarbe, Deckblatt hell/dunkel, Kacheln hell/dunkel, Schrift – von Hand oder per KI
+const MP_FONTS=[['Arial, Helvetica, sans-serif','Arial (Standard)'],['Helvetica, Arial, sans-serif','Helvetica'],['Verdana, Geneva, sans-serif','Verdana'],['"Trebuchet MS", Arial, sans-serif','Trebuchet'],['Georgia, "Times New Roman", serif','Georgia (Serifen)']];
+const mpDesign=()=>({acc:'#F4DB02',cover:'dunkel',tiles:'dunkel',font:MP_FONTS[0][0],...(((S.config||{}).offerMappe||{}).design||{})});
+function mpDesignSheet(){ const d=mpDesign();
+  openSheet({title:'Angebotsmappe · Gestaltung',wide:1,html:`${SAMPLE?`<div class="fld full mp-ai"><label for="md_ai">✨ Gestaltung per KI – wie soll die Mappe wirken?</label><div class="mp-ai-row"><input id="md_ai" class="inp" placeholder="z. B. „heller und freundlicher“, „edel für Gewerbekunden“, „mehr Kontrast“"><button type="button" class="btn sun" data-act="mpAiDesign">✨ Vorschlag</button></div></div>`:''}
+    <div class="fld"><label for="md_acc">Akzentfarbe</label><div class="row"><input id="md_acc" type="color" value="${esc(d.acc)}" style="width:56px;height:38px;padding:2px"><button type="button" class="btn sm ghost" data-act="mpAccReset">Sonnengelb</button></div></div>
+    <div class="fld"><label for="md_font">Schrift</label><select id="md_font" class="inp">${MP_FONTS.map(([v,l])=>`<option value="${esc(v)}" ${v===d.font?'selected':''}>${esc(l)}</option>`).join('')}</select></div>
+    <div class="fld"><label for="md_cover">Deckblatt</label><select id="md_cover" class="inp">${['dunkel','hell'].map(v=>`<option ${v===d.cover?'selected':''}>${v}</option>`).join('')}</select></div>
+    <div class="fld"><label for="md_tiles">Kennzahlen-Kacheln</label><select id="md_tiles" class="inp">${['dunkel','hell'].map(v=>`<option ${v===d.tiles?'selected':''}>${v}</option>`).join('')}</select></div>`,saveLabel:'Speichern',
+    onSave:()=>{ const dz={acc:$('#md_acc').value||'#F4DB02',font:$('#md_font').value,cover:$('#md_cover').value,tiles:$('#md_tiles').value}; putConfig({...(S.config||{}),offerMappe:{...((S.config||{}).offerMappe||{}),design:dz}}); toast('Gestaltung gespeichert – Vorschau zeigt es.'); }}); }
+async function mpAiDesign(){ const q=(($('#md_ai')||{}).value||'').trim(); if(!q||!SAMPLE) return toast('Bitte kurz beschreiben, wie die Mappe wirken soll.');
+  try{ const r=await SAMPLE.json(`Gestaltung einer Angebotsmappe für einen Solarbetrieb. Markenfarben: Schwarz und Sonnengelb #F4DB02 (Akzent darf leicht variieren, muss zur Marke passen und auf Weiß UND Schwarz lesbar sein). Wunsch: """${q.slice(0,400)}"""
+Wähle: acc (Hex-Farbe), cover ("dunkel"|"hell"), tiles ("dunkel"|"hell"), font (genau einer von: ${MP_FONTS.map(f=>f[1]).join(', ')}), why (1 Satz).
+Antworte nur mit JSON: {"acc":"#…","cover":"…","tiles":"…","font":"…","why":"…"}`,{modelTier:'default'});
+    if(!r) return; if(/^#[0-9a-f]{6}$/i.test(r.acc||'')) $('#md_acc').value=r.acc; if(['dunkel','hell'].includes(r.cover)) $('#md_cover').value=r.cover; if(['dunkel','hell'].includes(r.tiles)) $('#md_tiles').value=r.tiles;
+    const f=MP_FONTS.find(x=>x[1]===r.font||x[1].startsWith(String(r.font||'').split(' ')[0])); if(f) $('#md_font').value=f[0]; toast('✨ '+(r.why||'Vorschlag eingetragen')+' – speichern zum Übernehmen.'); }
+  catch(e){ toast(SAMPLE_ERR[e&&e.code]||'KI gerade nicht erreichbar.'); } }
+queueMicrotask(()=>Object.assign(A,{
+  mpAiText:()=>mpAiText(), mpAiQuick:d=>{ const i=$('#mp_ai'); if(i) i.value=d.q; mpAiText(d.q); }, mpAiAll:()=>mpAiAll(),
+  mpAiGfx:()=>mpAiGfx(), mpAiGfxRun:()=>mpAiGfxRun(), mpAiGfxUse:()=>mpAiGfxUse(), mpAiGfxX:()=>{ const g=$('.gx-pop'); if(g) g.remove(); MP_GFX=''; },
+  mpDesign:()=>mpDesignSheet(), mpAiDesign:()=>mpAiDesign(), mpAccReset:()=>{ const i=$('#md_acc'); if(i) i.value='#F4DB02'; } }));
+document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target&&['mp_ai','md_ai','gx_p'].includes(e.target.id)){ e.preventDefault(); ({mp_ai:()=>mpAiText(),md_ai:()=>mpAiDesign(),gx_p:()=>mpAiGfxRun()})[e.target.id](); } });
 const mpImgsHtml=()=>MP_IMGS.map((id,k)=>`<span class="mp-im"><img data-blob="${esc(id)}" alt=""><button type="button" data-act="mpImgDel" data-k="${k}" aria-label="Bild entfernen">✕</button></span>`).join('')||'<span class="small muted">Noch kein Bild.</span>';
 document.addEventListener('change',async e=>{ if(e.target.id!=='mp_file') return; const fl=[...(e.target.files||[])]; e.target.value=''; if(!fl.length) return; if(!ASSETS) return toast('Bilder hochladen geht nur in der Online-Version.');
   toast('Bild wird hochgeladen …'); for(const f of fl){ try{ const up=new File([await mappeToJpg(f,2000)],'mappe.jpg',{type:'image/jpeg'}); const r=await ASSETS.upload(up,{type:'image/jpeg'}); MP_IMGS.push(r.id); }catch(x){ toast('Bild konnte nicht hochgeladen werden.'); } }
@@ -7230,7 +7312,7 @@ function mpData(id,after){ const s=S.sales[id]||SALE_CUR; if(!s) return; const p
 async function mpBlob(id){ if(BLOB_URL[id]) return BLOB_URL[id]; try{ const r=await fetch('/_blob/'+id); if(!r.ok) return ''; BLOB_URL[id]=URL.createObjectURL(await r.blob()); return BLOB_URL[id]; }catch(e){ return ''; } }
 const mpN=(x,d=0)=>nf(x,d), mpE=x=>euro(Math.round(x));
 function mpEconSvg(rows){ const W=520,H=190,pad=26, mx=Math.max(1,...rows.map(r=>Math.abs(r.cum))), mn=Math.min(0,...rows.map(r=>r.cum)), top=Math.max(0,...rows.map(r=>r.cum)), rng=(top-mn)||1, bw=(W-pad*2)/rows.length, y0=pad+(top/rng)*(H-pad*2);
-  return `<svg viewBox="0 0 ${W} ${H}" class="mp-svg"><line x1="${pad}" x2="${W-pad}" y1="${y0}" y2="${y0}" stroke="#111" stroke-width="1"/>${rows.map((r,i)=>{ const h=Math.abs(r.cum)/rng*(H-pad*2), x=pad+i*bw+1.5; return `<rect x="${x}" y="${r.cum>=0?y0-h:y0}" width="${bw-3}" height="${Math.max(.5,h)}" fill="${r.cum>=0?'#F4DB02':'#C9C9C4'}"/>${i%4===0||i===rows.length-1?`<text x="${x+bw/2-1.5}" y="${H-6}" font-size="9" text-anchor="middle" fill="#555">${r.y}</text>`:''}`; }).join('')}<text x="${pad}" y="12" font-size="9" fill="#555">kumuliert (€) · Jahre nach Inbetriebnahme</text></svg>`; }
+  return `<svg viewBox="0 0 ${W} ${H}" class="mp-svg"><line x1="${pad}" x2="${W-pad}" y1="${y0}" y2="${y0}" stroke="#111" stroke-width="1"/>${rows.map((r,i)=>{ const h=Math.abs(r.cum)/rng*(H-pad*2), x=pad+i*bw+1.5; return `<rect x="${x}" y="${r.cum>=0?y0-h:y0}" width="${bw-3}" height="${Math.max(.5,h)}" fill="${r.cum>=0?esc(mpDesign().acc):'#C9C9C4'}"/>${i%4===0||i===rows.length-1?`<text x="${x+bw/2-1.5}" y="${H-6}" font-size="9" text-anchor="middle" fill="#555">${r.y}</text>`:''}`; }).join('')}<text x="${pad}" y="12" font-size="9" fill="#555">kumuliert (€) · Jahre nach Inbetriebnahme</text></svg>`; }
 async function mpPrint(s){ const L=mpSections().filter(x=>x.on), c=mpCalc(s), m=saleSums(s), cust=(s.cust&&s.cust.name)||'', nr=s.nr||'Entwurf';
   const urls={}; for(const id of [...new Set(L.flatMap(x=>x.imgs||[]))]) urls[id]=await mpBlob(id);
   const img=(id,cls)=>urls[id]?`<img class="${cls||''}" src="${urls[id]}" alt="">`:'';
@@ -7260,7 +7342,7 @@ async function mpPrint(s){ const L=mpSections().filter(x=>x.on), c=mpCalc(s), m=
     else if(x.kind==='sheets'&&it.length) out.push(page(H(x.title)+P(x.text)+`<table class="mp-tb wide">${it.map(([a,b])=>`<tr><td><b>${esc(a)}</b></td><td>${esc(b)}</td></tr>`).join('')}</table>`));
     else if(x.kind==='text') out.push(page(H(x.title)+((x.imgs||[])[0]?`<div class="mp-hero">${img(x.imgs[0])}</div>`:'')+P(x.text))); }
   let el=$('#printArea'); if(!el){ el=document.createElement('div'); el.id='printArea'; document.body.appendChild(el); }
-  el.innerHTML=`<div class="pr-mappe">${out.join('')}</div>`; document.body.classList.add('printing','print-letter','print-mappe'); const t0=document.title; document.title=('Angebotsmappe '+nr+' '+cust).trim();
+  const dz=mpDesign(); el.innerHTML=`<div class="pr-mappe cover-${dz.cover==="hell"?"hell":"dunkel"} tiles-${dz.tiles==="hell"?"hell":"dunkel"}" style="--mp-acc:${esc(dz.acc)};--mp-font:${esc(dz.font)}">${out.join('')}</div>`; document.body.classList.add('printing','print-letter','print-mappe'); const t0=document.title; document.title=('Angebotsmappe '+nr+' '+cust).trim();
   const done=()=>{ document.body.classList.remove('printing','print-letter','print-mappe'); document.title=t0; window.removeEventListener('afterprint',done); }; window.addEventListener('afterprint',done); setTimeout(()=>window.print(),250); }
 // Beispiel-Angebot für die Vorschau in den Vorlagen
 function mpSample(){ return {id:'mp_sample',type:'angebot',nr:'AN-26-0000',status:'offen',date:TODAY(),perf:addDays(TODAY(),30),cust:{name:'Familie Mustermann',addr:'Musterstraße 1\n50667 Köln'},title:'Angebot',subject:'Photovoltaikanlage 9,9 kWp mit Speicher',
