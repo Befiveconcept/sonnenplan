@@ -1135,6 +1135,9 @@ body.stock-dragging .pick{outline:2px dashed rgba(244,219,2,.8);outline-offset:2
 .pfs-r{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
 .pfs-r .inp{width:90px}
 @media (max-width:900px){ .pick-grid{grid-template-columns:minmax(0,1fr)} .mv{grid-template-columns:1fr auto auto;} .mv span:last-child{grid-column:1/-1} }
+.task-upd{flex:none;align-self:center;display:inline-flex;align-items:center;gap:3px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:3px 9px 3px 6px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.task-upd svg{width:13px;height:13px}.task-upd:hover{background:var(--sun);border-color:var(--sun);color:#111}
+@media (max-width:760px){ .task-upd{padding:3px 7px;font-size:0;gap:0} .task-upd svg{width:15px;height:15px} }
 .task-del{flex:none;opacity:.55}
 .task-del:hover{opacity:1;color:#C0392B}
 .fl-list{display:flex;flex-direction:column}
@@ -2739,7 +2742,7 @@ const whoMoreRow=n=>`<div class="who2-row"><input class="inp who2-in" list="staf
 function taskLi(t){  const late=t.due&&t.due<TODAY()&&!t.done;
   const bsel=UI.bulk&&['todos','pool'].includes(UI.view);
   return `<div class="li ${t.done?'done':''} ${bsel&&SEL.has(t.id)?'sel':''}" data-drag="task:${t.id}"${t.done?'':` data-drop-task="${t.id}"`}>${bsel?`<input type="checkbox" class="sel-ck" data-chg="selTask" data-id="${t.id}" ${SEL.has(t.id)?'checked':''} aria-label="Auswählen: ${esc(t.title)}" title="Für Mehrfachbearbeitung auswählen">`:''}<input type="checkbox" class="ck" data-chg="toggleTask" data-id="${t.id}" ${t.done?'checked':''} aria-label="Erledigt"><div class="body clickable" data-act="editTask" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="mt">${t.ext?`<span class="pill ext-pill" title="Liegt extern">extern: ${esc(t.ext)}</span>`:''}${t.pid?`<span>${esc(projName(t.pid))}</span>`:''}${t.due?`<span class="${late?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${t.wv&&!t.done?`<span class="pill wv-pill ${t.wv<=TODAY()?'bad':''}" title="${esc(t.wvNote||'Wiedervorlage')}">🔔 WV ${t.wv<=TODAY()?(t.wv===TODAY()?'heute':'seit '+fmtD(t.wv).slice(0,6)):fmtD(t.wv).slice(0,6)}</span>`:''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?`<span class="pill ${PRIO[t.prio][2]}">${PRIO[t.prio][0]}</span>`:''}${t.pool?'<span class="pill">allgemein</span>':''}${t.by&&t.by!=='?'?`<span class="by-line">angelegt ${esc(t.by)} ${esc(fmtD((t.at||'').slice(0,10)).slice(3))}</span>`:''}${t.done?`<span class="done-by">✓ erledigt von <b>${esc(t.doneBy||t.updBy||'?')}</b>${t.doneAt?' · '+esc(stampTxt(t.doneAt)):''}${t.doneNote?' – '+esc(t.doneNote):''}</span>`:''}</div>${taskUpdInline(t)}</div>
-    ${(t.who2||[]).length?`<span class="who-more" title="Ebenfalls zuständig: ${esc(t.who2.join(', '))}">+ ${esc(t.who2.map(shortWho).join(' '))}</span>`:''}<select class="who-sel ${t.who?'':'none'}" data-chg="taskWho" data-id="${t.id}" aria-label="Zuständig für: ${esc(t.title)}" title="Zuständigkeit ändern"><option value="">offen</option>${[...new Set([...staff().map(s=>s.name),...(t.who?[t.who]:[])])].map(n=>`<option value="${esc(n)}" ${n===t.who?'selected':''}>${esc(shortWho(n))}</option>`).join('')}<option value="__ext">→ liegt extern …</option>${t.ext?'<option value="__int">→ wieder intern</option>':''}</select>${isAdmin()?`<button type="button" class="icon-btn task-del" title="Aufgabe löschen" aria-label="Aufgabe löschen: ${esc(t.title)}" data-act="taskDel" data-id="${t.id}">${ic('x')}</button>`:''}</div>`;
+    ${t.done?'':`<button type="button" class="task-upd" data-act="taskQuickUpd" data-id="${t.id}" title="Update zu diesem To-Do eintragen" aria-label="Update eintragen: ${esc(t.title)}">${ic('plus')}Update</button>`}${(t.who2||[]).length?`<span class="who-more" title="Ebenfalls zuständig: ${esc(t.who2.join(', '))}">+ ${esc(t.who2.map(shortWho).join(' '))}</span>`:''}<select class="who-sel ${t.who?'':'none'}" data-chg="taskWho" data-id="${t.id}" aria-label="Zuständig für: ${esc(t.title)}" title="Zuständigkeit ändern"><option value="">offen</option>${[...new Set([...staff().map(s=>s.name),...(t.who?[t.who]:[])])].map(n=>`<option value="${esc(n)}" ${n===t.who?'selected':''}>${esc(shortWho(n))}</option>`).join('')}<option value="__ext">→ liegt extern …</option>${t.ext?'<option value="__int">→ wieder intern</option>':''}</select>${isAdmin()?`<button type="button" class="icon-btn task-del" title="Aufgabe löschen" aria-label="Aufgabe löschen: ${esc(t.title)}" data-act="taskDel" data-id="${t.id}">${ic('x')}</button>`:''}</div>`;
 }
 
 /* ========== Projekte ========== */
@@ -5772,6 +5775,18 @@ Object.assign(A,{
  taskUpdAdd:d=>{ const tx=fixNames(($('#tu_t')||{}).value||''), dd=($('#tu_d')||{}).value||TODAY(); if(tx.trim().length<3) return toast('Bitte kurz schreiben, was passiert ist.');
    const t=clone(S.tasks[d.id]); if(!t){ toast('Bitte das To-Do zuerst speichern.'); return; } t.upd2=[...(t.upd2||[]),{d:dd,tm:($('#tu_h')||{}).value||'',by:meK(),t:tx.trim(),at:new Date().toISOString()}]; put('tasks',t);
    $('#tu_t').value=''; const l=$('#tu_list'); if(l) l.innerHTML=taskUpdList(t); toast('Update gespeichert.'); },
+ // Kleiner Knopf „+ Update“ an jeder To-Do-Zeile: Update direkt eintragen, ohne das ganze To-Do zu öffnen
+ taskQuickUpd:d=>{ const t0=S.tasks[d.id]; if(!t0) return; if(!mayWrite('tasks')&&!taskHas(t0,ME)) return toast('Keine Berechtigung, dieses To-Do zu ändern.');
+   openSheet({title:'Update: '+t0.title,html:`<div class="fld full"><div class="small muted">${esc([projName(t0.pid),t0.who?shortWho(t0.who):'',t0.due?'fällig '+fmtD(t0.due):''].filter(Boolean).join(' · '))}</div></div>
+     <div class="fld full"><label for="qu_t">Was ist passiert?</label><textarea class="inp" id="qu_t" rows="3" placeholder="z. B. Westnetz angerufen, Rückruf Freitag zugesagt (Strg+Enter speichert)"></textarea></div>
+     <div class="fld"><label for="qu_d">Datum</label><input type="date" class="inp" id="qu_d" value="${TODAY()}"></div>
+     <div class="fld"><label class="mt-opt" style="margin-top:22px"><input type="checkbox" class="ck" id="qu_done"><span>Damit erledigt – abhaken</span></label></div>
+     ${(t0.upd2||[]).length?`<div class="fld full"><div class="sec-t" style="margin:4px 0">Bisherige Updates</div>${taskUpdList(t0)}</div>`:''}`,saveLabel:'Update speichern',
+     onSave:()=>{ const tx=fixNames(($('#qu_t').value||'').trim()); if(tx.length<3){ toast('Bitte kurz schreiben, was passiert ist.'); return false; }
+       const t=clone(S.tasks[d.id]); if(!t) return; t.upd2=[...(t.upd2||[]),{d:$('#qu_d').value||TODAY(),tm:nowStamp().slice(9),by:meK(),t:tx,at:new Date().toISOString()}];
+       if($('#qu_done').checked){ put('tasks',t); setTimeout(()=>{ const ck=document.querySelector(`input[data-chg="toggleTask"][data-id="${CSS.escape(d.id)}"]`); if(ck){ ck.checked=true; CHG.toggleTask({id:d.id},ck); } },60); }
+       else put('tasks',t); toast('Update gespeichert.'); }});
+   setTimeout(()=>{ const i=$('#qu_t'); if(i) i.focus(); },60); },
  weekPrint:()=>printWeek(),
  monteurSheet:d=>monteurSheet(d.ws||(UI.view==='week'?weekStart():'')),
  tlEditMs:d=>tlEditMs(d.pid,d.key), tlAddMs:d=>tlAddMs(d.pid),
@@ -7538,6 +7553,7 @@ function smartVoice(){
 }
 A.smartVoice=()=>smartVoice();
 // Update am To-Do: Strg+Enter fügt hinzu (statt das ganze To-Do zu speichern)
+document.addEventListener('keydown',e=>{ if(e.target&&e.target.id==='qu_t'&&e.key==='Enter'&&(e.ctrlKey||e.metaKey)){ e.preventDefault(); const b=[...document.querySelectorAll('button')].find(x=>x.textContent.trim()==='Update speichern'); if(b) b.click(); } },true);
 document.addEventListener('keydown',e=>{ if(e.target&&e.target.id==='tu_t'&&e.key==='Enter'&&(e.ctrlKey||e.metaKey)){ e.preventDefault(); e.stopImmediatePropagation(); const b=document.querySelector('[data-act=taskUpdAdd]'); if(b) b.click(); } },true);
 let MEET_T; document.addEventListener('input',e=>{ if(e.target.id!=='mt_tx') return; const id=e.target.dataset.id; MEET_TX[id]=e.target.value; clearTimeout(MEET_T); MEET_T=setTimeout(()=>meetSave(id,true),2500); });
 window.addEventListener('beforeunload',()=>{ if(MEET_ON) meetSave(MEET_ON,true); });
