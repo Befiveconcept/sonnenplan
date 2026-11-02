@@ -2795,10 +2795,13 @@ function agenda(items){
   return h? `<div class="ag">${h}</div>`:'';
 }
 // Updates direkt am To-Do: letztes Update sichtbar, alle per Klick aufklappbar
+// Aufgeklappte Updates bleiben offen, auch wenn die Liste neu gezeichnet wird (Live-Abgleich) – bis man sie selbst zuklappt
+var TU_OPEN=new Set();
+document.addEventListener('toggle',e=>{ const d=e.target; if(!d||!d.matches||!d.matches('details.tu-inl[data-tuid]')) return; if(d.open) TU_OPEN.add(d.dataset.tuid); else TU_OPEN.delete(d.dataset.tuid); },true);
 function taskUpdInline(t){ const u=(t.upd2||[]).slice().sort((a,b)=>updKey(b).localeCompare(updKey(a))); if(!u.length) return '';
   const line=x=>`<div class="tu"><b class="mono">${esc(updStamp(x))}</b> <span class="who-chip">${esc(x.by||'?')}</span> ${esc(x.t)}</div>`;
   // zugeklappt nur eine kurze Zeile – Updates erst beim Aufklappen (neuestes oben)
-  return `<details class="tu-inl" data-stop="1"><summary><span class="tu-sum">💬 ${u.length} Update${u.length>1?'s':''} · zuletzt ${esc(updStamp(u[0]))} · ${esc(u[0].by||'?')}</span></summary>${u.map(line).join('')}</details>`; }
+  return `<details class="tu-inl" data-stop="1" data-tuid="${esc(t.id)}" ${TU_OPEN.has(t.id)?'open':''}><summary><span class="tu-sum">💬 ${u.length} Update${u.length>1?'s':''} · zuletzt ${esc(updStamp(u[0]))} · ${esc(u[0].by||'?')}</span></summary>${u.map(line).join('')}</details>`; }
 // Bis zu 3 Zuständige: who = Hauptperson, who2 = bis zu 2 weitere
 function taskWhos(t){ return [t.who,...(t.who2||[])].filter(Boolean); }
 // Gleiches Kürzel = gleiche Person: „MK“, „Kamil (MK)“ und „Mustermann (MK)“ werden auf den Namen im Team (erster Eintrag mit dem Kürzel) zusammengeführt
