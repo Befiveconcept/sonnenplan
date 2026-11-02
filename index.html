@@ -951,7 +951,7 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .upd-pill{background:var(--sun-soft);color:var(--ink)}
 .tu-inl{margin-top:5px;padding:5px 8px;border-left:3px solid var(--sun);background:var(--sunken);border-radius:0 8px 8px 0;font-size:12.5px}
 .tu-inl summary{cursor:pointer;list-style:none}.tu-inl summary::-webkit-details-marker{display:none}
-.tu-inl .tu{font-size:12.5px}
+.tu-inl .tu{font-size:12.5px;cursor:pointer;border-radius:4px}.tu-inl .tu:hover{background:rgba(244,219,2,.18)}
 .tu-inl[open] .tu+.tu,.tu-inl[open] summary~.tu{border-top:1px dashed var(--line);padding-top:3px;margin-top:3px}
 /* Timeline bearbeitbar */
 button.tll-n{border:0;cursor:pointer}
@@ -1492,6 +1492,12 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 .sheet-h h2{flex:1;min-width:0}
 .sheet-b{padding:16px 18px;overflow-y:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 14px}
 .sheet-f{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+/* Fußleiste: oben eine Werkzeugzeile (Zusatzknöpfe), darunter Löschen links – Abbrechen/Speichern rechts */
+.sheet-f.has-x{flex-direction:column;gap:10px}
+.sheet-x{display:flex;flex-wrap:wrap;gap:6px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
+.sheet-x .btn{padding:6px 12px;font-size:13px;min-height:0}
+.sheet-fm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%}
+.btn.ok-btn{background:#2E9E5B;border-color:#2E9E5B;color:#fff}.btn.ok-btn:hover{background:#25834b}
 .fld{display:flex;flex-direction:column;gap:4px;min-width:0}
 .fld.full{grid-column:1/-1}
 .fld label{font-size:12px;font-weight:600;color:var(--muted)}
@@ -2223,8 +2229,8 @@ async function initMe(){
 var LIVE_READY={}, LIVE_FEED=[], LIVE_PEERS=[];
 const LIVE_COLL={tasks:'To-Do',projects:'Projekt',orders:'Bestellung',events:'Termin',plan:'Wochenplanung',reports:'Rapport',offers:'Angebot',meetings:'Meeting',sales:'Beleg',stock:'Lager',hrabs:'Abwesenheit',picks:'Kommissionierung',files:'Datei'};
 function liveDiff(k,old,neu){ if(!LIVE_READY[k]){ LIVE_READY[k]=1; return; }
-  if(k==='chat'&&ME){ const rooms=myRooms(); Object.values(neu).filter(m=>m&&!(old&&old[m.id])&&m.from&&m.from!==ME&&rooms.includes(m.room)&&!(UI.view==='chat'&&UI.room===m.room&&document.visibilityState==='visible')).slice(0,3).forEach(m=>liveToast({c:'chat',id:m.room,by:shortWho(m.from),t:'💬 Neue Chat-Nachricht',a:String(m.text||'').slice(0,90),pid:'',at:Date.now()})); return; } if(!LIVE_COLL[k]||!ME) return; const me=meK(), hits=[];
-  Object.entries(neu).forEach(([id,x])=>{ const p=old&&old[id]; if(!x||(p&&p.upd===x.upd)||!x.updBy||x.updBy===me) return; if((k==='sales'&&!canSee('sales'))||(k==='hrabs'&&!isAdmin())) return;
+  if(k==='chat'&&ME){ const rooms=myRooms(); Object.values(neu).filter(m=>m&&!(old&&old[m.id])&&m.from&&m.from!==ME&&rooms.includes(m.room)&&String(m.at)>lastRead(m.room)&&!(UI.view==='chat'&&UI.room===m.room&&document.visibilityState==='visible')).slice(0,3).forEach(m=>liveToast({c:'chat',id:m.room,by:shortWho(m.from),t:'💬 Neue Chat-Nachricht',a:String(m.text||'').slice(0,90),pid:'',at:Date.now()})); return; } if(!LIVE_COLL[k]||!ME) return; const me=meK(), hits=[];
+  Object.entries(neu).forEach(([id,x])=>{ const p=old&&old[id]; if(!x||(p&&p.upd===x.upd)||!x.updBy||x.updBy===me||seenElsewhere(x.upd)) return; if((k==='sales'&&!canSee('sales'))||(k==='hrabs'&&!isAdmin())) return;
     const h=(x.hist||[]).slice(-1)[0], what=h&&h.by===x.updBy&&h.at===x.upd?h.a:(p?'geändert':'neu angelegt');
     const lbl=k==='projects'?x.name:k==='plan'?'KW '+String(id).slice(2):k==='sales'?((SALE_T[x.type]||[''])[0]+' '+(x.nr||'Entwurf')+' · '+((x.cust&&x.cust.name)||'')):x.title||x.name||x.art||x.supplier||'';
     hits.push({c:k,id,by:x.updBy,t:LIVE_COLL[k]+(lbl?' „'+String(lbl).slice(0,50)+'“':''),a:String(what||'').slice(0,90),pid:x.pid||'',at:Date.now()}); });
@@ -2245,7 +2251,19 @@ const livePeersHtml=()=>LIVE_PEERS.length?`<div class="live-h">● Gerade online
 /* ---------- „Seit deinem letzten Besuch“: Zusammenfassung, was andere eingetragen/geändert haben ---------- */
 // Merkt sich je Person und Gerät, wann die App zuletzt offen war. Beim nächsten Öffnen (oder Rückkehr nach > 2 Std.) kommt ein Fenster.
 const SEEN_KEY=()=>'sonnenplan-seen-'+meK();
-const seenGet=()=>lsGet(SEEN_KEY())||'', seenSet=()=>{ if(ME&&MODE==='cloud') try{ localStorage.setItem(SEEN_KEY(),new Date().toISOString()); }catch(e){} };
+// Geräteübergreifend: „zuletzt aktiv“ und „Chat gelesen bis“ je Person in der Datenbank (Sammlung seen, Dokument = Kürzel).
+// So zeigt das Handy nichts noch einmal an, was man kurz vorher am Laptop schon gesehen hat – und umgekehrt.
+const DEV=(()=>{ let d=lsGet('sonnenplan-dev'); if(!d){ d='d'+Math.random().toString(36).slice(2,10); lsSet('sonnenplan-dev',d); } return d; })();
+var SEEN_R={at:'',dev:'',chat:{}}, SEEN_SUB='', SEEN_W=0, SEEN_WT=null;
+function seenSub(){ if(MODE!=='cloud'||!DB||!ME||SEEN_SUB===meK()) return; SEEN_SUB=meK();
+  try{ DB.collection('seen').doc(meK()).onSnapshot(s=>{ const d=s&&s.exists?s.data():null; if(!d) return; SEEN_R={at:d.at||'',dev:d.dev||'',chat:d.chat||{}}; scheduleRender(); /* Chat-Zähler, roter Punkt und Tab-Titel ziehen nach */ },()=>{}); }catch(e){} }
+function seenPush(now){ if(MODE!=='cloud'||!DB||!ME) return; clearTimeout(SEEN_WT); const go=()=>{ SEEN_W=Date.now(); let chat={}; try{ chat=JSON.parse(lsGet('sonnenplan-chatread')||'{}')||{}; }catch(e){}
+    const m={...SEEN_R.chat}; Object.entries(chat).forEach(([r,t])=>{ if(!m[r]||t>m[r]) m[r]=t; }); const at=new Date().toISOString(); SEEN_R={at,dev:DEV,chat:m};
+    try{ DB.collection('seen').doc(meK()).set({at,dev:DEV,chat:m}).catch(()=>{}); }catch(e){} };
+  if(now||Date.now()-SEEN_W>45000) go(); else SEEN_WT=setTimeout(go,45000-(Date.now()-SEEN_W)); }
+const seenGet=()=>{ const l=lsGet(SEEN_KEY())||'', r=SEEN_R.at||''; return r>l?r:l; }, seenSet=(now)=>{ if(ME&&MODE==='cloud'){ try{ localStorage.setItem(SEEN_KEY(),new Date().toISOString()); }catch(e){} seenPush(now); } };
+// Änderung schon auf einem anderen Gerät gesehen? (dort war man nach der Änderung aktiv)
+const seenElsewhere=at=>!!(at&&SEEN_R.at&&SEEN_R.dev&&SEEN_R.dev!==DEV&&String(at)<=SEEN_R.at);
 let SINCE_DONE=false;
 function sinceItems(last){ const me=meK(), out=[];
   Object.keys(LIVE_COLL).forEach(k=>{ if((k==='sales'&&!canSee('sales'))||(k==='hrabs'&&!isAdmin())) return;
@@ -2266,9 +2284,10 @@ function sinceShow(force,from){ if(!ME) return; const last=from||seenGet(); if(!
     saveLabel:'Gelesen',onSave:()=>{ seenSet(); }});
   seenSet(); }
 setInterval(()=>{ if(document.visibilityState==='visible'&&SINCE_DONE) seenSet(); },60000);
-document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'){ if(SINCE_DONE) seenSet(); } else if(SINCE_DONE&&Date.now()-new Date(seenGet()||0).getTime()>2*3600*1000) setTimeout(()=>sinceShow(),2500); });
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'){ if(SINCE_DONE) seenSet(true); } else if(SINCE_DONE&&Date.now()-new Date(seenGet()||0).getTime()>2*3600*1000) setTimeout(()=>sinceShow(),2500); });
 // erst wenn die Daten da sind und klar ist, wer man ist
-const SINCE_T=setInterval(()=>{ if(MODE!=='cloud'||!ME||!LIVE_READY.tasks||!LIVE_READY.projects) return; clearInterval(SINCE_T); SINCE_DONE=true; setTimeout(()=>sinceShow(),1500); },1000);
+const SINCE_T=setInterval(()=>{ if(MODE!=='cloud'||!ME||!LIVE_READY.tasks||!LIVE_READY.projects) return; seenSub(); clearInterval(SINCE_T); SINCE_DONE=true; setTimeout(()=>sinceShow(),2500); },1000); // kurz warten, bis „zuletzt aktiv“ der anderen Geräte geladen ist
+setInterval(()=>{ try{ seenSub(); }catch(e){} },5000); // auch nach Personenwechsel
 /* ---------- Mein Profil (unten in der Seitenleiste): Kürzel-Farbe, Passwort, Person wechseln ---------- */
 const K_COLS=['#F4DB02','#FFB74D','#FF8A65','#E57373','#F06292','#BA68C8','#9575CD','#7986CB','#64B5F6','#4FC3F7','#4DD0E1','#4DB6AC','#81C784','#AED581','#DCE775','#A1887F','#90A4AE','#1E1E1E'];
 const kCols=()=>((S.config||{}).kColors||{});
@@ -3526,7 +3545,7 @@ function openSheet(o){
   const el=document.createElement('div'); el.className='scrim'; el.id='scrim';
   el.innerHTML=`<form class="sheet ${o.wide?'wide':''}" id="sheetForm" novalidate><div class="sheet-h"><h2>${esc(o.title)}</h2><button type="button" class="icon-btn" data-act="closeSheet" aria-label="Schließen">${ic('x')}</button></div>
     <div class="sheet-b">${o.html||o.fields.map(f=>fieldHtml(f,(o.value||{})[f.k])).join('')}</div>
-    <div class="sheet-f">${o.onDelete?`<button type="button" class="btn danger" data-act="sheetDelete">${esc(o.deleteLabel||'Löschen')}</button>`:''}<span class="spacer"></span>${o.extraBtn||''}<button type="button" class="btn" data-act="closeSheet">Abbrechen</button><button type="submit" class="btn pri">${o.saveLabel||'Speichern'}</button></div></form>`;
+    <div class="sheet-f ${o.extraBtn?'has-x':''}">${o.extraBtn?`<div class="sheet-x">${o.extraBtn}</div>`:''}<div class="sheet-fm">${o.onDelete?`<button type="button" class="btn danger" data-act="sheetDelete">${esc(o.deleteLabel||'Löschen')}</button>`:''}<span class="spacer"></span><button type="button" class="btn" data-act="closeSheet">Abbrechen</button><button type="submit" class="btn pri">${o.saveLabel||'Speichern'}</button></div></div></form>`;
   document.body.appendChild(el);
   el.addEventListener('mousedown',e=>{ if(e.target===el) closeSheet(); });
   el.querySelector('form').addEventListener('submit',e=>{ e.preventDefault(); submitSheet(); });
@@ -3696,7 +3715,7 @@ function taskForm(t,pre){
     {k:'pid',label:'Projekt',type:'select',options:projOpts()},{k:'prio',label:'Dringlichkeit',type:'select',options:Object.entries(PRIO).map(([k,v])=>[k,v[0]])},{k:'notes',label:'Notiz',type:'textarea'},
     ...((t.from&&S.tasks[t.from])||(!isNew&&taskKids(t.id).length)?[{k:'linkx',label:'Verknüpfte To-Dos',type:'html',full:1,html:taskLinksHtml(t)}]:[]),
     ...(isNew?[]:[{k:'updbox',label:'Updates mit Datum',type:'html',html:taskUpdHtml(t)}])],
-    extraBtn:isNew?'':(()=>{ const cp=taskChatPeer(t); return cp?`<button type="button" class="btn" data-act="taskChat" data-id="${t.id}" title="Direktnachricht an ${esc(cp)} – mit Bezug auf dieses To-Do">💬 Chat mit ${esc(shortWho(cp))}</button>`:''; })()+(t.done?'':`<button type="button" class="btn pri" data-act="taskDoneNow" data-id="${t.id}" title="To-Do als erledigt abhaken">✓ Erledigt</button>`)+`<button type="button" class="btn" data-act="taskFollow" data-id="${t.id}" title="Neues To-Do, das mit diesem verknüpft ist (Änderungen hier vorher speichern)">${ic('plus')}Folge-To-Do</button>`+(SAMPLE?`<button type="button" class="btn sun" data-act="taskAi" data-id="${t.id}" title="Fertige E-Mail, Telefonnummer mit Gesprächsleitfaden oder Lösungsweg">✨ KI-Vorschlag</button>`:''),
+    extraBtn:isNew?'':(t.done?'':`<button type="button" class="btn ok-btn" data-act="taskDoneNow" data-id="${t.id}" title="To-Do als erledigt abhaken">✓ Erledigt</button>`)+(()=>{ const cp=taskChatPeer(t); return cp?`<button type="button" class="btn" data-act="taskChat" data-id="${t.id}" title="Direktnachricht an ${esc(cp)} – mit Bezug auf dieses To-Do">💬 Chat mit ${esc(shortWho(cp))}</button>`:''; })()+`<button type="button" class="btn" data-act="taskFollow" data-id="${t.id}" title="Neues To-Do, das mit diesem verknüpft ist (Änderungen hier vorher speichern)">${ic('plus')}Folge-To-Do</button>`+(SAMPLE?`<button type="button" class="btn sun" data-act="taskAi" data-id="${t.id}" title="Fertige E-Mail, Telefonnummer mit Gesprächsleitfaden oder Lösungsweg">✨ KI-Vorschlag</button>`:''),
     onSave:v=>{ delete v.updbox; delete v.wvq; delete v.who2x; delete v.linkx; t._wvForm=1; { const ex=[...document.querySelectorAll('#who_more .who2-in')].map(e=>e.value.trim()).filter(Boolean); if(!v.who&&ex.length) v.who=ex.shift(); const w2=[...new Set(ex.filter(n=>n!==v.who))].slice(0,2); if(w2.length) v.who2=w2; else { delete v.who2; delete t.who2; } } if(v.wv!==t.wv) delete t.wvShown; if(!v.wv) delete v.wvNote; Object.assign(t,v); const cur=S.tasks[t.id]; if(cur&&cur.upd2) t.upd2=cur.upd2; put('tasks',t); toast(isNew?'To-Do angelegt.':'Gespeichert.'); },
     onDelete:isNew?null:()=>{ del('tasks',t.id); closeSheet(); }});
 }
@@ -4421,8 +4440,10 @@ function chatTeamForm(t){
       const list=chatTeams().filter(x=>x.id!==t.id).concat([{...t,name,members}]); putConfig({...(S.config||{}),chatTeams:list}); UI.room='g:'+t.id; toast(isNew?'Team „'+name+'“ angelegt.':'Gespeichert.'); },
     onDelete:isNew||!(isAdmin()||t.by===meK())?null:()=>{ putConfig({...(S.config||{}),chatTeams:chatTeams().filter(x=>x.id!==t.id)}); UI.room='team'; closeSheet(); toast('Team gelöscht.'); }});
 }
-function lastRead(r){ try{ return (JSON.parse(lsGet('sonnenplan-chatread')||'{}'))[r]||''; }catch(e){ return ''; } }
-function markRead(r){ let m={}; try{ m=JSON.parse(lsGet('sonnenplan-chatread')||'{}')||{}; }catch(e){} m[r]=new Date().toISOString(); lsSet('sonnenplan-chatread',JSON.stringify(m)); }
+// Gelesen-Stand: der spätere von diesem Gerät und dem geräteübergreifenden Stand (SEEN_R.chat)
+function lastRead(r){ let l=''; try{ l=(JSON.parse(lsGet('sonnenplan-chatread')||'{}'))[r]||''; }catch(e){} const g=(SEEN_R.chat||{})[r]||''; return g>l?g:l; }
+function markRead(r){ let m={}; try{ m=JSON.parse(lsGet('sonnenplan-chatread')||'{}')||{}; }catch(e){} const was=m[r]||''; m[r]=new Date().toISOString(); lsSet('sonnenplan-chatread',JSON.stringify(m)); if(chatUnreadSince(r,was)) seenPush(true); }
+const chatUnreadSince=(r,t)=>arr('chat').some(x=>x.room===r&&x.from!==ME&&String(x.at)>t);
 function chatUnread(r){ return arr('chat').filter(m=>m.room===r&&m.from!==ME&&String(m.at)>lastRead(r)).length; }
 function chatUnreadAll(){ return ME?myRooms().reduce((a,r)=>a+chatUnread(r),0):0; }
 function vChat(){
@@ -8156,8 +8177,11 @@ Object.assign(A,{
  dyToggle:d=>{ UI.dyOpen={...(UI.dyOpen||{}),[d.k]:!(UI.dyOpen||{})[d.k]}; render(); },
  dyUnlink:d=>vlSet(d.pid,p=>{ const l={...(p.noteLinks||{})}; delete l[d.id]; p.noteLinks=l; },'Verknüpfung gelöst.'),
 });
-// Aufklappen der Updates am To-Do öffnet nicht gleich das To-Do
-document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('.tu-inl')) e.stopPropagation(); },true);
+// Aufklappen der Updates am To-Do öffnet nicht gleich das To-Do – Knöpfe darin (✕ löschen) führen ihre eigene Aktion aus
+document.addEventListener('click',e=>{ if(!(e.target.closest&&e.target.closest('.tu-inl'))) return; e.stopPropagation();
+  const b=e.target.closest('[data-act]'); if(b&&b.closest('.tu-inl')&&A[b.dataset.act]){ e.preventDefault(); A[b.dataset.act]({...b.dataset},b); return; }
+  // Klick auf ein Update (nicht auf die Zeile „💬 … Updates“ zum Auf-/Zuklappen) öffnet das To-Do zum Bearbeiten
+  const u=e.target.closest('.tu'), d=e.target.closest('details.tu-inl[data-tuid]'); if(u&&d&&S.tasks[d.dataset.tuid]) A.editTask({id:d.dataset.tuid}); },true);
 Object.assign(CHG,{ qnMode:(d,el)=>{ UI.qnMode={...(UI.qnMode||{}),[d.pid]:el.value}; render(); }, prioSelCls:(d,el)=>{ el.className='inp prio-sel p-'+el.value; }, mtAllP:(d,el)=>{ if(el.value==='__keep') return; document.querySelectorAll('#mt_list .mt-p').forEach(s=>{ s.value=el.value; s.classList.toggle('none',!el.value); }); }, mtRowP:(d,el)=>el.classList.toggle('none',!el.value), todoSort:(d,el)=>{ UI.todoSort=el.value; saveUI(); render(); } });
 Object.assign(A,{
  rdCat:d=>{ UI.rdCat=d.v; saveUI(); render(); },
