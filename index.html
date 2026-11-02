@@ -554,6 +554,13 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .gs-r:hover,.gs-r:focus-visible{background:var(--sun-soft);outline:none}
 .gs-r span{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;max-width:100%;white-space:nowrap}
 .gs-none{padding:12px;color:var(--muted)}
+/* Kleine Suche im Projektkopf */
+.ps-search{position:relative;display:flex;align-items:center;gap:6px;height:34px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface);width:190px}
+.ps-search:focus-within{border-color:var(--sun);box-shadow:0 0 0 3px var(--sun-soft)}
+.ps-search svg{width:15px;height:15px;flex:none;color:var(--muted)}
+.ps-search input{border:0;background:transparent;outline:none;font:inherit;font-size:13px;color:var(--ink);width:100%;min-width:0}
+.ps-res{position:absolute;top:calc(100% + 4px);right:0;width:min(380px,92vw);z-index:60;margin:0}
+@media (max-width:760px){ .ps-search{width:100%;order:-1} .ps-res{left:0;right:auto;width:100%} }
 /* Ein Feld für alles: suchen, Claude fragen, sprechen, Dateien reinziehen */
 .ask-box{border-radius:16px}
 .ask-box.over .gs-in{border-color:var(--sun);border-style:dashed;background:var(--sun-soft)}
@@ -2804,7 +2811,7 @@ function vProject(){
   const bigNav=`<button class="big-nav l" data-act="openProject" data-keep="1" data-id="${prev?prev.id:''}" ${prev?'':'disabled'} aria-label="Vorheriges Projekt${prev?': '+esc(prev.name):''}">${ic('left')}${prev?`<span class="bn-t">${esc(prev.name)}</span>`:''}</button><button class="big-nav r" data-act="openProject" data-keep="1" data-id="${next?next.id:''}" ${next?'':'disabled'} aria-label="Nächstes Projekt${next?': '+esc(next.name):''}">${ic('right')}${next?`<span class="bn-t">${esc(next.name)}</span>`:''}</button>`;
   return bigNav+pnav+(p.cover?`<div class="proj-cover"><img data-blob="${esc(p.cover)}" alt=""></div>`:'')+`<div class="topbar"><div class="t"><div class="eyebrow"><a href="#" data-act="nav" data-v="projects" style="color:inherit">Projekte</a> / ${esc(p.nr||'')}</div><h1>${esc(p.name)}</h1>
      <div class="row small" style="margin-top:6px"><select class="catsel" data-chg="setCat" data-pid="${p.id}" aria-label="Kategorie">${Object.entries(CATS).map(([k,l])=>`<option value="${k}" ${cat===k?'selected':''}>${l}</option>`).join('')}</select><span class="type t-${p.type}">${TYPES[p.type]||''}</span><span class="muted">${esc([p.customer,p.place,sizeLbl(p)].filter(Boolean).join(' · '))}</span>${p.pl?`<span class="role">PL ${esc(p.pl)}</span>`:''}${p.wartung?'<span class="pill ok">Wartungsvertrag</span>':''}${p.example?'<span class="pill">Beispiel</span>':''}</div></div>
-     <div class="row"><button class="btn" data-act="editProject" data-id="${p.id}">${ic('edit')}Bearbeiten</button><button class="btn sun desk" data-act="newMenu">${ic('plus')}Neu</button></div></div>
+     <div class="row">${psearchBox(p)}<button class="btn" data-act="editProject" data-id="${p.id}">${ic('edit')}Bearbeiten</button><button class="btn sun desk" data-act="newMenu">${ic('plus')}Neu</button></div></div>
     ${isIntern(p)?'<div class="hint" style="margin-bottom:12px">Allgemeines Projekt ohne Statusablauf: Notizen, To-Dos, Bestellungen, Material und Dateien für alles ohne Kundenbezug (Lager, Büro, Werkstatt, Fahrzeuge).</div>':''}<section class="rail-wrap" ${isIntern(p)?'hidden':''}>
       <div class="rail-top"><div><div class="rd-ey"><span class="live"></span>STATUS</div><b>${pp.last?esc(pp.label):'noch kein Status'}</b>${pp.val?` <span class="rail-d">${esc(msVal(pp.val))}</span>`:''}</div>
         ${pp.next&&['planung','laufend'].includes(cat)?`<div class="rail-nx"><span>NEXT STEP</span>${esc(pp.nextLabel)}</div>`:''}
@@ -2854,7 +2861,7 @@ function projStatus(p){
   </div>
   <div class="ps-side">
    <div class="card"><div class="card-b" style="display:flex;flex-direction:column;gap:12px">
-    <div><div class="eyebrow"><span>Wer macht gerade was · ${tasks.length} offen</span><button class="btn ghost sm" data-act="newTask" data-pid="${p.id}">${ic('assign')}Aufgabe</button></div>
+    <div><div class="eyebrow"><span>Wer macht gerade was · ${tasks.length} offen</span><button class="btn sun sm" data-act="newTask" data-pid="${p.id}" style="font-weight:700">${ic('plus')}Aufgabe</button></div>
       ${tasks.length>1?`<div style="margin:2px 0 6px">${ptSortSel()}</div>`:''}${ptListHtml(tasks,'<div class="small muted">Keine offenen Aufgaben.</div>')}
       ${dn.length?`<label class="tog-sw" style="margin-top:8px"><input type="checkbox" data-chg="toggleDoneSw" ${UI.todoShowDone?'checked':''}><span class="sw" aria-hidden="true"></span><span class="small">Erledigte einblenden (${dn.length})</span></label>${UI.todoShowDone?`<div class="list done-list">${dn.map(taskLi).join('')}</div>`:''}`:''}</div>
     <div><div class="eyebrow"><span>Standardisiert als Nächstes</span>${SAMPLE?`<button class="btn ghost sm" data-act="aiNext" data-pid="${p.id}" title="Claude schlägt konkrete nächste Schritte vor (Fristen, Pflichten, Netzbetreiber …)">✨ KI-Vorschläge</button>`:''}</div>
@@ -5334,6 +5341,32 @@ function gsearchHtml(q){
   const groups={}; ['Projekte','To-Dos','Notizen','Bestellungen','Dateien','Lager','Termine','Wochenplanung','Tagesrapporte','Kommissionierung','Private To-Dos'].forEach(g=>groups[g]=[]); res.forEach(r=>{ (groups[r.g]=groups[r.g]||[]).push(r); });
   return Object.entries(groups).filter(([,l])=>l.length).map(([g,l])=>`<div class="gs-g"><div class="gs-h">${esc(g)} <span class="mono">${l.length}</span></div>${l.slice(0,8).map(r=>`<button type="button" class="gs-r" data-act="${r.act}" data-id="${esc(r.id||'')}" ${r.at?`data-at="${r.at}"`:''} ${r.v?`data-v="${r.v}"`:''}><b>${esc(r.t)}</b><span>${esc(r.m||'')}</span></button>`).join('')}${l.length>8?`<div class="small muted" style="padding:4px 10px">+ ${l.length-8} weitere – Suche genauer eingeben</div>`:''}</div>`).join('');
 }
+/* ---------- Kleine Suche im Projekt: nur Inhalte dieses Projekts ---------- */
+function psearch(p,q){
+  q=String(q||'').trim().toLowerCase(); if(q.length<2) return [];
+  const terms=q.split(/\s+/), hit=s=>{ const x=String(s||'').toLowerCase(); return terms.every(t=>x.includes(t)); };
+  const snip=s=>{ const x=String(s||'').replace(/\s+/g,' '), i=x.toLowerCase().indexOf(terms[0]); if(x.length<=120) return x; return i<0?x.slice(0,100):(i>35?'…':'')+x.slice(Math.max(0,i-35),i+80)+'…'; };
+  const out=[], id=p.id;
+  ['updates','notes'].forEach(k=>noteBlocks(p[k]).forEach(b=>{ const nb=noteParts(b); if(hit(nb.text+' '+nb.by)) out.push({g:'Notizen',t:snip(nb.text),m:[nb.d,nb.by].filter(Boolean).join(' · '),act:'openAt',id,at:'status'}); }));
+  [['scope','Umfang'],['questions','Zu klärende Fragen'],['customer','Kunde'],['contact','Kontakt'],['place','Ort']].forEach(([k,l])=>{ if(p[k]&&hit(p[k])) out.push({g:'Infos',t:l,m:snip(p[k]),act:'openAt',id,at:'infos'}); });
+  arr('tasks').filter(t=>t.pid===id).forEach(t=>{ if(hit([t.title,t.notes,t.ext,t.who,...(t.upd2||[]).map(u=>u.t)].join(' '))) out.push({g:'To-Dos',t:(t.done?'✓ ':'')+t.title,m:[t.who?shortWho(t.who):'',t.due?fmtD(t.due):''].filter(Boolean).join(' · '),act:'editTask',id:t.id}); });
+  arr('orders').filter(o=>o.pid===id).forEach(o=>{ if(hit([o.supplier,o.no,o.buyer,...(o.items||[]).map(i=>[i.art,i.artNr].join(' '))].join(' '))) out.push({g:'Bestellungen',t:(o.supplier||'Bestellung')+(o.no?' · '+o.no:''),m:[fmtD(o.ordered),orderState(o).k].filter(Boolean).join(' · '),act:'editOrder',id:o.id}); });
+  allFiles().filter(f=>f.pid===id).forEach(f=>{ if(hit([f.name,f.orig,f.from,f.subject,f.text].join(' '))) out.push({g:'Dateien',t:f.name,m:[FILE_KINDS[f.kind],fmtD(f.date)].filter(Boolean).join(' · '),act:f.virtual?f.vact:f.asset?'fileAsset':'fileOpen',id:f.virtual?f.vid:f.asset?f.asset:f.id}); });
+  arr('events').filter(e=>e.pid===id).forEach(e=>{ if(hit([e.title,e.place,e.notes].join(' '))) out.push({g:'Termine',t:e.title,m:fmtD(e.date),act:'editEvent',id:e.id}); });
+  arr('reports').filter(r=>r.pid===id).forEach(r=>{ if(hit([r.work,r.plan,r.address].join(' '))) out.push({g:'Tagesrapporte',t:'Rapport '+fmtD(r.date),m:snip([r.work,r.plan].join(' ')),act:'editReport',id:r.id}); });
+  arr('picks').filter(k=>k.pid===id).forEach(k=>{ if(hit([k.who,...(k.items||[]).map(i=>i.art)].join(' '))) out.push({g:'Kommissionierung',t:'Liste '+fmtD(k.date),m:PICK_ST[k.status]||'',act:'openPick',id:k.id}); });
+  return out;
+}
+function psearchHtml(p,q){
+  if(String(q||'').trim().length<2) return ''; const res=psearch(p,q); if(!res.length) return '<div class="gs-none">Nichts gefunden in diesem Projekt.</div>';
+  const groups={}; res.forEach(r=>(groups[r.g]=groups[r.g]||[]).push(r));
+  return Object.entries(groups).map(([g,l])=>`<div class="gs-g"><div class="gs-h">${esc(g)} <span class="mono">${l.length}</span></div>${l.slice(0,8).map(r=>`<button type="button" class="gs-r" data-act="${r.act}" data-id="${esc(r.id||'')}" ${r.at?`data-at="${r.at}"`:''}><b>${esc(r.t)}</b><span>${esc(r.m||'')}</span></button>`).join('')}${l.length>8?`<div class="small muted" style="padding:4px 10px">+ ${l.length-8} weitere</div>`:''}</div>`).join(''); }
+function psearchBox(p){ const q=UI.pq&&UI.pqPid===p.id?UI.pq:''; return `<div class="ps-search">${ic('search')}<input id="pSearch" type="search" autocomplete="off" placeholder="Im Projekt suchen …" value="${esc(q)}" aria-label="Im Projekt suchen"><div id="pResults" class="gs-res ps-res" role="region" aria-live="polite">${psearchHtml(p,q)}</div></div>`; }
+let pT; document.addEventListener('input',e=>{ if(e.target.id!=='pSearch') return; UI.pq=e.target.value; UI.pqPid=UI.pid; clearTimeout(pT); pT=setTimeout(()=>{ const r=$('#pResults'), p=S.projects[UI.pid]; if(r&&p) r.innerHTML=psearchHtml(p,UI.pq); },150); });
+document.addEventListener('keydown',e=>{ if(e.target&&e.target.id==='pSearch'&&e.key==='Escape'){ e.target.value=''; UI.pq=''; const r=$('#pResults'); if(r) r.innerHTML=''; } });
+// Treffer angeklickt oder außerhalb geklickt → Ergebnisliste schließen (Suchbegriff bleibt im Feld)
+document.addEventListener('click',e=>{ const r=$('#pResults'); if(!r||!r.innerHTML) return; if(e.target.closest('.gs-r')&&r.contains(e.target)){ setTimeout(()=>{ const x=$('#pResults'); if(x) x.innerHTML=''; },0); return; } if(!e.target.closest('.ps-search')) r.innerHTML=''; });
+document.addEventListener('focusin',e=>{ if(e.target.id!=='pSearch') return; const r=$('#pResults'), p=S.projects[UI.pid]; if(r&&p&&!r.innerHTML) r.innerHTML=psearchHtml(p,e.target.value); });
 // Startseite: EIN Feld für alles – tippen = sofort suchen, Enter/Sprechen = Claude fragen („Zeig mir das neueste Update zum Energiepark“),
 // Dateien, Mails und Text reinziehen = wie bisher erkennen und zuordnen
 function gsearchBox(){
