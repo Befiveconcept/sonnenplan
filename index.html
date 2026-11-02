@@ -194,6 +194,8 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .sug-list{display:flex;flex-direction:column;gap:8px}
 .sug{display:grid;grid-template-columns:22px minmax(0,1fr) 110px 140px 110px;gap:8px;align-items:center}
 .quick-note{display:flex;flex-direction:column;gap:6px;background:var(--sunken);border-radius:8px;padding:8px}
+.pm-list{margin:0;padding-left:18px;line-height:1.7}
+.quick-note .qn-from{width:190px;max-width:100%;cursor:text}
 .quick-note textarea{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:8px 10px;min-height:64px;resize:vertical;width:100%}
 .quick-note textarea:focus{outline:2px solid var(--primary);outline-offset:-1px;min-height:96px}
 .nb-list{padding:4px 6px;white-space:normal}
@@ -2639,7 +2641,7 @@ function lastNote(p){
     if(!m){ lastPlain={d:'',t:b.trim(),by:''}; return; }
     let y=m[3]?(m[3].length===2?'20'+m[3]:m[3]):t0.slice(0,4); let d=y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
     if(!m[3]&&d>t0) d=(+y-1)+d.slice(4); // Datum ohne Jahr in der Zukunft → Vorjahr
-    const nt=noteTime(m[4]), by=(nt.rest.match(/^\(([^)]{1,12})\)\s*:?\s*/)||[])[1]||''; const t=nt.rest.replace(/^\([^)]{1,12}\)\s*:?\s*/,'').replace(/\s*\n\s*/g,' ').trim();
+    const nt=noteTime(m[4]), by=(nt.rest.match(/^\(([^)]{1,48})\)\s*:?\s*/)||[])[1]||''; const t=nt.rest.replace(/^\([^)]{1,48}\)\s*:?\s*/,'').replace(/\s*\n\s*/g,' ').trim();
     if(t&&(!best||d+nt.tm>=best.d+(best.tm||''))) best={d,tm:nt.tm,t,by}; }));
   return best||lastPlain;
 }
@@ -2648,7 +2650,7 @@ function noteEntries(p){ const out=[], t0=TODAY();
   [['notes','Notiz'],['updates','Update']].forEach(([k,src])=>noteBlocks(p[k]).forEach(b=>{
     const m=b.match(/^\s*(\d{1,2})\.(\d{1,2})\.(\d{2,4})?\s*:?\s*([\s\S]*)$/); if(!m) return;
     const y=m[3]?(m[3].length===2?'20'+m[3]:m[3]):t0.slice(0,4); let d=y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'); if(!m[3]&&d>addDays(t0,60)) d=(+y-1)+d.slice(4);
-    const nt=noteTime(m[4]), by=(nt.rest.match(/^\(([^)]{1,12})\)\s*:?\s*/)||[])[1]||''; const t=nt.rest.replace(/^\([^)]{1,12}\)\s*:?\s*/,'').replace(/\s*\n\s*/g,' ').trim();
+    const nt=noteTime(m[4]), by=(nt.rest.match(/^\(([^)]{1,48})\)\s*:?\s*/)||[])[1]||''; const t=nt.rest.replace(/^\([^)]{1,48}\)\s*:?\s*/,'').replace(/\s*\n\s*/g,' ').trim();
     if(t) out.push({d,tm:nt.tm,by,t,kind:/^✓ Erledigt/.test(t)?'done':'note',src}); }));
   return out; }
 // Timeline: Notizen (auch mit Datum in der Zukunft), Statusschritte, Termine, Lieferungen, fällige Aufgaben
@@ -2991,6 +2993,7 @@ function projStatus(p){
     <div class="quick-note"><textarea id="qn_${p.id}" rows="2" placeholder="Neue Notiz … (Datum und Kürzel ${esc(meK())} kommen automatisch dazu, Strg+Enter speichert)" aria-label="Neue Notiz">${esc(QN[p.id]||'')}</textarea>
       <div class="row">${(()=>{ const m=(UI.qnMode||{})[p.id]||'notes', ot=openTasks(p.id);
         return `<select class="catsel" id="qnf_${p.id}" data-chg="qnMode" data-pid="${p.id}" aria-label="Speichern als">${[['notes','Als Notiz'],['todo','Als To-Do'],['tupd','Als Update zu To-Do']].map(([k,l])=>`<option value="${k}" ${m===k?'selected':''}>${l}</option>`).join('')}</select>
+        ${m==='tupd'||m==='todo'?'':`<input class="catsel qn-from" id="qni_${p.id}" list="infoFromList" placeholder="Info von … (Kürzel, Kunde …)" aria-label="Von wem kam die Info?" title="Von wem kam die Info? Leer = von dir">${infoFromList()}`}
         ${m==='tupd'?`<select class="catsel" id="qnt_${p.id}" aria-label="Zu welchem To-Do?" style="max-width:260px">${ot.length?ot.map(t=>`<option value="${t.id}">${esc(t.title.slice(0,60))}${t.who?' · '+esc(shortWho(t.who)):''}</option>`).join(''):'<option value="">– keine offenen To-Dos –</option>'}</select>`:''}`; })()}<span class="spacer"></span><button class="btn pri sm" data-act="quickNote" data-pid="${p.id}">Speichern</button></div></div>
     ${projVerlauf(p,adm)}
   </div></div>
@@ -3045,10 +3048,12 @@ const QN={};
 // Schreibweisen im Betrieb: Marc immer mit c (auch aus Diktat / Spracherkennung)
 const NAME_FIX=[[/\bMark(?=\s+Krebber\b|\s*[,.;:!?)]|\s+(?:soll|muss|hat|kann|wird|ist|macht|kümmert|ruft|schickt|bestellt|fragt|klärt|und|oder|sagt|meint)\b|\s*$)/g,'Marc'],[/\bMarks\b(?=\s)/g,'Marcs']];
 const fixNames=s=>NAME_FIX.reduce((t,[rx,to])=>t.replace(rx,to),String(s||''));
-function saveNote(pid,f,text){
-  text=fixNames(String(text||'').trim()); if(!text) return false;
+const infoFromList=()=>`<datalist id="infoFromList">${[...new Set([...staff().map(s=>shortWho(s.name)),'Kunde','Netzbetreiber','Lieferant','Subunternehmer'])].map(k=>`<option value="${esc(k)}">`).join('')}</datalist>`;
+// from = von wem die Info kam (Kürzel, „Kunde“, „Westnetz“ …) → steht hinter dem eigenen Kürzel: „(EP · Info: HH)“
+function saveNote(pid,f,text,from){
+  text=fixNames(String(text||'').trim()); if(!text) return false; from=String(from||'').replace(/[()]/g,'').trim().slice(0,30);
   const p=clone(S.projects[pid]); const d0=new Date(), stamp=nowStamp();
-  p[f]=(p[f]?p[f].replace(/\s+$/,'')+'\n':'')+stamp+' ('+meK()+'): '+text; delete p.now; delete p.nowD; put('projects',p); toast('Notiz gespeichert.'); suggestTodos(pid,text);
+  p[f]=(p[f]?p[f].replace(/\s+$/,'')+'\n':'')+stamp+' ('+meK()+(from&&from.toLowerCase()!==meK().toLowerCase()?' · Info: '+from:'')+'): '+text; delete p.now; delete p.nowD; put('projects',p); toast('Notiz gespeichert.'); suggestTodos(pid,text);
 }
 // Notiztext in Einträge zerlegen: ein Eintrag beginnt mit einem Datum (z. B. „22.10.26:“), Folgezeilen gehören dazu
 // Zeitstempel fuer neue Eintraege: TT.MM.JJ HH:MM
@@ -3056,7 +3061,7 @@ const nowStamp=()=>{ const d=new Date(), p=n=>String(n).padStart(2,'0'); return 
 const noteTime=s=>{ const m=String(s).match(/^(\d{1,2}:\d{2})\s*/); return m?{tm:m[1].padStart(5,'0'),rest:s.slice(m[0].length)}:{tm:'',rest:s}; };
 // Notiz-Eintrag zerlegen: Datum, Uhrzeit, Kürzel, Text
 function noteParts(b){ const m=String(b).match(/^\s*(\d{1,2}\.\d{1,2}\.(?:\d{2,4})?)\s*:?\s*([\s\S]*)$/); if(!m) return {d:'',tm:'',by:'',text:String(b).trim()};
-  const nt=noteTime(m[2]), by=(nt.rest.match(/^\(([^)]{1,12})\)\s*:?\s*/)||[])[1]||''; return {d:m[1],tm:nt.tm,by,text:nt.rest.replace(/^\([^)]{1,12}\)\s*:?\s*/,'').trim()}; }
+  const nt=noteTime(m[2]), by=(nt.rest.match(/^\(([^)]{1,48})\)\s*:?\s*/)||[])[1]||''; return {d:m[1],tm:nt.tm,by,text:nt.rest.replace(/^\([^)]{1,48}\)\s*:?\s*/,'').trim()}; }
 const strHash=s=>{ let h=0; s=String(s); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0; return 'h'+(h>>>0).toString(36); };
 // Überschrift je Eintrag: von Claude (p.noteHeads, am Text-Hash), sonst vorläufig die ersten Wörter
 function noteHead(p,b){ const h=(p.noteHeads||{})[strHash(noteParts(b).text)]; if(h) return {t:h,ai:true};
@@ -3609,8 +3614,34 @@ function projectForm(p,pre,after){
       if(!isNew&&!lock){ const added=['updates','notes'].map(k=>addedText(before[k],p[k]||'')).filter(Boolean).join('\n'); if(added) suggestTodos(p.id,added); }
       if(!lock&&qLines(p.questions).length&&(p.questions||'')!==before.questions) setTimeout(()=>qToTasks(p.id,true),300);
       if(isNew){ UI.ptab='status'; go('project',p.id); toast('Projekt angelegt. Standardablauf mit '+progress(p).tot+' Schritten erstellt.'); } },
+    extraBtn:!isNew&&isAdmin()?`<button type="button" class="btn" data-act="projMerge" data-id="${p.id}" title="Alles aus diesem Projekt in ein anderes übernehmen">⇢ In anderes Projekt zusammenführen</button>`:'',
     onDelete:isNew?null:()=>confirmSheet('Projekt „'+p.name+'“ löschen? To-Dos, Bestellungen und Termine bleiben ohne Projektbezug erhalten.',()=>{ del('projects',p.id); go('projects'); })});
 }
+/* ---------- Projekte zusammenführen: alles aus Quelle → Ziel (To-Dos, Bestellungen, Termine, Dateien, Rapporte, Belege, Planung, Notizen …), Quelle danach löschen ---------- */
+const MERGE_SKIP=['projects','config','priv'];
+function projMergeCount(src){ const out={}; Object.keys(S).filter(k=>!MERGE_SKIP.includes(k)&&S[k]&&typeof S[k]==='object').forEach(k=>{ const n=Object.values(S[k]).filter(x=>x&&typeof x==='object'&&x.pid===src).length; if(n) out[k]=n; });
+  const pe=arr('plan').reduce((a,w)=>a+(w.entries||[]).filter(e=>e.pid===src).length,0); if(pe) out['plan (Einsätze)']=pe; return out; }
+const MERGE_L={tasks:'To-Dos',orders:'Bestellungen',offers:'Angebote (alt)',events:'Termine',reports:'Tagesrapporte',files:'Dateien',picks:'Kommissionierlisten',sales:'Verkaufsbelege',chat:'Chat-Nachrichten',meetings:'Meetings',hrtime:'Zeiteinträge',fin:'Finanz-Buchungen',anlagen:'Anlagen','plan (Einsätze)':'Einsätze in der Wochenplanung'};
+function projMergeSheet(src){ const s=S.projects[src]; if(!s||!isAdmin()) return; const cnt=projMergeCount(src), opts=arr('projects').filter(x=>x.id!==src).sort((a,b)=>a.name.localeCompare(b.name,'de'));
+  const nNotes=['updates','notes','questions'].reduce((a,k)=>a+noteBlocks(s[k]).length,0);
+  openSheet({title:'„'+s.name+'“ zusammenführen',wide:1,html:`<div class="fld full"><label for="pm_dst">Übernehmen in Projekt</label><select id="pm_dst" class="inp"><option value="">– Zielprojekt wählen –</option>${opts.map(x=>`<option value="${x.id}">${esc(x.name)}${x.nr?' · '+esc(x.nr):''}</option>`).join('')}</select></div>
+    <div class="fld full"><div class="sec-t" style="margin:4px 0">Das wandert ins Zielprojekt</div><ul class="pm-list">${Object.entries(cnt).map(([k,n])=>`<li><b>${n}</b> ${esc(MERGE_L[k]||k)}</li>`).join('')}${nNotes?`<li><b>${nNotes}</b> Notizen / Updates / Fragen (mit Datum und Kürzel)</li>`:''}${s.scope?'<li>Leistungsumfang (wird angehängt)</li>':''}<li>Erledigte Checklisten-Punkte, die im Ziel noch offen sind</li></ul>${!Object.keys(cnt).length&&!nNotes?'<div class="small muted">In diesem Projekt hängt nichts – es kann einfach gelöscht werden.</div>':''}</div>
+    <div class="fld full"><label class="mt-opt"><input type="checkbox" class="ck" id="pm_del" checked><span>„${esc(s.name)}“ danach löschen (erst wenn alles übertragen ist)</span></label></div>`,saveLabel:'Zusammenführen',
+    onSave:()=>{ const dst=$('#pm_dst').value; if(!dst||!S.projects[dst]){ toast('Bitte das Zielprojekt wählen.'); return false; } const delSrc=$('#pm_del').checked;
+      setTimeout(()=>confirmSheet('Alles aus „'+s.name+'“ in „'+S.projects[dst].name+'“ übernehmen'+(delSrc?' und „'+s.name+'“ danach löschen':'')+'?',()=>projMergeRun(src,dst,delSrc)),60); }}); }
+function projMergeRun(src,dst,delSrc){ const s=S.projects[src], d0=S.projects[dst]; if(!s||!d0) return; let moved=0;
+  Object.keys(S).filter(k=>!MERGE_SKIP.includes(k)&&S[k]&&typeof S[k]==='object').forEach(k=>Object.values(S[k]).forEach(x=>{ if(x&&typeof x==='object'&&x.pid===src&&x.id){ put(k,{...clone(x),pid:dst}); moved++; } }));
+  arr('plan').forEach(w=>{ if((w.entries||[]).some(e=>e.pid===src)){ const c=clone(w); c.entries=c.entries.map(e=>e.pid===src?{...e,pid:dst}:e); put('plan',c); moved++; } });
+  const d=clone(S.projects[dst]), stamp=nowStamp(), add=(k,txt)=>{ if(String(txt||'').trim()) d[k]=(d[k]?d[k].replace(/\s+$/,'')+'\n':'')+String(txt).trim(); };
+  add('updates',s.updates); add('notes',s.notes); add('questions',s.questions);
+  add('notes',stamp+' ('+meK()+'): ➜ Projekt „'+s.name+'“'+(s.nr?' ('+s.nr+')':'')+' wurde hierher übernommen – To-Dos, Bestellungen, Termine, Dateien und Notizen stehen jetzt hier.');
+  if(String(s.scope||'').trim()) d.scope=(d.scope?d.scope.replace(/\s+$/,'')+'\n\n':'')+'Aus „'+s.name+'“: '+s.scope.trim();
+  ['qTasks','noteHeads','dayHeads','noteLinks'].forEach(k=>{ if(s[k]) d[k]={...s[k],...(d[k]||{})}; });
+  if(s.checks){ d.checks=d.checks||{}; Object.entries(s.checks).forEach(([k,v])=>{ if(!d.checks[k]) d.checks[k]=v; }); }
+  delete d.now; delete d.nowD; put('projects',d);
+  if(delSrc){ const left=projMergeCount(src); if(Object.keys(left).length) toast('Achtung: '+Object.values(left).reduce((a,b)=>a+b,0)+' Einträge hängen noch an „'+s.name+'“ – Projekt bleibt bestehen.'); else { del('projects',src); } }
+  closeSheet(); go('project',dst); toast('Zusammengeführt: '+moved+' Einträge'+(delSrc?' · „'+s.name+'“ gelöscht':'')+'.'); }
+queueMicrotask(()=>Object.assign(A,{ projMerge:d=>{ closeSheet(); setTimeout(()=>projMergeSheet(d.id),60); } }));
 queueMicrotask(()=>Object.assign(A,{ /* A wird weiter unten angelegt */
   whoMoreAdd:()=>{ const b=$('#who_more'); if(!b) return; const n=b.querySelectorAll('.who2-row').length; if(n>=2) return; b.querySelector('.who-plus').insertAdjacentHTML('beforebegin',whoMoreRow('')); b.querySelectorAll('.who2-in')[n].focus(); if(n+1>=2) b.querySelector('.who-plus').hidden=true; },
   whoMoreDel:(d,el)=>{ const r=el.closest('.who2-row'); if(r) r.remove(); const p=document.querySelector('#who_more .who-plus'); if(p) p.hidden=false; } }));
@@ -5084,8 +5115,8 @@ const A = {
  newUnhide:d=>{ newHiddenSet(newHidden().filter(k=>k!==d.key)); A.newMenu({}); },
  newHidTg:()=>{ NEW_SHOWHID=!NEW_SHOWHID; A.newMenu({}); },
  // Notiz ins Projekt-Tagebuch (heutige Tagesnotiz), auch ohne vorher ins Projekt zu gehen
- newNote:d=>openSheet({title:'Notiz schreiben',value:{pid:d.pid||'',t:''},fields:[{k:'pid',label:'Projekt',type:'select',options:[['','– Projekt wählen –'],...projOpts().filter(o=>o[0])],req:1},{k:'t',label:'Notiz',type:'textarea',req:1,ph:'Was ist passiert / was wurde besprochen?'}],
-   onSave:v=>{ if(!v.pid||!String(v.t||'').trim()){ toast('Bitte Projekt und Text angeben.'); return false; } saveNote(v.pid,'notes',String(v.t).trim()); }}),
+ newNote:d=>openSheet({title:'Notiz schreiben',value:{pid:d.pid||'',t:''},fields:[{k:'pid',label:'Projekt',type:'select',options:[['','– Projekt wählen –'],...projOpts().filter(o=>o[0])],req:1},{k:'t',label:'Notiz',type:'textarea',req:1,ph:'Was ist passiert / was wurde besprochen?'},{k:'from',label:'Info von (optional – Kürzel, Kunde, Netzbetreiber …)',list:'infoFromList'},{k:'flx',label:'',type:'html',html:infoFromList()}],
+   onSave:v=>{ if(!v.pid||!String(v.t||'').trim()){ toast('Bitte Projekt und Text angeben.'); return false; } saveNote(v.pid,'notes',String(v.t).trim(),v.from); }}),
  // Handy-Menü „Mehr“ = dieselben Rubriken wie die Seitenleiste am Desktop (ohne die 4 Tabs unten)
  moreMenu:()=>navDrawer(!document.body.classList.contains('nav-open')),
  moreMenuOld:(d,el)=>showMenu(el,[['meProfile','Mein Profil ('+(ME?meK():'?')+'): Farbe, Passwort','assign'],
@@ -5173,7 +5204,7 @@ const A = {
    if(f==='todo'){ put('tasks',{id:uid(),pid:d.pid,title:t.slice(0,300),who:'',done:false,prio:'normal',src:'notiz',created:TODAY()}); toast('To-Do angelegt.'); }
    else if(f==='tupd'){ const k=clone(S.tasks[($('#qnt_'+d.pid)||{}).value||'']||null); if(!k){ toast('Bitte ein To-Do auswählen.'); return; }
      k.upd2=[...(k.upd2||[]),{d:TODAY(),tm:nowStamp().slice(9),by:meK(),t,at:new Date().toISOString()}]; put('tasks',k); toast('Update an „'+k.title.slice(0,40)+'“ gespeichert.'); setTimeout(()=>followCheck(k.id,t),300); }
-   else saveNote(d.pid,f==='questions'?'questions':'notes',t);
+   else { const fr=($('#qni_'+d.pid)||{}).value||''; saveNote(d.pid,f==='questions'?'questions':'notes',t,fr); const fi=$('#qni_'+d.pid); if(fi) fi.value=''; }
    QN[d.pid]=''; ta.value=''; },
  editNoteBlock:d=>{ if(!isAdmin()) return toast('Nur EP und AvE können Notizen bearbeiten.'); const bl=noteBlocks(S.projects[d.pid][d.k]);
    openSheet({title:'Eintrag bearbeiten',value:{t:bl[+d.i]},fields:[{k:'t',label:'Text',type:'textarea',req:1}],onSave:v=>{ const b=noteBlocks(S.projects[d.pid][d.k]); b[+d.i]=v.t; saveNoteBlocks(d.pid,d.k,b,'Eintrag geändert.'); }}); },
