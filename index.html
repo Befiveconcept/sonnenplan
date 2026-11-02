@@ -2363,6 +2363,14 @@ function navSide(cur,cnt){ NAV_CUR=cur; const pins=navPins();
   $('#locList').innerHTML =[...new Set(['Lager','Container',...arr('stock').map(s=>s.loc).filter(Boolean)])].map(s=>`<option value="${esc(s)}">`).join('');
   setTimeout(fselBar,0); // Auswahlleiste der Datenablage ein-/ausblenden
 }
+// Die große Such-/KI-/Ablage-Leiste steht zusätzlich in diesen Rubriken direkt unter der Überschrift (Projektseite: eigener Aufruf)
+const GS_VIEWS=['todos','week','calendar'];
+// Wo wurde etwas eingegeben/abgelegt? → Hinweis für die KI und die Vorauswahl
+function gsCtx(){ const p=UI.view==='project'&&S.projects[UI.pid];
+  if(p) return {key:'p:'+p.id,label:'Projekt „'+p.name+'“',ai:'Der Nutzer ist im Projekt „'+p.name+'“ (ID '+p.id+'). Abgelegtes und Fragen ohne Projektnamen gehören sehr wahrscheinlich zu diesem Projekt.'};
+  if(UI.view==='todos') return {key:'todos',label:'To-Dos',type:'todos',ai:'Der Nutzer ist in der Rubrik To-Dos: Abgelegtes oder Eingefügtes sind sehr wahrscheinlich Aufgaben → type "todos", außer der Inhalt ist eindeutig etwas anderes (z. B. Lieferschein).'};
+  if(UI.view==='week'||UI.view==='calendar') return {key:'cal',label:'Kalender',type:'termin',ai:'Der Nutzer ist im Terminkalender: Abgelegtes oder Eingefügtes ist sehr wahrscheinlich ein Termin → type "termin" mit Titel, Datum, Uhrzeit und Ort, außer der Inhalt ist eindeutig etwas anderes.'};
+  return {key:UI.view,label:'',ai:''}; }
 // „+ Neu …“ passend zur geöffneten Rubrik, direkt sichtbar neben dem allgemeinen „Neu“-Menü
 function ctxNew(){ const v=UI.view, mk=(act,l,attr,ok=true)=>ok?{act,l,attr:attr||''}:null;
   if(v==='projects') return mk('newProject','Neues Projekt','',mayWrite('projects'));
@@ -2384,7 +2392,7 @@ function head(title,sub,actions=''){
   const c=ctxNew(), cb=c?`<button class="btn pri ctx-new" data-act="${c.act}" ${c.attr}>${ic('plus')}${esc(c.l)}</button>`:'';
   // Gab es in der Rubrik schon einen (unauffälligen) Knopf für dasselbe, wird er durch den deutlichen ersetzt
   if(c) actions=String(actions).replace(/<button\b[^>]*>[\s\S]*?<\/button>/g,b=>b.includes(`data-act="${c.act}"`)&&(!c.attr||b.includes(c.attr))?'':b);
-  return `<div class="topbar"><div class="t"><div class="eyebrow">${sub||''}</div><h1>${title}</h1></div><div class="row">${actions}${cb}<button class="btn sun desk" data-act="newMenu">${ic('plus')}Neu</button></div></div>`;
+  return `<div class="topbar"><div class="t"><div class="eyebrow">${sub||''}</div><h1>${title}</h1></div><div class="row">${actions}${cb}<button class="btn sun desk" data-act="newMenu">${ic('plus')}Neu</button></div></div>`+(GS_VIEWS.includes(UI.view)?gsearchBox():'');
 }
 function banner(){
   if(MODE==='local') return `<div class="banner">Lokaler Modus: Die Datenbank ist in dieser Ansicht nicht erreichbar, Daten bleiben nur in diesem Browser. Über den veröffentlichten Link in claude.ai synchronisieren Laptop und Handy.</div>`;
@@ -2879,7 +2887,8 @@ function vProject(){
   const bigNav=`<button class="big-nav l" data-act="openProject" data-keep="1" data-id="${prev?prev.id:''}" ${prev?'':'disabled'} aria-label="Vorheriges Projekt${prev?': '+esc(prev.name):''}">${ic('left')}${prev?`<span class="bn-t">${esc(prev.name)}</span>`:''}</button><button class="big-nav r" data-act="openProject" data-keep="1" data-id="${next?next.id:''}" ${next?'':'disabled'} aria-label="Nächstes Projekt${next?': '+esc(next.name):''}">${ic('right')}${next?`<span class="bn-t">${esc(next.name)}</span>`:''}</button>`;
   return bigNav+pnav+(p.cover?`<div class="proj-cover"><img data-blob="${esc(p.cover)}" alt=""></div>`:'')+`<div class="topbar"><div class="t"><div class="eyebrow"><a href="#" data-act="nav" data-v="projects" style="color:inherit">Projekte</a> / ${esc(p.nr||'')}</div><h1>${esc(p.name)}</h1>
      <div class="row small" style="margin-top:6px"><select class="catsel" data-chg="setCat" data-pid="${p.id}" aria-label="Kategorie">${Object.entries(CATS).map(([k,l])=>`<option value="${k}" ${cat===k?'selected':''}>${l}</option>`).join('')}</select><span class="type t-${p.type}">${TYPES[p.type]||''}</span><span class="muted">${esc([p.customer,p.place,sizeLbl(p)].filter(Boolean).join(' · '))}</span>${p.pl?`<span class="role">PL ${esc(p.pl)}</span>`:''}${p.wartung?'<span class="pill ok">Wartungsvertrag</span>':''}${p.example?'<span class="pill">Beispiel</span>':''}</div></div>
-     <div class="row">${psearchBox(p)}<button class="btn" data-act="editProject" data-id="${p.id}">${ic('edit')}Bearbeiten</button><button class="btn sun desk" data-act="newMenu">${ic('plus')}Neu</button></div></div>
+     <div class="row"><button class="btn" data-act="editProject" data-id="${p.id}">${ic('edit')}Bearbeiten</button><button class="btn sun desk" data-act="newMenu">${ic('plus')}Neu</button></div></div>
+    ${gsearchBox(p)}
     ${isIntern(p)?'<div class="hint" style="margin-bottom:12px">Allgemeines Projekt ohne Statusablauf: Notizen, To-Dos, Bestellungen, Material und Dateien für alles ohne Kundenbezug (Lager, Büro, Werkstatt, Fahrzeuge).</div>':''}<section class="rail-wrap" ${isIntern(p)?'hidden':''}>
       <div class="rail-top"><div><div class="rd-ey"><span class="live"></span>STATUS</div><b>${pp.last?esc(pp.label):'noch kein Status'}</b>${pp.val?` <span class="rail-d">${esc(msVal(pp.val))}</span>`:''}</div>
         ${pp.next&&['planung','laufend'].includes(cat)?`<div class="rail-nx"><span>NEXT STEP</span>${esc(pp.nextLabel)}</div>`:''}
@@ -2945,18 +2954,22 @@ function projStatus(p){
 // Projekt-To-Do abhaken: Beschreibung ist Pflicht und landet mit Kürzel als Update in den Notizen
 function completeProjTask(id){
   const t0=S.tasks[id]; if(!t0) return; const p0=S.projects[t0.pid]; if(!p0) return;
+  // Hat das To-Do schon Updates, ist dokumentiert, was gemacht wurde: direkt abhaken, das letzte Update kommt in die Notizen
+  const lastU=(t0.upd2||[]).slice().sort((a,b)=>updKey(b).localeCompare(updKey(a)))[0];
+  if(lastU&&String(lastU.t||'').trim()){ finish(String(lastU.t).trim()); return; }
   openSheet({title:'Erledigt · '+t0.title,fields:[
       {k:'info',label:'Projekt',type:'html',html:`<div><b>${esc(p0.name)}</b>${t0.who?` · zuständig ${esc(shortWho(t0.who))}`:''}</div>`},
       {k:'x',label:'Was wurde gemacht? (Pflicht – kommt in die Projekt-Notizen)',type:'textarea',req:1,ph:'z. B. Zählerschrank verdrahtet, Kunde informiert, Termin Zählersetzung am 12.11.'}],
     saveLabel:'Erledigt & in Notizen eintragen',
-    onSave:v=>{ const x=fixNames((v.x||'').trim()); if(x.length<5){ toast('Bitte kurz beschreiben, was gemacht wurde.'); return false; }
+    onSave:v=>{ const x=fixNames((v.x||'').trim()); if(x.length<5){ toast('Bitte kurz beschreiben, was gemacht wurde.'); return false; } finish(x); }});
+  function finish(x){
       const t=clone(S.tasks[id]); t.done=true; t.doneAt=new Date().toISOString(); t.doneBy=meK(); t.doneNote=x; put('tasks',t);
       const p=clone(S.projects[t.pid]); const d0=new Date(), stamp=nowStamp();
       const line=stamp+' ('+meK()+'): ✓ Erledigt: '+t.title+(t.who&&shortWho(t.who)!==meK()?' (zuständig '+shortWho(t.who)+')':'')+' – '+x;
       p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+line; delete p.now; delete p.nowD; put('projects',p);
       if(t.ms&&!(S.projects[t.pid].ms||{})['m'+t.ms]) setMs(t.pid,+t.ms,TODAY());
       if(t.item){ const pp=clone(S.projects[t.pid]); pp.checks=pp.checks||{}; if(!pp.checks[t.item]){ pp.checks[t.item]={d:TODAY(),by:t.who||''}; const n=ITEM_MS[t.item]; if(n&&!(pp.ms||{})['m'+n]) applyMs(pp,n,TODAY()); put('projects',pp); } }
-      toast('Erledigt und in den Notizen vermerkt.'); setTimeout(()=>suggestTodos(t.pid,x),400); }});
+      toast('Erledigt und in den Notizen vermerkt.'); setTimeout(()=>suggestTodos(t.pid,x),400); }
 }
 // Direkt-Notiz im Projekt: Entwurf bleibt beim Neuzeichnen erhalten
 const QN={};
@@ -3099,11 +3112,11 @@ function vTodos(){  const t=TODAY(), who=UI.todoWho;
   const modeSw=`<div class="seg-mode light">${[['liste','Liste'],['board','Nach Mitarbeiter']].map(([k,l])=>`<button class="${(UI.todoMode||'liste')===k?'on':''}" data-act="todoMode" data-v="${k}">${l}</button>`).join('')}</div><button class="btn ${UI.bulk?'pri':''}" data-act="bulkOn" title="To-Dos markieren und gemeinsam bearbeiten">${UI.bulk?'Mehrfachauswahl beenden':'☑ Mehrere bearbeiten'}</button>`;
   if(UI.todoMode==='board'){
     const cols=[...staffUniq().map(s=>s.name),'']; const all=arr('tasks').filter(x=>(UI.todoShowDone||!x.done)&&!(x.pool&&!x.who)); VIS_TASKS=all.filter(x=>!x.done).map(x=>x.id);
-    return head('To-Dos', arr('tasks').filter(x=>!x.done).length+' offen · Aufgabe auf eine Person ziehen, um sie neu zuzuweisen', modeSw)+mailTodoDropHtml()+
+    return head('To-Dos', arr('tasks').filter(x=>!x.done).length+' offen · Aufgabe auf eine Person ziehen, um sie neu zuzuweisen', modeSw)+
       `<div class="row"><label class="tog-sw"><input type="checkbox" data-chg="toggleDoneSw" ${UI.todoShowDone?'checked':''}><span class="sw" aria-hidden="true"></span><span>Erledigte einblenden</span></label><span class="spacer"></span>${todoSortSel()}</div>
       <div class="tboard">${cols.map(n=>{ const its=all.filter(x=>n?taskHas(x,n):!x.who).sort((TODO_SORTS[UI.todoSort]||TODO_SORTS.due)[1]); return `<div class="tcol" data-drop-who="${n?esc(n):'__none'}"><h4><span>${n?esc(shortWho(n)):'Nicht zugewiesen'}</span><span class="who-chip ${n?'':'open'}">${n?esc(shortWho(n)):'–'} ${its.filter(x=>!x.done).length}</span></h4><div class="list">${its.map(taskLi).join('')||'<div class="small muted tc-empty">Hierher ziehen</div>'}</div></div>`; }).join('')}</div>`+(UI.bulk?bulkBar():'');
   }
-  return head('To-Dos', open.length+' offen'+(who?' · '+(who==='-'?'nicht zugewiesen':who):''), modeSw)+mailTodoDropHtml()+
+  return head('To-Dos', open.length+' offen'+(who?' · '+(who==='-'?'nicht zugewiesen':who):''), modeSw)+
   `<div class="chips"><button class="chip ${!who?'on':''}" data-act="todoWho" data-v="">Alle</button>${byPerson.map(([n,c])=>`<button class="chip ${who===n?'on':''}" data-act="todoWho" data-v="${esc(n)}" data-drop-who="${esc(n)}" title="Aufgabe hierher ziehen, um sie ${esc(n)} zuzuweisen">${esc(shortWho(n))} <span class="mono small">${c}</span></button>`).join('')}<button class="chip ${who==='-'?'on':''}" data-act="todoWho" data-v="-" data-drop-who="__none">Nicht zugewiesen</button></div>
   <div class="small muted">Tipp: Eine Aufgabe auf einen Namen ziehen, um die Zuständigkeit zu ändern.</div>
   <div class="row"><label class="tog-sw"><input type="checkbox" data-chg="toggleDoneSw" ${UI.todoShowDone?'checked':''}><span class="sw" aria-hidden="true"></span><span>Erledigte einblenden${done.length?` <span class="mono small muted">(${done.length})</span>`:''}</span></label><span class="spacer"></span>${todoSortSel()}</div>
@@ -5526,9 +5539,9 @@ function gsResHtml(q){ const p=gsProj(); if(!p||String(q||'').trim().length<2) r
   const pr=psearch(p,q).length?psearchHtml(p,q):'', gl=gsearchHtml(q);
   return `<div class="gs-g"><div class="gs-h gs-sec">In diesem Projekt</div></div>${pr||'<div class="gs-none">Nichts in diesem Projekt.</div>'}${gl&&!/gs-none/.test(gl.slice(0,30))?`<div class="gs-g"><div class="gs-h gs-sec">Überall in der App</div></div>${gl}`:''}`; }
 function gsearchBox(p){
-  const key=p?p.id:''; if((UI.gqPid||'')!==key){ UI.gq=''; UI.gqPid=key; } // Suchtext gilt nur für die Seite, auf der er getippt wurde
-  return `<section class="gs-wrap ask-box smart-drop ${p?'gs-proj':''}" aria-label="Suchen, fragen oder Dateien ablegen"><div class="gs-in">${ic('search')}<input id="gSearch" type="search" autocomplete="off" enterkeyhint="go" placeholder="${p?(SAMPLE?'Im Projekt suchen oder fragen – z. B. „Was ist der letzte Stand?“':'Im Projekt suchen: Notizen, To-Dos, Bestellungen, Dateien …'):SAMPLE?'Suchen oder fragen – z. B. „Zeig mir das neueste Update zum Energiepark“':'Alles durchsuchen: Projekte, Notizen, To-Dos, Bestellungen, Dateien, Lager …'}" value="${esc(UI.gq||'')}" aria-label="Suchen oder fragen">${SRec?`<button type="button" class="gs-mic" data-act="gsVoice" title="Sprechen: suchen oder fragen" aria-label="Sprechen">🎙</button>`:''}<button type="button" class="gs-mic gs-cam" data-act="gsCam" title="Foto aufnehmen - z. B. Lieferschein, Rechnung, Notiz. Die App erkennt, was es ist." aria-label="Kamera">📷</button>${SAMPLE&&CAN_SPEAK?`<button type="button" class="gs-spk ${ASK_SPEAK?'on':''}" data-act="askSpkTog" title="${ASK_SPEAK?'Antworten werden vorgelesen – ausschalten':'Antworten laut vorlesen lassen'}" aria-label="Antworten vorlesen" aria-pressed="${ASK_SPEAK}">${ASK_SPEAK?'🔊':'🔈'}</button>`:''}<button type="button" class="btn sun sm ask-go" data-act="askGo">Los</button></div>
-    <div class="ask-sub"><span>✨ Dateien, E-Mails (.msg/.eml), PDFs, Fotos oder Text hier reinziehen – die App erkennt, was es ist${p?' und ordnet es diesem Projekt zu':''}.</span><button type="button" class="lnk" data-act="smartPick">Datei wählen</button><button type="button" class="lnk" data-act="smartText">Text einfügen</button></div>
+  const cx=gsCtx(), key=cx.key; if((UI.gqPid||'')!==key){ UI.gq=''; UI.gqPid=key; } // Suchtext gilt nur für die Seite, auf der er getippt wurde
+  return `<section class="gs-wrap ask-box smart-drop ${GS_VIEWS.includes(UI.view)||p?'gs-proj':''}" aria-label="Suchen, fragen oder Dateien ablegen"><div class="gs-in">${ic('search')}<input id="gSearch" type="search" autocomplete="off" enterkeyhint="go" placeholder="${p?(SAMPLE?'Im Projekt suchen oder fragen – z. B. „Was ist der letzte Stand?“':'Im Projekt suchen: Notizen, To-Dos, Bestellungen, Dateien …'):cx.key==='todos'?(SAMPLE?'Suchen oder fragen – z. B. „Welche To-Dos von HH sind überfällig?“':'To-Dos und alles andere durchsuchen …'):cx.key==='cal'?(SAMPLE?'Suchen oder fragen – z. B. „Wer ist nächste Woche auf welcher Baustelle?“':'Termine und alles andere durchsuchen …'):SAMPLE?'Suchen oder fragen – z. B. „Zeig mir das neueste Update zum Energiepark“':'Alles durchsuchen: Projekte, Notizen, To-Dos, Bestellungen, Dateien, Lager …'}" value="${esc(UI.gq||'')}" aria-label="Suchen oder fragen">${SRec?`<button type="button" class="gs-mic" data-act="gsVoice" title="Sprechen: suchen oder fragen" aria-label="Sprechen">🎙</button>`:''}<button type="button" class="gs-mic gs-cam" data-act="gsCam" title="Foto aufnehmen - z. B. Lieferschein, Rechnung, Notiz. Die App erkennt, was es ist." aria-label="Kamera">📷</button>${SAMPLE&&CAN_SPEAK?`<button type="button" class="gs-spk ${ASK_SPEAK?'on':''}" data-act="askSpkTog" title="${ASK_SPEAK?'Antworten werden vorgelesen – ausschalten':'Antworten laut vorlesen lassen'}" aria-label="Antworten vorlesen" aria-pressed="${ASK_SPEAK}">${ASK_SPEAK?'🔊':'🔈'}</button>`:''}<button type="button" class="btn sun sm ask-go" data-act="askGo">Los</button></div>
+    <div class="ask-sub"><span>✨ Dateien, E-Mails (.msg/.eml), PDFs, Fotos oder Text hier reinziehen – die App erkennt, was es ist${p?' und ordnet es diesem Projekt zu':cx.key==='todos'?' – hier meist als To-Dos':cx.key==='cal'?' – hier meist als Termin':''}.</span><button type="button" class="lnk" data-act="smartPick">Datei wählen</button><button type="button" class="lnk" data-act="smartText">Text einfügen</button></div>
     <div id="askOut" class="ask-ans" role="status"></div>
     <div id="gResults" class="gs-res" role="region" aria-live="polite">${gsResHtml(UI.gq)}</div></section><input type="file" id="smartIn" multiple hidden><input type="file" id="camIn" accept="image/*" capture="environment" hidden>`;
 }
@@ -5717,7 +5730,7 @@ async function aiChat(q){
   const views=NAV.filter(n=>canSee(n[0])&&!String(n[0]).startsWith('f:')).map(n=>n[0]+' = '+n[1]).join(', ');
   try{ const r=await SAMPLE.json(`Du bist der KI-Assistent in der Projekt-App der nutz die Sonne GmbH (Solar-Installationsbetrieb: PV-Anlagen, Speicher, Ladesäulen). Heute ist ${fmtD(TODAY())} (${TODAY()}), ich bin ${meK()}.
 Antworte wie ein guter Chat-Assistent: genau, vollständig, knapp, auf Deutsch. Nutze NUR die Daten unten – nichts erfinden; fehlt etwas, sag es. Zahlen und Listen exakt aus den Daten zählen. Datumsangaben als TT.MM., Mitarbeiter als Kürzel.
-${gsProj()?'Ich habe gerade das Projekt „'+gsProj().name+'“ (id '+gsProj().id+') geöffnet – Fragen ohne Projektnamen beziehen sich auf dieses Projekt.\n':''}${hist?'Bisheriges Gespräch:\n'+hist+'\n':''}Neue Nachricht: """${q.slice(0,1500)}"""
+${gsProj()?'Ich habe gerade das Projekt „'+gsProj().name+'“ (id '+gsProj().id+') geöffnet – Fragen ohne Projektnamen beziehen sich auf dieses Projekt.\n':gsCtx().label?'Ich bin gerade in der Rubrik '+gsCtx().label+' – Fragen beziehen sich im Zweifel darauf.\n':''}${hist?'Bisheriges Gespräch:\n'+hist+'\n':''}Neue Nachricht: """${q.slice(0,1500)}"""
 
 DATEN:
 ${aiSnapshot(gsProj()?q+' '+gsProj().name:q,hist)}
@@ -6044,11 +6057,12 @@ const SMART_ACTS={
   order:{l:'Bestellung anlegen / ergänzen',d:'Positionen, Preise, Liefertermin auslesen (Bestellung, AB, Rechnung vom Lieferanten)'},
   delivery:{l:'Wareneingang: Lieferschein abgleichen',d:'Mit der offenen Bestellung vergleichen und zeigen, was fehlt'},
   todos:{l:'To-Dos daraus erstellen',d:'Aufgaben, Zuständige und Fristen erkennen, mit bestehenden To-Dos abgleichen'},
+  event:{l:'Termin daraus erstellen',d:'Titel, Datum, Uhrzeit und Ort übernehmen – im Termin-Fenster noch prüfen und speichern'},
   note:{l:'Notiz daraus erstellen',d:'Als Notiz ins Projekt (mit Datum und Kürzel) – Text lässt sich vorher anpassen; Dateien landen zusätzlich in den Projekt-Dateien'},
   file:{l:'In der Datenablage ablegen',d:'Einheitlich benennen, Art und Projekt zuordnen (Mails unter Korrespondenz)'},
   none:{l:'Sonst nichts – nur die bestehenden To-Dos aktualisieren',d:'Nur die oben markierten To-Do-Updates speichern'}};
-const SMART_TYPES={bestellung:'Bestellung',ab:'Auftragsbestätigung',rechnung:'Rechnung',lieferschein:'Lieferschein',todos:'Aufgaben / To-Do-Liste',notiz:'Notiz / Stand zum Projekt',angebot:'Angebot',korrespondenz:'Korrespondenz (E-Mail)',plan:'Plan / Zeichnung',foto:'Foto',vertrag:'Vertrag',sonst:'Sonstiges'};
-const SMART_MAP={bestellung:'order',ab:'order',rechnung:'order',lieferschein:'delivery',todos:'todos',notiz:'note',korrespondenz:'todos',angebot:'file',plan:'file',foto:'file',vertrag:'file',sonst:'file'};
+const SMART_TYPES={bestellung:'Bestellung',ab:'Auftragsbestätigung',rechnung:'Rechnung',lieferschein:'Lieferschein',todos:'Aufgaben / To-Do-Liste',termin:'Termin',notiz:'Notiz / Stand zum Projekt',angebot:'Angebot',korrespondenz:'Korrespondenz (E-Mail)',plan:'Plan / Zeichnung',foto:'Foto',vertrag:'Vertrag',sonst:'Sonstiges'};
+const SMART_MAP={bestellung:'order',ab:'order',rechnung:'order',lieferschein:'delivery',todos:'todos',termin:'event',notiz:'note',korrespondenz:'todos',angebot:'file',plan:'file',foto:'file',vertrag:'file',sonst:'file'};
 function smartDropHtml(){
   return `<div class="dropz smart-drop" tabindex="0" aria-label="Alles hier ablegen – Claude erkennt, was es ist">
     <div class="dz-ic">✨</div><div><b>Alles hier reinziehen – ${SAMPLE?'Claude erkennt, was es ist':'die App erkennt, was es ist'}</b><div class="small muted">E-Mails (.msg/.eml), PDFs, Fotos, Lieferscheine, Rechnungen, Aufgabenlisten oder kopierter Text (hier klicken, Strg+V). Danach schlägt die App den passenden Weg vor: Bestellung, Wareneingang, To-Dos, Projekt-Notiz oder Datenablage.</div></div>
@@ -6072,8 +6086,9 @@ async function smartDrop(files,text){
   let type=guessKind((f&&f.name)||'',all,!!mail,f&&f.type); type={mail:'korrespondenz'}[type]||type;
   if(!files.length&&!mail) type=isTodoList(body)?'todos':'notiz';
   if(/^image\//.test((f&&f.type)||'')&&/liefer|ls[-_ ]?\d/i.test(f.name)) type='lieferschein';
-  const curP=gsProj(); // auf der Projektseite abgelegt → gehört im Zweifel zu diesem Projekt
-  let pid=curP?curP.id:(matchProject(all).pid||''), orderId='', summary='', why='', related=null;
+  const curP=gsProj(), cx=gsCtx(); // auf der Projektseite abgelegt → gehört im Zweifel zu diesem Projekt; in To-Dos/Kalender → eher Aufgaben/Termin
+  if(cx.type&&!files.length&&!mail) type=cx.type;
+  let pid=curP?curP.id:(matchProject(all).pid||''), orderId='', summary='', why='', related=null, event=null;
   const openOrders=arr('orders').filter(o=>orderState(o).open);
   if(SAMPLE){
     const plist=arr('projects').filter(p=>['laufend','planung','onhold'].includes(catOf(p))).map(p=>`${p.id} | ${p.name} | ${p.nr||''} | ${String(p.place||'').replace(/\n/g,' ')} | ${p.customer||''}`).join('\n');
@@ -6088,19 +6103,22 @@ Was ist das? Wähle genau einen Typ:
 - "lieferschein": Lieferschein / Warenbegleitschein zu einer Lieferung an uns
 - "todos": Text/Mail, aus der sich vor allem Aufgaben für uns ergeben, oder eine Aufgabenliste
 - "notiz": Stand/Info zu einem Projekt ohne konkrete Aufgabe (z. B. Baustellenbericht, Gesprächsnotiz)
+- "termin": Termin / Verabredung mit Datum (z. B. Zählersetzung, Baubesprechung, Kundentermin, Lieferung zu festem Termin)
 - "angebot": Angebot (von uns an Kunden oder von Lieferanten an uns), "korrespondenz": sonstige Mail ohne Aufgaben, "plan", "foto", "vertrag", "sonst"
-${curP?`Es wurde im geöffneten Projekt „${curP.name}“ (ID ${curP.id}) abgelegt: projectId = ${curP.id}, außer der Inhalt gehört eindeutig zu einem anderen Projekt.\n`:''}Ordne ein Projekt zu, wenn eindeutig (Projektname, Nummer, Kommission, Adresse, Kunde); Lager/Büro: "intern"; sonst "". Bei Lieferschein/AB/Rechnung: passende offene Bestellung (orderId), falls Lieferant + Nummer/Positionen passen, sonst "".
+${cx.ai?'WO ABGELEGT: '+cx.ai+'\n':''}${curP?`Es wurde im geöffneten Projekt „${curP.name}“ (ID ${curP.id}) abgelegt: projectId = ${curP.id}, außer der Inhalt gehört eindeutig zu einem anderen Projekt.\n`:''}Bei type "termin" zusätzlich "event": {"title":"kurz","date":"JJJJ-MM-TT","time":"HH:MM oder leer","end":"JJJJ-MM-TT oder leer","place":"Ort oder leer"}.
+Ordne ein Projekt zu, wenn eindeutig (Projektname, Nummer, Kommission, Adresse, Kunde); Lager/Büro: "intern"; sonst "". Bei Lieferschein/AB/Rechnung: passende offene Bestellung (orderId), falls Lieferant + Nummer/Positionen passen, sonst "".
 Prüfe außerdem: Ist das eine Rückmeldung, ein Fortschritt oder eine Erledigung zu einem der offenen To-Dos (gleiche Sache, nicht nur gleiches Projekt)? Dann in "related" aufnehmen: relation "update" (neue Info) oder "erledigt" (die Sache ist damit erledigt), update = 1 kurzer Satz, was neu ist. Sonst related leer.
 Antworte nur mit JSON: {"type":"","projectId":"","orderId":"","summary":"1 Satz, was es ist und worum es geht","why":"kurz","related":[{"id":"To-Do-ID","relation":"update|erledigt","update":"kurz"}]}`;
     try{ const r=await SAMPLE.json(prompt,{modelTier:'default',...(imgs.length?{images:imgs}:{})});
-      if(r&&SMART_TYPES[r.type]) type=r.type; if(r&&r.projectId&&(S.projects[r.projectId]||r.projectId===INTERN)) pid=r.projectId; if(r&&r.orderId&&S.orders[r.orderId]) orderId=r.orderId; summary=r&&r.summary||''; why=r&&r.why||''; related=(r&&Array.isArray(r.related)?r.related:[]).filter(x=>x&&S.tasks[x.id]&&!S.tasks[x.id].done).slice(0,5).map(x=>({id:x.id,relation:x.relation==='erledigt'?'erledigt':'update',update:String(x.update||summary||'').slice(0,300),by:'Claude'})); }
+      if(r&&SMART_TYPES[r.type]) type=r.type; if(r&&r.projectId&&(S.projects[r.projectId]||r.projectId===INTERN)) pid=r.projectId; if(r&&r.orderId&&S.orders[r.orderId]) orderId=r.orderId; summary=r&&r.summary||''; why=r&&r.why||''; related=(r&&Array.isArray(r.related)?r.related:[]).filter(x=>x&&S.tasks[x.id]&&!S.tasks[x.id].done).slice(0,5).map(x=>({id:x.id,relation:x.relation==='erledigt'?'erledigt':'update',update:String(x.update||summary||'').slice(0,300),by:'Claude'}));
+      if(r&&r.event&&typeof r.event==='object'){ const ev=r.event, okD=s=>/^\d{4}-\d{2}-\d{2}$/.test(s||'')?s:''; event={title:String(ev.title||summary||'').slice(0,120),date:okD(ev.date),time:/^\d{1,2}:\d{2}$/.test(ev.time||'')?ev.time.padStart(5,'0'):'',end:okD(ev.end),place:String(ev.place||'').slice(0,160)}; } }
     catch(e){ if(e&&e.code&&e.code!=='cancelled') toast(SAMPLE_ERR[e.code]||'Claude nicht erreichbar – einfache Erkennung.'); } }
   if(!orderId&&type==='lieferschein'){ const sup=openOrders.find(o=>o.supplier&&all.toLowerCase().includes(String(o.supplier).toLowerCase().split(' ')[0])&&(!pid||o.pid===pid)); if(sup) orderId=sup.id; }
   if(files.length>1&&!mail) type=type==='lieferschein'?type:'sonst';
   // Ohne Claude: Wortvergleich mit offenen To-Dos (schwache Treffer werden nur angezeigt, nicht vorausgewählt)
   if(!related){ const head=(mail?mail.subject+' '+mail.text.slice(0,300):body.slice(0,300))||(f&&f.name)||''; const fr=findRelated({title:head,projectId:pid});
     related=fr?[{id:fr.id,relation:'update',update:(mail?mail.subject:body.replace(/\s+/g,' ').slice(0,160))||'',by:'Wortvergleich',weak:!fr.strong}]:[]; }
-  smartSheet({files,text,type,pid,orderId,summary,why,mail,related,many:files.length>1});
+  smartSheet({files,text,type,pid,orderId,summary,why,mail,related,event,many:files.length>1});
 }
 function smartSheet(c){
   const rec=c.many&&c.type!=='lieferschein'?'file':SMART_MAP[c.type]||'file';
@@ -6130,6 +6148,10 @@ function smartSheet(c){
       // E-Mails landen immer auch in den Projekt-Dateien (Korrespondenz), außer der Weg legt sie ohnehin ab
       if(c.mail&&($('#sm_keep')||{}).checked&&!['file','todos'].includes(act)){ const mf=c.files.filter(f=>/\.(msg|eml)$/i.test(f.name||'')||f.type==='message/rfc822'); setTimeout(()=>ingestFiles(mf,mf.length?'':c.text,pid),80); }
       if(act==='none'){ if(!nu){ toast('Kein To-Do markiert.'); return false; } return; }
+      if(act==='event'){ const ev=c.event||{}, first=String(c.text||'').trim().split('\n')[0].slice(0,100);
+        const pre={pid:pid&&S.projects[pid]?pid:'',title:ev.title||(c.mail&&c.mail.subject)||c.summary||first||'Termin',date:ev.date||TODAY(),notes:(c.summary||'')+(c.mail?'\nMail von '+(c.mail.from||'')+': '+(c.mail.subject||''):'')};
+        if(ev.time) pre.time=ev.time; if(ev.end) pre.end=ev.end; if(ev.place) pre.place=ev.place; const rest=c.files.filter(f=>!(c.mail&&($('#sm_keep')||{}).checked&&(/\.(msg|eml)$/i.test(f.name||'')||f.type==='message/rfc822')));
+        if(rest.length&&pre.pid) setTimeout(()=>ingestFiles(rest,'',pre.pid),120); setTimeout(()=>eventForm(null,pre),80); return; }
       if(act==='note'){ if(!pid||!S.projects[pid]){ toast('Bitte ein Projekt wählen.'); return false; } const nt=(($('#sm_note')||{}).value||'').trim(); if(!nt){ toast('Bitte einen Notiztext eingeben.'); return false; }
         saveNote(pid,'updates',nt); const rest=c.files.filter(f=>!(c.mail&&($('#sm_keep')||{}).checked&&(/\.(msg|eml)$/i.test(f.name||'')||f.type==='message/rfc822'))); if(rest.length) setTimeout(()=>ingestFiles(rest,'',pid),120); return; }
       if(act==='delivery'){ const oid=($('#sm_order')||{}).value; if(!oid){ toast('Bitte die offene Bestellung wählen.'); return false; } const file=c.files[0];
