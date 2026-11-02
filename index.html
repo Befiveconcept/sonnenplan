@@ -518,7 +518,23 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .ch-b{color:#1a1a1a}.ch-b a,.ch-b .lnk{color:#5a4a00}.ch-b .ch-t,.ch-b .ch-del{color:#6b6b6b}.ch-b .ch-pid,.ch-b .muted,.ch-b .small{color:#4a4a4a}
 .ch-room.on{color:#111}.ch-room.on .who-chip{background:#fff;color:#111}.ch-room:hover:not(.on){background:rgba(244,219,2,.18)}
 .ch-del{background:none;border:0;color:var(--muted);cursor:pointer;font-size:10px;padding:0 2px}
-.ch-in{display:grid;grid-template-columns:minmax(0,1fr) 170px auto;gap:8px;padding:10px;border-top:1px solid var(--line)}
+.ch-in{display:grid;grid-template-columns:auto minmax(0,1fr) 170px auto;gap:8px;padding:10px;border-top:1px solid var(--line);align-items:end}
+.ch-tools{display:flex;gap:2px;align-items:center;height:40px}
+.ch-tb{border:0;background:none;cursor:pointer;font-size:19px;line-height:1;width:34px;height:34px;border-radius:9px;display:grid;place-items:center;color:var(--ink);padding:0}
+.ch-tb:hover{background:var(--sun-soft)}.ch-gif{font-size:11px;font-weight:800;letter-spacing:.04em;border:1.5px solid currentColor;width:34px;height:24px;border-radius:6px}
+.ch-replybar{display:flex;align-items:center;gap:8px;margin:0 10px;padding:6px 10px;border-left:3px solid var(--sun);background:var(--sun-soft);border-radius:8px 8px 0 0;font-size:13px;color:var(--ink)}
+.ch-replybar span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ch-replybar .ch-tb{width:26px;height:26px;font-size:13px}
+.ch-q{display:flex;flex-direction:column;align-items:flex-start;width:100%;text-align:left;border:0;border-left:3px solid #c9a800;background:rgba(0,0,0,.06);border-radius:6px;padding:4px 8px;margin:0 0 5px;cursor:pointer;font:inherit;font-size:12.5px;color:#1a1a1a}
+.ch-q b{font-size:11px;color:#7a6a00}.ch-q span{color:#3a3a3a;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ch-img{display:block;max-width:min(280px,100%);max-height:260px;border-radius:10px;margin:2px 0 4px;cursor:zoom-in;background:#e8e6dd}
+.ch-rep{border:0;background:none;color:#6b6b6b;cursor:pointer;font-size:10.5px;padding:0 6px 0 0;opacity:0;transition:opacity .15s}
+.ch-msg:hover .ch-rep,.ch-rep:focus-visible{opacity:1}@media (hover:none){.ch-rep{opacity:.8}}
+.ch-msg.flash .ch-b{animation:flash 1.4s ease-out}
+.ch-main{position:relative}.ch-emo{position:absolute;bottom:64px;left:10px;z-index:30;display:grid;grid-template-columns:repeat(10,1fr);gap:2px;padding:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);max-width:min(400px,calc(100% - 20px))}
+.ch-emo button{border:0;background:none;font-size:21px;line-height:1;padding:5px;border-radius:8px;cursor:pointer}.ch-emo button:hover{background:var(--sun-soft)}
+.gif-prev img{max-width:260px;max-height:200px;border-radius:10px;margin-top:8px}
+.gif-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}.gif-pick{border:0;padding:0;background:#e8e6dd;border-radius:8px;overflow:hidden;cursor:pointer;aspect-ratio:1}.gif-pick img{width:100%;height:100%;object-fit:cover;display:block}
+@media (max-width:760px){ .ch-in{grid-template-columns:minmax(0,1fr) auto}.ch-tools{grid-column:1/-1;height:auto}.ch-in select{grid-column:1/-1;grid-row:3}.ch-emo{grid-template-columns:repeat(8,1fr);bottom:110px} }
 .ch-in textarea{resize:none;min-height:40px}
 @media (max-width:900px){ .chat{grid-template-columns:minmax(0,1fr);height:auto} .ch-rooms{flex-direction:row;overflow-x:auto} .ch-room{flex:none} .ch-box{max-height:60vh} .ch-in{grid-template-columns:minmax(0,1fr) auto} .ch-in select{grid-column:1/-1} .priv-add{grid-template-columns:minmax(0,1fr) auto} }
 .me-opt.taken{opacity:.5}
@@ -948,6 +964,8 @@ textarea.autogrow{resize:vertical;overflow:hidden;min-height:40px!important;max-
 .sheet .smart-act input[type=radio]{width:18px!important;height:18px;min-width:0;flex:none;margin-top:3px;padding:0;accent-color:var(--primary)}
 .sheet .smart-act select{width:100%}
 .smart-act select{margin-top:4px;max-width:420px}
+.smart-act .sm-note{margin-top:4px;width:100%;min-height:60px;resize:vertical;font:inherit;font-size:13.5px}
+.smart-act:not(:has(input:checked)) .sm-note{display:none}
 .sm-rel{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
 .sm-rel-row{background:var(--sun-soft);border-left:3px solid var(--sun);border-radius:0 10px 10px 0;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
 .sm-rel-a{display:grid;grid-template-columns:220px minmax(0,1fr);gap:6px;padding-left:28px}
@@ -4277,14 +4295,62 @@ function vChat(){
   setTimeout(()=>{ markRead(r); const b=$('#chatBox'); if(b) b.scrollTop=b.scrollHeight; renderShellBadges(); },30);
   let lastDay='';
   const body=msgs.map(m=>{ const d=String(m.at).slice(0,10), mine=m.from===ME; let h=''; if(d!==lastDay){ h+=`<div class="ch-day">${fmtD(d)} · ${relDay(d)}</div>`; lastDay=d; }
-    return h+`<div class="ch-msg ${mine?'me':''}"><div class="ch-b">${mine?'':`<div class="ch-from">${esc(shortWho(m.from))}</div>`}${esc(m.text).replace(/\n/g,'<br>')}${m.pid?`<div class="ch-pid"><button class="linkish" data-act="openProject" data-id="${m.pid}">${esc(projName(m.pid))}</button></div>`:''}<div class="ch-t">${esc(stampTxt(m.at).slice(-5))}${mine||isAdmin()?` <button class="ch-del" data-act="chatDel" data-id="${m.id}" title="Nachricht löschen" aria-label="Nachricht löschen">✕</button>`:''}</div></div></div>`; }).join('');
+    return h+`<div class="ch-msg ${mine?'me':''}" id="chm_${esc(m.id)}"><div class="ch-b">${mine?'':`<div class="ch-from">${esc(shortWho(m.from))}</div>`}${chQuote(m)}${chMedia(m)}${chText(m.text)}${m.pid?`<div class="ch-pid"><button class="linkish" data-act="openProject" data-id="${m.pid}">${esc(projName(m.pid))}</button></div>`:''}<div class="ch-t"><button class="ch-rep" data-act="chatReply" data-id="${esc(m.id)}" title="Auf diese Nachricht antworten" aria-label="Antworten">↩ Antworten</button>${esc(stampTxt(m.at).slice(-5))}${mine||isAdmin()?` <button class="ch-del" data-act="chatDel" data-id="${m.id}" title="Nachricht löschen" aria-label="Nachricht löschen">✕</button>`:''}</div></div></div>`; }).join('');
   const tmR=teamOf(r);
   return head('Chat',roomTitle(r)+(tmR?' · '+(tmR.members||[]).map(shortWho).join(', '):''),tmR&&(isAdmin()||tmR.by===meK()||(tmR.members||[]).includes(ME))?`<button class="btn" data-act="chatTeamEdit" data-id="${tmR.id}">${ic('edit')}Team bearbeiten</button>`:'')+`<div class="chat">
     <aside class="ch-rooms"><button class="btn sm ch-newteam" data-act="chatTeamNew">${ic('plus')}Neues Team</button>${rooms.map(x=>{ const u=chatUnread(x), tm=teamOf(x); return `<button class="ch-room ${x===r?'on':''}" data-act="chatRoom" data-v="${esc(x)}"><span class="who-chip ${tm?'team':''}">${x==='team'?'Alle':tm?'👥':esc(roomTitle(x))}</span><span class="ch-rn">${x==='team'?'Team':tm?esc(tm.name)+` <span class="small muted">· ${(tm.members||[]).map(shortWho).join(', ')}</span>`:esc((staff().find(s=>chatKey(s.name)===roomTitle(x))||{}).name||roomTitle(x))}${lastMsg[x]?`<span class="ch-last">${esc(stampTxt(lastMsg[x].at).replace(/^\S+\s/,''))} · ${esc(String(lastMsg[x].text||'').slice(0,40))}</span>`:''}</span>${u?`<span class="cnt">${u}</span>`:''}</button>`; }).join('')}</aside>
     <section class="ch-main"><div class="ch-box" id="chatBox">${body||'<div class="empty">Noch keine Nachrichten. Schreib die erste!</div>'}</div>
-      <div class="ch-in"><textarea id="chatIn" class="inp" rows="1" placeholder="Nachricht an ${esc(r==='team'?'alle':roomTitle(r))} … (Enter senden, Shift+Enter neue Zeile)" aria-label="Nachricht"></textarea><select id="chatPid" class="inp" aria-label="Projekt verknüpfen"><option value="">Projekt …</option>${arr('projects').filter(p=>['laufend','planung'].includes(catOf(p))).sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select><button class="btn pri" data-act="chatSend">Senden</button></div>
+      ${chReplyBar()}<div class="ch-in"><div class="ch-tools"><button type="button" class="ch-tb" data-act="chatEmo" title="Smileys" aria-label="Smileys">😊</button><button type="button" class="ch-tb ch-gif" data-act="chatGif" title="GIF senden" aria-label="GIF">GIF</button><button type="button" class="ch-tb" data-act="chatImgPick" title="Bild oder Foto senden" aria-label="Bild senden">🖼</button><input type="file" id="chatImg" accept="image/*" multiple hidden></div><textarea id="chatIn" class="inp" rows="1" placeholder="Nachricht an ${esc(r==='team'?'alle':roomTitle(r))} … (Enter senden, Shift+Enter neue Zeile)" aria-label="Nachricht">${esc(chDraft(r))}</textarea><select id="chatPid" class="inp" aria-label="Projekt verknüpfen"><option value="">Projekt …</option>${arr('projects').filter(p=>['laufend','planung'].includes(catOf(p))).sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${p.id}" ${chDraftP(r)===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select><button class="btn pri" data-act="chatSend">Senden</button></div>
       <div class="small muted" style="padding:4px 2px">Hinweis: Direktnachrichten sieht nur ihr beide in der App. Nichts Vertrauliches wie Passwörter schreiben.</div></section></div>`;
 }
+/* ---------- Chat: Antworten mit Bezug, Smileys, GIFs, Bilder ---------- */
+// Nachricht: {text, reply:{id,from,text}, img:<Asset-ID>, gif:<https-Link>}
+const chText=t=>esc(t||'').replace(/\n/g,'<br>');
+const chSnip=m=>m?(String(m.text||'').replace(/\s+/g,' ').slice(0,90)||(m.img?'🖼 Bild':m.gif?'GIF':'')):'';
+function chQuote(m){ const r=m.reply; if(!r) return ''; const o=S.chat[r.id];
+  return `<button type="button" class="ch-q" data-act="chatJump" data-id="${esc(r.id)}" title="Zur ursprünglichen Nachricht"><b>${esc(shortWho(r.from||''))}</b><span>${esc(o?chSnip(o):r.text||'')}</span></button>`; }
+const gifOk=u=>/^https:\/\/[^\s"'<>]+$/i.test(String(u||''));
+function chMedia(m){ if(m.img) return `<img class="ch-img" data-blob="${esc(m.img)}" alt="Bild" data-act="chatImgOpen">`; if(m.gif&&gifOk(m.gif)) return `<img class="ch-img" src="${esc(m.gif)}" alt="GIF" loading="lazy" referrerpolicy="no-referrer" data-act="chatImgOpen">`; return ''; }
+function chReplyBar(){ const m=UI.chatReply&&S.chat[UI.chatReply]; if(!m) return '';
+  return `<div class="ch-replybar"><span>↩ Antwort an <b>${esc(shortWho(m.from))}</b>: ${esc(chSnip(m))}</span><button type="button" class="ch-tb" data-act="chatReplyX" aria-label="Antwort abbrechen">✕</button></div>`; }
+function chPost(extra){ if(!ME){ toast('Bitte zuerst anmelden.'); return null; } const m={id:uid(),room:UI.room||'team',from:ME,text:'',at:new Date().toISOString(),...extra};
+  const pid=$('#chatPid')&&$('#chatPid').value; if(pid) m.pid=pid; const rp=UI.chatReply&&S.chat[UI.chatReply]; if(rp) m.reply={id:rp.id,from:rp.from,text:chSnip(rp)}; UI.chatReply=''; put('chat',m); return m; }
+// Angefangener, nicht gesendeter Text bleibt je Chat stehen (beim Neuzeichnen, Chatwechsel und neu Laden)
+let CH_DRAFT=null; const chDrafts=()=>{ if(!CH_DRAFT){ try{ CH_DRAFT=JSON.parse(lsGet('sonnenplan-chatdraft')||'{}')||{}; }catch(e){ CH_DRAFT={}; } } return CH_DRAFT; };
+const chDraft=r=>(chDrafts()[r]||{}).t||'', chDraftP=r=>(chDrafts()[r]||{}).p||'';
+function chDraftSave(){ lsSet('sonnenplan-chatdraft',JSON.stringify(chDrafts())); }
+function chDraftSet(r,t){ const d=chDrafts(); d[r]={...(d[r]||{}),t}; if(!t&&!d[r].p) delete d[r]; chDraftSave(); }
+function chDraftPid(r,p){ const d=chDrafts(); d[r]={...(d[r]||{}),p}; if(!p&&!d[r].t) delete d[r]; chDraftSave(); }
+let CH_DT; document.addEventListener('input',e=>{ if(e.target.id!=='chatIn') return; const v=e.target.value, r=UI.room||'team'; chDrafts()[r]={...(chDrafts()[r]||{}),t:v}; clearTimeout(CH_DT); CH_DT=setTimeout(()=>chDraftSet(r,v),300); });
+document.addEventListener('change',e=>{ if(e.target.id==='chatPid') chDraftPid(UI.room||'team',e.target.value); });
+const CH_EMO='😀 😂 😊 😍 😘 😎 🤔 😅 😉 🙂 😇 🥳 😴 😢 😭 😡 😱 🤯 🙈 🤷 👍 👎 👌 👏 🙌 🙏 💪 👋 🤝 ✌️ ❤️ 🧡 💛 💚 💙 🔥 ⭐ ✨ 🎉 🎂 ☀️ 🌞 ⚡ 🔋 🔌 🏠 🚐 🛠️ 🔧 📦 📅 ⏰ ✅ ❌ ⚠️ ❓ ❗ 💶 ☕ 🍺'.split(' ');
+const gifRecent=()=>{ try{ return JSON.parse(lsGet('sonnenplan-gifs')||'[]').filter(gifOk); }catch(e){ return []; } };
+function gifRemember(u){ const l=[u,...gifRecent().filter(x=>x!==u)].slice(0,24); lsSet('sonnenplan-gifs',JSON.stringify(l)); }
+async function chatUpload(files){ files=[...(files||[])].filter(f=>/^image\//.test(f.type||'')); if(!files.length) return; if(!ASSETS){ toast('Bilder hochladen geht nur in der Online-Version.'); return; }
+  toast(files.length>1?files.length+' Bilder werden gesendet …':'Bild wird gesendet …');
+  for(const f of files){ try{ const gif=/gif/i.test(f.type); const up=gif?f:new File([await mappeToJpg(f,1600)],(f.name||'bild').replace(/\.\w+$/,'')+'.jpg',{type:'image/jpeg'}); const r=await ASSETS.upload(up,{type:up.type}); const t=$('#chatIn'); const txt=t&&files.length===1?t.value.trim().slice(0,4000):''; chPost({img:r.id,text:txt}); if(txt&&t){ t.value=''; chDraftSet(UI.room||'team',''); } }
+    catch(e){ toast('Bild konnte nicht gesendet werden.'); } } }
+document.addEventListener('change',e=>{ if(e.target.id==='chatImg'){ chatUpload(e.target.files); e.target.value=''; } });
+// Bild per Strg+V ins Chatfeld einfügen
+document.addEventListener('paste',e=>{ if(!e.target||e.target.id!=='chatIn') return; const fl=[...(e.clipboardData&&e.clipboardData.files||[])].filter(f=>/^image\//.test(f.type)); if(fl.length){ e.preventDefault(); chatUpload(fl); } });
+queueMicrotask(()=>Object.assign(A,{
+  chatReply:d=>{ UI.chatReply=d.id; render(); setTimeout(()=>{ const i=$('#chatIn'); if(i) i.focus(); },40); },
+  chatReplyX:()=>{ UI.chatReply=''; render(); },
+  chatJump:d=>{ const el=document.getElementById('chm_'+d.id); if(!el) return toast('Die Nachricht ist nicht mehr da.'); el.scrollIntoView({block:'center',behavior:'smooth'}); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); },
+  chatImgPick:()=>{ const f=$('#chatImg'); if(f) f.click(); },
+  chatImgOpen:(d,el)=>{ if(el&&el.src) window.open(el.src,'_blank','noopener'); },
+  chatEmo:(d,el)=>{ let p=$('#chEmo'); if(p){ p.remove(); return; } p=document.createElement('div'); p.id='chEmo'; p.className='ch-emo'; p.innerHTML=CH_EMO.map(x=>`<button type="button" data-emo="${x}">${x}</button>`).join('');
+    p.addEventListener('click',e=>{ const b=e.target.closest('[data-emo]'); if(!b) return; const i=$('#chatIn'); if(!i) return; const s=i.selectionStart??i.value.length, en=i.selectionEnd??s; i.value=i.value.slice(0,s)+b.dataset.emo+i.value.slice(en); i.focus(); i.selectionStart=i.selectionEnd=s+b.dataset.emo.length; });
+    const box=el&&el.closest('.ch-main'); (box||document.body).appendChild(p); setTimeout(()=>document.addEventListener('click',function off(e){ if(!e.target.closest('#chEmo,[data-act="chatEmo"]')){ const q=$('#chEmo'); if(q) q.remove(); document.removeEventListener('click',off); } }),0); },
+  chatGif:()=>{ const used=[...new Set([...gifRecent(),...arr('chat').filter(m=>m.gif&&gifOk(m.gif)).sort((a,b)=>String(b.at).localeCompare(String(a.at))).map(m=>m.gif)])].slice(0,24);
+    openSheet({title:'GIF senden',wide:1,html:`<div class="fld full"><label for="gif_u">GIF-Link einfügen</label><input id="gif_u" class="inp" placeholder="https://media.giphy.com/media/…/giphy.gif"><div class="small muted" style="margin-top:4px">Auf <a href="https://giphy.com" target="_blank" rel="noopener">giphy.com</a> oder <a href="https://tenor.com" target="_blank" rel="noopener">tenor.com</a> ein GIF suchen, Rechtsklick aufs GIF → „Bildadresse kopieren“, hier einfügen. Oder ein eigenes GIF vom Gerät senden.</div>
+      <div id="gif_prev" class="gif-prev"></div><button type="button" class="btn sm" data-act="chatGifFile" style="margin-top:8px">GIF vom Gerät wählen</button><input type="file" id="gifFile" accept="image/gif" hidden></div>
+      ${used.length?`<div class="fld full"><div class="sec-t" style="margin:4px 0 6px">Zuletzt verwendet – antippen zum Senden</div><div class="gif-grid">${used.map(u=>`<button type="button" class="gif-pick" data-act="chatGifSend" data-u="${esc(u)}"><img src="${esc(u)}" alt="GIF" loading="lazy" referrerpolicy="no-referrer"></button>`).join('')}</div></div>`:''}`,saveLabel:'Senden',
+      onSave:()=>{ const u=($('#gif_u').value||'').trim(); if(!gifOk(u)){ toast('Bitte einen Link einfügen, der mit https:// beginnt.'); return false; } gifRemember(u); chPost({gif:u}); }}); },
+  chatGifSend:(d,el)=>{ const u=el&&el.dataset.u; if(!gifOk(u)) return; gifRemember(u); closeSheet(); chPost({gif:u}); },
+  chatGifFile:()=>{ const f=$('#gifFile'); if(f) f.click(); } }));
+document.addEventListener('change',e=>{ if(e.target.id==='gifFile'){ const fl=[...(e.target.files||[])]; if(fl.length){ closeSheet(); chatUpload(fl); } } });
+document.addEventListener('input',e=>{ if(e.target.id!=='gif_u') return; const u=e.target.value.trim(), p=$('#gif_prev'); if(p) p.innerHTML=gifOk(u)?`<img src="${esc(u)}" alt="Vorschau" referrerpolicy="no-referrer">`:''; });
 function renderShellBadges(){ const n=chatUnreadAll(); document.querySelectorAll('[data-v="chat"] .cnt').forEach(x=>x.textContent=n||''); }
 
 function dropStockOnPick(sid,pkid){
@@ -5009,7 +5075,7 @@ const A = {
  privDel:d=>privDel(d.id),
  chatRoom:d=>{ UI.room=d.v; render(); },
  chatTeamNew:()=>chatTeamForm(null), chatTeamEdit:d=>{ const t=chatTeams().find(x=>x.id===d.id); if(t) chatTeamForm(t); },
- chatSend:()=>{ const el=$('#chatIn'); const t=el&&el.value.trim(); if(!t) return; if(!ME) return toast('Bitte zuerst anmelden.'); const m={id:uid(),room:UI.room||'team',from:ME,text:t.slice(0,4000),at:new Date().toISOString()}; const pid=$('#chatPid')&&$('#chatPid').value; if(pid) m.pid=pid; put('chat',m); el.value=''; setTimeout(()=>{ const i=$('#chatIn'); if(i) i.focus(); },40); },
+ chatSend:()=>{ const el=$('#chatIn'); const t=el&&el.value.trim(); if(!t) return; if(!ME) return toast('Bitte zuerst anmelden.'); const room=UI.room||'team'; if(!chPost({text:t.slice(0,4000)})) return; el.value=''; chDraftSet(room,''); const pe=$('#chatPid'); if(pe) pe.value=''; chDraftPid(room,''); render(); setTimeout(()=>{ const i=$('#chatIn'); if(i) i.focus(); },40); },
  chatDel:d=>{ const m=S.chat[d.id]; if(!m) return; if(m.from!==ME&&!isAdmin()) return; del('chat',d.id); },
  unlinkUser:d=>{ if(!isAdmin()) return; const map={...((S.config||{}).userMap||{})}; const n=map[d.id]; delete map[d.id]; putConfig({...(S.config||{}),userMap:map}); toast('Verknüpfung mit '+(n||'Konto')+' gelöst. Die Person wählt beim nächsten Öffnen neu.'); },
  stockEdit:d=>{ if(!isAdmin()) return; stockForm(S.stock[d.id]); },
@@ -5907,7 +5973,7 @@ const SMART_ACTS={
   order:{l:'Bestellung anlegen / ergänzen',d:'Positionen, Preise, Liefertermin auslesen (Bestellung, AB, Rechnung vom Lieferanten)'},
   delivery:{l:'Wareneingang: Lieferschein abgleichen',d:'Mit der offenen Bestellung vergleichen und zeigen, was fehlt'},
   todos:{l:'To-Dos daraus erstellen',d:'Aufgaben, Zuständige und Fristen erkennen, mit bestehenden To-Dos abgleichen'},
-  note:{l:'Als Notiz ins Projekt',d:'Text als Update in die Projekt-Notizen (mit Kürzel)'},
+  note:{l:'Notiz daraus erstellen',d:'Als Notiz ins Projekt (mit Datum und Kürzel) – Text lässt sich vorher anpassen; Dateien landen zusätzlich in den Projekt-Dateien'},
   file:{l:'In der Datenablage ablegen',d:'Einheitlich benennen, Art und Projekt zuordnen (Mails unter Korrespondenz)'},
   none:{l:'Sonst nichts – nur die bestehenden To-Dos aktualisieren',d:'Nur die oben markierten To-Do-Updates speichern'}};
 const SMART_TYPES={bestellung:'Bestellung',ab:'Auftragsbestätigung',rechnung:'Rechnung',lieferschein:'Lieferschein',todos:'Aufgaben / To-Do-Liste',notiz:'Notiz / Stand zum Projekt',angebot:'Angebot',korrespondenz:'Korrespondenz (E-Mail)',plan:'Plan / Zeichnung',foto:'Foto',vertrag:'Vertrag',sonst:'Sonstiges'};
@@ -5967,9 +6033,11 @@ Antworte nur mit JSON: {"type":"","projectId":"","orderId":"","summary":"1 Satz,
 }
 function smartSheet(c){
   const rec=c.many&&c.type!=='lieferschein'?'file':SMART_MAP[c.type]||'file';
-  const rel=c.related||[], acts=Object.keys(SMART_ACTS).filter(k=>!(k==='note'&&c.files.length)&&!(k==='delivery'&&!c.files.length&&!c.text)&&!(k==='none'&&!rel.length));
+  const rel=c.related||[], acts=Object.keys(SMART_ACTS).filter(k=>!(k==='delivery'&&!c.files.length&&!c.text)&&!(k==='none'&&!rel.length));
   const openOrders=arr('orders').filter(o=>orderState(o).open).sort((a,b)=>(a.supplier||'').localeCompare(b.supplier||''));
   const what=c.files.length?c.files.map(f=>f.name).slice(0,4).join(', ')+(c.files.length>4?' …':''):(c.mail?'Kopierte E-Mail':'Kopierter Text');
+  // Vorschlag für den Notiztext: eigener Text, bei Mails Absender + Betreff + Kern, bei Dateien die Zusammenfassung
+  const noteDraft=!c.files.length&&!c.mail?String(c.text||'').trim():[c.mail?'Mail von '+(c.mail.from||'?')+' „'+(c.mail.subject||'')+'“':'Datei: '+c.files.map(f=>f.name).slice(0,4).join(', '),c.summary||(c.mail?String(c.mail.text||'').replace(/\s+/g,' ').slice(0,400):'')].filter(Boolean).join(' – ');
   openSheet({title:'Was ist das?',wide:1,html:`<div class="fld full">
     <div class="small muted">${esc(what)}</div>
     <div class="smart-guess"><span class="pill pri">${esc(SMART_TYPES[c.type]||'Sonstiges')}</span>${c.summary?` <b>${esc(c.summary)}</b>`:''}${c.why?`<div class="small muted">${esc(c.why)}</div>`:''}</div>
@@ -5979,7 +6047,7 @@ function smartSheet(c){
     <div class="sec-t" style="margin:6px 0">Was soll passieren?</div>
     ${c.mail?`<label class="mt-opt" style="margin:0 0 8px"><input type="checkbox" class="ck" id="sm_keep" checked><span>E-Mail zusätzlich in den Projekt-Dateien ablegen (Korrespondenz, für alle zum Öffnen)</span></label>`:''}
     <div class="smart-acts">${acts.map(k=>`<label class="smart-act ${k===rec?'rec':''}"><input type="radio" name="sm_act" value="${k}" ${k===rec?'checked':''}><span><b>${SMART_ACTS[k].l}</b>${k===rec?' <span class="pill ok">Vorschlag</span>':''}<span class="small muted">${SMART_ACTS[k].d}</span>
-      ${k==='delivery'?`<select class="inp" id="sm_order" aria-label="Bestellung"><option value="">– offene Bestellung wählen –</option>${openOrders.map(o=>`<option value="${o.id}" ${o.id===c.orderId?'selected':''}>${esc((o.supplier||'Lieferant')+(o.no?' · '+o.no:'')+' · '+(projName(o.pid)||'ohne Projekt'))}</option>`).join('')}</select>`:''}</span></label>`).join('')}</div></div>`,saveLabel:'Los',
+      ${k==='delivery'?`<select class="inp" id="sm_order" aria-label="Bestellung"><option value="">– offene Bestellung wählen –</option>${openOrders.map(o=>`<option value="${o.id}" ${o.id===c.orderId?'selected':''}>${esc((o.supplier||'Lieferant')+(o.no?' · '+o.no:'')+' · '+(projName(o.pid)||'ohne Projekt'))}</option>`).join('')}</select>`:''}${k==='note'?`<textarea class="inp sm-note" id="sm_note" rows="3" aria-label="Notiztext">${esc(noteDraft)}</textarea>`:''}</span></label>`).join('')}</div></div>`,saveLabel:'Los',
     onSave:()=>{ const act=(document.querySelector('input[name=sm_act]:checked')||{}).value, pid=$('#sm_pid').value;
       // markierte To-Do-Updates zuerst speichern (Datum + Kürzel; bei „erledigt“ abhaken und in den Projekt-Notizen vermerken)
       let nu=0; rel.forEach((x,i)=>{ if(!$('#smr_c'+i).checked||!S.tasks[x.id]) return; const how=$('#smr_a'+i).value, txt=($('#smr_t'+i).value||'').trim()||'Neue Info'+(c.mail&&c.mail.subject?' (Mail: '+c.mail.subject+')':'');
@@ -5991,7 +6059,8 @@ function smartSheet(c){
       // E-Mails landen immer auch in den Projekt-Dateien (Korrespondenz), außer der Weg legt sie ohnehin ab
       if(c.mail&&($('#sm_keep')||{}).checked&&!['file','todos'].includes(act)){ const mf=c.files.filter(f=>/\.(msg|eml)$/i.test(f.name||'')||f.type==='message/rfc822'); setTimeout(()=>ingestFiles(mf,mf.length?'':c.text,pid),80); }
       if(act==='none'){ if(!nu){ toast('Kein To-Do markiert.'); return false; } return; }
-      if(act==='note'){ if(!pid||!S.projects[pid]){ toast('Bitte ein Projekt wählen.'); return false; } saveNote(pid,'updates',c.text); return; }
+      if(act==='note'){ if(!pid||!S.projects[pid]){ toast('Bitte ein Projekt wählen.'); return false; } const nt=(($('#sm_note')||{}).value||'').trim(); if(!nt){ toast('Bitte einen Notiztext eingeben.'); return false; }
+        saveNote(pid,'updates',nt); const rest=c.files.filter(f=>!(c.mail&&($('#sm_keep')||{}).checked&&(/\.(msg|eml)$/i.test(f.name||'')||f.type==='message/rfc822'))); if(rest.length) setTimeout(()=>ingestFiles(rest,'',pid),120); return; }
       if(act==='delivery'){ const oid=($('#sm_order')||{}).value; if(!oid){ toast('Bitte die offene Bestellung wählen.'); return false; } const file=c.files[0];
         setTimeout(()=>{ A.receive({id:oid}); if(file) setTimeout(()=>scanDeliveryNote(oid,file),400); else toast('Bitte im Wareneingang die Mengen prüfen.'); },50); return; }
       setTimeout(()=>{ if(act==='order') ordersFromDrop(c.files,c.text,pid===INTERN?INTERN:pid);
