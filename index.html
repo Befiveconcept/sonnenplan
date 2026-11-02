@@ -1987,8 +1987,11 @@ const ADMINS=['EP','AvE'];
 const isBaseAdmin=()=>ADMINS.includes(meK());
 const permOf=n=>(((S&&S.config)||{}).perms||{})[n]||null;
 const isAdmin=()=>isBaseAdmin()||!!(permOf(ME)||{}).admin;
-const AREAS=[['dash','Übersicht'],['projects','Projekte'],['todos','To-Dos'],['private','Private To-Dos'],['chat','Chat'],['week','Kalender & Wochenplanung'],['orders','Bestellungen & Wareneingänge'],['stock','Lagerverwaltung'],['files','Datenablage'],['offers','Angebote'],['reports','Tagesrapporte'],['templates','Vorlagen'],['sales','Verkauf (Angebote, Rechnungen …)'],['stamm','Stammdaten (Kunden, Lieferanten, Artikel)'],['hr','HR (Stempeluhr, Urlaub)'],['settings','Team & Einstellungen'],['activity','Aktivität']];
-const defaultViews=n=>AREAS.map(a=>a[0]).filter(v=>v!=='activity'||shortWho(n)==='EP');
+const AREAS=[['dash','Übersicht'],['projects','Projekte'],['todos','To-Dos'],['meetings','Meetings'],['private','Private To-Dos'],['chat','Chat'],['week','Kalender & Wochenplanung'],['orders','Bestellungen & Wareneingänge'],['stock','Lagerverwaltung'],['files','Datenablage'],['offers','Angebote'],['reports','Tagesrapporte'],['templates','Vorlagen'],['sales','Verkauf (Angebote, Rechnungen …)'],['fin','Finanzen (Bank, Ausgaben, Steuer, DATEV)'],['stamm','Stammdaten (Kunden, Lieferanten, Artikel)'],['hr','HR (Stempeluhr, Urlaub)'],['settings','Team & Einstellungen'],['activity','Aktivität']];
+const FIN_DEFAULT=['JP','AvE','EP']; /* Finanzen ohne eigene Einstellung: nur diese drei */
+const defaultViews=n=>AREAS.map(a=>a[0]).filter(v=>(v!=='activity'||shortWho(n)==='EP')&&(v!=='fin'||FIN_DEFAULT.includes(shortWho(n))));
+// Alte gespeicherte Rechte (vor den Spalten Meetings + Finanzen) so lesen, wie sie bisher wirkten
+const permV2=(n,p,list)=>{ if(!p||p.v2) return list; const o=list.slice(); if(o.includes('todos')&&!p.ownTodos&&!o.includes('meetings')) o.push('meetings'); if(FIN_DEFAULT.includes(shortWho(n))&&!o.includes('fin')) o.push('fin'); return o; };
 // Rollen-Voreinstellungen fuer die Rechteverteilung (danach pro Person anpassbar)
 const ROLE_PRESETS={
  monteur:{l:'Monteur',views:['dash','todos','private','week','orders','stock','hr'],ownTodos:true,admin:false,info:'Terminplan, eigene + allgemeine To-Dos, Material & Lager, eigene Stempeluhr'},
@@ -1999,13 +2002,13 @@ const ROLE_DEFAULT_BY_K={as:'monteur',moji:'monteur',hh:'buero',mk:'buero',js:'b
 const ownTodosOnly=()=>!isAdmin()&&!!(permOf(ME)||{}).ownTodos;
 // Rolle anwenden: Sehen + Bearbeiten wie die Voreinstellung, Admin-Häkchen, „nur eigene To-Dos“
 function rolePerm(role,old){ const R=ROLE_PRESETS[role]; if(!R) return {...(old||{}),role:''};
-  return {...(old||{}),role,views:R.views.slice(),edit:R.views.filter(v=>!['dash','activity'].includes(v)),admin:!!R.admin,ownTodos:!!R.ownTodos}; }
+  return {...(old||{}),role,v2:true,views:R.views.slice(),edit:R.views.filter(v=>!['dash','activity'].includes(v)),admin:!!R.admin,ownTodos:!!R.ownTodos}; }
 queueMicrotask(()=>{ A.permPresetAll=()=>CHG.permPresetAll(); }); /* Knopf „Voreinstellungen übernehmen“ (A wird weiter unten angelegt) */
-const viewsOf=n=>{ const p=permOf(n); return p&&Array.isArray(p.views)?p.views:defaultViews(n); };
-const editsOf=n=>{ const p=permOf(n); return p&&Array.isArray(p.edit)?p.edit:viewsOf(n); };
+const viewsOf=n=>{ const p=permOf(n); return p&&Array.isArray(p.views)?permV2(n,p,p.views):defaultViews(n); };
+const editsOf=n=>{ const p=permOf(n); return p&&Array.isArray(p.edit)?permV2(n,p,p.edit):viewsOf(n); };
 const canEdit=a=>isAdmin()||(!!ME&&editsOf(ME).includes(a)&&viewsOf(ME).includes(a));
 function canSee(v){ if(v==='rights') return isBaseAdmin(); if(v==='hr') return true; /* Stempeln und Urlaub: für alle */ if(String(v).startsWith('f:')) v='files'; if(String(v).startsWith('st:')) v='stamm'; if(v==='fin'||String(v).startsWith('fi:')) return finOk(); if(String(v).startsWith('vk:')) v='sales'; if(v==='dash') return true; if(!ME) return v!=='activity'; const vs=viewsOf(ME);
-  if(v==='project') return vs.includes('projects'); if(v==='pool') return vs.includes('todos'); if(v==='meetings') return vs.includes('todos')&&!ownTodosOnly(); if(v==='calendar') return vs.includes('week'); return vs.includes(v); }
+  if(v==='project') return vs.includes('projects'); if(v==='pool') return vs.includes('todos'); if(v==='meetings') return vs.includes('meetings'); if(v==='calendar') return vs.includes('week'); return vs.includes(v); }
 const canSeeActivity=()=>canSee('activity');
 const META=['upd','updBy','hist','at','by'];
 const strip=o=>{ const c={}; Object.keys(o||{}).forEach(k=>{ if(!META.includes(k)) c[k]=o[k]; }); return JSON.stringify(c); };
@@ -2058,8 +2061,8 @@ function describeChange(coll,prev,o){
   return out.join(' · ');
 }
 // Schreibrecht je Rubrik (Admin-Bereich „Rechte“): ohne Häkchen „bearbeiten“ wird nichts gespeichert
-const COLL_AREA={projects:'projects',tasks:'todos',orders:'orders',offers:'offers',events:'week',plan:'week',reports:'reports',files:'files',stock:'stock',picks:'stock',chat:'chat',meetings:'todos',hrtime:'hr',hrabs:'hr',hrstaff:'hr',hrdocs:'hr',kunden:'stamm',lieferanten:'stamm',artikel:'stamm',sales:'sales',fin:'fin',anlagen:'fin'};
-function mayWrite(coll){ const a=COLL_AREA[coll]; if(!a||!ME||isAdmin()) return true; if(a==='hr') return !['hrstaff','hrdocs'].includes(coll); if(a==='fin') return finOk(); return canEdit(a); }
+const COLL_AREA={projects:'projects',tasks:'todos',orders:'orders',offers:'offers',events:'week',plan:'week',reports:'reports',files:'files',stock:'stock',picks:'stock',chat:'chat',meetings:'meetings',hrtime:'hr',hrabs:'hr',hrstaff:'hr',hrdocs:'hr',kunden:'stamm',lieferanten:'stamm',artikel:'stamm',sales:'sales',fin:'fin',anlagen:'fin'};
+function mayWrite(coll){ const a=COLL_AREA[coll]; if(a==='fin'&&ME) return finOk()&&(isAdmin()||editsOf(ME).includes('fin')); if(!a||!ME||isAdmin()) return true; if(a==='hr') return !['hrstaff','hrdocs'].includes(coll); return canEdit(a); }
 function put(coll,obj){
   if(!mayWrite(coll)){ toast('Keine Bearbeitungsrechte für „'+((AREAS.find(a=>a[0]===COLL_AREA[coll])||[])[1]||coll)+'“. Bitte EP oder AvE fragen.'); scheduleRender(); return; }
   const prev=S[coll][obj.id], now=new Date().toISOString();
@@ -2779,7 +2782,7 @@ function vProject(){
   if(UI.ptab==='status') body=projStatus(p);
   else if(UI.ptab==='ablauf') body=`<div class="row ck-bar"><span class="small muted">Haken setzen und Bemerkungen eintragen wird sofort gespeichert. Drucken öffnet den Druckdialog, dort „Als PDF speichern“ wählen.</span><span class="spacer"></span><button class="btn sun sm" data-act="ckPrint" data-pid="${p.id}">${ic('report')}Alle Checklisten drucken / PDF</button></div>`+projPhaseNav(pr)+projAblauf(p,pr);
   else if(UI.ptab==='formulare') body=projForms(p);
-  else if(UI.ptab==='todos') body=`<div class="card"><div class="card-h"><h3>To-Dos</h3><button class="btn sm" data-act="newTask" data-pid="${p.id}">${ic('plus')}To-Do</button></div><div class="list">${tasks.sort(byDue).map(taskLi).join('')||'<div class="empty">Keine To-Dos. Aus jedem Checklistenpunkt lässt sich eins zuweisen.</div>'}</div></div>`;
+  else if(UI.ptab==='todos') body=`<div class="card"><div class="card-h"><h3>To-Dos</h3><span class="spacer"></span>${tasks.length>1?ptSortSel():''}<button class="btn sm" data-act="newTask" data-pid="${p.id}">${ic('plus')}To-Do</button></div>${(()=>{ const op=tasks.filter(t=>!t.done), dn=tasks.filter(t=>t.done); return ptListHtml(op,dn.length?'':'<div class="empty">Keine To-Dos. Aus jedem Checklistenpunkt lässt sich eins zuweisen.</div>')+(dn.length?`<div class="grp-h">Erledigt · ${dn.length}</div><div class="list done-list">${ptSorted(dn).map(taskLi).join('')}</div>`:''); })()}</div>`;
   else if(UI.ptab==='material') body=matStatus(p)+dropZoneHtml(p.id)+`<div class="card"><div class="card-h"><h3>Bestellungen & Wareneingang</h3><button class="btn sm" data-act="newOrder" data-pid="${p.id}">${ic('plus')}Bestellung</button></div>${ordersTable(orders)}</div>`+(()=>{ const pk=arr('picks').filter(x=>x.pid===p.id).sort((a,b)=>(a.status==='uebergeben')-(b.status==='uebergeben')); return `<div class="card-h" style="padding:16px 0 8px"><h3>Kommissionierlisten für die Monteure</h3><button class="btn sm" data-act="pickForProject" data-pid="${p.id}">${ic('plus')}Liste / aus dem Lager</button></div>`+(pk.map(x=>pickCard(x,true)).join('')||'<div class="card"><div class="empty">Noch keine Kommissionierliste. Sie entsteht beim Wareneingang („Baustelle kommissionieren“) oder bei der Entnahme aus dem Lager.</div></div>'); })();
   else if(UI.ptab==='termine') body=`<div class="card"><div class="card-h"><h3>Termine</h3><button class="btn sm" data-act="newEvent" data-pid="${p.id}">${ic('plus')}Termin</button></div><div class="card-b">${agenda(calItems('0000','9999').filter(i=>(i.act==='editEvent'&&S.events[i.id]?.pid===p.id)||(i.act==='receive'&&S.orders[i.id]?.pid===p.id)||(i.act==='editTask'&&S.tasks[i.id]?.pid===p.id)||(i.act==='openProject'&&i.id===p.id)))||'<div class="empty">Keine Termine.</div>'}</div></div>`;
   else if(UI.ptab==='angebote') body=`<div class="card"><div class="card-h"><h3>Angebote</h3><button class="btn sm" data-act="newOffer" data-pid="${p.id}">${ic('plus')}Angebot</button></div>${offersTable(offers)}</div>`;
@@ -2852,7 +2855,7 @@ function projStatus(p){
   <div class="ps-side">
    <div class="card"><div class="card-b" style="display:flex;flex-direction:column;gap:12px">
     <div><div class="eyebrow"><span>Wer macht gerade was · ${tasks.length} offen</span><button class="btn ghost sm" data-act="newTask" data-pid="${p.id}">${ic('assign')}Aufgabe</button></div>
-      <div class="list">${tasks.map(taskLi).join('')||'<div class="small muted">Keine offenen Aufgaben.</div>'}</div>
+      ${tasks.length>1?`<div style="margin:2px 0 6px">${ptSortSel()}</div>`:''}${ptListHtml(tasks,'<div class="small muted">Keine offenen Aufgaben.</div>')}
       ${dn.length?`<label class="tog-sw" style="margin-top:8px"><input type="checkbox" data-chg="toggleDoneSw" ${UI.todoShowDone?'checked':''}><span class="sw" aria-hidden="true"></span><span class="small">Erledigte einblenden (${dn.length})</span></label>${UI.todoShowDone?`<div class="list done-list">${dn.map(taskLi).join('')}</div>`:''}`:''}</div>
     <div><div class="eyebrow"><span>Standardisiert als Nächstes</span>${SAMPLE?`<button class="btn ghost sm" data-act="aiNext" data-pid="${p.id}" title="Claude schlägt konkrete nächste Schritte vor (Fristen, Pflichten, Netzbetreiber …)">✨ KI-Vorschläge</button>`:''}</div>
       ${active&&pp.next?`<div class="nxbox"><b>${esc(pp.nextLabel)}</b>${pp.afterNext?`<span class="small muted">danach${pp.flow.opt.includes(pp.afterNext)?' optional':''}: ${esc(PIPE_DO[pp.afterNext-1])}</span>`:''}
@@ -5055,8 +5058,8 @@ function applyMs(p,i,val){
 }
 function setMs(pid,i,val){ const p=clone(S.projects[pid]); const msg=applyMs(p,i,val); put('projects',p); if(msg) toast(msg); }
 const CHG = {
- permView:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; const p={...(perms[d.n]||{}),role:''}; const vs=new Set(viewsOf(d.n)); if(el.checked) vs.add(d.v); else vs.delete(d.v); p.views=[...vs]; perms[d.n]=p; putConfig({...(S.config||{}),perms}); },
- permEdit:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; const p={...(perms[d.n]||{}),views:viewsOf(d.n)}; const es=new Set(editsOf(d.n)); if(el.checked) es.add(d.v); else es.delete(d.v); p.edit=[...es]; perms[d.n]=p; putConfig({...(S.config||{}),perms}); },
+ permView:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; const p={...(perms[d.n]||{}),role:''}; const vs=new Set(viewsOf(d.n)); if(!p.v2&&Array.isArray(p.edit)) p.edit=editsOf(d.n); p.v2=true; if(el.checked) vs.add(d.v); else vs.delete(d.v); p.views=[...vs]; perms[d.n]=p; putConfig({...(S.config||{}),perms}); },
+ permEdit:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; const p={...(perms[d.n]||{}),views:viewsOf(d.n)}; const es=new Set(editsOf(d.n)); p.v2=true; if(el.checked) es.add(d.v); else es.delete(d.v); p.edit=[...es]; perms[d.n]=p; putConfig({...(S.config||{}),perms}); },
  permRole:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; perms[d.n]=rolePerm(el.value,perms[d.n]); putConfig({...(S.config||{}),perms}); toast(shortWho(d.n)+': '+(el.value?ROLE_PRESETS[el.value].l:'individuell')+'.'); },
  permPresetAll:()=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}, done=[]; staff().forEach(s=>{ const k=String(shortWho(s.name)).toLowerCase(), r=ROLE_DEFAULT_BY_K[k]; if(!r||ADMINS.includes(shortWho(s.name))) return; perms[s.name]=rolePerm(r,perms[s.name]); done.push(shortWho(s.name)+' = '+ROLE_PRESETS[r].l); }); putConfig({...(S.config||{}),perms}); toast(done.length?'Übernommen: '+done.join(', '):'Keine passenden Kürzel gefunden.'); },
  permAdmin:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; perms[d.n]={...(perms[d.n]||{}),views:viewsOf(d.n),admin:el.checked}; putConfig({...(S.config||{}),perms}); toast(shortWho(d.n)+(el.checked?' ist jetzt Admin.':' ist kein Admin mehr.')); },
@@ -5080,6 +5083,7 @@ const CHG = {
  fileQ:(d,el)=>{ UI.fq=el.value; render(); },
  fileProjF:(d,el)=>{ UI.fproj=el.value; render(); },
  toggleDoneSw:(d,el)=>{ UI.todoShowDone=el.checked; saveUI(); render(); },
+ ptSort:(d,el)=>{ UI.ptSort=el.value; saveUI(); render(); },
  infoField:(d,el)=>{ const p=clone(S.projects[d.pid]); if(!p) return; const k=d.k; let v=el.value.trim();
    if(k==='name'&&!v){ toast('Der Projektname darf nicht leer sein.'); el.value=S.projects[d.pid].name; return; }
    if(['kwp','kwh','lp','value'].includes(k)) v=v===''?'':+String(v).replace(',','.');
@@ -5178,6 +5182,15 @@ const updKey=x=>(x.d||'')+' '+(updTime(x)||'00:00')+(x.at||'');
 // Letzte Aktivität eines To-Dos: neuestes Update, sonst Anlagezeitpunkt (Format JJJJ-MM-TT HH:MM)
 const isoLocal=s=>{ const a=new Date(s); return isNaN(a)?'':iso(a)+' '+String(a.getHours()).padStart(2,'0')+':'+String(a.getMinutes()).padStart(2,'0'); };
 const taskActKey=t=>{ const u=(t.upd2||[]).map(x=>(x.d||'')+' '+(updTime(x)||'00:00')).sort().pop()||''; const c=t.at?isoLocal(t.at):''; return u>c?u:c; };
+// To-Dos im Projekt sortieren: zuletzt bearbeitet, Fälligkeit, alphabetisch, nach Person (mit Zwischenüberschrift je Person)
+const PT_SORTS=[['akt','Zuletzt bearbeitet'],['due','Fälligkeit'],['az','Alphabetisch (A–Z)'],['who','Nach Person']];
+function ptSortKey(){ return PT_SORTS.some(s=>s[0]===UI.ptSort)?UI.ptSort:'akt'; }
+function ptSortSel(){ const k=ptSortKey(); return `<select class="catsel pt-sort" data-chg="ptSort" aria-label="To-Dos sortieren" title="To-Dos sortieren">${PT_SORTS.map(([v,l])=>`<option value="${v}" ${v===k?'selected':''}>↕ ${l}</option>`).join('')}</select>`; }
+function ptSorted(list){ const k=ptSortKey(), due=t=>t.due||'9999', az=(a,b)=>String(a.title||'').localeCompare(String(b.title||''),'de',{sensitivity:'base'}), wk=t=>t.who?shortWho(t.who):'￿';
+  return list.slice().sort(k==='due'?(a,b)=>due(a).localeCompare(due(b))||az(a,b):k==='az'?az:k==='who'?(a,b)=>wk(a).localeCompare(wk(b),'de')||due(a).localeCompare(due(b))||az(a,b):(a,b)=>taskActKey(b).localeCompare(taskActKey(a))); }
+function ptListHtml(list,empty){ const s=ptSorted(list); if(!s.length) return empty; if(ptSortKey()!=='who') return `<div class="list">${s.map(taskLi).join('')}</div>`;
+  const g=[]; s.forEach(t=>{ const w=t.who?shortWho(t.who):'nicht zugewiesen'; if(!g.length||g[g.length-1][0]!==w) g.push([w,[]]); g[g.length-1][1].push(t); });
+  return g.map(([w,ts])=>`<div class="grp-h">${esc(w)} · ${ts.length}</div><div class="list">${ts.map(taskLi).join('')}</div>`).join(''); }
 function taskUpdList(t){ const u=(t&&t.upd2)||[]; return u.length?u.slice().sort((a,b)=>updKey(b).localeCompare(updKey(a))).map(x=>`<div class="tu"><b class="mono">${esc(updStamp(x))}</b> <span class="who-chip">${esc(x.by||'?')}</span> ${esc(x.t)}</div>`).join(''):'<div class="small muted">Noch keine Updates.</div>'; }
 function taskUpdHtml(t){
   return `<div class="tu-box"><div id="tu_list">${taskUpdList(S.tasks[t.id]||t)}</div>
@@ -6905,8 +6918,7 @@ Object.assign(CHG,{ vkSt:(d,el)=>{ UI.vkSt=el.value; render(); },
 // Sammlungen: fin = Buchungen {id, kind:'ausgabe'|'einnahme'|'bank', date, docNr, partner, text, net, vatRate, vat, gross, cat, pid, due, paidDate, acc:'Bank'|'Kasse', asset, fp, rc(§13b), status:'offen'|'bezahlt'}
 //             anlagen = Anlagegüter {id, name, date, cost (netto), life (Jahre), cat, disposal}
 // Ausgangsrechnungen kommen aus „Verkauf“. Konten nach SKR03 – mit dem Steuerberater abstimmen.
-const FIN_USERS=['JP','AvE','EP'];
-const finOk=()=>!!ME&&FIN_USERS.includes(meK());
+const finOk=()=>!!ME&&(isBaseAdmin()||viewsOf(ME).includes('fin')); /* Spalte „Finanzen“ in der Rechtevergabe; ohne Einstellung JP, AvE, EP */
 const FIN_CAT={ // Schlüssel: [Bezeichnung, SKR03-Konto, Automatikkonto (Vorsteuer automatisch)]
  waren:['Wareneinkauf / Material 19 %','3400',1],waren7:['Wareneinkauf 7 %','3300',1],fremd:['Fremdleistungen / Subunternehmer','3100',0],bau13b:['Bauleistungen § 13b (Leistungsempfänger)','3120',0],
  fahrzeug:['Kfz-Kosten (Treibstoff, Reparatur)','4530',0],kfzvers:['Kfz-Versicherung / -Steuer','4520',0],miete:['Miete / Pacht','4210',0],energie:['Strom, Gas, Wasser','4240',0],
@@ -6955,10 +6967,10 @@ function finJournal(from,to){ const J=[], soll=FCFG().ust!=='ist', inR=d=>d&&d>=
 
 // ---------- Ansicht ----------
 const FIN_TABS=[['bank','Bank / Kasse'],['aus','Ausgaben'],['ein','Sonstige Einnahmen'],['journal','Buchungsübersicht'],['ust','USt-Voranmeldung'],['steuer','Steuerauswertungen'],['ausw','Auswertungen'],['export','Steuerberater-Export'],['anlagen','Anlagenverwaltung']];
-function vFin(){ if(!finOk()) return head('Finanzen','')+'<div class="card"><div class="empty">Finanzen sehen nur JP, AvE und EP.</div></div>'; finLoad();
+function vFin(){ if(!finOk()) return head('Finanzen','')+'<div class="card"><div class="empty">Finanzen ist für dich nicht freigegeben (Rechtevergabe → Spalte Finanzen).</div></div>'; finLoad();
   const tab=FIN_TABS.some(t=>t[0]===UI.fiTab)?UI.fiTab:'bank', y=UI.fiYear||TODAY().slice(0,4);
   const body={bank:finTabBank,aus:()=>finTabList('ausgabe'),ein:()=>finTabList('einnahme'),journal:finTabJournal,ust:finTabUst,steuer:finTabSteuer,ausw:finTabAusw,export:finTabExport,anlagen:finTabAnlagen}[tab]();
-  return head('Finanzen · '+FIN_TABS.find(t=>t[0]===tab)[1],'nur für JP, AvE und EP sichtbar',`<select class="catsel" data-chg="fiYear" aria-label="Jahr">${[0,1,2].map(i=>String(+TODAY().slice(0,4)-i)).map(v=>`<option ${v===y?'selected':''}>${v}</option>`).join('')}</select><button class="btn ghost sm" data-act="finCfg">Einstellungen</button>`)+
+  return head('Finanzen · '+FIN_TABS.find(t=>t[0]===tab)[1],'nur für Freigegebene sichtbar (Rechtevergabe)',`<select class="catsel" data-chg="fiYear" aria-label="Jahr">${[0,1,2].map(i=>String(+TODAY().slice(0,4)-i)).map(v=>`<option ${v===y?'selected':''}>${v}</option>`).join('')}</select><button class="btn ghost sm" data-act="finCfg">Einstellungen</button>`)+
     `<div class="chips">${FIN_TABS.map(([k,l])=>`<button class="chip ${k===tab?'on':''}" data-act="nav" data-v="fi:${k}">${l}</button>`).join('')}</div>`+body; }
 function finTabBank(){ const mv=finMoves(), y=UI.fiYear||TODAY().slice(0,4), acc=UI.fiAcc||'', list=mv.filter(m=>String(m.d).slice(0,4)===y&&(!acc||m.acc===acc)), unm=finAll().filter(f=>f.kind==='bank'&&!f.match);
   return `<div class="hero-k vk-kpi"><div class="hk"><span class="hv">${euro(finBal('Bank'))}</span><span class="hl">Kontostand Bank (lt. App)</span></div><div class="hk"><span class="hv">${euro(finBal('Kasse'))}</span><span class="hl">Kassenbestand</span></div><div class="hk"><span class="hv">${unm.length}</span><span class="hl">Bankumsätze nicht zugeordnet</span></div></div>
