@@ -929,6 +929,7 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 @media (max-width:640px){ .pool-it{grid-template-columns:1fr} }
 /* To-Do-Updates */
 .tu-box{display:flex;flex-direction:column;gap:8px}
+.tu-del{border:0;background:none;color:var(--muted);cursor:pointer;font-size:11px;padding:0 4px;opacity:.55}.tu-del:hover{color:#C0392B;opacity:1}
 .tu-follow{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;font:inherit;font-size:11px;font-weight:600;padding:0 6px;margin-left:4px;cursor:pointer;white-space:nowrap}.tu-follow:hover{background:var(--sun);border-color:var(--sun);color:#111}
 .fu-sug{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;border:1.5px solid var(--sun);background:var(--sun-soft);border-radius:12px;padding:10px 12px;font-size:13.5px;color:var(--ink)}
 .fu-sug:empty{display:none}#tu_sug:empty{display:none}
@@ -2820,7 +2821,7 @@ function taskCalOffer(id){ const t=S.tasks[id]; if(!t||!t.done||SHEET) return; c
 var TU_OPEN=new Set();
 document.addEventListener('toggle',e=>{ const d=e.target; if(!d||!d.matches||!d.matches('details.tu-inl[data-tuid]')) return; if(d.open) TU_OPEN.add(d.dataset.tuid); else TU_OPEN.delete(d.dataset.tuid); },true);
 function taskUpdInline(t){ const u=(t.upd2||[]).slice().sort((a,b)=>updKey(b).localeCompare(updKey(a))); if(!u.length) return '';
-  const line=x=>`<div class="tu"><b class="mono">${esc(updStamp(x))}</b> <span class="who-chip">${esc(x.by||'?')}</span> ${esc(x.t)}</div>`;
+  const line=x=>`<div class="tu"><b class="mono">${esc(updStamp(x))}</b> <span class="who-chip">${esc(x.by||'?')}</span> ${esc(x.t)}${tuCanDel(x)?` <button type="button" class="tu-del" data-act="taskUpdDel" data-id="${esc(t.id)}" data-key="${esc(tuKey(x))}" title="Update löschen" aria-label="Update löschen">✕</button>`:''}</div>`;
   // zugeklappt nur eine kurze Zeile – Updates erst beim Aufklappen (neuestes oben)
   return `<details class="tu-inl" data-stop="1" data-tuid="${esc(t.id)}" ${TU_OPEN.has(t.id)?'open':''}><summary><span class="tu-sum">💬 ${u.length} Update${u.length>1?'s':''} · zuletzt ${esc(updStamp(u[0]))} · ${esc(u[0].by||'?')}</span></summary>${u.map(line).join('')}</details>`; }
 // Bis zu 3 Zuständige: who = Hauptperson, who2 = bis zu 2 weitere
@@ -5451,7 +5452,13 @@ function ptSorted(list){ const k=ptSortKey(), due=t=>t.due||'9999', az=(a,b)=>St
 function ptListHtml(list,empty){ const s=ptSorted(list); if(!s.length) return empty; if(ptSortKey()!=='who') return `<div class="list">${s.map(taskLi).join('')}</div>`;
   const g=[]; s.forEach(t=>{ const w=t.who?shortWho(t.who):'nicht zugewiesen'; if(!g.length||g[g.length-1][0]!==w) g.push([w,[]]); g[g.length-1][1].push(t); });
   return g.map(([w,ts])=>`<div class="grp-h">${esc(w)} · ${ts.length}</div><div class="list">${ts.map(taskLi).join('')}</div>`).join(''); }
-function taskUpdList(t){ const u=(t&&t.upd2)||[]; return u.length?u.slice().sort((a,b)=>updKey(b).localeCompare(updKey(a))).map(x=>`<div class="tu"><b class="mono">${esc(updStamp(x))}</b> <span class="who-chip">${esc(x.by||'?')}</span> ${esc(x.t)}${t.id&&x.at?` <button type="button" class="tu-follow" data-act="taskFromUpd" data-id="${esc(t.id)}" data-at="${esc(x.at)}" title="Aus diesem Update ein neues, verknüpftes To-Do machen">→ To-Do</button>`:''}</div>`).join(''):'<div class="small muted">Noch keine Updates.</div>'; }
+function taskUpdList(t){ const u=(t&&t.upd2)||[]; return u.length?u.slice().sort((a,b)=>updKey(b).localeCompare(updKey(a))).map(x=>`<div class="tu"><b class="mono">${esc(updStamp(x))}</b> <span class="who-chip">${esc(x.by||'?')}</span> ${esc(x.t)}${t.id&&x.at?` <button type="button" class="tu-follow" data-act="taskFromUpd" data-id="${esc(t.id)}" data-at="${esc(x.at)}" title="Aus diesem Update ein neues, verknüpftes To-Do machen">→ To-Do</button>`:''}${t.id&&tuCanDel(x)?` <button type="button" class="tu-del" data-act="taskUpdDel" data-id="${esc(t.id)}" data-key="${esc(tuKey(x))}" title="Update löschen" aria-label="Update löschen">✕</button>`:''}</div>`).join(''):'<div class="small muted">Noch keine Updates.</div>'; }
+// Updates löschen: eigene Updates jeder, fremde nur Admins (Schlüssel = Zeitstempel, bei alten Einträgen Datum+Kürzel+Text)
+const tuKey=x=>x.at||((x.d||'')+'|'+(x.by||'')+'|'+String(x.t||'').slice(0,40));
+const tuCanDel=x=>isAdmin()||(!!ME&&(x.by||'')===meK());
+queueMicrotask(()=>Object.assign(A,{ taskUpdDel:d=>{ const t=S.tasks[d.id]; if(!t) return; const u=(t.upd2||[]).find(x=>tuKey(x)===d.key); if(!u) return; if(!tuCanDel(u)) return toast('Nur eigene Updates (oder als Admin) löschen.');
+  const run=()=>{ const c=clone(S.tasks[d.id]); c.upd2=(c.upd2||[]).filter(x=>tuKey(x)!==d.key); put('tasks',c); const l=$('#tu_list'); if(l) l.innerHTML=taskUpdList(c); toast('Update gelöscht.'); };
+  if(SHEET){ if(confirm('Update „'+String(u.t||'').slice(0,60)+'“ löschen?')) run(); } else confirmSheet('Update „'+String(u.t||'').slice(0,80)+'“ löschen?',run); } }));
 /* ---------- Folge-To-Dos: aus einem To-Do oder Update ein neues, verknüpftes To-Do (Feld from = Ausgangs-To-Do) ---------- */
 const taskKids=id=>arr('tasks').filter(x=>x.from===id);
 function taskLinksHtml(t){ const par=t.from&&S.tasks[t.from], kids=taskKids(t.id); if(!par&&!kids.length) return '';
