@@ -540,6 +540,8 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .firm-pill{background:var(--sunken);color:var(--ink);white-space:nowrap}
 /* Globale Suche */
 .gs-wrap{position:relative;margin:0 0 18px}
+.gs-proj{margin:0 0 14px}.gs-sec{color:var(--ink);font-weight:700}
+.ctx-new{white-space:nowrap}
 .gs-in{display:flex;align-items:center;gap:10px;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:0 14px;box-shadow:var(--shadow)}
 .gs-in:focus-within{border-color:var(--sun);box-shadow:0 0 0 3px var(--sun-soft)}
 .gs-in svg{width:20px;height:20px;color:var(--muted);flex:none}
@@ -2331,8 +2333,28 @@ function navSide(cur,cnt){ NAV_CUR=cur; const pins=navPins();
   $('#locList').innerHTML =[...new Set(['Lager','Container',...arr('stock').map(s=>s.loc).filter(Boolean)])].map(s=>`<option value="${esc(s)}">`).join('');
   setTimeout(fselBar,0); // Auswahlleiste der Datenablage ein-/ausblenden
 }
+// „+ Neu …“ passend zur geöffneten Rubrik, direkt sichtbar neben dem allgemeinen „Neu“-Menü
+function ctxNew(){ const v=UI.view, mk=(act,l,attr,ok=true)=>ok?{act,l,attr:attr||''}:null;
+  if(v==='projects') return mk('newProject','Neues Projekt','',mayWrite('projects'));
+  if(v==='todos'||v==='pool') return mk('newTask','Neues To-Do','',mayWrite('tasks'));
+  if(v==='meetings') return mk('meetNew','Neues Meeting');
+  if(v==='week') return mk('newPlan','Neuer Einsatz','',mayWrite('plan'));
+  if(v==='calendar') return mk('newEvent','Neuer Termin','',mayWrite('events'));
+  if(v==='orders') return mk('newOrder','Neue Bestellung','',mayWrite('orders'));
+  if(v==='stock') return mk('stockNew','Neuer Lagerartikel','',mayWrite('stock'));
+  if(v==='reports') return mk('newReport','Neuer Tagesrapport','',mayWrite('reports'));
+  if(v==='sales'){ const t=SALE_T[UI.vkTab]?UI.vkTab:'rechnung'; return t==='mahnung'?null:mk('saleNew',({angebot:'Neues Angebot',auftrag:'Neue Auftragsbestätigung',lieferschein:'Neuer Lieferschein',abschlag:'Neue Abschlagsrechnung',rechnung:'Neue Rechnung',storno:'Neue Stornorechnung',gutschrift:'Neue Rechnungskorrektur'})[t]||'Neu',`data-type="${t}"`,mayWrite('sales')); }
+  if(v==='fin') return mk('finNew',UI.fiTab==='ein'?'Neue Einnahme':'Neue Ausgabe',`data-kind="${UI.fiTab==='ein'?'einnahme':'ausgabe'}"`,mayWrite('fin'));
+  if(v==='stamm'){ const k=['kunden','lieferanten','artikel'].includes(UI.stTab)?UI.stTab:'kunden'; return mk('stEdit',{kunden:'Neuer Kunde',lieferanten:'Neuer Lieferant',artikel:'Neuer Artikel'}[k],`data-k="${k}"`,mayWrite(k)); }
+  if(v==='hr') return mk('hrAbsNew','Urlaub beantragen','data-type="urlaub"');
+  if(v==='files'&&!['angebot','rapport','kommi'].includes(UI.fkind||'')) return mk('fdPick','Datei hochladen','data-pid=""',mayWrite('files'));
+  if(v==='offers') return mk('newOffer','Neues Angebot','',mayWrite('offers'));
+  return null; }
 function head(title,sub,actions=''){
-  return `<div class="topbar"><div class="t"><div class="eyebrow">${sub||''}</div><h1>${title}</h1></div><div class="row">${actions}<button class="btn sun desk" data-act="newMenu">${ic('plus')}Neu</button></div></div>`;
+  const c=ctxNew(), cb=c?`<button class="btn pri ctx-new" data-act="${c.act}" ${c.attr}>${ic('plus')}${esc(c.l)}</button>`:'';
+  // Gab es in der Rubrik schon einen (unauffälligen) Knopf für dasselbe, wird er durch den deutlichen ersetzt
+  if(c) actions=String(actions).replace(/<button\b[^>]*>[\s\S]*?<\/button>/g,b=>b.includes(`data-act="${c.act}"`)&&(!c.attr||b.includes(c.attr))?'':b);
+  return `<div class="topbar"><div class="t"><div class="eyebrow">${sub||''}</div><h1>${title}</h1></div><div class="row">${actions}${cb}<button class="btn sun desk" data-act="newMenu">${ic('plus')}Neu</button></div></div>`;
 }
 function banner(){
   if(MODE==='local') return `<div class="banner">Lokaler Modus: Die Datenbank ist in dieser Ansicht nicht erreichbar, Daten bleiben nur in diesem Browser. Über den veröffentlichten Link in claude.ai synchronisieren Laptop und Handy.</div>`;
@@ -2816,7 +2838,8 @@ function vProject(){
   const bigNav=`<button class="big-nav l" data-act="openProject" data-keep="1" data-id="${prev?prev.id:''}" ${prev?'':'disabled'} aria-label="Vorheriges Projekt${prev?': '+esc(prev.name):''}">${ic('left')}${prev?`<span class="bn-t">${esc(prev.name)}</span>`:''}</button><button class="big-nav r" data-act="openProject" data-keep="1" data-id="${next?next.id:''}" ${next?'':'disabled'} aria-label="Nächstes Projekt${next?': '+esc(next.name):''}">${ic('right')}${next?`<span class="bn-t">${esc(next.name)}</span>`:''}</button>`;
   return bigNav+pnav+(p.cover?`<div class="proj-cover"><img data-blob="${esc(p.cover)}" alt=""></div>`:'')+`<div class="topbar"><div class="t"><div class="eyebrow"><a href="#" data-act="nav" data-v="projects" style="color:inherit">Projekte</a> / ${esc(p.nr||'')}</div><h1>${esc(p.name)}</h1>
      <div class="row small" style="margin-top:6px"><select class="catsel" data-chg="setCat" data-pid="${p.id}" aria-label="Kategorie">${Object.entries(CATS).map(([k,l])=>`<option value="${k}" ${cat===k?'selected':''}>${l}</option>`).join('')}</select><span class="type t-${p.type}">${TYPES[p.type]||''}</span><span class="muted">${esc([p.customer,p.place,sizeLbl(p)].filter(Boolean).join(' · '))}</span>${p.pl?`<span class="role">PL ${esc(p.pl)}</span>`:''}${p.wartung?'<span class="pill ok">Wartungsvertrag</span>':''}${p.example?'<span class="pill">Beispiel</span>':''}</div></div>
-     <div class="row">${psearchBox(p)}<button class="btn" data-act="editProject" data-id="${p.id}">${ic('edit')}Bearbeiten</button><button class="btn sun desk" data-act="newMenu">${ic('plus')}Neu</button></div></div>
+     <div class="row"><button class="btn" data-act="editProject" data-id="${p.id}">${ic('edit')}Bearbeiten</button><button class="btn sun desk" data-act="newMenu">${ic('plus')}Neu</button></div></div>
+    ${gsearchBox(p)}
     ${isIntern(p)?'<div class="hint" style="margin-bottom:12px">Allgemeines Projekt ohne Statusablauf: Notizen, To-Dos, Bestellungen, Material und Dateien für alles ohne Kundenbezug (Lager, Büro, Werkstatt, Fahrzeuge).</div>':''}<section class="rail-wrap" ${isIntern(p)?'hidden':''}>
       <div class="rail-top"><div><div class="rd-ey"><span class="live"></span>STATUS</div><b>${pp.last?esc(pp.label):'noch kein Status'}</b>${pp.val?` <span class="rail-d">${esc(msVal(pp.val))}</span>`:''}</div>
         ${pp.next&&['planung','laufend'].includes(cat)?`<div class="rail-nx"><span>NEXT STEP</span>${esc(pp.nextLabel)}</div>`:''}
@@ -5374,13 +5397,19 @@ document.addEventListener('click',e=>{ const r=$('#pResults'); if(!r||!r.innerHT
 document.addEventListener('focusin',e=>{ if(e.target.id!=='pSearch') return; const r=$('#pResults'), p=S.projects[UI.pid]; if(r&&p&&!r.innerHTML) r.innerHTML=psearchHtml(p,e.target.value); });
 // Startseite: EIN Feld für alles – tippen = sofort suchen, Enter/Sprechen = Claude fragen („Zeig mir das neueste Update zum Energiepark“),
 // Dateien, Mails und Text reinziehen = wie bisher erkennen und zuordnen
-function gsearchBox(){
-  return `<section class="gs-wrap ask-box smart-drop" aria-label="Suchen, fragen oder Dateien ablegen"><div class="gs-in">${ic('search')}<input id="gSearch" type="search" autocomplete="off" enterkeyhint="go" placeholder="${SAMPLE?'Suchen oder fragen – z. B. „Zeig mir das neueste Update zum Energiepark“':'Alles durchsuchen: Projekte, Notizen, To-Dos, Bestellungen, Dateien, Lager …'}" value="${esc(UI.gq||'')}" aria-label="Suchen oder fragen">${SRec?`<button type="button" class="gs-mic" data-act="gsVoice" title="Sprechen: suchen oder fragen" aria-label="Sprechen">🎙</button>`:''}<button type="button" class="gs-mic gs-cam" data-act="gsCam" title="Foto aufnehmen - z. B. Lieferschein, Rechnung, Notiz. Die App erkennt, was es ist." aria-label="Kamera">📷</button>${SAMPLE&&CAN_SPEAK?`<button type="button" class="gs-spk ${ASK_SPEAK?'on':''}" data-act="askSpkTog" title="${ASK_SPEAK?'Antworten werden vorgelesen – ausschalten':'Antworten laut vorlesen lassen'}" aria-label="Antworten vorlesen" aria-pressed="${ASK_SPEAK}">${ASK_SPEAK?'🔊':'🔈'}</button>`:''}<button type="button" class="btn sun sm ask-go" data-act="askGo">Los</button></div>
-    <div class="ask-sub"><span>✨ Dateien, E-Mails (.msg/.eml), PDFs, Fotos oder Text hier reinziehen – die App erkennt, was es ist.</span><button type="button" class="lnk" data-act="smartPick">Datei wählen</button><button type="button" class="lnk" data-act="smartText">Text einfügen</button></div>
+// Dieselbe Leiste auch auf der Projektseite (p): Treffer zuerst aus dem Projekt, Fragen/Fotos/Dateien beziehen sich auf das Projekt
+const gsProj=()=>UI.view==='project'&&S.projects[UI.pid]||null;
+function gsResHtml(q){ const p=gsProj(); if(!p||String(q||'').trim().length<2) return gsearchHtml(q);
+  const pr=psearch(p,q).length?psearchHtml(p,q):'', gl=gsearchHtml(q);
+  return `<div class="gs-g"><div class="gs-h gs-sec">In diesem Projekt</div></div>${pr||'<div class="gs-none">Nichts in diesem Projekt.</div>'}${gl&&!/gs-none/.test(gl.slice(0,30))?`<div class="gs-g"><div class="gs-h gs-sec">Überall in der App</div></div>${gl}`:''}`; }
+function gsearchBox(p){
+  const key=p?p.id:''; if((UI.gqPid||'')!==key){ UI.gq=''; UI.gqPid=key; } // Suchtext gilt nur für die Seite, auf der er getippt wurde
+  return `<section class="gs-wrap ask-box smart-drop ${p?'gs-proj':''}" aria-label="Suchen, fragen oder Dateien ablegen"><div class="gs-in">${ic('search')}<input id="gSearch" type="search" autocomplete="off" enterkeyhint="go" placeholder="${p?(SAMPLE?'Im Projekt suchen oder fragen – z. B. „Was ist der letzte Stand?“':'Im Projekt suchen: Notizen, To-Dos, Bestellungen, Dateien …'):SAMPLE?'Suchen oder fragen – z. B. „Zeig mir das neueste Update zum Energiepark“':'Alles durchsuchen: Projekte, Notizen, To-Dos, Bestellungen, Dateien, Lager …'}" value="${esc(UI.gq||'')}" aria-label="Suchen oder fragen">${SRec?`<button type="button" class="gs-mic" data-act="gsVoice" title="Sprechen: suchen oder fragen" aria-label="Sprechen">🎙</button>`:''}<button type="button" class="gs-mic gs-cam" data-act="gsCam" title="Foto aufnehmen - z. B. Lieferschein, Rechnung, Notiz. Die App erkennt, was es ist." aria-label="Kamera">📷</button>${SAMPLE&&CAN_SPEAK?`<button type="button" class="gs-spk ${ASK_SPEAK?'on':''}" data-act="askSpkTog" title="${ASK_SPEAK?'Antworten werden vorgelesen – ausschalten':'Antworten laut vorlesen lassen'}" aria-label="Antworten vorlesen" aria-pressed="${ASK_SPEAK}">${ASK_SPEAK?'🔊':'🔈'}</button>`:''}<button type="button" class="btn sun sm ask-go" data-act="askGo">Los</button></div>
+    <div class="ask-sub"><span>✨ Dateien, E-Mails (.msg/.eml), PDFs, Fotos oder Text hier reinziehen – die App erkennt, was es ist${p?' und ordnet es diesem Projekt zu':''}.</span><button type="button" class="lnk" data-act="smartPick">Datei wählen</button><button type="button" class="lnk" data-act="smartText">Text einfügen</button></div>
     <div id="askOut" class="ask-ans" role="status"></div>
-    <div id="gResults" class="gs-res" role="region" aria-live="polite">${gsearchHtml(UI.gq)}</div></section><input type="file" id="smartIn" multiple hidden><input type="file" id="camIn" accept="image/*" capture="environment" hidden>`;
+    <div id="gResults" class="gs-res" role="region" aria-live="polite">${gsResHtml(UI.gq)}</div></section><input type="file" id="smartIn" multiple hidden><input type="file" id="camIn" accept="image/*" capture="environment" hidden>`;
 }
-let gT; document.addEventListener('input',e=>{ if(e.target.id!=='gSearch') return; UI.gq=e.target.value; const o=$('#askOut'); if(o) o.innerHTML=''; clearTimeout(gT); gT=setTimeout(()=>{ const r=$('#gResults'); if(r) r.innerHTML=gsearchHtml(UI.gq); },150); });
+let gT; document.addEventListener('input',e=>{ if(e.target.id!=='gSearch') return; UI.gq=e.target.value; const o=$('#askOut'); if(o) o.innerHTML=''; clearTimeout(gT); gT=setTimeout(()=>{ const r=$('#gResults'); if(r) r.innerHTML=gsResHtml(UI.gq); },150); });
 document.addEventListener('keydown',e=>{ if(e.target&&e.target.id==='gSearch'&&e.key==='Enter'){ e.preventDefault(); askRun(e.target.value); } });
 document.addEventListener('dragover',e=>{ const z=e.target.closest&&e.target.closest('.ask-box'); if(z){ e.preventDefault(); z.classList.add('over'); } });
 document.addEventListener('dragleave',e=>{ const z=e.target.closest&&e.target.closest('.ask-box'); if(z&&!z.contains(e.relatedTarget)) z.classList.remove('over'); });
@@ -5391,7 +5420,7 @@ A.askGo=()=>{ const i=$('#gSearch'); if(i) askRun(i.value); };
 // Enter / Sprechen: kurze Begriffe → bester Treffer; Sätze und Fragen → Claude
 function askRun(q){
   q=fixNames(String(q||'').trim()).replace(/[.!]+$/,''); if(q.length<2) return;
-  const words=q.split(/\s+/).length, res=gsearch(q);
+  const p=gsProj(), words=q.split(/\s+/).length, res=[...(p?psearch(p,q):[]),...gsearch(q)];
   if(SAMPLE&&(words>=3||/\?$/.test(q)||!res.length)) return askAI(q);
   if(res.length){ const r=res[0]; A[r.act]&&A[r.act]({id:r.id,at:r.at,v:r.v}); return; }
   toast('Nichts gefunden.');
@@ -5565,10 +5594,10 @@ async function aiChat(q){
   const views=NAV.filter(n=>canSee(n[0])&&!String(n[0]).startsWith('f:')).map(n=>n[0]+' = '+n[1]).join(', ');
   try{ const r=await SAMPLE.json(`Du bist der KI-Assistent in der Projekt-App der nutz die Sonne GmbH (Solar-Installationsbetrieb: PV-Anlagen, Speicher, Ladesäulen). Heute ist ${fmtD(TODAY())} (${TODAY()}), ich bin ${meK()}.
 Antworte wie ein guter Chat-Assistent: genau, vollständig, knapp, auf Deutsch. Nutze NUR die Daten unten – nichts erfinden; fehlt etwas, sag es. Zahlen und Listen exakt aus den Daten zählen. Datumsangaben als TT.MM., Mitarbeiter als Kürzel.
-${hist?'Bisheriges Gespräch:\n'+hist+'\n':''}Neue Nachricht: """${q.slice(0,1500)}"""
+${gsProj()?'Ich habe gerade das Projekt „'+gsProj().name+'“ (id '+gsProj().id+') geöffnet – Fragen ohne Projektnamen beziehen sich auf dieses Projekt.\n':''}${hist?'Bisheriges Gespräch:\n'+hist+'\n':''}Neue Nachricht: """${q.slice(0,1500)}"""
 
 DATEN:
-${aiSnapshot(q,hist)}
+${aiSnapshot(gsProj()?q+' '+gsProj().name:q,hist)}
 
 Ansichten der App: ${views}
 Projekt-Reiter: status (Notizen + To-Dos), todos (alle To-Dos des Projekts), material (Bestellungen), timeline, dateien, infos.
@@ -5907,7 +5936,8 @@ async function smartDrop(files,text){
   let type=guessKind((f&&f.name)||'',all,!!mail,f&&f.type); type={mail:'korrespondenz'}[type]||type;
   if(!files.length&&!mail) type=isTodoList(body)?'todos':'notiz';
   if(/^image\//.test((f&&f.type)||'')&&/liefer|ls[-_ ]?\d/i.test(f.name)) type='lieferschein';
-  let pid=matchProject(all).pid||'', orderId='', summary='', why='', related=null;
+  const curP=gsProj(); // auf der Projektseite abgelegt → gehört im Zweifel zu diesem Projekt
+  let pid=curP?curP.id:(matchProject(all).pid||''), orderId='', summary='', why='', related=null;
   const openOrders=arr('orders').filter(o=>orderState(o).open);
   if(SAMPLE){
     const plist=arr('projects').filter(p=>['laufend','planung','onhold'].includes(catOf(p))).map(p=>`${p.id} | ${p.name} | ${p.nr||''} | ${String(p.place||'').replace(/\n/g,' ')} | ${p.customer||''}`).join('\n');
@@ -5923,7 +5953,7 @@ Was ist das? Wähle genau einen Typ:
 - "todos": Text/Mail, aus der sich vor allem Aufgaben für uns ergeben, oder eine Aufgabenliste
 - "notiz": Stand/Info zu einem Projekt ohne konkrete Aufgabe (z. B. Baustellenbericht, Gesprächsnotiz)
 - "angebot": Angebot (von uns an Kunden oder von Lieferanten an uns), "korrespondenz": sonstige Mail ohne Aufgaben, "plan", "foto", "vertrag", "sonst"
-Ordne ein Projekt zu, wenn eindeutig (Projektname, Nummer, Kommission, Adresse, Kunde); Lager/Büro: "intern"; sonst "". Bei Lieferschein/AB/Rechnung: passende offene Bestellung (orderId), falls Lieferant + Nummer/Positionen passen, sonst "".
+${curP?`Es wurde im geöffneten Projekt „${curP.name}“ (ID ${curP.id}) abgelegt: projectId = ${curP.id}, außer der Inhalt gehört eindeutig zu einem anderen Projekt.\n`:''}Ordne ein Projekt zu, wenn eindeutig (Projektname, Nummer, Kommission, Adresse, Kunde); Lager/Büro: "intern"; sonst "". Bei Lieferschein/AB/Rechnung: passende offene Bestellung (orderId), falls Lieferant + Nummer/Positionen passen, sonst "".
 Prüfe außerdem: Ist das eine Rückmeldung, ein Fortschritt oder eine Erledigung zu einem der offenen To-Dos (gleiche Sache, nicht nur gleiches Projekt)? Dann in "related" aufnehmen: relation "update" (neue Info) oder "erledigt" (die Sache ist damit erledigt), update = 1 kurzer Satz, was neu ist. Sonst related leer.
 Antworte nur mit JSON: {"type":"","projectId":"","orderId":"","summary":"1 Satz, was es ist und worum es geht","why":"kurz","related":[{"id":"To-Do-ID","relation":"update|erledigt","update":"kurz"}]}`;
     try{ const r=await SAMPLE.json(prompt,{modelTier:'default',...(imgs.length?{images:imgs}:{})});
