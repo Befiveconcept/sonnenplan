@@ -795,8 +795,10 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .aic[hidden]{display:none}
 .aic-h{display:flex;align-items:center;gap:6px;padding:10px 12px;background:var(--night);color:#fff}
 .aic-h b{color:var(--sun);font-size:15px}
-.aic-ib{width:30px;height:30px;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:#fff;cursor:pointer;font-size:14px}
-.aic-ib.on{background:var(--sun);color:var(--ink)}
+.aic-ib{width:36px;height:36px;border-radius:50%;border:0;background:#fff;color:#111;cursor:pointer;font-size:17px;font-weight:700;display:grid;place-items:center;flex:none}.aic-ib:hover{background:var(--sun)}
+.aic-ib.on{background:var(--sun);color:#111}
+.aic-h{padding-top:max(10px,env(safe-area-inset-top,0px))}.aic-in{padding-bottom:max(10px,env(safe-area-inset-bottom,0px))}.aic-in .gs-mic{width:40px;height:40px;font-size:18px;color:#111}
+@media (max-width:760px){ .aic-h{gap:10px;padding-left:14px;padding-right:12px} .aic-ib{width:40px;height:40px;font-size:19px} .aic-in .btn{min-height:40px} }
 .aic-msgs{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--bg)}
 .aic-empty{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
 .aic-empty .chip{text-align:left}
@@ -3479,7 +3481,7 @@ const wvDue=(list,onlyMine)=>(list||arr('tasks')).filter(t=>!t.done&&t.wv&&t.wv<
 const wvRow=t=>`<div class="wv-row"><div class="wv-b clickable" data-act="editTask" data-id="${t.id}"><b>${esc(t.title)}</b><div class="small muted">${esc([t.wvNote,projName(t.pid),t.who?shortWho(t.who):'',t.wv<TODAY()?'seit '+fmtD(t.wv):'heute'].filter(Boolean).join(' · '))}</div></div>
   <div class="wv-a"><button type="button" class="btn sm" data-act="wvDone" data-id="${t.id}" title="Wiedervorlage erledigt, To-Do bleibt offen">✓ Gesehen</button><select class="inp wv-sn" data-chg="wvSnooze" data-id="${t.id}" aria-label="Neue Wiedervorlage"><option value="">↻ neue WV …</option>${WV_QUICK.map(([l,k])=>`<option value="${k}">${l}</option>`).join('')}</select><button type="button" class="btn ghost sm" data-act="wvTaskDone" data-id="${t.id}" title="To-Do ist erledigt">To-Do erledigt</button></div></div>`;
 function wvCard(open){ const due=wvDue(open); return due.length?`<div class="card wv-card"><div class="card-h"><h3>🔔 Wiedervorlage fällig · ${due.length}</h3></div>${due.map(wvRow).join('')}</div>`:''; }
-function wvDashStrip(){ const due=wvDue(null,true); return due.length?`<div class="hr-strip wv-strip"><b>🔔 ${due.length} Wiedervorlage${due.length>1?'n':''} für dich</b><span class="small muted">${esc(due.slice(0,2).map(t=>t.title).join(' · '))}${due.length>2?' …':''}</span><span class="spacer"></span><button class="btn sun sm" data-act="wvShow">Ansehen</button></div>`:''; }
+function wvDashStrip(){ const due=wvDue(null,true); return due.length&&WV_STRIP_HIDE!==TODAY()?`<div class="hr-strip wv-strip"><b>🔔 ${due.length} Wiedervorlage${due.length>1?'n':''} für dich</b><span class="small muted">${esc(due.slice(0,2).map(t=>t.title).join(' · '))}${due.length>2?' …':''}</span><span class="spacer"></span><button class="btn sun sm" data-act="wvShow">Ansehen</button></div>`:''; }
 function wvRemind(force){ const due=wvDue(null,true); if(!due.length){ if(force) toast('Keine Wiedervorlagen fällig.'); return; }
   const key='sonnenplan-wv-'+meK(); if(!force&&lsGet(key)===TODAY()) return; if(SHEET){ setTimeout(()=>wvRemind(force),2000); return; }
   try{ localStorage.setItem(key,TODAY()); }catch(e){}
@@ -4765,6 +4767,17 @@ function showMenu(anchor,items){
   let top=r.bottom+6; if(top+h>window.innerHeight-12) top=r.top-h-6;
   m.style.left=left+'px'; m.style.top=Math.max(12,top)+'px';
 }
+// Meldungen (Live-Meldungen, Hinweise, Rückgängig-Leiste, Wiedervorlage-Leiste) am Handy zur Seite wegwischen
+(()=>{ const SEL='.live-t,#toast,#kxUndo,.wv-strip'; let el=null,x0=0,y0=0,dx=0,moved=false,bt='';
+  const reset=x=>{ x.style.transition=''; x.style.transform=''; x.style.opacity=''; };
+  document.addEventListener('touchstart',e=>{ const t=e.target.closest&&e.target.closest(SEL); if(!t||e.touches.length!==1) return; el=t; x0=e.touches[0].clientX; y0=e.touches[0].clientY; dx=0; moved=false; const tr=getComputedStyle(el).transform; bt=tr==='none'?'':tr; el.style.transition='none'; },{passive:true});
+  document.addEventListener('touchmove',e=>{ if(!el) return; const p=e.touches[0]; dx=p.clientX-x0; const dy=p.clientY-y0; if(!moved){ if(Math.abs(dx)<10&&Math.abs(dy)<10) return; if(Math.abs(dy)>Math.abs(dx)){ reset(el); el=null; return; } moved=true; } el.style.transform=bt+' translateX('+dx+'px)'; el.style.opacity=String(Math.max(.15,1-Math.abs(dx)/220)); },{passive:true});
+  document.addEventListener('touchend',()=>{ if(!el) return; const x=el; el=null; if(!moved){ reset(x); return; } SWIPED_AT=Date.now();
+    if(Math.abs(dx)>70){ x.style.transition='transform .2s ease-in,opacity .2s'; x.style.transform=bt+' translateX('+(dx>0?420:-420)+'px)'; x.style.opacity='0';
+      setTimeout(()=>{ reset(x); if(x.id==='toast') x.hidden=true; else if(x.id==='kxUndo') x.classList.remove('on'); else if(x.classList.contains('wv-strip')){ x.remove(); WV_STRIP_HIDE=TODAY(); } else x.remove(); },200); }
+    else { x.style.transition='transform .2s,opacity .2s'; x.style.transform=bt; x.style.opacity='1'; setTimeout(()=>reset(x),220); } });
+  document.addEventListener('click',e=>{ if(Date.now()-SWIPED_AT<350&&e.target.closest&&e.target.closest(SEL)){ e.stopImmediatePropagation(); e.preventDefault(); } },true); })();
+var SWIPED_AT=0, WV_STRIP_HIDE='';
 let tT; function toast(msg){ let t=$('#toast'); if(!t){ t=document.createElement('div'); t.className='toast'; t.id='toast'; t.setAttribute('role','status'); document.body.appendChild(t); } t.textContent=msg; t.hidden=false; clearTimeout(tT); tT=setTimeout(()=>{ t.hidden=true; },3200); }
 async function copyText(s,ok){ try{ await navigator.clipboard.writeText(s); toast(ok); }catch(e){ openSheet({title:'Zum Kopieren markieren',html:`<div class="fld full"><textarea id="cpy" style="min-height:120px">${esc(s)}</textarea></div>`,saveLabel:'Fertig',onSave:()=>{}}); setTimeout(()=>{ const t=$('#cpy'); t&&t.select(); },50); } }
 
@@ -5373,7 +5386,7 @@ function aicEl(){ let d=$('#aic'); if(d) return d;
   d=document.createElement('section'); d.id='aic'; d.className='aic'; d.hidden=true; d.setAttribute('aria-label','KI-Assistent');
   d.innerHTML=`<header class="aic-h"><b>✨ Assistent</b><span class="spacer"></span>${CAN_SPEAK?'<button type="button" class="aic-ib" data-aic="spk" title="Antworten vorlesen"></button>':''}<button type="button" class="aic-ib" data-aic="new" title="Neues Gespräch">↺</button><button type="button" class="aic-ib" data-aic="close" title="Schließen">✕</button></header>
     <div class="aic-msgs" id="aic_msgs"></div>
-    <form class="aic-in" id="aic_f"><textarea id="aic_tx" rows="1" placeholder="Frag mich etwas – z. B. „Diagramm: offene To-Dos je Mitarbeiter“" aria-label="Nachricht"></textarea>${SRec?'<button type="button" class="gs-mic" data-aic="mic" title="Sprechen">🎙</button>':''}<button type="submit" class="btn sun sm">Los</button></form>`;
+    <form class="aic-in" id="aic_f"><textarea id="aic_tx" rows="1" placeholder="Frag mich etwas – z. B. „Diagramm: offene To-Dos je Mitarbeiter“" aria-label="Nachricht"></textarea>${SRec?'<button type="button" class="gs-mic" data-aic="mic" title="Sprechen" aria-label="Sprechen">'+SVG_MIC+'</button>':''}<button type="submit" class="btn sun sm">Los</button></form>`;
   document.body.appendChild(d);
   d.addEventListener('click',e=>{ const b=e.target.closest('[data-aic]'); if(!b) return; const k=b.dataset.aic;
     if(k==='close') aicShow(false); else if(k==='new'){ AIC.msgs=[]; speakStop(); aicPaint(); } else if(k==='spk'){ A.askSpkTog(); aicPaint(); }
@@ -5409,7 +5422,11 @@ function aicChart(c){
   return `<div class="aic-ch">${head}<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(c.title||'Diagramm')}">${grid}${marks}${xl}</svg>${SR.length>1?leg(SR.map((s,k)=>[s.name,COL[k]])):''}</div>`;
 }
 function aicOpenLabel(o){ if(!o) return ''; if(o.task&&S.tasks[o.task]) return 'To-Do „'+S.tasks[o.task].title.slice(0,40)+'“ öffnen'; if(o.pid&&S.projects[o.pid]) return projName(o.pid)+' · '+({todos:'To-Dos',material:'Material/Bestellungen',timeline:'Timeline',dateien:'Dateien',infos:'Infos'}[o.tab]||'Notizen')+' öffnen'; const n=NAV.find(n=>n[0]===o.view); return n?n[1]+' öffnen':''; }
-function aicPaint(){ const box=$('#aic_msgs'); if(!box) return; const sp=document.querySelector('#aic [data-aic=spk]'); if(sp){ sp.textContent=ASK_SPEAK?'🔊':'🔈'; sp.classList.toggle('on',ASK_SPEAK); }
+// klare Symbole statt Emojis (Emojis erscheinen am Handy oft blass)
+const SVG_SPK_ON='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
+const SVG_SPK_OFF='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
+const SVG_MIC='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+function aicPaint(){ const box=$('#aic_msgs'); if(!box) return; const sp=document.querySelector('#aic [data-aic=spk]'); if(sp){ sp.innerHTML=ASK_SPEAK?SVG_SPK_ON:SVG_SPK_OFF; sp.title=ASK_SPEAK?'Vorlesen ist an – ausschalten':'Antworten vorlesen lassen'; sp.classList.toggle('on',ASK_SPEAK); }
   box.innerHTML=(AIC.msgs.length?'':`<div class="aic-empty"><b>Was möchtest du wissen?</b><div class="small muted">Ich kenne alle Projekte, Notizen, To-Dos, Bestellungen, Lager und die Wochenplanung. Beispiele:</div>${['Gib mir alle To-Dos zum Energiepark','Was ist diese Woche bei Strundepark passiert?','Diagramm: offene To-Dos je Mitarbeiter','Welche Lieferungen kommen diese Woche?'].map(x=>`<button type="button" class="chip" data-aicq="${esc(x)}">${esc(x)}</button>`).join('')}</div>`)+
     AIC.msgs.map((m,i)=>m.role==='u'?`<div class="aic-m u">${esc(m.text)}</div>`:`<div class="aic-m a">${m.err?`<span class="muted">${esc(m.text)}</span>`:aicMd(m.text)}${aicTable(m.table)}${aicChart(m.chart)}${aicActsHtml(m,i)}<div class="aic-acts">${m.open&&aicOpenLabel(m.open)?`<button type="button" class="lnk" data-aic="go" data-i="${i}">↗ ${esc(aicOpenLabel(m.open))}</button>`:''}${CAN_SPEAK&&m.text&&!m.err?`<button type="button" class="lnk" data-aic="say" data-i="${i}">🔊 Vorlesen</button>`:''}</div></div>`).join('')+
     (AIC.busy?'<div class="aic-m a"><span class="aic-dots"><i></i><i></i><i></i></span></div>':'');
@@ -7581,7 +7598,7 @@ document.addEventListener('paste',e=>{ if(UI.view!=='todos'||SHEET) return; cons
   const files=[...(e.clipboardData.files||[])], text=e.clipboardData.getData('text/plain')||''; if(!files.length&&text.trim().length<30) return; e.preventDefault(); e.stopImmediatePropagation(); mailToTodos(files,text); },true);
 
 // Handy: im Projekt nach links/rechts wischen = nächstes/voriges Projekt (wie die Pfeile am Desktop)
-(()=>{ let x0=0,y0=0,t0=0,ok=false; const NO='input,textarea,select,[contenteditable],.rail,.tbl-wrap,.chips,.sl-items,.dcols,.board,.hscroll,.sheet,#scrim,.aic,.side';
+(()=>{ let x0=0,y0=0,t0=0,ok=false; const NO='input,textarea,select,[contenteditable],.rail,.tbl-wrap,.chips,.sl-items,.dcols,.board,.hscroll,.sheet,#scrim,.aic,.side,.live-t,#toast,#kxUndo,.wv-strip';
   document.addEventListener('touchstart',e=>{ ok=false; if(UI.view!=='project'||innerWidth>900||e.touches.length!==1||SHEET||document.body.classList.contains('nav-open')) return; if(e.target.closest&&e.target.closest(NO)) return;
     const t=e.touches[0]; x0=t.clientX; y0=t.clientY; t0=Date.now(); ok=x0>16&&x0<innerWidth-16; },{passive:true}); // Ränder frei lassen (Zurück-Geste des Handys)
   document.addEventListener('touchend',e=>{ if(!ok) return; ok=false; const t=e.changedTouches[0], dx=t.clientX-x0, dy=t.clientY-y0;
