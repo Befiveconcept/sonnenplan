@@ -608,6 +608,9 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 @media (max-width:900px){ .hp-wrap{grid-template-columns:minmax(0,1fr)} .hp-side{position:static} .kx-head,.kx-row{grid-template-columns:120px minmax(520px,1fr)} }
 .nav-btn .cnt.alert,.nav-btn.on .cnt.alert{background:#E5383B;color:#fff;font-weight:700;animation:cntPulse 1.8s ease-out infinite}
 @keyframes cntPulse{0%{box-shadow:0 0 0 0 rgba(229,56,59,.65)}70%{box-shadow:0 0 0 7px rgba(229,56,59,0)}100%{box-shadow:0 0 0 0 rgba(229,56,59,0)}}
+.rec-lamp{flex:none;width:10px;height:10px;border-radius:50%;background:#E5383B;margin-left:6px;animation:recLamp 1.2s ease-in-out infinite}
+.nav-gh .rec-lamp{margin:0 6px 0 auto}.tb-rec{position:absolute;top:5px;right:calc(50% - 18px);margin:0}
+@keyframes recLamp{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(229,56,59,.7)}50%{opacity:.55;box-shadow:0 0 0 5px rgba(229,56,59,0)}}
 .tabbar button{position:relative}.tb-dot{position:absolute;top:4px;left:calc(50% + 6px);min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:#E5383B;color:#fff;font-size:10.5px;font-weight:700;line-height:17px;text-align:center}
 .menu-row{display:flex;align-items:stretch}.menu-row>button:first-child{flex:1;min-width:0}
 .menu .menu-x{flex:none;width:30px;justify-content:center;padding:0;color:var(--muted);font-size:17px;font-weight:700;opacity:.45}.menu .menu-row:hover .menu-x{opacity:1}.menu .menu-x:hover{color:var(--ink);background:var(--sunken)}
@@ -2296,16 +2299,18 @@ const navSubOpen=(v,kids,cur)=>{ const s=UI.navOpen&&UI.navOpen[v]; return s===t
 const NAV_PIN_KEY=()=>'sonnenplan-pins-'+(ME?meK():'');
 const navPins=()=>{ try{ return (JSON.parse(lsGet(NAV_PIN_KEY())||'[]')||[]).filter(v=>NAV.some(n=>n[0]===v)&&canSee(v)).slice(0,3); }catch(e){ return []; } };
 const navLabel=v=>{ const n=NAV.find(x=>x[0]===v); if(!n) return v; const p=n[3]&&NAV.find(x=>x[0]===n[3]); return (p?p[1]+' · ':'')+n[1]; };
+// Rote Lampe am Menüpunkt Meetings, solange eine Mitschrift läuft (auch wenn man woanders in der App ist)
+const recLamp=v=>v==='meetings'&&MEET_ON?'<span class="rec-lamp" title="Meeting-Mitschrift läuft – Mikrofon ist an" aria-label="Aufnahme läuft"></span>':'';
 function navItem([v,l,i],cur,cnt){ const kids=NAV.filter(n=>n[3]===v&&canSee(n[0])), open=kids.length&&navSubOpen(v,kids,cur), pins=navPins();
   const pin=x=>`<button class="nav-pin ${pins.includes(x)?'on':''}" data-act="navPin" data-v="${x}" title="${pins.includes(x)?'Nicht mehr oben anheften':'Oben anheften (max. 3)'}" aria-label="Anheften">☀</button>`;
-  return `<div class="nav-row"><button class="nav-btn ${cur===v?'on':''}" data-act="nav" data-v="${v}">${ic(i)}<span>${l}</span>${cnt[v]?`<span class="cnt ${v==='chat'?'alert':''}">${cnt[v]}</span>`:''}</button>${v!=='dash'?pin(v):''}${kids.length?`<button class="nav-tg ${open?'open':''}" data-act="navToggle" data-v="${v}" aria-label="${open?'Zuklappen':'Aufklappen'}" aria-expanded="${open?'true':'false'}">▾</button>`:''}</div>`+
-    (open?kids.map(([kv,kl,ki])=>`<div class="nav-row sub"><button class="nav-btn sub ${cur===kv?'on':''}" data-act="nav" data-v="${kv}">${ic(ki)}<span>${kl}</span>${cnt[kv]?`<span class="cnt">${cnt[kv]}</span>`:''}</button>${pin(kv)}</div>`).join(''):''); }
+  return `<div class="nav-row"><button class="nav-btn ${cur===v?'on':''}" data-act="nav" data-v="${v}">${ic(i)}<span>${l}</span>${recLamp(v)}${cnt[v]?`<span class="cnt ${v==='chat'?'alert':''}">${cnt[v]}</span>`:''}</button>${v!=='dash'?pin(v):''}${kids.length?`<button class="nav-tg ${open?'open':''}" data-act="navToggle" data-v="${v}" aria-label="${open?'Zuklappen':'Aufklappen'}" aria-expanded="${open?'true':'false'}">▾</button>`:''}</div>`+
+    (open?kids.map(([kv,kl,ki])=>`<div class="nav-row sub"><button class="nav-btn sub ${cur===kv?'on':''}" data-act="nav" data-v="${kv}">${ic(ki)}<span>${kl}</span>${recLamp(kv)}${cnt[kv]?`<span class="cnt">${cnt[kv]}</span>`:''}</button>${pin(kv)}</div>`).join(''):''); }
 var NAV_CUR='dash';
 function navSide(cur,cnt){ NAV_CUR=cur; const pins=navPins();
-  const pinHtml=pins.length?`<div class="nav-pins"><div class="nav-pins-h">☀ Angeheftet</div>${pins.map(v=>{ const n=NAV.find(x=>x[0]===v); return `<div class="nav-row"><button class="nav-btn ${cur===v?'on':''}" data-act="nav" data-v="${v}">${ic(n[2])}<span>${esc(navLabel(v))}</span>${cnt[v]?`<span class="cnt">${cnt[v]}</span>`:''}</button><button class="nav-pin on" data-act="navPin" data-v="${v}" title="Lösen" aria-label="Lösen">☀</button></div>`; }).join('')}</div>`:'';
+  const pinHtml=pins.length?`<div class="nav-pins"><div class="nav-pins-h">☀ Angeheftet</div>${pins.map(v=>{ const n=NAV.find(x=>x[0]===v); return `<div class="nav-row"><button class="nav-btn ${cur===v?'on':''}" data-act="nav" data-v="${v}">${ic(n[2])}<span>${esc(navLabel(v))}</span>${recLamp(v)}${cnt[v]?`<span class="cnt">${cnt[v]}</span>`:''}</button><button class="nav-pin on" data-act="navPin" data-v="${v}" title="Lösen" aria-label="Lösen">☀</button></div>`; }).join('')}</div>`:'';
   return navGroups().map(([g,l,items])=>{ const html=items.map(n=>navItem(n,cur,cnt)).join(''); if(!g) return html+pinHtml;
   const open=navGrpOpen(g,items,cur), c=items.reduce((a,n)=>a+(+cnt[n[0]]||0),0);
-  return `<div class="nav-grp ${open?'open':''}"><button class="nav-gh" data-act="navGrp" data-g="${g}" aria-expanded="${open?'true':'false'}"><span>${l}</span>${!open&&c?`<span class="cnt">${c}</span>`:''}<span class="nav-gc" aria-hidden="true">▾</span></button>${open?html:''}</div>`; }).join(''); }function renderShell(){  const openTodos=arr('tasks').filter(t=>!t.done&&!(t.pool&&!t.who)).length, openOrders=arr('orders').filter(o=>orderState(o).open).length;
+  return `<div class="nav-grp ${open?'open':''}"><button class="nav-gh" data-act="navGrp" data-g="${g}" aria-expanded="${open?'true':'false'}"><span>${l}</span>${!open&&items.some(n=>n[0]==='meetings')?recLamp('meetings'):''}${!open&&c?`<span class="cnt">${c}</span>`:''}<span class="nav-gc" aria-hidden="true">▾</span></button>${open?html:''}</div>`; }).join(''); }function renderShell(){  const openTodos=arr('tasks').filter(t=>!t.done&&!(t.pool&&!t.who)).length, openOrders=arr('orders').filter(o=>orderState(o).open).length;
   const cnt={projects:activeProjects().length,todos:openTodos,orders:ordApprover()?ordPending().length||openOrders:openOrders,chat:chatUnreadAll(),private:Object.values(S.priv||{}).filter(t=>!t.done).length,pool:arr('tasks').filter(t=>t.pool&&!t.done&&!t.who).length};
   const cur = UI.view==='sales'?'vk:'+(UI.vkTab||'rechnung'):UI.view==='fin'?'fi:'+(UI.fiTab||'bank'):UI.view==='stamm'?'st:'+(UI.stTab||'kunden'):UI.view==='project'?'projects':UI.view==='calendar'?'week':UI.view==='files'&&UI.fkind?'f:'+UI.fkind:UI.view==='offers'?'f:angebot':UI.view==='reports'?'f:rapport':UI.view;
   $('#side').innerHTML = `<div class="brand"><div class="wordmark"><span class="y">NUTZ DIE</span> <span class="g">SONNE</span></div><small>Projektsteuerung</small></div>`+
@@ -2314,8 +2319,8 @@ function navSide(cur,cnt){ NAV_CUR=cur; const pins=navPins();
   $('#mtop').innerHTML = (UI.view==='project'?`<button class="icon-btn" data-act="nav" data-v="projects" aria-label="Zurück">${ic('back')}</button>`:'<div class="wordmark"><span class="y">NUTZ DIE</span> <span class="g">SONNE</span></div>')+`<b>${UI.view==='dash'?'':VIEW_T[UI.view]||''}</b><button class="btn sun sm" data-act="newMenu">${ic('plus')}Neu</button>`;
   const tb=[['dash','Übersicht','dash'],['projects','Projekte','proj'],['week','Kalender','cal'],['todos','To-Dos','todo']];
   const inMore=!tb.some(t=>t[0]===cur);
-  $('#tabbar').innerHTML = tb.map(([v,l,i])=>`<button class="${cur===v?'on':''}" data-act="nav" data-v="${v}">${ic(i)}${l}</button>`).join('')+`<button class="${inMore?'on':''}" data-act="moreMenu">${ic('more')}Mehr${cnt.chat?`<span class="tb-dot" aria-label="${cnt.chat} ungelesene Chat-Nachrichten">${cnt.chat}</span>`:''}</button>`;
-  document.title=(cnt.chat?'('+cnt.chat+') ':'')+'Sonnenplan Projektsteuerung';
+  $('#tabbar').innerHTML = tb.map(([v,l,i])=>`<button class="${cur===v?'on':''}" data-act="nav" data-v="${v}">${ic(i)}${l}</button>`).join('')+`<button class="${inMore?'on':''}" data-act="moreMenu">${ic('more')}Mehr${MEET_ON?'<span class="rec-lamp tb-rec" aria-label="Meeting-Aufnahme läuft"></span>':''}${cnt.chat?`<span class="tb-dot" aria-label="${cnt.chat} ungelesene Chat-Nachrichten">${cnt.chat}</span>`:''}</button>`;
+  document.title=(MEET_ON?'● Aufnahme · ':'')+(cnt.chat?'('+cnt.chat+') ':'')+'Sonnenplan Projektsteuerung';
   $('#staffList').innerHTML = staff().map(s=>`<option value="${esc(s.name)}">`).join('');
   const sup=[...new Set(arr('orders').map(o=>o.supplier).filter(Boolean))];
   $('#supplierList').innerHTML = sup.map(s=>`<option value="${esc(s)}">`).join('');
@@ -5978,7 +5983,7 @@ document.addEventListener('paste',e=>{ if(UI.view!=='dash'||SHEET) return; const
 /* ========== Meetings: Mitschrift per Mikrofon, Claude macht daraus Projekt-Notizen und To-Dos ========== */
 // Spracherkennung des Browsers (Chrome/Edge). Text liegt im Speicher (MEET_TX), damit ein Neuzeichnen nichts löscht.
 const SRec=window.SpeechRecognition||window.webkitSpeechRecognition;
-const MEET_TX={}; let MEET_REC=null, MEET_ON='', MEET_INT='', MEET_SAVE=null;
+const MEET_TX={}; var MEET_REC=null, MEET_ON='', MEET_INT='', MEET_SAVE=null; /* var: Menü (renderShell) liest MEET_ON schon vorher */
 const meetTx=m=>MEET_TX[m.id]!==undefined?MEET_TX[m.id]:(m.tx||'');
 function meetSave(id,silent){ const m=S.meetings&&S.meetings[id]; if(!m) return; const tx=meetTx(m); if(tx===m.tx) return; put('meetings',{...clone(m),tx}); if(!silent) toast('Mitschrift gespeichert.'); }
 function meetNew(){ const m={id:uid(),title:'Meeting '+fmtD(TODAY()),date:TODAY(),time:nowStamp().slice(9),who:ME?[ME]:[],pids:[],tx:'',status:'offen'}; put('meetings',m); UI.mid=m.id; go('meetings'); }
