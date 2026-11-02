@@ -1199,6 +1199,11 @@ body.stock-dragging .pick{outline:2px dashed rgba(244,219,2,.8);outline-offset:2
 .task-del:hover{opacity:1;color:#C0392B}
 .fl-list{display:flex;flex-direction:column}
 .fl{display:grid;grid-template-columns:20px 110px minmax(220px,1fr) minmax(140px,210px) 130px 104px;gap:10px;align-items:center;padding:10px 16px;border-top:1px solid var(--line)}
+.fl[draggable=true]{cursor:grab}.fl[draggable=true]:active{cursor:grabbing}
+#fkBar{position:fixed;left:50%;top:12px;transform:translate(-50%,-140%);z-index:500;display:flex;flex-wrap:wrap;gap:6px;align-items:center;max-width:min(980px,96vw);background:#111;color:#fff;border-radius:14px;padding:10px 12px;box-shadow:0 10px 30px rgba(0,0,0,.35);transition:transform .15s}
+#fkBar.on{transform:translate(-50%,0)}#fkBar>span{font-size:12.5px;color:var(--sun);font-weight:700;margin-right:4px}
+.fk-t{background:#2a2a2a;color:#fff;border:1.5px dashed #555;border-radius:10px;padding:7px 11px;font-size:13px}.fk-t.cur{opacity:.45}
+.fk-t.fk-over,.chip.fk-over,summary.fk-over{background:var(--sun)!important;color:#111!important;border-color:var(--sun)!important;outline:2px solid var(--sun)}
 .fl.unassigned{background:rgba(244,219,2,.08)}
 .fl-k{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;border-radius:8px;padding:4px 8px;background:#efefe9;color:#444;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fl-k.k-rechnung{background:#FDE7E3;color:#8a2a17}.fl-k.k-angebot{background:#E5EFFC;color:#1d4f91}.fl-k.k-ab,.fl-k.k-bestellung{background:#EDE6FA;color:#5a3596}.fl-k.k-lieferschein{background:#E4F4E8;color:#1f6b38}.fl-k.k-mail{background:#FFF6C2;color:#6b5a00}
@@ -2359,7 +2364,7 @@ function calItems(from,to){
 
 /* ========== Shell ========== */
 // „private“ ist Unterpunkt von To-Dos (aufklappbar); welche Rubriken jemand sieht, regelt canSee() (Admin-Bereich „Rechte“)
-const NAV = [['dash','Übersicht','dash'],['projects','Projekte','proj'],['todos','To-Dos','todo'],['private','Meine privaten To-Dos','lock','todos'],['pool','Allgemeine Aufgaben','todo','todos'],['meetings','Meetings','form'],['chat','Chat','chat'],['week','Kalender & Wochenplanung','cal'],['orders','Bestellungen & Wareneingänge','box'],['stock','Lagerverwaltung','stock'],['files','Datenablage','files'],['f:mail','Korrespondenz','chat','files'],['f:angebot','Angebote','offer','files'],['f:rechnung','Rechnungen','offer','files'],['f:lieferschein','Lieferscheine','truck','files'],['f:rapport','Tagesrapporte','report','files'],['f:kommi','Kommissionierung','stock','files'],['f:sonst','Sonstiges','files','files'],['sales','Verkauf','offer'],['vk:angebot','Angebote','offer','sales'],['vk:auftrag','Aufträge','form','sales'],['vk:lieferschein','Lieferscheine','truck','sales'],['vk:abschlag','Abschläge','offer','sales'],['vk:rechnung','Rechnungen','offer','sales'],['fin','Finanzen','euro'],['fi:bank','Bank / Kasse','euro','fin'],['fi:aus','Ausgaben','euro','fin'],['fi:ein','Sonstige Einnahmen','euro','fin'],['fi:journal','Buchungsübersicht','form','fin'],['fi:ust','USt-Voranmeldung','report','fin'],['fi:steuer','Steuerauswertungen','report','fin'],['fi:ausw','Auswertungen','report','fin'],['fi:export','Steuerberater-Export','files','fin'],['fi:anlagen','Anlagenverwaltung','box','fin'],['stamm','Stammdaten','box'],['st:kunden','Kunden','assign','stamm'],['st:lieferanten','Lieferanten','truck','stamm'],['st:artikel','Artikel','stock','stamm'],['templates','Vorlagen','tpl'],['hr','HR','clock'],['settings','Team & Einstellungen','gear'],['activity','Aktivität','form'],['rights','Admin: Rechte','lock']];
+const NAV = [['dash','Übersicht','dash'],['projects','Projekte','proj'],['todos','To-Dos','todo'],['private','Private To-Dos','lock','todos'],['pool','Allgemeine Aufgaben','todo','todos'],['meetings','Meetings','form'],['chat','Chat','chat'],['week','Kalender & Wochenplanung','cal'],['orders','Bestellungen & Wareneingänge','box'],['stock','Lagerverwaltung','stock'],['files','Datenablage','files'],['f:mail','Korrespondenz','chat','files'],['f:angebot','Angebote','offer','files'],['f:rechnung','Rechnungen','offer','files'],['f:lieferschein','Lieferscheine','truck','files'],['f:rapport','Tagesrapporte','report','files'],['f:kommi','Kommissionierung','stock','files'],['f:sonst','Sonstiges','files','files'],['sales','Verkauf','offer'],['vk:angebot','Angebote','offer','sales'],['vk:auftrag','Aufträge','form','sales'],['vk:lieferschein','Lieferscheine','truck','sales'],['vk:abschlag','Abschläge','offer','sales'],['vk:rechnung','Rechnungen','offer','sales'],['fin','Finanzen','euro'],['fi:bank','Bank / Kasse','euro','fin'],['fi:aus','Ausgaben','euro','fin'],['fi:ein','Sonstige Einnahmen','euro','fin'],['fi:journal','Buchungsübersicht','form','fin'],['fi:ust','USt-Voranmeldung','report','fin'],['fi:steuer','Steuerauswertungen','report','fin'],['fi:ausw','Auswertungen','report','fin'],['fi:export','Steuerberater-Export','files','fin'],['fi:anlagen','Anlagenverwaltung','box','fin'],['stamm','Stammdaten','box'],['st:kunden','Kunden','assign','stamm'],['st:lieferanten','Lieferanten','truck','stamm'],['st:artikel','Artikel','stock','stamm'],['templates','Vorlagen','tpl'],['hr','HR','clock'],['settings','Team & Einstellungen','gear'],['activity','Aktivität','form'],['rights','Admin: Rechte','lock']];
 const VIEW_T = {dash:'Übersicht',projects:'Projekte',project:'Projekt',todos:'To-Dos',pool:'Allgemeine Aufgaben',meetings:'Meetings',week:'Wochenplanung Team',calendar:'Kalender',files:'Datenablage',stock:'Lagerverwaltung',chat:'Chat',private:'Privat',activity:'Aktivität',orders:'Bestellungen & Wareneingänge',offers:'Angebote',reports:'Tagesrapporte',templates:'Vorlagen',settings:'Team & Einstellungen',rights:'Rechte',stamm:'Stammdaten',hr:'HR',sales:'Verkauf',fin:'Finanzen'};
 function sunMark(){ return `<svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="2" y="15" width="26" height="12" rx="2" fill="var(--primary)"/><path d="M2 21h26M10.7 15v12M19.3 15v12" stroke="var(--surface)" stroke-width="1.3"/><circle cx="15" cy="9" r="5" fill="var(--sun)"/></svg>` }
 // Seitenmenü in Bereichen: Übersicht und Chat oben, darunter aufklappbare Bereiche.
@@ -2378,7 +2383,7 @@ const navSubOpen=(v,kids,cur)=>{ const s=UI.navOpen&&UI.navOpen[v]; return s===t
 // Angeheftete Rubriken (bis zu 3, mit ☀ markiert) – je Person und Gerät
 const NAV_PIN_KEY=()=>'sonnenplan-pins-'+(ME?meK():'');
 const navPins=()=>{ try{ return (JSON.parse(lsGet(NAV_PIN_KEY())||'[]')||[]).filter(v=>NAV.some(n=>n[0]===v)&&canSee(v)).slice(0,3); }catch(e){ return []; } };
-const navLabel=v=>{ const n=NAV.find(x=>x[0]===v); if(!n) return v; const p=n[3]&&NAV.find(x=>x[0]===n[3]); return (p?p[1]+' · ':'')+n[1]; };
+const navLabel=v=>{ const n=NAV.find(x=>x[0]===v); if(!n) return v; const p=n[3]&&NAV.find(x=>x[0]===n[3]); return (p&&!String(n[1]).includes(p[1])?p[1]+' · ':'')+n[1]; }; // nicht doppelt: „Private To-Dos“ statt „To-Dos · Private To-Dos“
 // Rote Lampe am Menüpunkt Meetings, solange eine Mitschrift läuft (auch wenn man woanders in der App ist)
 const recLamp=v=>v==='meetings'&&MEET_ON?'<span class="rec-lamp" title="Meeting-Mitschrift läuft – Mikrofon ist an" aria-label="Aufnahme läuft"></span>':'';
 function navItem([v,l,i],cur,cnt){ const kids=NAV.filter(n=>n[3]===v&&canSee(n[0])), open=kids.length&&navSubOpen(v,kids,cur), pins=navPins();
@@ -2795,6 +2800,20 @@ function agenda(items){
   return h? `<div class="ag">${h}</div>`:'';
 }
 // Updates direkt am To-Do: letztes Update sichtbar, alle per Klick aufklappbar
+/* ---------- To-Do erledigt → passende, noch anstehende Kalendereinträge (Termine, Wochenplanung) zum Löschen anbieten ---------- */
+const calWords=s=>new Set(String(s||'').toLowerCase().replace(/[^a-zäöüß0-9 ]/g,' ').split(/\s+/).filter(w=>w.length>3&&!['nach','beim','für','oder','und','eine','einen','dass','wird','noch','bitte'].includes(w)));
+function taskCalCands(t){ const today=TODAY(), tw=calWords(t.title), sim=s=>{ const w=calWords(s); let n=0; tw.forEach(x=>{ if(w.has(x)) n++; }); return n; }, out=[];
+  arr('events').forEach(e=>{ const end=e.end||e.date; if(!end||end<today) return; const linked=t.evId===e.id, s=sim(e.title+' '+(e.notes||''));
+    if(linked||(t.pid&&e.pid===t.pid&&s>=1)||s>=2){ const others=arr('tasks').filter(x=>x.evId===e.id&&x.id!==t.id&&!x.done).length; out.push({k:'ev',id:e.id,t:e.title,d:e.date,time:e.time,pre:(linked||s>=2)&&!others,why:linked?'aus diesem Termin entstanden':others?'gehört auch zu '+others+' anderen offenen To-Do(s)':'ähnlicher Titel'+(t.pid&&e.pid===t.pid?', gleiches Projekt':'')}); } });
+  arr('plan').forEach(w=>(w.entries||[]).forEach((e,i)=>{ const end=e.end||e.d; if(!end||end<today) return; const s=sim(e.t+' '+(e.note||'')); if((t.pid&&e.pid===t.pid&&s>=1)||s>=2) out.push({k:'plan',id:w.id,i,t:e.t,d:e.d,who:e.who,pre:s>=2,why:'Wochenplanung'+(e.who?' · '+shortWho(e.who):'')}); }));
+  return out.slice(0,8); }
+function taskCalOffer(id){ const t=S.tasks[id]; if(!t||!t.done||SHEET) return; const c=taskCalCands(t); if(!c.length) return;
+  openSheet({title:'Kalendereintrag auch löschen?',html:`<div class="fld full"><div class="small muted">„${esc(t.title)}“ ist erledigt. Dazu steht noch im Kalender:</div></div>
+    <div class="fld full">${c.map((x,j)=>`<label class="mt-opt" style="padding:6px 0;align-items:flex-start"><input type="checkbox" class="ck tc-ck" data-j="${j}" ${x.pre?'checked':''}><span><b>${esc(x.t||'(ohne Titel)')}</b><br><span class="small muted">${esc(fmtD(x.d))}${x.time?' · '+esc(x.time):''} · ${x.k==='ev'?'Termin':'Einsatz'} · ${esc(x.why)}</span></span></label>`).join('')}</div>`,saveLabel:'Markierte löschen',cancelLabel:'Behalten',
+    onSave:()=>{ const sel=[...document.querySelectorAll('.tc-ck:checked')].map(i=>c[+i.dataset.j]); if(!sel.length) return; const byW={};
+      sel.forEach(x=>{ if(x.k==='ev') del('events',x.id); else (byW[x.id]=byW[x.id]||[]).push(x.i); });
+      Object.entries(byW).forEach(([wid,is])=>{ const w=clone(S.plan[wid]); if(!w) return; w.entries=(w.entries||[]).filter((e,i)=>!is.includes(i)); put('plan',w); });
+      toast(sel.length+' Kalendereintr'+(sel.length>1?'äge':'ag')+' gelöscht.'); }}); }
 // Aufgeklappte Updates bleiben offen, auch wenn die Liste neu gezeichnet wird (Live-Abgleich) – bis man sie selbst zuklappt
 var TU_OPEN=new Set();
 document.addEventListener('toggle',e=>{ const d=e.target; if(!d||!d.matches||!d.matches('details.tu-inl[data-tuid]')) return; if(d.open) TU_OPEN.add(d.dataset.tuid); else TU_OPEN.delete(d.dataset.tuid); },true);
@@ -3019,7 +3038,7 @@ function completeProjTask(id){
       p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+line; delete p.now; delete p.nowD; put('projects',p);
       if(t.ms&&!(S.projects[t.pid].ms||{})['m'+t.ms]) setMs(t.pid,+t.ms,TODAY());
       if(t.item){ const pp=clone(S.projects[t.pid]); pp.checks=pp.checks||{}; if(!pp.checks[t.item]){ pp.checks[t.item]={d:TODAY(),by:t.who||''}; const n=ITEM_MS[t.item]; if(n&&!(pp.ms||{})['m'+n]) applyMs(pp,n,TODAY()); put('projects',pp); } }
-      toast('Erledigt und in den Notizen vermerkt.'); setTimeout(()=>suggestTodos(t.pid,x),400); }
+      toast('Erledigt und in den Notizen vermerkt.'); setTimeout(()=>taskCalOffer(t.id),450); setTimeout(()=>suggestTodos(t.pid,x),400); }
 }
 // Direkt-Notiz im Projekt: Entwurf bleibt beim Neuzeichnen erhalten
 const QN={};
@@ -4311,7 +4330,7 @@ function vPrivate(){
   const firms=[...new Set(all.map(t=>t.firm).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
   const li=t=>`<div class="li ${stOf(t)==='erledigt'?'done':''} pst-${stOf(t)}"><select class="inp pst" data-chg="privState" data-id="${t.id}" aria-label="Stand">${[['offen','○ offen'],['angefangen','◐ angefangen'],['erledigt','● erledigt']].map(([v,l])=>`<option value="${v}" ${stOf(t)===v?'selected':''}>${l}</option>`).join('')}</select><div class="body"><div class="tt">${t.prio==='hoch'?'<span class="pill bad">wichtig</span> ':''}${esc(t.title)}</div><div class="mt">${t.due?`<span class="${!t.done&&t.due<TODAY()?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${t.pid?`<span>${esc(projName(t.pid))}</span>`:''}</div></div><button class="icon-btn" title="Bearbeiten" data-act="privEdit" data-id="${t.id}">${ic('edit')}</button><button class="icon-btn" title="Löschen" data-act="privDel" data-id="${t.id}">${ic('x')}</button></div>`;
   const group=list=>{ const by={}; list.forEach(t=>{ (by[t.firm||'']=by[t.firm||'']||[]).push(t); }); return Object.keys(by).sort((a,b)=>(a===''?1:0)-(b===''?1:0)||a.localeCompare(b)).map(f=>`<div class="priv-firm"><h4>${esc(f||'ohne Firma')} <span class="cnt-b">${by[f].length}</span></h4><div class="list">${by[f].map(li).join('')}</div></div>`).join(''); };
-  return head('Meine privaten To-Dos','🔒 Nur du siehst diese Liste – auch EP und AvE nicht')+
+  return head('Private To-Dos','🔒 Nur du siehst diese Liste – auch EP und AvE nicht')+
    `<datalist id="firmList">${[...new Set(['nutz die Sonne GmbH','Flexvolt GmbH & Co. KG',...firms])].map(f=>`<option value="${esc(f)}">`).join('')}</datalist>
    <div class="card"><div class="card-b priv-add"><input class="inp" id="privT" placeholder="Neues privates To-Do … (Enter)" aria-label="Neues privates To-Do"><input class="inp" id="privF" list="firmList" placeholder="Für Firma" aria-label="Für welche Firma" value="${esc(UI.privFirm||'')}"><input class="inp" id="privD" type="date" aria-label="Fällig am"><button class="btn pri" data-act="privAdd">${ic('plus')}Hinzufügen</button></div>
    ${MODE!=='cloud'?'<div class="small muted" style="padding:0 16px 10px">Lokaler Modus: Liste liegt nur in diesem Browser.</div>':''}
@@ -4621,12 +4640,30 @@ function fileProjOpts(cur){ return `<option value="">– nicht zugeordnet –</o
 function filesTable(list,inProject){
   if(!list.length) return '<div class="empty">Noch keine Dateien. Einfach Dateien oder Mails hier ablegen.</div>'; setTimeout(fselBar,0);
   return `<div class="fl-list">${list.map(f=>{ const link=f.asset?`<a href="/_blob/${esc(f.asset)}" target="_blank" rel="noopener">${esc(f.name)}</a>`:f.virtual?`<button type="button" class="linkish" data-act="${f.vact}" data-id="${esc(f.vid)}">${esc(f.name)}</button>`:`<button type="button" class="linkish" data-act="fileOpen" data-id="${esc(f.id)}">${esc(f.name)}</button>`;
-    return `<div class="fl ${f.pid?'':'unassigned'} ${fselHas(f.id)?'sel':''}"><input type="checkbox" class="ck fl-ck" data-chg="fileSel" data-id="${esc(f.id)}" ${fselHas(f.id)?'checked':''} aria-label="Auswählen"><span class="fl-k k-${f.kind}">${esc(FILE_KINDS[f.kind]||'Datei')}</span>
+    return `<div class="fl ${f.pid?'':'unassigned'} ${fselHas(f.id)?'sel':''}"${f.virtual?'':` draggable="true" data-fdrag="${esc(f.id)}" title="Auf eine Rubrik ziehen, um sie zu verschieben"`}><input type="checkbox" class="ck fl-ck" data-chg="fileSel" data-id="${esc(f.id)}" ${fselHas(f.id)?'checked':''} aria-label="Auswählen"><span class="fl-k k-${f.kind}">${esc(FILE_KINDS[f.kind]||'Datei')}</span>
       <div class="fl-n">${link}<div class="small muted">${esc([fmtD(f.date),f.by||f.updBy,f.from,f.virtual?f.src:'',f.parent?'Anhang':'',f.atts&&f.atts.length?f.atts.length+' Anhang/Anhänge':'',f.note].filter(Boolean).join(' · '))}</div>${f.why&&!inProject?`<div class="fl-why">${f.pid?'✓':'?'} ${esc(f.why)}</div>`:''}</div>
       ${f.virtual?`<span class="small muted">${esc(projName(f.pid)||'–')}</span><span></span>`:`${inProject?'':`<select class="inp fl-p" data-chg="filePid" data-id="${esc(f.id)}" aria-label="Projekt">${fileProjOpts(f.pid)}</select>`}
       <select class="inp fl-kind" data-chg="fileKind" data-id="${esc(f.id)}" aria-label="Art">${Object.entries(FILE_KINDS).map(([k,l])=>`<option value="${k}" ${k===f.kind?'selected':''}>${l}</option>`).join('')}</select>`}
       <span class="fl-act">${fileDlBtn(f)}${f.virtual?`<button class="icon-btn" title="Öffnen" data-act="${f.vact}" data-id="${esc(f.vid)}">${ic(f.vact==='editOrder'?'box':f.vact==='editReport'?'report':'offer')}</button>`:`<button class="icon-btn" title="Umbenennen (Datum_Thema_Detail)" data-act="fileRename" data-id="${esc(f.id)}">${ic('edit')}</button><button class="icon-btn" title="Eintrag löschen" data-act="fileDel" data-id="${esc(f.id)}">${ic('x')}</button>`}</span></div>`; }).join('')}</div><datalist id="kindList">${Object.values(FILE_KINDS).map(k=>`<option value="${esc(k)}">`).join('')}</datalist>`;
 }
+// Datei bearbeiten: Dateiname direkt tippen (= eigener Name) oder aus Datum/Thema/Detail/Rubrik live zusammenbauen
+var FREN={ext:'',manual:false};
+document.addEventListener('input',e=>{ const id=e.target&&e.target.id; if(id==='f_fname'){ FREN.manual=true; return; }
+  if(!['f_date','f_thema','f_detail'].includes(id)||!$('#f_fname')||FREN.manual) return; const g=k=>(($('#f_'+k)||{}).value||'');
+  $('#f_fname').value=g('date').replace(/-/g,'')+'_'+nameSafe(g('thema'))+'_'+nameSafe(g('detail'))+FREN.ext; });
+document.addEventListener('change',e=>{ if(e.target&&e.target.id==='f_kind'&&$('#f_fname')&&$('#f_thema')&&!FREN.manual){ const th=$('#f_thema'); if(Object.values(FILE_KINDS).includes(th.value)){ th.value=FILE_KINDS[e.target.value]; th.dispatchEvent(new Event('input',{bubbles:true})); } } });
+/* ---------- Dateien per Drag & Drop in eine andere Rubrik verschieben ---------- */
+// Beim Ziehen erscheint oben eine Leiste mit allen Rubriken; außerdem nehmen die Rubrik-Chips und Projektordner Dateien an.
+// Sind mehrere Dateien markiert und eine davon wird gezogen, wandern alle markierten mit.
+let FDRAG=null;
+document.addEventListener('dragstart',e=>{ const r=e.target.closest&&e.target.closest('[data-fdrag]'); if(!r) return; const id=r.dataset.fdrag; FDRAG=fselHas(id)&&FSEL.size>1?[...FSEL].filter(x=>S.files[x]):[id];
+  try{ e.dataTransfer.setData('text/x-file',id); e.dataTransfer.effectAllowed='move'; }catch(x){}
+  let bar=$('#fkBar'); if(!bar){ bar=document.createElement('div'); bar.id='fkBar'; document.body.appendChild(bar); }
+  const cur=new Set(FDRAG.map(x=>(S.files[x]||{}).kind)); bar.innerHTML=`<span>${FDRAG.length>1?FDRAG.length+' Dateien':'Datei'} verschieben nach:</span>${Object.entries(FILE_KINDS).map(([k,l])=>`<div class="fk-t ${cur.size===1&&cur.has(k)?'cur':''}" data-fkind-drop="${k}">${esc(l)}</div>`).join('')}`; bar.classList.add('on'); });
+document.addEventListener('dragend',()=>{ FDRAG=null; const b=$('#fkBar'); if(b) b.classList.remove('on'); document.querySelectorAll('.fk-over').forEach(x=>x.classList.remove('fk-over')); });
+document.addEventListener('dragover',e=>{ if(!FDRAG) return; const t=e.target.closest&&e.target.closest('[data-fkind-drop]'); if(!t) return; e.preventDefault(); document.querySelectorAll('.fk-over').forEach(x=>x!==t&&x.classList.remove('fk-over')); t.classList.add('fk-over'); });
+document.addEventListener('drop',e=>{ if(!FDRAG) return; const t=e.target.closest&&e.target.closest('[data-fkind-drop]'); if(!t) return; e.preventDefault(); e.stopPropagation(); const k=t.dataset.fkindDrop, ids=FDRAG.filter(id=>S.files[id]&&S.files[id].kind!==k);
+  ids.forEach(id=>CHG.fileKind({id},{value:k})); FDRAG=null; const b=$('#fkBar'); if(b) b.classList.remove('on'); toast(ids.length?(ids.length>1?ids.length+' Dateien':'Datei')+' verschoben nach „'+FILE_KINDS[k]+'“.':'Ist schon in „'+FILE_KINDS[k]+'“.'); },true);
 /* ---------- Download je Datei, Mehrfachauswahl, Kundenmappe (ein schönes PDF zum Verschicken) ---------- */
 const EXT_OF_MIME={'application/pdf':'.pdf','image/jpeg':'.jpg','image/png':'.png','image/webp':'.webp','image/heic':'.heic','application/vnd.ms-outlook':'.msg','text/plain':'.txt'};
 const fileDlName=f=>{ const n=String(f.orig||f.name||'Datei').replace(/[\\/:*?"<>|]+/g,'_'); return /\.[a-z0-9]{2,5}$/i.test(n)?n:n+(EXT_OF_MIME[f.mime]||(f.asset?'':'.txt')); };
@@ -4740,7 +4777,7 @@ function vFiles(){
   return head(SUBT[kf]?'Datenablage · '+SUBT[kf]:'Datenablage',list.length+' Einträge'+(un?' · '+un+' ohne Projekt':''),act)+(kf==='kommi'||kf==='rapport'?'':fileDropHtml(''))+
    `<div class="card"><div class="card-h fl-filter"><input class="inp" type="search" placeholder="Suchen (Name, Absender, Projekt, Inhalt)" value="${esc(UI.fq||'')}" data-chg="fileQ" aria-label="Suchen">
      <select class="inp" data-chg="fileProjF" aria-label="Projekt-Filter"><option value="">Alle Projekte</option><option value="ohne" ${pf==='ohne'?'selected':''}>Ohne Projekt (${un})</option>${arr('projects').filter(p=>all.some(f=>f.pid===p.id)).sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${p.id}" ${pf===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}${all.some(f=>f.pid===INTERN)?`<option value="${INTERN}" ${pf===INTERN?'selected':''}>Haus intern</option>`:''}</select></div>
-     <div class="chips" style="padding:0 16px 10px"><button class="chip ${!kf?'on':''}" data-act="fileKindF" data-v="">Alle</button>${Object.entries(FILE_KINDS).filter(([k])=>all.some(f=>f.kind===k)).map(([k,l])=>`<button class="chip ${kf===k?'on':''}" data-act="fileKindF" data-v="${k}">${l} ${all.filter(f=>f.kind===k).length}</button>`).join('')}</div>
+     <div class="chips" style="padding:0 16px 10px"><button class="chip ${!kf?'on':''}" data-act="fileKindF" data-v="">Alle</button>${Object.entries(FILE_KINDS).filter(([k])=>all.some(f=>f.kind===k)).map(([k,l])=>`<button class="chip ${kf===k?'on':''}" data-act="fileKindF" data-v="${k}" data-fkind-drop="${k}">${l} ${all.filter(f=>f.kind===k).length}</button>`).join('')}</div>
      ${filesTable(list,false)}</div>`;
 }
 document.addEventListener('dragover',e=>{ const z=e.target.closest&&e.target.closest('.fdrop'); if(z){ e.preventDefault(); z.classList.add('over'); } });
@@ -5200,8 +5237,12 @@ const A = {
      ${kids.length?`<div class="small" style="margin-top:8px">Anhänge: ${kids.map(k=>`<a href="/_blob/${esc(k.asset)}" target="_blank" rel="noopener">${esc(k.orig||k.name)}</a>`).join(' · ')}</div>`:f.atts&&f.atts.length?`<div class="small" style="margin-top:6px">Anhänge: ${esc(f.atts.join(', '))}</div>`:''}<div class="longtext" style="margin-top:10px;max-height:60vh">${esc(f.text||'(kein Text)')}</div></div>`,saveLabel:'Schließen',onSave:()=>{}}); },
  fileRename:d=>{ const f=S.files[d.id]; if(!f) return; const m=String(f.name).match(STD_RX)||[];
    const dd=m[1]?m[1].slice(0,4)+'-'+m[1].slice(4,6)+'-'+m[1].slice(6,8):(f.date||TODAY());
-   openSheet({title:'Datei benennen',html:'',fields:[{k:'date',label:'Datum',type:'date',req:1},{k:'thema',label:'Thema',req:1,list:'kindList'},{k:'detail',label:'Detail',req:1,full:1}],value:{date:dd,thema:m[2]?m[2].replace(/-/g,' '):FILE_KINDS[f.kind]||'',detail:m[3]?m[3].replace(/-/g,' '):stemOf(f.name)},saveLabel:'Umbenennen',
-     onSave:v=>{ const ff=clone(S.files[d.id]); ff.orig=ff.orig||ff.name; ff.name=String(v.date).replace(/-/g,'')+'_'+nameSafe(v.thema)+'_'+nameSafe(v.detail)+(m[4]||extOf(ff.name)); put('files',ff); toast('Umbenannt: '+ff.name); }}); },
+   const k0=FILE_KINDS[f.kind]?f.kind:'sonst';
+   FREN={ext:m[4]||extOf(f.name),manual:false};
+   openSheet({title:'Datei bearbeiten',html:'',fields:[{k:'fname',label:'Dateiname (direkt änderbar – oder unten aus Datum, Thema, Detail bauen lassen)',full:1,req:1},{k:'kind',label:'Rubrik',type:'select',options:Object.entries(FILE_KINDS)},{k:'pid',label:'Projekt',type:'select',options:projOpts()},{k:'date',label:'Datum',type:'date',req:1},{k:'thema',label:'Thema (im Dateinamen)',req:1,list:'kindList'},{k:'detail',label:'Detail',req:1,full:1}],value:{fname:f.name,kind:k0,pid:f.pid||'',date:dd,thema:m[2]?m[2].replace(/-/g,' '):FILE_KINDS[f.kind]||'',detail:m[3]?m[3].replace(/-/g,' '):stemOf(f.name)},saveLabel:'Speichern',
+     onSave:v=>{ const ff=clone(S.files[d.id]); ff.orig=ff.orig||ff.name; let th=v.thema; if(v.kind!==k0&&String(th).trim()===String(FILE_KINDS[k0]||'').trim()) th=FILE_KINDS[v.kind]; // Thema folgt der Rubrik, solange es nicht eigens geändert wurde
+       let nm=String(v.fname||'').trim().replace(/[\\/:*?"<>|]+/g,'_'); if(!FREN.manual||!nm) nm=String(v.date).replace(/-/g,'')+'_'+nameSafe(th)+'_'+nameSafe(v.detail)+FREN.ext; else if(FREN.ext&&!/\.[a-z0-9]{2,5}$/i.test(nm)) nm+=FREN.ext; // eigene Endung behalten
+       ff.name=nm; ff.kind=v.kind; ff.pid=v.pid||''; put('files',ff); toast('Gespeichert: '+ff.name+(v.kind!==k0?' · Rubrik '+FILE_KINDS[v.kind]:'')); }}); },
  fileDel:d=>{ const f=S.files[d.id]; if(!f) return; openSheet({title:'Eintrag löschen?',html:`<div class="fld full"><b>${esc(f.name)}</b><div class="small muted" style="margin-top:6px">Der Eintrag verschwindet aus der Datenablage. Die Löschung wird mit deinem Kürzel festgehalten.</div></div>`,saveLabel:'Ja, löschen',onSave:()=>{ del('files',d.id); toast('Eintrag gelöscht.'); }}); },
  lsScan:d=>{ const f=$('#lsIn'); f.value=''; f.dataset.id=d.id; f.click(); },
  rcvAllDa:()=>{ document.querySelectorAll('.rcv input[type=radio][value=da]').forEach(r=>r.checked=true); },
@@ -5302,7 +5343,7 @@ const CHG = {
  jumpProject:(d,el)=>{ if(el.value) A.openProject({id:el.value,keep:'1'}); },
  toggleTask:(d,el)=>{ const t0=S.tasks[d.id]; if(!t0) return;
    if(el.checked&&t0.pid&&S.projects[t0.pid]){ el.checked=false; completeProjTask(d.id); return; }
-   const t=clone(t0); t.done=el.checked; t.doneAt=el.checked?new Date().toISOString():''; t.doneBy=el.checked?meK():''; if(!el.checked) delete t.doneNote; put('tasks',t);
+   const t=clone(t0); t.done=el.checked; t.doneAt=el.checked?new Date().toISOString():''; t.doneBy=el.checked?meK():''; if(!el.checked) delete t.doneNote; put('tasks',t); if(t.done) setTimeout(()=>taskCalOffer(t.id),500);
    if(t.done&&t.pool&&t.repeat){ put('tasks',{id:uid(),pool:true,done:false,prio:t.prio||'normal',title:t.title,pcat:t.pcat||'sonst',dur:t.dur||'',repeat:'ja',notes:t.notes||''}); toast('Erledigt – wiederkehrende Aufgabe ist wieder im Pool.'); }
    if(t.done&&t.ms&&t.pid&&S.projects[t.pid]&&!(S.projects[t.pid].ms||{})['m'+t.ms]){ setMs(t.pid,+t.ms,TODAY()); }
    if(t.done&&t.item&&t.pid&&S.projects[t.pid]){ const p=clone(S.projects[t.pid]); p.checks=p.checks||{}; if(!p.checks[t.item]){ p.checks[t.item]={d:TODAY(),by:t.who||''}; const n=ITEM_MS[t.item]; if(n&&!(p.ms||{})['m'+n]) applyMs(p,n,TODAY()); put('projects',p); toast('To-Do erledigt und in der Projekt-Checkliste abgehakt.'); } } },
@@ -5885,7 +5926,7 @@ function projFilesHtml(p){
   const fl=allFiles().filter(f=>f.pid===p.id);
   if(!fl.length) return `<div class="card"><div class="empty">Noch keine Dateien. Einfach Dateien oder Outlook-Mails oben ablegen.</div></div>`;
   return PFOLDERS.map(([k,l])=>{ const g=fl.filter(f=>(FILE_KINDS[f.kind]?f.kind:'sonst')===k); if(!g.length) return ''; const open=UI.pfOpen&&UI.pfOpen[p.id+k]!==undefined?UI.pfOpen[p.id+k]:k==='mail';
-    return `<details class="card pf" ${open?'open':''} data-pf="${p.id+k}"><summary class="card-h"><h3>📁 ${l}</h3><span class="cnt-b">${g.length}</span></summary>${filesTable(g,true)}</details>`; }).join('');
+    return `<details class="card pf" ${open?'open':''} data-pf="${p.id+k}"><summary class="card-h" data-fkind-drop="${k}"><h3>📁 ${l}</h3><span class="cnt-b">${g.length}</span></summary>${filesTable(g,true)}</details>`; }).join('');
 }
 function slimDrop(pid){ return `<div class="dropz fdrop slim" data-fdrop="${esc(pid)}" tabindex="0" aria-label="Dateien in dieses Projekt ablegen">${ic('files')}<span><b>Alles fürs Projekt hier hochladen</b> <span class="small muted">Mails, PDFs, Fotos, Pläne – ${SAMPLE?'die KI schlägt vor: in die Notizen, als To-Do / Update oder nur in die Ablage':'landet in der Datenablage dieses Projekts (Mails unter Korrespondenz)'}</span></span><button type="button" class="btn sm" data-act="fdPick" data-pid="${esc(pid)}">Wählen</button></div>`; }
 
