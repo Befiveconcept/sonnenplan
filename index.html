@@ -3221,7 +3221,6 @@ function projStatus(p){
     <div class="quick-note"><textarea id="qn_${p.id}" rows="2" placeholder="Neue Notiz … (Datum und Kürzel ${esc(meK())} kommen automatisch dazu, Strg+Enter speichert)" aria-label="Neue Notiz">${esc(QN[p.id]||'')}</textarea>
       <div class="row">${(()=>{ const m=(UI.qnMode||{})[p.id]||'notes', ot=openTasks(p.id);
         return `<select class="catsel" id="qnf_${p.id}" data-chg="qnMode" data-pid="${p.id}" aria-label="Speichern als">${[['notes','Als Notiz'],['todo','Als To-Do'],['tupd','Als Update zu To-Do']].map(([k,l])=>`<option value="${k}" ${m===k?'selected':''}>${l}</option>`).join('')}</select>
-        ${m==='tupd'||m==='todo'?'':`<input class="catsel qn-from" id="qni_${p.id}" list="infoFromList" placeholder="Info von … (Kürzel, Kunde …)" aria-label="Von wem kam die Info?" title="Von wem kam die Info? Leer = von dir">${infoFromList()}`}
         ${m==='tupd'?`<select class="catsel" id="qnt_${p.id}" aria-label="Zu welchem To-Do?" style="max-width:260px">${ot.length?ot.map(t=>`<option value="${t.id}">${esc(t.title.slice(0,60))}${t.who?' · '+esc(shortWho(t.who)):''}</option>`).join(''):'<option value="">– keine offenen To-Dos –</option>'}</select>`:''}`; })()}<span class="spacer"></span><button class="btn pri sm" data-act="quickNote" data-pid="${p.id}">Speichern</button></div></div>
     ${projVerlauf(p,adm)}
   </div></div>
@@ -3265,7 +3264,7 @@ function completeProjTask(id){
   function finish(x){
       const t=clone(S.tasks[id]); t.done=true; t.doneAt=new Date().toISOString(); t.doneBy=meK(); t.doneNote=x; put('tasks',t);
       const p=clone(S.projects[t.pid]); const d0=new Date(), stamp=nowStamp();
-      const line=stamp+' ('+meK()+'): ✓ Erledigt: '+t.title+(t.who&&shortWho(t.who)!==meK()?' (zuständig '+shortWho(t.who)+')':'')+' – '+x;
+      const line=stamp+' '+noteByTag(taskOrigin(t))+': ✓ Erledigt: '+t.title+(t.who&&shortWho(t.who)!==meK()?' (zuständig '+shortWho(t.who)+')':'')+' – '+x;
       p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+line; delete p.now; delete p.nowD; put('projects',p);
       if(t.ms&&!(S.projects[t.pid].ms||{})['m'+t.ms]) setMs(t.pid,+t.ms,TODAY());
       if(t.item){ const pp=clone(S.projects[t.pid]); pp.checks=pp.checks||{}; if(!pp.checks[t.item]){ pp.checks[t.item]={d:TODAY(),by:t.who||''}; const n=ITEM_MS[t.item]; if(n&&!(pp.ms||{})['m'+n]) applyMs(pp,n,TODAY()); put('projects',pp); } }
@@ -3278,8 +3277,13 @@ const NAME_FIX=[[/\bMark(?=\s+Krebber\b|\s*[,.;:!?)]|\s+(?:soll|muss|hat|kann|wi
 const fixNames=s=>NAME_FIX.reduce((t,[rx,to])=>t.replace(rx,to),String(s||''));
 const infoFromList=()=>`<datalist id="infoFromList">${[...new Set([...staff().map(s=>shortWho(s.name)),'Kunde','Netzbetreiber','Lieferant','Subunternehmer'])].map(k=>`<option value="${esc(k)}">`).join('')}</datalist>`;
 // from = von wem die Info kam (Kürzel, „Kunde“, „Westnetz“ …) → steht hinter dem eigenen Kürzel: „(EP · Info: HH)“
+// Kürzel-Klammer für Notizen: eigenes Kürzel + Herkunft („(EP · Info: MK)“), wenn die Info von jemand anderem stammt
+const noteByTag=from=>{ const me=meK(), fs=[...new Set([].concat(from||[]).map(x=>String(x||'').replace(/[()]/g,'').trim().slice(0,30)).filter(x=>x&&x.toLowerCase()!==me.toLowerCase()))]; return '('+me+(fs.length?' · Info: '+fs.join(', '):'')+')'; };
+// Herkunft automatisch: To-Do → wer es angelegt hat; Mail → Absender
+const taskOrigin=t=>t?(t.by&&t.by!=='?'?t.by:''):'';
+function noteOrigin(text){ const m=String(text||'').match(/Mail von ([^:\n]{2,160}?):/); return m?mailFromShort(m[1]):''; }
 function saveNote(pid,f,text,from){
-  text=fixNames(String(text||'').trim()); if(!text) return false; from=String(from||'').replace(/[()]/g,'').trim().slice(0,30);
+  text=fixNames(String(text||'').trim()); if(!text) return false; from=String(from||noteOrigin(text)||'').replace(/[()]/g,'').trim().slice(0,30);
   const p=clone(S.projects[pid]); const d0=new Date(), stamp=nowStamp();
   p[f]=(p[f]?p[f].replace(/\s+$/,'')+'\n':'')+stamp+' ('+meK()+(from&&from.toLowerCase()!==meK().toLowerCase()?' · Info: '+from:'')+'): '+text; delete p.now; delete p.nowD; put('projects',p); toast('Notiz gespeichert.'); suggestTodos(pid,text);
 }
@@ -5348,7 +5352,7 @@ const A = {
  newUnhide:d=>{ newHiddenSet(newHidden().filter(k=>k!==d.key)); A.newMenu({}); },
  newHidTg:()=>{ NEW_SHOWHID=!NEW_SHOWHID; A.newMenu({}); },
  // Notiz ins Projekt-Tagebuch (heutige Tagesnotiz), auch ohne vorher ins Projekt zu gehen
- newNote:d=>openSheet({title:'Notiz schreiben',value:{pid:d.pid||'',t:''},fields:[{k:'pid',label:'Projekt',type:'select',options:[['','– Projekt wählen –'],...projOpts().filter(o=>o[0])],req:1},{k:'t',label:'Notiz',type:'textarea',req:1,ph:'Was ist passiert / was wurde besprochen?'},{k:'from',label:'Info von (optional – Kürzel, Kunde, Netzbetreiber …)',list:'infoFromList'},{k:'flx',label:'',type:'html',html:infoFromList()}],
+ newNote:d=>openSheet({title:'Notiz schreiben',value:{pid:d.pid||'',t:''},fields:[{k:'pid',label:'Projekt',type:'select',options:[['','– Projekt wählen –'],...projOpts().filter(o=>o[0])],req:1},{k:'t',label:'Notiz',type:'textarea',req:1,ph:'Was ist passiert / was wurde besprochen?'}],
    onSave:v=>{ if(!v.pid||!String(v.t||'').trim()){ toast('Bitte Projekt und Text angeben.'); return false; } saveNote(v.pid,'notes',String(v.t).trim(),v.from); }}),
  // Handy-Menü „Mehr“ = dieselben Rubriken wie die Seitenleiste am Desktop (ohne die 4 Tabs unten)
  moreMenu:()=>navDrawer(!document.body.classList.contains('nav-open')),
@@ -6416,7 +6420,7 @@ Object.assign(A,{
        const d0=new Date(), stamp=nowStamp(), byP={};
        ids.forEach(id=>{ const t=clone(S.tasks[id]); t.done=true; t.doneAt=new Date().toISOString(); t.doneBy=meK(); if(x) t.doneNote=x; put('tasks',t); if(t.pid&&S.projects[t.pid]) (byP[t.pid]=byP[t.pid]||[]).push(t);
          if(t.pool&&t.repeat) put('tasks',{id:uid(),pool:true,done:false,prio:t.prio||'normal',title:t.title,pcat:t.pcat||'sonst',dur:t.dur||'',repeat:'ja',notes:t.notes||''}); });
-       Object.entries(byP).forEach(([pid,ts])=>{ const p=clone(S.projects[pid]); p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+stamp+' ('+meK()+'): ✓ Erledigt: '+ts.map(t=>t.title).join('; ')+' – '+x; delete p.now; delete p.nowD; put('projects',p);
+       Object.entries(byP).forEach(([pid,ts])=>{ const p=clone(S.projects[pid]); p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+stamp+' '+noteByTag(ts.map(taskOrigin))+': ✓ Erledigt: '+ts.map(t=>t.title).join('; ')+' – '+x; delete p.now; delete p.nowD; put('projects',p);
          ts.forEach(t=>{ if(t.ms&&!(S.projects[pid].ms||{})['m'+t.ms]) setMs(pid,+t.ms,TODAY()); }); });
        ids.forEach(id=>SEL.delete(id)); toast(ids.length+' erledigt'+(Object.keys(byP).length?' und in den Notizen vermerkt':'')+'.'); }}); },
  bulkDel:()=>{ if(!isAdmin()) return toast('Nur EP und AvE können Aufgaben löschen.'); const ids=[...SEL].filter(id=>S.tasks[id]); if(!ids.length) return;
@@ -6520,7 +6524,7 @@ function smartSheet(c){
       let nu=0; rel.forEach((x,i)=>{ if(!$('#smr_c'+i).checked||!S.tasks[x.id]) return; const how=$('#smr_a'+i).value, txt=($('#smr_t'+i).value||'').trim()||'Neue Info'+(c.mail&&c.mail.subject?' (Mail: '+c.mail.subject+')':'');
         const t=clone(S.tasks[x.id]); t.upd2=[...(t.upd2||[]),{d:TODAY(),by:meK(),t:txt.slice(0,400),at:new Date().toISOString()}];
         if(how==='erledigt'){ t.done=true; t.doneAt=new Date().toISOString(); t.doneBy=meK(); t.doneNote=txt.slice(0,300);
-          if(t.pid&&S.projects[t.pid]){ const p=clone(S.projects[t.pid]), d0=new Date(), stamp=nowStamp(); p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+stamp+' ('+meK()+'): ✓ Erledigt: '+t.title+' – '+txt; delete p.now; delete p.nowD; put('projects',p); } }
+          if(t.pid&&S.projects[t.pid]){ const p=clone(S.projects[t.pid]), d0=new Date(), stamp=nowStamp(); p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+stamp+' '+noteByTag(taskOrigin(t))+': ✓ Erledigt: '+t.title+' – '+txt; delete p.now; delete p.nowD; put('projects',p); } }
         put('tasks',t); nu++; });
       if(nu) toast(nu+' To-Do'+(nu>1?'s':'')+' aktualisiert.');
       // E-Mails landen immer auch in den Projekt-Dateien (Korrespondenz), außer der Weg legt sie ohnehin ab
@@ -6531,7 +6535,7 @@ function smartSheet(c){
         if(ev.time) pre.time=ev.time; if(ev.end) pre.end=ev.end; if(ev.place) pre.place=ev.place; const rest=c.files.filter(f=>!(c.mail&&($('#sm_keep')||{}).checked&&(/\.(msg|eml)$/i.test(f.name||'')||f.type==='message/rfc822')));
         if(rest.length&&pre.pid) setTimeout(()=>ingestFiles(rest,'',pre.pid),120); setTimeout(()=>eventForm(null,pre),80); return; }
       if(act==='note'){ if(!pid||!S.projects[pid]){ toast('Bitte ein Projekt wählen.'); return false; } const nt=(($('#sm_note')||{}).value||'').trim(); if(!nt){ toast('Bitte einen Notiztext eingeben.'); return false; }
-        saveNote(pid,'updates',nt); const rest=c.files.filter(f=>!(c.mail&&($('#sm_keep')||{}).checked&&(/\.(msg|eml)$/i.test(f.name||'')||f.type==='message/rfc822'))); if(rest.length) setTimeout(()=>ingestFiles(rest,'',pid),120); return; }
+        saveNote(pid,'updates',nt,c.mail&&c.mail.from?mailFromShort(c.mail.from):''); const rest=c.files.filter(f=>!(c.mail&&($('#sm_keep')||{}).checked&&(/\.(msg|eml)$/i.test(f.name||'')||f.type==='message/rfc822'))); if(rest.length) setTimeout(()=>ingestFiles(rest,'',pid),120); return; }
       if(act==='delivery'){ const oid=($('#sm_order')||{}).value; if(!oid){ toast('Bitte die offene Bestellung wählen.'); return false; } const file=c.files[0];
         setTimeout(()=>{ A.receive({id:oid}); if(file) setTimeout(()=>scanDeliveryNote(oid,file),400); else toast('Bitte im Wareneingang die Mengen prüfen.'); },50); return; }
       setTimeout(()=>{ if(act==='order') ordersFromDrop(c.files,c.text,pid===INTERN?INTERN:pid);
@@ -8055,7 +8059,7 @@ function saleTodoAsk(v,todos,why){ const go=()=>{ if(SHEET){ setTimeout(go,800);
   openSheet({title:'To-Do damit erledigt?',html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">${esc(why)} – im Projekt „${esc(projName(v.pid))}“ sind diese To-Dos noch offen:</div>${todos.map((t,i)=>`<label class="mt-opt" style="padding:4px 0"><input type="checkbox" class="ck" id="std_${i}" checked><span><b>${esc(t.title)}</b>${t.who?` <span class="small muted">· ${esc(shortWho(t.who))}</span>`:''}</span></label>`).join('')}<div class="small muted" style="margin-top:6px">Abgehakte To-Dos werden als erledigt markiert, mit Vermerk in der Tagesnotiz.</div></div>`,saveLabel:'Als erledigt markieren',
     onSave:()=>{ const done=todos.filter((t,i)=>$('#std_'+i).checked); if(!done.length) return; const note=why;
       done.forEach(t=>put('tasks',{...clone(S.tasks[t.id]||t),done:true,doneAt:new Date().toISOString(),doneBy:meK(),doneNote:'erledigt durch: '+note}));
-      const p=clone(S.projects[v.pid]); if(p){ p.notes=(p.notes?p.notes.replace(/\s+$/,'')+'\n':'')+nowStamp()+' ('+meK()+'): ✓ Erledigt: '+done.map(t=>t.title).join(', ')+' – '+note; put('projects',p); }
+      const p=clone(S.projects[v.pid]); if(p){ p.notes=(p.notes?p.notes.replace(/\s+$/,'')+'\n':'')+nowStamp()+' '+noteByTag(done.map(taskOrigin))+': ✓ Erledigt: '+done.map(t=>t.title).join(', ')+' – '+note; put('projects',p); }
       toast(done.length+' To-Do'+(done.length>1?'s':'')+' erledigt.'); }}); };
   go(); }
 
