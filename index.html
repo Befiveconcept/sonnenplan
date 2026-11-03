@@ -1405,6 +1405,10 @@ button.link-ms:hover{color:var(--ink)}
 .ag-it .tt{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ag-it .mt{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .k-bau{--kc:var(--primary)} .k-kunde{--kc:var(--t-bess)} .k-evu{--kc:var(--t-ffa)} .k-lief{--kc:var(--sun)} .k-intern{--kc:var(--muted)} .k-todo{--kc:var(--bad)} .k-proj{--kc:var(--ink)}
+.k-urlaub{--kc:#2E9E4F} .k-krank{--kc:#D32F2F} .k-ausw{--kc:#F57C00} .k-teams{--kc:#5B5FC7} .k-sonst{--kc:#8D6E63}
+/* Termine farbig hinterlegt (nach Art), damit man Urlaub, Krankheit, Teams usw. auf einen Blick unterscheidet */
+.cal .ev[class*="k-"],.team .en[class*="k-"],.day-it .en[class*="k-"]{background:color-mix(in srgb,var(--kc) 17%,var(--surface))}
+.dev[class*="k-"]{background:color-mix(in srgb,var(--kc,transparent) 11%,var(--surface))}
 
 /* Lists */
 .list{display:flex;flex-direction:column}
@@ -2035,7 +2039,7 @@ const MAT_AC = ['Hauptschalter','eHz-Adapter','eHz-Kassette','Ü-Schutz','Einspe
 const MAT_KABEL = ['1,5mm²','2,5mm²','4mm²','6mm²','10mm²','16mm²','5x4mm²','5x6mm²','5x10mm²','5x16mm²','Kanal 40x40','Kanal 40x60','Kanal 100x60 Metall','KuPa25','KuPa32','KuPa40','Schellen','AluRohr 25','AluRohr 32','AluRohr 40','Alu-Schellen'];
 const MAT_DC = ['PV-Kabel 6mm² rot','PV-Kabel 6mm² schwarz','Erdung 16mm² starr','Erdung 16mm² flexibel','Dachhaken','Schienen Alu 3m','Schienen Alu 6m','Schienenverbinder','Kreuzverbinder','Endklemmen','Mittelklemmen','Stockschrauben'];
 const CREW_ROLES = ['Meister','Vorarbeiter','Facharbeiter','Hilfsarbeiter','Auszubildender'];
-const EV_KINDS = {bau:'Baustelle',kunde:'Kundentermin',evu:'EVU / Zählersetzung',lief:'Lieferung',intern:'Intern'};
+const EV_KINDS = {bau:'Baustelle',kunde:'Kundentermin',evu:'EVU / Zählersetzung',lief:'Lieferung',ausw:'Auswärtstermin',teams:'Teams-Meeting',urlaub:'Urlaub',krank:'Krankheit',intern:'Intern',sonst:'Sonstiges'};
 const ORDER_ST = {entwurf:'Entwurf (noch nicht bestellt)',freigegeben:'freigegeben – noch bestellen',angefragt:'angefragt',bestellt:'bestellt',bestaetigt:'bestätigt',storniert:'storniert'};
 const ordDraft=o=>o.status==='entwurf'||o.status==='freigegeben';
 // Wartet die Bestellung auf Freigabe? Nicht, wenn EP, HH oder AvE sie angelegt bzw. bestellt haben
@@ -3472,7 +3476,7 @@ function vCalendar(){
     cells+=`<div class="dc ${dd.getMonth()!==m-1?'out':''} ${d===t?'today':''} ${d===UI.calSel?'sel':''}" data-act="calSel" data-d="${d}" data-drop-d="${d}"><span class="dn">${dd.getDate()}</span>${its.slice(0,3).map(x=>`<div class="ev k-${x.k} ${x.multi&&!x.first?'cont':''}" data-act="${x.act}" data-id="${x.id}" data-drag="${x.ref||''}" title="${esc(x.t+(x.m?' · '+x.m:''))}">${x.multi&&!x.first?'↳ ':''}${x.who&&staff().some(s=>s.name===x.who)?`<b>${esc(shortWho(x.who))}</b> `:''}${esc(x.t)}${x.rz&&x.last?'<span class="rz" aria-hidden="true"></span>':''}</div>`).join('')}${its.length>3?`<div class="small muted">+${its.length-3}</div>`:''}<div class="dots">${its.slice(0,5).map(x=>`<i class="k-${x.k}"></i>`).join('')}</div></div>`; }
   const sel=calItems(UI.calSel,UI.calSel), up=calItems(t,addDays(t,21));
   return head(MON[m-1]+' '+y,'Kalender',`<button class="icon-btn" data-act="calNav" data-v="-1" aria-label="Vormonat">${ic('left')}</button><button class="btn sm" data-act="calNav" data-v="0">Heute</button><button class="icon-btn" data-act="calNav" data-v="1" aria-label="Folgemonat">${ic('right')}</button>`)+
-  calModeChips()+`<div class="legend"><span class="k-bau">Baustelle / Team</span><span class="k-abw">Abwesend</span><span class="k-kunde">Kunde</span><span class="k-evu">EVU / Zähler</span><span class="k-lief">Lieferung</span><span class="k-todo">To-Do-Frist</span><span class="k-proj">Baubeginn/-ende</span><span class="k-intern">Intern</span></div>
+  calModeChips()+`<div class="legend"><span class="k-bau">Baustelle / Team</span><span class="k-abw">Abwesend</span><span class="k-kunde">Kunde</span><span class="k-evu">EVU / Zähler</span><span class="k-lief">Lieferung</span><span class="k-todo">To-Do-Frist</span><span class="k-proj">Baubeginn/-ende</span><span class="k-ausw">Auswärtstermin</span><span class="k-teams">Teams-Meeting</span><span class="k-urlaub">Urlaub</span><span class="k-krank">Krankheit</span><span class="k-intern">Intern</span><span class="k-sonst">Sonstiges</span></div>
   <div class="small muted">Einträge auf einen anderen Tag ziehen; am rechten Rand ziehen zum Verlängern oder Verkürzen.</div>
   <div class="card" style="overflow:hidden"><div class="cal">${['Mo','Di','Mi','Do','Fr','Sa','So'].map(d=>`<div class="dh">${d}</div>`).join('')}${cells}</div></div>
   <div class="grid2"><div class="card"><div class="card-h"><h3>${fmtDL(UI.calSel)}</h3><button class="btn sm" data-act="newEvent" data-date="${UI.calSel}">${ic('plus')}Termin</button></div><div class="card-b">${agenda(sel)||'<div class="empty">Nichts geplant.</div>'}</div></div>
