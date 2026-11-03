@@ -679,6 +679,7 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .pin h3{margin:0;font-size:15px;line-height:1.3;overflow-wrap:anywhere}.pin-tx{font-size:13.5px;line-height:1.5;overflow-wrap:anywhere}.pin-tx a{color:#0B57D0}
 .pin-img{width:100%;max-height:180px;object-fit:cover;border-radius:6px}.pin-f{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:11.5px;opacity:.8;margin-top:auto;padding-top:4px}.pin-f .lnk{margin-left:auto;color:#1E1E1E}
 .pin-new,.pin-imp{position:absolute;top:6px;right:8px;font-size:10px;font-weight:700;letter-spacing:.05em;padding:1px 6px;border-radius:8px;background:#1E1E1E;color:#F4DB02}.pin-imp{right:auto;left:8px;background:#E53935;color:#fff}
+.spk-ctl{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}.spk-rate{display:inline-flex;align-items:center;gap:4px;font-size:13px;padding:0 4px}.spk-rate input{width:110px;accent-color:#F4DB02}
 .brief{line-height:1.55}.brief-hi{font-size:16px;font-weight:600;margin-bottom:4px}.brief-top{background:#FFF9C4;border-radius:10px;padding:8px 12px;margin:10px 0;color:#1E1E1E}.brief-top ol{margin:4px 0 0 18px;padding:0}.brief-top li{margin:3px 0}
 .brief-h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;opacity:.7;margin-top:6px}.brief-g{margin:16px 0 6px;font-size:15px}
 .brief-p{border:1px solid var(--line);border-left:4px solid #7CB342;border-radius:10px;padding:9px 12px;margin-bottom:8px}.brief-p.a-gelb{border-left-color:#F4DB02}.brief-p.a-rot{border-left-color:#E53935}
@@ -2391,8 +2392,8 @@ function briefShow(fresh){ if(!ME) return; if(!SAMPLE&&(fresh||!BRIEF||BRIEF.d!=
   const regen=()=>{ if(BRIEF_RUN) return; BRIEF_RUN=true; const box=()=>$('#briefBox'); if(box()) box().innerHTML=briefHtml(null);
     briefMake().then(b=>{ b.seen=true; briefSave(b); if(box()) box().innerHTML=briefHtml(b); }).catch(e=>{ if(box()) box().innerHTML=`<div class="empty">Briefing konnte nicht erstellt werden: ${esc(e&&e.message||e)}</div>`; }).finally(()=>{ BRIEF_RUN=false; }); };
   const ok=BRIEF&&BRIEF.d===TODAY()&&!fresh;
-  openSheet({title:'☀️ Dein Morgen-Briefing · '+fmtD(TODAY()),wide:1,html:`<div class="fld full" id="briefBox">${briefHtml(ok?BRIEF:null)}</div>`,saveLabel:'Gelesen',onSave:()=>{ if(BRIEF_SPK&&window.speechSynthesis){ speechSynthesis.cancel(); BRIEF_SPK=false; } if(BRIEF&&BRIEF.d===TODAY()&&!BRIEF.seen){ BRIEF.seen=true; briefSave(BRIEF); } },
-    extraBtn:`${window.speechSynthesis?'<button type="button" class="btn sun sm" id="briefSpk" data-act="briefSpeak">🔊 Vorlesen</button>':''}<button type="button" class="btn ghost sm" data-act="briefRegen">↻ Neu erstellen</button>`});
+  openSheet({title:'☀️ Dein Morgen-Briefing · '+fmtD(TODAY()),wide:1,html:`<div class="fld full" id="briefBox">${briefHtml(ok?BRIEF:null)}</div>`,saveLabel:'Gelesen',onSave:()=>{ if(BRIEF_Q.st!=='stop') briefStop(); if(BRIEF&&BRIEF.d===TODAY()&&!BRIEF.seen){ BRIEF.seen=true; briefSave(BRIEF); } },
+    extraBtn:`${window.speechSynthesis?`<span class="spk-ctl"><button type="button" class="btn sun sm" id="briefSpk" data-act="briefSpeak">${BRIEF_Q.st==='play'?'⏸ Pause':BRIEF_Q.st==='pause'?'▶ Weiter':'🔊 Vorlesen'}</button><button type="button" class="btn ghost sm" id="briefStop" data-act="briefStop" title="Vorlesen beenden" ${BRIEF_Q.st==='stop'?'hidden':''}>⏹</button><label class="spk-rate" title="Sprechtempo"><span>🐢</span><input type="range" id="briefRate" min="0.7" max="2" step="0.05" value="${briefRate()}" aria-label="Sprechtempo"><span>🐇</span><b id="briefRateV" class="mono small">${briefRate().toFixed(2).replace('.',',').replace(/0$/,'')}×</b></label></span>`:''}<button type="button" class="btn ghost sm" data-act="briefRegen">↻ Neu erstellen</button>`});
   BRIEF_REGEN=regen;
   if(ok){ if(!BRIEF.seen){ BRIEF.seen=true; briefSave(BRIEF); } } else regen(); }
 // 🔊 Vorlesen mit der Sprachausgabe des Geräts (Browser, Handy) – Satz für Satz, damit lange Texte nicht abbrechen
@@ -2406,15 +2407,24 @@ function briefSpeakText(b){ const d=(b&&b.data)||{}, AMP={gruen:'läuft gut',gel
   // Kürzel buchstabieren statt als Wort lesen (EP → E P), Abkürzungen ausschreiben
   return out.join('\n').replace(/\b([A-ZÄÖÜ]{2,3})\b/g,m=>/^(PV|OK)$/.test(m)?m:m.split('').join(' ')).replace(/\bkWp\b/g,'Kilowatt Peak').replace(/\bkWh\b/g,'Kilowattstunden').replace(/\bz\. ?B\./g,'zum Beispiel').replace(/\bca\./g,'circa'); }
 function briefVoice(){ const vs=speechSynthesis.getVoices().filter(v=>/^de(-|_|$)/i.test(v.lang)); return vs.find(v=>/natural|online|neural|premium|enhanced/i.test(v.name))||vs.find(v=>/google/i.test(v.name))||vs[0]||null; }
-function briefSpkBtn(){ const b=$('#briefSpk'); if(b) b.textContent=BRIEF_SPK?'⏹ Stopp':'🔊 Vorlesen'; }
-function briefSpeak(){ const ss=window.speechSynthesis; if(!ss) return toast('Vorlesen geht in diesem Browser leider nicht.');
-  if(BRIEF_SPK||ss.speaking){ ss.cancel(); BRIEF_SPK=false; briefSpkBtn(); return; }
+// Satz für Satz nacheinander: so greift ein geändertes Tempo ab dem nächsten Satz, und Pause/Weiter geht auf allen Geräten (auch Android)
+var BRIEF_Q={parts:[],i:0,st:'stop'}; // st: stop | play | pause
+const briefRate=()=>{ const r=parseFloat(lsGet('sonnenplan-spkrate')||''); return r>=0.6&&r<=2.2?r:1.15; };
+function briefSpkUi(){ const st=BRIEF_Q.st, b=$('#briefSpk'), s=$('#briefStop'), r=$('#briefRateV');
+  if(b) b.textContent=st==='play'?'⏸ Pause':st==='pause'?'▶ Weiter':'🔊 Vorlesen'; if(s) s.hidden=st==='stop'; if(r) r.textContent=briefRate().toFixed(2).replace('.',',').replace(/0$/,'')+'×'; }
+function briefSpeakNext(){ const ss=window.speechSynthesis, q=BRIEF_Q; if(q.st!=='play') return;
+  if(!$('#briefBox')){ q.st='stop'; ss.cancel(); return; } // Fenster zu → aufhören
+  if(q.i>=q.parts.length){ q.st='stop'; q.i=0; BRIEF_SPK=false; briefSpkUi(); return; }
+  const u=new SpeechSynthesisUtterance(q.parts[q.i]), v=briefVoice(); u.lang='de-DE'; if(v) u.voice=v; u.rate=briefRate();
+  const tok=q.tok=(q.tok||0)+1; u.onend=u.onerror=()=>{ if(q.st==='play'&&q.tok===tok){ q.i++; briefSpeakNext(); } }; ss.speak(u); }
+function briefSpeak(){ const ss=window.speechSynthesis; if(!ss) return toast('Vorlesen geht in diesem Browser leider nicht.'); const q=BRIEF_Q;
+  if(q.st==='play'){ q.st='pause'; q.tok++; ss.cancel(); briefSpkUi(); return; }       // Pause (der angefangene Satz wird bei „Weiter“ neu gelesen)
+  if(q.st==='pause'){ q.st='play'; BRIEF_SPK=true; briefSpkUi(); briefSpeakNext(); return; } // Weiter
   if(!BRIEF||BRIEF.d!==TODAY()||!BRIEF.data) return toast('Das Briefing wird noch erstellt – gleich nochmal versuchen.');
-  const parts=briefSpeakText(BRIEF).split(/\n|(?<=[^\d\s][.!?])\s+(?=[A-ZÄÖÜ])/).map(s=>s.trim()).filter(Boolean), v=briefVoice(); BRIEF_SPK=true; briefSpkBtn();
-  parts.forEach((s,i)=>{ const u=new SpeechSynthesisUtterance(s); u.lang='de-DE'; if(v) u.voice=v; u.rate=0.98;
-    u.onstart=()=>{ if(!$('#briefBox')){ ss.cancel(); BRIEF_SPK=false; } }; // Fenster zu → aufhören
-    if(i===parts.length-1){ u.onend=()=>{ BRIEF_SPK=false; briefSpkBtn(); }; } u.onerror=()=>{ if(i===parts.length-1){ BRIEF_SPK=false; briefSpkBtn(); } };
-    ss.speak(u); }); }
+  ss.cancel(); q.parts=briefSpeakText(BRIEF).split(/\n|(?<=[^\d\s][.!?])\s+(?=[A-ZÄÖÜ])/).map(s=>s.trim()).filter(Boolean); q.i=0; q.st='play'; BRIEF_SPK=true; briefSpkUi(); briefSpeakNext(); }
+function briefStop(){ const q=BRIEF_Q; q.st='stop'; q.i=0; q.tok=(q.tok||0)+1; BRIEF_SPK=false; if(window.speechSynthesis) speechSynthesis.cancel(); briefSpkUi(); }
+const briefSpkBtn=briefSpkUi;
+document.addEventListener('input',e=>{ if(e.target.id!=='briefRate') return; lsSet('sonnenplan-spkrate',String(e.target.value)); briefSpkUi(); });
 if(window.speechSynthesis){ try{ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged=()=>{}; }catch(e){} }
 // App bleibt über Nacht offen? Beim Zurückkommen und alle 30 Min. prüfen, ob schon das heutige Briefing dran war
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&SINCE_DONE&&!SHEET) setTimeout(()=>briefAuto().catch(()=>{}),1200); });
@@ -2487,7 +2497,7 @@ function dupClean(){ if(!isAdmin()) return toast('Nur für Admins.'); const r=du
       if(ck('dc_u')) r.up.forEach(x=>{ const t=clone(S.tasks[x.t.id]); if(!t) return; const seen=[]; t.upd2=(t.upd2||[]).filter(u=>{ const b=dupBody(u.t); if(b&&seen.some(s=>s.b===b&&(b.length>=15||s.d===(u.d||'')))){ a++; return false; } seen.push({b,d:u.d||''}); return true; }); t._dupOk=1; put('tasks',t); });
       if(ck('dc_n')) r.nt.forEach(x=>{ const p=clone(S.projects[x.p.id]); if(!p) return; const have=new Set(); p[x.k]=noteBlocks(p[x.k]).filter(b=>{ const d=dupBody(b); if(d&&d.length>=8&&have.has(d)){ a++; return false; } if(d) have.add(d); return true; }).join('\n'); p._dupOk=1; put('projects',p); });
       toast(a+' Doppelte entfernt.'); }}); }
-queueMicrotask(()=>Object.assign(A,{ dupClean:()=>dupClean(), briefShow:()=>briefShow(), briefSpeak:()=>briefSpeak(), briefRegen:()=>{ if(BRIEF_REGEN) BRIEF_REGEN(); },briefToggle:()=>{ const me=meK(), cur=[...(((S.config||{}).briefWho)||['EP'])], on=cur.includes(me); putConfig({...(S.config||{}),briefWho:on?cur.filter(k=>k!==me):[...cur,me]}); toast(on?'Morgen-Briefing ausgeschaltet.':'Morgen-Briefing eingeschaltet – ab morgen früh beim ersten Öffnen.'); closeSheet(); setTimeout(meProfile,50); } }));
+queueMicrotask(()=>Object.assign(A,{ dupClean:()=>dupClean(), briefShow:()=>briefShow(), briefSpeak:()=>briefSpeak(), briefStop:()=>briefStop(), briefRegen:()=>{ if(BRIEF_REGEN) BRIEF_REGEN(); },briefToggle:()=>{ const me=meK(), cur=[...(((S.config||{}).briefWho)||['EP'])], on=cur.includes(me); putConfig({...(S.config||{}),briefWho:on?cur.filter(k=>k!==me):[...cur,me]}); toast(on?'Morgen-Briefing ausgeschaltet.':'Morgen-Briefing eingeschaltet – ab morgen früh beim ersten Öffnen.'); closeSheet(); setTimeout(meProfile,50); } }));
 /* ---------- Mein Profil (unten in der Seitenleiste): Kürzel-Farbe, Passwort, Person wechseln ---------- */
 const K_COLS=['#F4DB02','#FFB74D','#FF8A65','#E57373','#F06292','#BA68C8','#9575CD','#7986CB','#64B5F6','#4FC3F7','#4DD0E1','#4DB6AC','#81C784','#AED581','#DCE775','#A1887F','#90A4AE','#1E1E1E'];
 const kCols=()=>((S.config||{}).kColors||{});
