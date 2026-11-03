@@ -663,6 +663,14 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .ord-appr-b{border-left:4px solid var(--sun)}
 #menu{max-height:calc(100vh - 24px);overflow-y:auto}
 .menu-h{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:8px 12px 2px}
+.pinb{margin-bottom:18px}.pinb .card-h{flex-wrap:wrap}.pinb-sub{margin-right:auto}
+.pin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;padding:4px 16px 16px}
+.pin{position:relative;background:#FFF6B3;color:#1E1E1E;border-radius:4px 4px 14px 4px;padding:16px 14px 10px;box-shadow:0 2px 6px rgba(0,0,0,.12);transform:rotate(-.6deg);display:flex;flex-direction:column;gap:6px;min-width:0}
+.pin:nth-child(2n){transform:rotate(.7deg);background:#FFF0C2}.pin:nth-child(3n){transform:rotate(-.2deg);background:#FDF5D0}
+.pin.top{background:#FFE1DC;outline:2px solid #E53935;padding-top:26px}.pin-n{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:18px}
+.pin h3{margin:0;font-size:15px;line-height:1.3;overflow-wrap:anywhere}.pin-tx{font-size:13.5px;line-height:1.5;overflow-wrap:anywhere}.pin-tx a{color:#0B57D0}
+.pin-img{width:100%;max-height:180px;object-fit:cover;border-radius:6px}.pin-f{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:11.5px;opacity:.8;margin-top:auto;padding-top:4px}.pin-f .lnk{margin-left:auto;color:#1E1E1E}
+.pin-new,.pin-imp{position:absolute;top:6px;right:8px;font-size:10px;font-weight:700;letter-spacing:.05em;padding:1px 6px;border-radius:8px;background:#1E1E1E;color:#F4DB02}.pin-imp{right:auto;left:8px;background:#E53935;color:#fff}
 .brief{line-height:1.55}.brief-hi{font-size:16px;font-weight:600;margin-bottom:4px}.brief-top{background:#FFF9C4;border-radius:10px;padding:8px 12px;margin:10px 0;color:#1E1E1E}.brief-top ol{margin:4px 0 0 18px;padding:0}.brief-top li{margin:3px 0}
 .brief-h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;opacity:.7;margin-top:6px}.brief-g{margin:16px 0 6px;font-size:15px}
 .brief-p{border:1px solid var(--line);border-left:4px solid #7CB342;border-radius:10px;padding:9px 12px;margin-bottom:8px}.brief-p.a-gelb{border-left-color:#F4DB02}.brief-p.a-rot{border-left-color:#E53935}
@@ -955,7 +963,8 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .tu-d .tu{padding:3px 0;border-top:1px dashed var(--line)}
 .upd-pill{background:var(--sun-soft);color:var(--ink)}
 .tu-inl{margin-top:5px;padding:5px 8px;border-left:3px solid var(--sun);background:var(--sunken);border-radius:0 8px 8px 0;font-size:12.5px}
-.tu-inl summary{cursor:pointer;list-style:none}.tu-inl summary::-webkit-details-marker{display:none}
+.tu-inl summary{cursor:pointer;list-style:none}.tu-ar{display:inline-block;width:14px;font-size:11px;transition:transform .15s}.tu-inl[open] .tu-ar{transform:rotate(90deg)}
+.tu-close{display:block;margin:4px 0 0 auto;background:none;border:0;padding:2px 6px;font-size:11.5px;color:var(--muted);cursor:pointer;border-radius:6px}.tu-close:hover{background:var(--line);color:inherit}.tu-inl summary::-webkit-details-marker{display:none}
 .tu-inl .tu{font-size:12.5px;cursor:pointer;border-radius:4px}.tu-inl .tu:hover{background:rgba(244,219,2,.18)}
 .tu-inl[open] .tu+.tu,.tu-inl[open] summary~.tu{border-top:1px dashed var(--line);padding-top:3px;margin-top:3px}
 /* Timeline bearbeitbar */
@@ -2072,8 +2081,8 @@ const ICONS = {download:'<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M
 const ic = (n,extra='')=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ${extra}>${ICONS[n]}</svg>`;
 
 /* ========== Datenhaltung (gemeinsame Datenbank, sonst lokal) ========== */
-const COLLS = ['projects','tasks','orders','offers','events','reports','plan','log','files','stock','picks','chat','meetings','hrtime','hrabs','hrstaff','hrdocs','sales'];
-const S = {projects:{},tasks:{},orders:{},offers:{},events:{},reports:{},plan:{},log:{},hrtime:{},hrabs:{},hrstaff:{},hrdocs:{},kunden:{},lieferanten:{},artikel:{},sales:{},fin:{},anlagen:{},config:{staff:[]}};
+const COLLS = ['projects','tasks','orders','offers','events','reports','plan','log','files','stock','picks','chat','meetings','hrtime','hrabs','hrstaff','hrdocs','sales','pins'];
+const S = {pins:{},projects:{},tasks:{},orders:{},offers:{},events:{},reports:{},plan:{},log:{},hrtime:{},hrabs:{},hrstaff:{},hrdocs:{},kunden:{},lieferanten:{},artikel:{},sales:{},fin:{},anlagen:{},config:{staff:[]}};
 let DB=null, MODE='init', READONLY=false;
 const LS_KEY='sonnenplan-v1';
 function lsGet(k){ try{ return localStorage.getItem(k) }catch(e){ return null } }
@@ -2172,8 +2181,30 @@ function describeChange(coll,prev,o){
 // Schreibrecht je Rubrik (Admin-Bereich „Rechte“): ohne Häkchen „bearbeiten“ wird nichts gespeichert
 const COLL_AREA={projects:'projects',tasks:'todos',orders:'orders',offers:'offers',events:'week',plan:'week',reports:'reports',files:'files',stock:'stock',picks:'stock',chat:'chat',meetings:'meetings',hrtime:'hr',hrabs:'hr',hrstaff:'hr',hrdocs:'hr',kunden:'stamm',lieferanten:'stamm',artikel:'stamm',sales:'sales',fin:'fin',anlagen:'fin'};
 function mayWrite(coll){ const a=COLL_AREA[coll]; if(a==='fin'&&ME) return finOk()&&(isAdmin()||editsOf(ME).includes('fin')); if(!a||!ME||isAdmin()) return true; if(a==='hr') return !['hrstaff','hrdocs'].includes(coll); return canEdit(a); }
+/* ---------- Doppelt-Sperre (greift bei JEDEM Speichern: Formular, KI, Meeting, Smart-Drop, Sprache, Belege, Handy) ---------- */
+const dupNorm=s=>String(s||'').toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').replace(/^\s*(bitte|todo|to-do|aufgabe)\s*:?\s+/,'').replace(/[^a-z0-9]+/g,' ').trim();
+// Notiz-/Update-Text ohne Datum, Uhrzeit und Kürzel davor („02.11.26 15:33 (EP): …“)
+const dupBody=s=>dupNorm(String(s||'').replace(/^\s*\d{1,2}\.\d{1,2}\.(\d{2,4})?\s*(\d{1,2}:\d{2})?\s*(\([^)]*\))?\s*:?\s*/,''));
+// gleiches offenes (oder in den letzten 3 Tagen erledigtes) To-Do im selben Projekt bzw. bei derselben Person
+function dupTask(t){ const n=dupNorm(t.title); if(n.length<3) return null; const lim=new Date(Date.now()-3*864e5).toISOString();
+  return arr('tasks').find(x=>x&&x.id!==t.id&&dupNorm(x.title)===n&&(x.pid||'')===(t.pid||'')&&!!x.pool===!!t.pool&&(t.pid||t.pool||(x.who||'')===(t.who||'')||!x.who||!t.who)&&(!x.done||String(x.doneAt||'')>=lim))||null; }
+const dupToast=m=>setTimeout(()=>toast(m),450); // nach der Meldung des Aufrufers ("To-Do angelegt")
+function dupGuard(coll,obj){ if(!obj||obj._dupOk){ if(obj) delete obj._dupOk; return false; } const prev=S[coll]&&S[coll][obj.id];
+  if(coll==='tasks'&&!prev&&!obj.example&&!(obj.pool&&obj.repeat)){ const x=dupTask(obj); if(x){
+      // statt Doppel: fehlende Angaben ins bestehende To-Do übernehmen
+      const c=clone(x); let ch=false; ['who','due','ext'].forEach(k=>{ if(obj[k]&&!c[k]){ c[k]=obj[k]; ch=true; } }); if(obj.notes&&!dupNorm(c.notes||'').includes(dupNorm(obj.notes))){ c.notes=((c.notes||'')+'\n'+obj.notes).trim(); ch=true; }
+      if(ch) put('tasks',c); obj.id=x.id; // Aufrufer, die die id weiterverwenden, zeigen so auf das bestehende To-Do
+      dupToast('Gibt es schon'+(x.done?' (gerade erledigt)':'')+': „'+String(x.title).slice(0,50)+'“ – nicht doppelt angelegt.'); return true; } }
+  if(coll==='tasks'&&prev&&Array.isArray(obj.upd2)&&obj.upd2.length>(prev.upd2||[]).length){ const old=new Set((prev.upd2||[]).map(tuKey)), seen=[]; let drop=0;
+    obj.upd2=obj.upd2.filter(u=>{ const b=dupBody(u.t), isNew=!old.has(tuKey(u)); if(isNew&&b&&seen.some(s=>s.b===b&&(b.length>=15||s.d===(u.d||'')))){ drop++; return false; } seen.push({b,d:u.d||''}); return true; });
+    if(drop){ dupToast(drop>1?drop+' Updates standen schon drin – nicht doppelt gespeichert.':'Dieses Update steht schon drin – nicht doppelt gespeichert.'); if(JSON.stringify(obj.upd2)===JSON.stringify(prev.upd2||[])&&Object.keys(obj).every(k=>['upd2','upd','updBy','hist'].includes(k)||JSON.stringify(obj[k])===JSON.stringify(prev[k]))) return true; } }
+  if(coll==='projects'&&prev) ['notes','updates'].forEach(k=>{ const was=noteBlocks(prev[k]), now=noteBlocks(obj[k]); if(now.length<=was.length) return; const have=new Set(was.map(dupBody).filter(Boolean)); let drop=0;
+    const keep=now.filter((b,i)=>{ if(i<was.length&&b===was[i]) return true; const d=dupBody(b); if(d&&d.length>=8&&have.has(d)){ drop++; return false; } if(d) have.add(d); return true; });
+    if(drop){ obj[k]=keep.join('\n'); dupToast('Diese Notiz steht schon drin – nicht doppelt gespeichert.'); } });
+  return false; }
 function put(coll,obj){
   if(!mayWrite(coll)){ toast('Keine Bearbeitungsrechte für „'+((AREAS.find(a=>a[0]===COLL_AREA[coll])||[])[1]||coll)+'“. Bitte EP oder AvE fragen.'); scheduleRender(); return; }
+  if(dupGuard(coll,obj)) return; // nichts doppelt: gleiches To-Do / gleiches Update / gleiche Notiz wird nicht noch einmal gespeichert
   const prev=S[coll][obj.id], now=new Date().toISOString();
   if(!ME&&MODE==='cloud') askMe();
   const what=describeChange(coll,prev,obj);
@@ -2232,7 +2263,7 @@ async function initMe(){
 /* ---------- Live: Einträge anderer sofort einblenden + wer gerade wo tippt ---------- */
 // liveDiff vergleicht jeden Datenbank-Stand mit dem vorigen: neue/geänderte Einträge von anderen erscheinen als kleine Live-Meldung (klickbar)
 var LIVE_READY={}, LIVE_FEED=[], LIVE_PEERS=[];
-const LIVE_COLL={tasks:'To-Do',projects:'Projekt',orders:'Bestellung',events:'Termin',plan:'Wochenplanung',reports:'Rapport',offers:'Angebot',meetings:'Meeting',sales:'Beleg',stock:'Lager',hrabs:'Abwesenheit',picks:'Kommissionierung',files:'Datei'};
+const LIVE_COLL={pins:'📌 Pinnwand',tasks:'To-Do',projects:'Projekt',orders:'Bestellung',events:'Termin',plan:'Wochenplanung',reports:'Rapport',offers:'Angebot',meetings:'Meeting',sales:'Beleg',stock:'Lager',hrabs:'Abwesenheit',picks:'Kommissionierung',files:'Datei'};
 function liveDiff(k,old,neu){ if(!LIVE_READY[k]){ LIVE_READY[k]=1; return; }
   if(k==='chat'&&ME){ const rooms=myRooms(); Object.values(neu).filter(m=>m&&!(old&&old[m.id])&&m.from&&m.from!==ME&&rooms.includes(m.room)&&String(m.at)>lastRead(m.room)&&!(UI.view==='chat'&&UI.room===m.room&&document.visibilityState==='visible')).slice(0,3).forEach(m=>liveToast({c:'chat',id:m.room,by:shortWho(m.from),t:'💬 Neue Chat-Nachricht',a:String(m.text||'').slice(0,90),pid:'',at:Date.now()})); return; } if(!LIVE_COLL[k]||!ME) return; const me=meK(), hits=[];
   Object.entries(neu).forEach(([id,x])=>{ const p=old&&old[id]; if(!x||(p&&p.upd===x.upd)||!x.updBy||x.updBy===me||seenElsewhere(x.upd)) return; if((k==='sales'&&!canSee('sales'))||(k==='hrabs'&&!isAdmin())) return;
@@ -2348,17 +2379,87 @@ function briefShow(fresh){ if(!ME) return; if(!SAMPLE&&(fresh||!BRIEF||BRIEF.d!=
   const regen=()=>{ if(BRIEF_RUN) return; BRIEF_RUN=true; const box=()=>$('#briefBox'); if(box()) box().innerHTML=briefHtml(null);
     briefMake().then(b=>{ b.seen=true; briefSave(b); if(box()) box().innerHTML=briefHtml(b); }).catch(e=>{ if(box()) box().innerHTML=`<div class="empty">Briefing konnte nicht erstellt werden: ${esc(e&&e.message||e)}</div>`; }).finally(()=>{ BRIEF_RUN=false; }); };
   const ok=BRIEF&&BRIEF.d===TODAY()&&!fresh;
-  openSheet({title:'☀️ Dein Morgen-Briefing · '+fmtD(TODAY()),wide:1,html:`<div class="fld full" id="briefBox">${briefHtml(ok?BRIEF:null)}</div>`,saveLabel:'Gelesen',onSave:()=>{ if(BRIEF&&BRIEF.d===TODAY()&&!BRIEF.seen){ BRIEF.seen=true; briefSave(BRIEF); } },
-    extraBtn:`<button type="button" class="btn ghost sm" data-act="briefRegen">↻ Neu erstellen</button>`});
+  openSheet({title:'☀️ Dein Morgen-Briefing · '+fmtD(TODAY()),wide:1,html:`<div class="fld full" id="briefBox">${briefHtml(ok?BRIEF:null)}</div>`,saveLabel:'Gelesen',onSave:()=>{ if(BRIEF_SPK&&window.speechSynthesis){ speechSynthesis.cancel(); BRIEF_SPK=false; } if(BRIEF&&BRIEF.d===TODAY()&&!BRIEF.seen){ BRIEF.seen=true; briefSave(BRIEF); } },
+    extraBtn:`${window.speechSynthesis?'<button type="button" class="btn sun sm" id="briefSpk" data-act="briefSpeak">🔊 Vorlesen</button>':''}<button type="button" class="btn ghost sm" data-act="briefRegen">↻ Neu erstellen</button>`});
   BRIEF_REGEN=regen;
   if(ok){ if(!BRIEF.seen){ BRIEF.seen=true; briefSave(BRIEF); } } else regen(); }
+// 🔊 Vorlesen mit der Sprachausgabe des Geräts (Browser, Handy) – Satz für Satz, damit lange Texte nicht abbrechen
+var BRIEF_SPK=false;
+function briefSpeakText(b){ const d=(b&&b.data)||{}, AMP={gruen:'läuft gut',gelb:'bitte im Blick behalten',rot:'dringend'}, out=[];
+  out.push('Dein Morgen-Briefing für '+new Date().toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'})+'.'); if(d.gruss) out.push(d.gruss);
+  if(d.top&&d.top.length) out.push('Heute am wichtigsten:',...d.top.map((s,i)=>['Erstens','Zweitens','Drittens'][i]+': '+s));
+  [['laufend','Die laufenden Projekte.'],['planung','Die Projekte in Planung.']].forEach(([c,l])=>{ const xs=(d.p||[]).filter(x=>S.projects[x.id]&&catOf(S.projects[x.id])===c).sort((a,b)=>({rot:0,gelb:1,gruen:2}[a.ampel]-{rot:0,gelb:1,gruen:2}[b.ampel])); if(!xs.length) return; out.push(l);
+    xs.forEach(x=>{ out.push(S.projects[x.id].name+'. '+(AMP[x.ampel]||'')+'.'); if(x.stand) out.push(x.stand); if(x.tun&&x.tun.length) out.push('Zu tun: '+x.tun.join('. ')+'.'); }); });
+  out.push('Das war dein Briefing. Einen guten Tag!');
+  // Kürzel buchstabieren statt als Wort lesen (EP → E P), Abkürzungen ausschreiben
+  return out.join('\n').replace(/\b([A-ZÄÖÜ]{2,3})\b/g,m=>/^(PV|OK)$/.test(m)?m:m.split('').join(' ')).replace(/\bkWp\b/g,'Kilowatt Peak').replace(/\bkWh\b/g,'Kilowattstunden').replace(/\bz\. ?B\./g,'zum Beispiel').replace(/\bca\./g,'circa'); }
+function briefVoice(){ const vs=speechSynthesis.getVoices().filter(v=>/^de(-|_|$)/i.test(v.lang)); return vs.find(v=>/natural|online|neural|premium|enhanced/i.test(v.name))||vs.find(v=>/google/i.test(v.name))||vs[0]||null; }
+function briefSpkBtn(){ const b=$('#briefSpk'); if(b) b.textContent=BRIEF_SPK?'⏹ Stopp':'🔊 Vorlesen'; }
+function briefSpeak(){ const ss=window.speechSynthesis; if(!ss) return toast('Vorlesen geht in diesem Browser leider nicht.');
+  if(BRIEF_SPK||ss.speaking){ ss.cancel(); BRIEF_SPK=false; briefSpkBtn(); return; }
+  if(!BRIEF||BRIEF.d!==TODAY()||!BRIEF.data) return toast('Das Briefing wird noch erstellt – gleich nochmal versuchen.');
+  const parts=briefSpeakText(BRIEF).split(/\n|(?<=[^\d\s][.!?])\s+(?=[A-ZÄÖÜ])/).map(s=>s.trim()).filter(Boolean), v=briefVoice(); BRIEF_SPK=true; briefSpkBtn();
+  parts.forEach((s,i)=>{ const u=new SpeechSynthesisUtterance(s); u.lang='de-DE'; if(v) u.voice=v; u.rate=0.98;
+    u.onstart=()=>{ if(!$('#briefBox')){ ss.cancel(); BRIEF_SPK=false; } }; // Fenster zu → aufhören
+    if(i===parts.length-1){ u.onend=()=>{ BRIEF_SPK=false; briefSpkBtn(); }; } u.onerror=()=>{ if(i===parts.length-1){ BRIEF_SPK=false; briefSpkBtn(); } };
+    ss.speak(u); }); }
+if(window.speechSynthesis){ try{ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged=()=>{}; }catch(e){} }
 // App bleibt über Nacht offen? Beim Zurückkommen und alle 30 Min. prüfen, ob schon das heutige Briefing dran war
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&SINCE_DONE&&!SHEET) setTimeout(()=>briefAuto().catch(()=>{}),1200); });
 setInterval(()=>{ if(document.visibilityState==='visible'&&SINCE_DONE&&!SHEET&&(!BRIEF||BRIEF.d!==TODAY())) briefAuto().catch(()=>{}); },30*60000);
 // Beim ersten Öffnen des Tages (auf irgendeinem Gerät) automatisch – danach nur noch über den Knopf
 async function briefAuto(){ if(!briefOn()||!SAMPLE||BRIEF_RUN) return; if(BRIEF&&BRIEF.d===TODAY()&&BRIEF.seen) return;
   BRIEF=await briefLoad(); if(BRIEF&&BRIEF.d===TODAY()&&BRIEF.seen) return; if(SHEET){ setTimeout(()=>briefAuto().catch(()=>{}),3000); return; } briefShow(); }
-queueMicrotask(()=>Object.assign(A,{ briefShow:()=>briefShow(), briefRegen:()=>{ if(BRIEF_REGEN) BRIEF_REGEN(); },briefToggle:()=>{ const me=meK(), cur=[...(((S.config||{}).briefWho)||['EP'])], on=cur.includes(me); putConfig({...(S.config||{}),briefWho:on?cur.filter(k=>k!==me):[...cur,me]}); toast(on?'Morgen-Briefing ausgeschaltet.':'Morgen-Briefing eingeschaltet – ab morgen früh beim ersten Öffnen.'); closeSheet(); setTimeout(meProfile,50); } }));
+/* ---------- 📌 Pinnwand auf der Startseite: News für alle, keine Aufgaben ---------- */
+// Sammlung pins: {id,title,text,img,until,top,by,at}. Jeder darf anheften; bearbeiten/abnehmen nur, wer es angeheftet hat, oder Admins.
+// „Angeheftet bis“ (optional): danach verschwindet der Zettel von selbst von der Startseite.
+const pinCan=p=>isAdmin()||(!!ME&&(p.by||'')===meK());
+const pinsActive=()=>{ const t=TODAY(); return arr('pins').filter(p=>p&&!(p.until&&p.until<t)).sort((a,b)=>(!!b.top-!!a.top)||String(b.at||'').localeCompare(String(a.at||''))); };
+const pinText=s=>esc(String(s||'')).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>');
+function pinCard(p){ const neu=SINCE_FROM&&String(p.at||'')>SINCE_FROM&&(p.by||'')!==meK();
+  return `<article class="pin ${p.top?'top':''}"><span class="pin-n" aria-hidden="true">📌</span>${neu?'<span class="pin-new">NEU</span>':''}${p.top?'<span class="pin-imp">Wichtig</span>':''}
+    <h3>${esc(p.title||'')}</h3>${p.img?`<img data-blob="${esc(p.img)}" alt="" class="pin-img">`:''}${p.text?`<div class="pin-tx">${pinText(p.text)}</div>`:''}
+    <div class="pin-f"><span class="who-chip">${esc(p.by||'?')}</span><span>${esc(fmtD(String(p.at||'').slice(0,10)))}</span>${p.until?`<span title="Verschwindet danach automatisch">bis ${esc(fmtD(p.until).slice(3))}</span>`:''}${pinCan(p)?`<button type="button" class="lnk" data-act="pinEdit" data-id="${esc(p.id)}">Bearbeiten</button>`:''}</div></article>`; }
+function pinboardHtml(){ const ps=pinsActive(), show=UI.pinAll?ps:ps.slice(0,6);
+  return `<section class="card pinb"><div class="card-h"><h2>📌 Pinnwand ${ps.length?`<span class="cnt-b">${ps.length}</span>`:''}</h2><span class="small muted pinb-sub">News für alle · keine Aufgaben</span><button class="btn sun sm" data-act="pinNew">${ic('plus')}Anheften</button></div>
+    ${show.length?`<div class="pin-grid">${show.map(pinCard).join('')}</div>`:'<div class="empty" style="padding:6px 16px 16px">Noch nichts angeheftet. Hier kommen Neuigkeiten für alle hin – z. B. Betriebsurlaub, neue Kollegin, Info vom Lieferanten, Firmenfeier.</div>'}
+    ${ps.length>6?`<button class="btn ghost sm more-b" data-act="pinAll">${UI.pinAll?'Weniger anzeigen':'+ '+(ps.length-6)+' weitere anzeigen'}</button>`:''}</section>`; }
+var PIN_FILE=null;
+function pinForm(p0){ const isNew=!p0, p=p0?clone(p0):{id:uid(),title:'',text:'',until:'',top:''}; PIN_FILE=null;
+  openSheet({title:isNew?'📌 An die Pinnwand heften':'Pinnwand-Zettel bearbeiten',value:{...p,top:p.top?'1':''},fields:[
+      {k:'title',label:'Überschrift',req:1,full:1,ph:'z. B. Betriebsurlaub 23.12.–2.1.'},
+      {k:'text',label:'Text (optional)',type:'textarea',full:1,ph:'Was sollen alle wissen? Links werden anklickbar.'},
+      {k:'imgx',label:'Bild (optional)',type:'html',full:1,html:`<div class="row" style="gap:8px;align-items:center">${ASSETS?`<input type="file" id="pin_img" accept="image/*" aria-label="Bild wählen">`:'<span class="small muted">Bilder gehen nur in der Online-Version.</span>'}${p.img?`<label class="small"><input type="checkbox" id="pin_imgdel"> Bild entfernen</label>`:''}</div>`},
+      {k:'until',label:'Angeheftet bis (optional – danach verschwindet es automatisch)',type:'date'},
+      {k:'top',label:'Hervorheben',type:'select',options:[['','normal'],['1','Wichtig – steht oben, rot markiert']]}],
+    saveLabel:isNew?'Anheften':'Speichern',
+    onSave:v=>{ const x={...p,title:String(v.title||'').trim(),text:String(v.text||'').trim(),until:v.until||'',top:v.top==='1'}; delete x.imgx; if(!x.until) delete x.until; if(!x.top) delete x.top; if(!x.text) delete x.text;
+      const dl=$('#pin_imgdel'); if(dl&&dl.checked) delete x.img; put('pins',x); toast(isNew?'An die Pinnwand geheftet – alle sehen es auf der Startseite.':'Gespeichert.');
+      const f=PIN_FILE; if(f&&ASSETS) (async()=>{ try{ const up=/gif/i.test(f.type)?f:new File([await mappeToJpg(f,1600)],'pin.jpg',{type:'image/jpeg'}); const r=await ASSETS.upload(up,{type:up.type}); const c=clone(S.pins[x.id]); if(c){ c.img=r.id; put('pins',c); } }catch(e){ toast('Bild konnte nicht hochgeladen werden.'); } })(); },
+    onDelete:!isNew&&pinCan(p)?()=>{ if(!confirm('Diesen Zettel von der Pinnwand nehmen?')) return; del('pins',p.id); closeSheet(); toast('Von der Pinnwand genommen.'); }:null,deleteLabel:'Abnehmen'}); }
+document.addEventListener('change',e=>{ if(e.target.id==='pin_img') PIN_FILE=e.target.files&&e.target.files[0]||null; });
+queueMicrotask(()=>Object.assign(A,{ pinNew:()=>pinForm(), pinEdit:d=>{ const p=S.pins[d.id]; if(p&&pinCan(p)) pinForm(p); }, pinAll:()=>{ UI.pinAll=!UI.pinAll; render(); } }));
+/* ---------- 🧹 Doppelte aufräumen (Admin): gleiche offene To-Dos, gleiche Updates, gleiche Notizen ---------- */
+function dupScan(){ const groups={}, tk=[], up=[], nt=[];
+  arr('tasks').filter(t=>t&&!t.done&&!t.example&&dupNorm(t.title).length>=3).forEach(t=>{ const k=(t.pid||(t.pool?'#pool':'#'+(t.who||'')))+'|'+dupNorm(t.title); (groups[k]=groups[k]||[]).push(t); });
+  Object.values(groups).filter(g=>g.length>1).forEach(g=>{ g.sort((a,b)=>String(a.at||a.created||'').localeCompare(String(b.at||b.created||''))); tk.push({keep:g[0],drop:g.slice(1)}); });
+  arr('tasks').forEach(t=>{ const seen=[]; let n=0; (t.upd2||[]).forEach(u=>{ const b=dupBody(u.t); if(b&&seen.some(s=>s.b===b&&(b.length>=15||s.d===(u.d||'')))) n++; else seen.push({b,d:u.d||''}); }); if(n) up.push({t,n}); });
+  arr('projects').forEach(p=>['notes','updates'].forEach(k=>{ const have=new Set(); let n=0; noteBlocks(p[k]).forEach(b=>{ const d=dupBody(b); if(d&&d.length>=8&&have.has(d)) n++; else if(d) have.add(d); }); if(n) nt.push({p,k,n}); }));
+  return {tk,up,nt}; }
+function dupClean(){ if(!isAdmin()) return toast('Nur für Admins.'); const r=dupScan(), nT=r.tk.reduce((a,g)=>a+g.drop.length,0), nU=r.up.reduce((a,x)=>a+x.n,0), nN=r.nt.reduce((a,x)=>a+x.n,0);
+  if(!nT&&!nU&&!nN) return toast('Keine Doppelten gefunden. 👍');
+  openSheet({title:'🧹 Doppelte aufräumen',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Gefunden wurde nur, was wirklich gleich ist (gleicher Titel im selben Projekt bzw. gleicher Text). Ähnlich formulierte To-Dos prüft die App weiterhin beim Anlegen und fragt nach.</div>
+    ${nT?`<label class="mt-opt"><input type="checkbox" class="ck" id="dc_t" checked><span><b>${nT} doppelte To-Do${nT>1?'s':''}</b> zusammenführen – das älteste bleibt, Updates, Zuständige, Fälligkeit und Notizen der anderen werden übernommen</span></label><div class="small muted" style="margin:0 0 8px 28px">${r.tk.slice(0,12).map(g=>'„'+esc(g.keep.title)+'“ '+(g.keep.pid?'· '+esc(projName(g.keep.pid)):'')+' ('+(g.drop.length+1)+'×)').join('<br>')}${r.tk.length>12?'<br>…':''}</div>`:''}
+    ${nU?`<label class="mt-opt"><input type="checkbox" class="ck" id="dc_u" checked><span><b>${nU} doppelte Update${nU>1?'s':''}</b> in ${r.up.length} To-Do${r.up.length>1?'s':''} entfernen</span></label><div class="small muted" style="margin:0 0 8px 28px">${r.up.slice(0,8).map(x=>'„'+esc(x.t.title)+'“ ('+x.n+')').join('<br>')}</div>`:''}
+    ${nN?`<label class="mt-opt"><input type="checkbox" class="ck" id="dc_n" checked><span><b>${nN} doppelte Notiz${nN>1?'en':''}</b> in ${r.nt.length} Projekt${r.nt.length>1?'en':''} entfernen</span></label><div class="small muted" style="margin:0 0 8px 28px">${r.nt.slice(0,8).map(x=>esc(x.p.name)+' ('+x.n+')').join('<br>')}</div>`:''}</div>`,saveLabel:'Aufräumen',
+    onSave:()=>{ let a=0; const ck=id=>{ const e=$('#'+id); return e&&e.checked; };
+      if(ck('dc_t')) r.tk.forEach(g=>{ const k=clone(S.tasks[g.keep.id]); if(!k) return; g.drop.forEach(d0=>{ const d=S.tasks[d0.id]; if(!d) return;
+          k.upd2=[...(k.upd2||[]),...(d.upd2||[])].sort((x,y)=>String(x.at||x.d||'').localeCompare(String(y.at||y.d||''))); ['who','due','ext'].forEach(f=>{ if(d[f]&&!k[f]) k[f]=d[f]; }); if(d.notes&&!dupNorm(k.notes||'').includes(dupNorm(d.notes))) k.notes=((k.notes||'')+'\n'+d.notes).trim();
+          del('tasks',d.id); a++; }); const seen=[]; k.upd2=(k.upd2||[]).filter(u=>{ const b=dupBody(u.t); if(b&&seen.some(s=>s.b===b&&(b.length>=15||s.d===(u.d||'')))) return false; seen.push({b,d:u.d||''}); return true; }); k._dupOk=1; put('tasks',k); });
+      if(ck('dc_u')) r.up.forEach(x=>{ const t=clone(S.tasks[x.t.id]); if(!t) return; const seen=[]; t.upd2=(t.upd2||[]).filter(u=>{ const b=dupBody(u.t); if(b&&seen.some(s=>s.b===b&&(b.length>=15||s.d===(u.d||'')))){ a++; return false; } seen.push({b,d:u.d||''}); return true; }); t._dupOk=1; put('tasks',t); });
+      if(ck('dc_n')) r.nt.forEach(x=>{ const p=clone(S.projects[x.p.id]); if(!p) return; const have=new Set(); p[x.k]=noteBlocks(p[x.k]).filter(b=>{ const d=dupBody(b); if(d&&d.length>=8&&have.has(d)){ a++; return false; } if(d) have.add(d); return true; }).join('\n'); p._dupOk=1; put('projects',p); });
+      toast(a+' Doppelte entfernt.'); }}); }
+queueMicrotask(()=>Object.assign(A,{ dupClean:()=>dupClean(), briefShow:()=>briefShow(), briefSpeak:()=>briefSpeak(), briefRegen:()=>{ if(BRIEF_REGEN) BRIEF_REGEN(); },briefToggle:()=>{ const me=meK(), cur=[...(((S.config||{}).briefWho)||['EP'])], on=cur.includes(me); putConfig({...(S.config||{}),briefWho:on?cur.filter(k=>k!==me):[...cur,me]}); toast(on?'Morgen-Briefing ausgeschaltet.':'Morgen-Briefing eingeschaltet – ab morgen früh beim ersten Öffnen.'); closeSheet(); setTimeout(meProfile,50); } }));
 /* ---------- Mein Profil (unten in der Seitenleiste): Kürzel-Farbe, Passwort, Person wechseln ---------- */
 const K_COLS=['#F4DB02','#FFB74D','#FF8A65','#E57373','#F06292','#BA68C8','#9575CD','#7986CB','#64B5F6','#4FC3F7','#4DD0E1','#4DB6AC','#81C784','#AED581','#DCE775','#A1887F','#90A4AE','#1E1E1E'];
 const kCols=()=>((S.config||{}).kColors||{});
@@ -2378,7 +2479,7 @@ function meProfile(){ if(!ME){ askMe(true); return; } const k=meK(), cur=kCols()
     <label>Farbe für mein Kürzel <span class="small muted">(sehen alle im Team)</span></label><div class="me-cols">${K_COLS.map(h=>`<button type="button" class="me-col ${h===cur?'on':''}" style="background:${h}" data-act="meCol" data-v="${h}" aria-label="Farbe ${h}"></button>`).join('')}<input type="color" id="me_colc" value="${cur||'#F4DB02'}" title="Eigene Farbe" aria-label="Eigene Farbe"><button type="button" class="lnk" data-act="meCol" data-v="">Standard</button></div>
     ${window.SB_SETPW?`<label>Passwort ändern</label><div class="sl-2"><input class="inp" type="password" id="me_pw1" autocomplete="new-password" placeholder="Neues Passwort (mind. 8 Zeichen)"><input class="inp" type="password" id="me_pw2" autocomplete="new-password" placeholder="Wiederholen"></div><button type="button" class="btn sm" data-act="mePw" style="margin-top:6px">Passwort speichern</button><div class="small" id="me_pwmsg" role="status"></div>`:''}
     <label style="margin-top:14px">☀️ Morgen-Briefing</label><div class="row" style="gap:6px;align-items:center"><button type="button" class="btn sm" data-act="briefShow">Briefing öffnen</button><button type="button" class="btn ghost sm" data-act="briefToggle">${briefOn()?'Jeden Morgen automatisch: an – ausschalten':'Jeden Morgen automatisch zeigen'}</button></div><div class="small muted">Einmal am Tag beim ersten Öffnen: alle laufenden und geplanten Projekte in einfacher Sprache – Stand, was zu tun ist, wer dran ist.</div>
-    <div class="row" style="margin-top:14px"><button type="button" class="btn ghost sm" data-act="sinceShow">Was ist neu seit meinem letzten Besuch?</button><button type="button" class="btn ghost sm" data-act="askMe">Andere Person / Kürzel wählen</button></div></div>`,saveLabel:'Schließen',onSave:()=>{}});
+    <div class="row" style="margin-top:14px"><button type="button" class="btn ghost sm" data-act="sinceShow">Was ist neu seit meinem letzten Besuch?</button>${isAdmin()?'<button type="button" class="btn ghost sm" data-act="dupClean">🧹 Doppelte To-Dos/Updates aufräumen</button>':''}<button type="button" class="btn ghost sm" data-act="askMe">Andere Person / Kürzel wählen</button></div></div>`,saveLabel:'Schließen',onSave:()=>{}});
   const cc=$('#me_colc'); if(cc) cc.addEventListener('change',()=>A.meCol({v:cc.value})); }
 queueMicrotask(()=>Object.assign(A,{ meProfile:()=>meProfile(), sinceShow:()=>{ closeSheet(); sinceShow(true,SINCE_FROM||seenGet()); }, /* A wird weiter unten angelegt */
   meCol:d=>{ const k=meK(); if(!k) return; const cfg=clone(S.config||{}); cfg.kColors={...(cfg.kColors||{})}; if(d.v) cfg.kColors[k]=d.v; else delete cfg.kColors[k]; putConfig(cfg);
@@ -2576,7 +2677,7 @@ function needAll(){ const out=[];
   return out; }
 function vDash(){
   const t=TODAY(), mon=mondayOf(t), days=[0,1,2,3,4].map(i=>addDays(mon,i));
-  if(!arr('projects').length) return dashHero(t)+smartDropHtml()+emptyStart();
+  if(!arr('projects').length) return dashHero(t)+smartDropHtml()+pinboardHtml()+emptyStart();
   // 1) Wochenplanung Mo–Fr (eigene Einträge zuerst)
   const items=calItems(mon,days[4]).filter(x=>x.k!=='todo');
   const tim=x=>(x.e&&x.e.time)||'';
@@ -2597,7 +2698,7 @@ function vDash(){
   // 4) Noch zu bestellen, je Projekt gebündelt
   const nd=needAll(), ndP=[...new Set(nd.map(n=>n.pid))].map(pid=>({pid,its:nd.filter(n=>n.pid===pid)})).sort((a,b)=>b.its.length-a.its.length);
   const ndRow=g=>`<div class="nd-row"><div style="min-width:0" class="clickable" data-act="openAt" data-id="${g.pid}" data-at="material"><div class="tt">${esc(projName(g.pid)||'ohne Projekt')}</div><div class="small muted nd-its">${g.its.slice(0,3).map(n=>esc((n.qty?qn(n.qty)+' '+(n.unit||'')+' ':'')+n.art)).join(' · ')}${g.its.length>3?' · +'+(g.its.length-3):''}</div></div><button class="btn sun sm" data-act="needOrder" data-pid="${g.pid}">Bestellen</button></div>`;
-  return dashHero(t)+hrDashStrip()+wvDashStrip()+(ordApprover()?ordApprBanner():'')+gsearchBox()+`<div class="dash-grid">
+  return dashHero(t)+hrDashStrip()+wvDashStrip()+(ordApprover()?ordApprBanner():'')+gsearchBox()+pinboardHtml()+`<div class="dash-grid">
     <section class="card dash-todo"><div class="card-h"><h2>Meine offenen To-Dos <span class="cnt-b">${my.length}</span></h2>${myLate?`<span class="pill bad">${myLate} überfällig</span>`:''}<button class="btn ghost sm" data-act="myTasks">Alle</button></div>
       ${ME?`<div class="list">${my.slice(0,7).map(taskLi).join('')||'<div class="empty"><b>Alles erledigt</b>Du hast keine offenen Aufgaben.</div>'}</div>${my.length>7?`<button class="btn ghost sm more-b" data-act="myTasks">+ ${my.length-7} weitere anzeigen</button>`:''}`:'<div class="empty">Unten links „Wer bist du?“ wählen, dann erscheinen hier deine Aufgaben.</div>'}</section>
     <section class="card dash-dl"><div class="card-h"><h2>Offene Lieferungen <span class="cnt-b">${dl.length}</span></h2><button class="btn ghost sm" data-act="nav" data-v="orders">Alle</button></div>
@@ -2684,7 +2785,7 @@ function vDashOld(){
   const delLate = del7.filter(o=>o.delivery<t);
   const offOpen = arr('offers').filter(o=>['versendet','nachfassen'].includes(o.status));
   const offSum = offOpen.reduce((a,o)=>a+(+o.sum||0),0);
-  if(!arr('projects').length) return dashHero(t)+smartDropHtml()+emptyStart();
+  if(!arr('projects').length) return dashHero(t)+smartDropHtml()+pinboardHtml()+emptyStart();
   const cc = k=>arr('projects').filter(p=>catOf(p)===k).length;
   const lauf = act.filter(p=>catOf(p)==='laufend').sort(byPipe), plan = act.filter(p=>catOf(p)==='planung').sort(byPipe);
   const week = calItems(t,addDays(t,7));
@@ -2914,7 +3015,8 @@ document.addEventListener('toggle',e=>{ const d=e.target; if(!d||!d.matches||!d.
 function taskUpdInline(t){ const u=(t.upd2||[]).slice().sort((a,b)=>updKey(b).localeCompare(updKey(a))); if(!u.length) return '';
   const line=x=>`<div class="tu"><b class="mono">${esc(updStamp(x))}</b> <span class="who-chip">${esc(x.by||'?')}</span> ${esc(x.t)}${tuCanDel(x)?` <button type="button" class="tu-del" data-act="taskUpdDel" data-id="${esc(t.id)}" data-key="${esc(tuKey(x))}" title="Update löschen" aria-label="Update löschen">✕</button>`:''}</div>`;
   // zugeklappt nur eine kurze Zeile – Updates erst beim Aufklappen (neuestes oben)
-  return `<details class="tu-inl" data-stop="1" data-tuid="${esc(t.id)}" ${TU_OPEN.has(t.id)?'open':''}><summary><span class="tu-sum">💬 ${u.length} Update${u.length>1?'s':''} · zuletzt ${esc(updStamp(u[0]))} · ${esc(u[0].by||'?')}</span></summary>${u.map(line).join('')}</details>`; }
+  return `<details class="tu-inl" data-stop="1" data-tuid="${esc(t.id)}" ${TU_OPEN.has(t.id)?'open':''}><summary><span class="tu-sum"><span class="tu-ar" aria-hidden="true">▸</span>💬 ${u.length} Update${u.length>1?'s':''} · zuletzt ${esc(updStamp(u[0]))} · ${esc(u[0].by||'?')}</span></summary>${u.map(line).join('')}<button type="button" class="tu-close" data-act="tuClose" title="Updates zuklappen" aria-label="Updates zuklappen">▴ zuklappen</button></details>`; }
+queueMicrotask(()=>Object.assign(A,{ tuClose:(d,b)=>{ const x=b&&b.closest('details.tu-inl'); if(x) x.open=false; } }));
 // Bis zu 3 Zuständige: who = Hauptperson, who2 = bis zu 2 weitere
 function taskWhos(t){ return [t.who,...(t.who2||[])].filter(Boolean); }
 // Gleiches Kürzel = gleiche Person: „MK“, „Kamil (MK)“ und „Mustermann (MK)“ werden auf den Namen im Team (erster Eintrag mit dem Kürzel) zusammengeführt
@@ -4967,6 +5069,8 @@ Standard-Statusschritte des Projekts, bereits erreicht:
 ${done}
 Noch offen (Nummer. Schritt):
 ${open}
+Bereits vorhandene offene To-Dos im Projekt – diese NICHT noch einmal vorschlagen, auch nicht anders formuliert:
+${openTasks(pid).slice(0,60).map(t=>'- '+t.title+(t.who?' ('+shortWho(t.who)+')':'')).join('\n')||'-'}
 Aufgabe 1 – Status: Erkenne, ob die Notiz klar sagt, dass einer der OFFENEN Schritte jetzt erreicht ist (z. B. „Angebot ist raus“ → Angebot versendet, „Auftrag erhalten“ → Beauftragt, „Material ist bestellt“ → Material bestellt, „Zähler wurde gesetzt“ → Zähler eingebaut, „Kunde sagt ab“ → Abgesagt, „Projekt ruht“ → Onhold). Nur bei eindeutiger Aussage, nicht bei Absichten oder Plänen („wir müssen noch bestellen“ ist KEIN erreichter Status). date = genanntes Datum, sonst heute.
 Aufgabe 2 – To-Dos: Erkenne alles, was noch jemand tun muss, auch wenn es versteckt formuliert ist: „X anrufen“, „Material bestellen (MK)“, „Termin vereinbaren“, „muss noch …“, „fehlt noch …“, „Kunde wartet auf Angebot“ (→ Angebot schicken), „warten auf Rückmeldung von Y“ (→ bei Y nachfragen), „Netzbetreiber hat noch nicht geantwortet“ (→ beim Netzbetreiber nachhaken). Reine Statusmeldungen ohne offene Handlung sind keine Aufgaben. Ordne einen Mitarbeiter nur zu, wenn er im Text genannt ist (Kürzel oder Name); sonst who "". due nur, wenn ein Termin genannt oder klar ableitbar ist (z. B. „bis Freitag“, „nächste Woche“ = Freitag der nächsten Woche), sonst "".
 Antworte nur mit JSON: {"status":[{"n":7,"date":"YYYY-MM-DD","why":"kurzes Zitat aus der Notiz"}],"todos":[{"title":"kurze Aufgabe im Imperativ","who":"Kürzel oder leer","due":"YYYY-MM-DD oder leer"}]}`;
@@ -4979,6 +5083,7 @@ Antworte nur mit JSON: {"status":[{"n":7,"date":"YYYY-MM-DD","why":"kurzes Zitat
 }
 function showSuggest(pid,stats,todos,local){
   const p=S.projects[pid]; if(!p) return;
+  todos=todos.filter((t,i)=>!dupTask({title:t.title,pid})&&todos.findIndex(u=>dupNorm(u.title)===dupNorm(t.title))===i); if(!todos.length&&!stats.length) return toast('Alle erkannten Aufgaben gibt es schon als To-Do.');
   const byK={}; staff().forEach(s=>byK[shortWho(s.name).toLowerCase()]=s.name);
   const srows=stats.map((s,i)=>`<div class="sug sug-st"><input type="checkbox" class="ck" id="ss_c${i}" checked aria-label="übernehmen"><div style="min-width:0"><b>${esc(PIPE[s.n-1])}</b>${MS_LINK[s.n]?' <span class="link-ms">↔ Checkliste</span>':''}${s.why?`<div class="small muted">„${esc(s.why)}“</div>`:''}</div><input class="inp" type="date" id="ss_d${i}" value="${s.date}" aria-label="Datum"></div>`).join('');
   const rows=todos.map((t,i)=>{ const who=byK[String(t.who||'').toLowerCase()]||''; const due=/^\d{4}-\d{2}-\d{2}$/.test(t.due||'')?t.due:'';
@@ -5576,7 +5681,7 @@ Bereits offene To-Dos (nicht doppelt anlegen):\n${open}
 Mitarbeiter-Kürzel: ${staff().map(s=>shortWho(s.name)).join(', ')}
 Ergibt sich aus dem Update eine NEUE, eigenständige Aufgabe für uns, die nicht schon im To-Do selbst oder in den offenen To-Dos steckt (z. B. Rückruf am Freitag nachfassen, Unterlagen nachreichen, Termin vereinbaren, Material bestellen)? Nur dann create=true. Reine Statusmeldungen, Erledigungen oder Warten ohne eigene Handlung: create=false.
 Antworte nur mit JSON: {"create":true|false,"title":"kurze Aufgabe im Imperativ","who":"Kürzel oder leer","due":"JJJJ-MM-TT oder leer","why":"1 kurzer Satz"}`;
-  try{ const r=await SAMPLE.json(prompt,{modelTier:'default'}); if(!r||!r.create||!String(r.title||'').trim()) return;
+  try{ const r=await SAMPLE.json(prompt,{modelTier:'default'}); if(!r||!r.create||!String(r.title||'').trim()||dupTask({title:r.title,pid:t.pid||''})) return;
     const sug={title:String(r.title).trim().slice(0,200),who:byK[String(r.who||'').toLowerCase()]||'',due:/^\d{4}-\d{2}-\d{2}$/.test(r.due||'')?r.due:'',why:String(r.why||'').slice(0,200)};
     FOLLOW_SUG[id]=sug; const box=$('#tu_sug'); if(box&&SHEET) box.innerHTML=followSugHtml(id); else if(!SHEET) followSugSheet(id); else toast('✨ Vorschlag für ein Folge-To-Do liegt beim To-Do „'+t.title.slice(0,40)+'“ bereit.'); }
   catch(e){} }
@@ -5701,7 +5806,7 @@ Offene Aufgaben:\n${openTasks(pid).map(t=>'- '+t.title).join('\n')||'-'}
 Letzte Notizen:\n${noteEntries(p).sort((a,b)=>b.d.localeCompare(a.d)).slice(0,12).map(n=>'- '+n.d+': '+n.t).join('\n')||'-'}
 Welche 4–8 konkreten nächsten Schritte sind JETZT sinnvoll? Denke an Fristen und Pflichten, die leicht vergessen werden (z. B. MaStR-Registrierung binnen 1 Monat nach IBN, Fertigmeldung an den Netzbetreiber, Anlagenzertifikat, Inbetriebnahmeprotokoll, Wartungsangebot, Dokumentation an den Kunden). Keine Doppelungen mit offenen Aufgaben.
 Antworte nur mit JSON: {"steps":[{"title":"Imperativ, kurz","why":"Begründung in einem Satz","basis":"Regel/Quelle, z. B. VDE-AR-N 4105, MaStRV §5, TAB Westnetz – oder leer","who":"Kürzel oder leer","due":"YYYY-MM-DD oder leer"}]}`;
-  try{ const r=await SAMPLE.json(prompt,{modelTier:'default'}); const st=(r&&Array.isArray(r.steps)?r.steps:[]).filter(s=>s&&s.title).slice(0,10);
+  try{ const r=await SAMPLE.json(prompt,{modelTier:'default'}); const st=(r&&Array.isArray(r.steps)?r.steps:[]).filter(s=>s&&s.title&&!dupTask({title:s.title,pid})).slice(0,10);
     if(!st.length) return toast('Keine Vorschläge.');
     const byK={}; staff().forEach(s=>byK[shortWho(s.name).toLowerCase()]=s.name);
     openSheet({title:'Vorschläge: nächste Schritte · '+p.name,wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Auswählen, anpassen, übernehmen – wird als To-Do im Projekt angelegt. Claude stützt sich auf sein Fachwissen (Stand 2026), nicht auf eine Live-Internetsuche: Regeln und Fristen bitte bei Bedarf kurz gegenprüfen.</div>
