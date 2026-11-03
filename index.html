@@ -388,6 +388,9 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .pk-m{display:block;font-size:11.5px;color:var(--muted)}
 .priv-add{display:grid;grid-template-columns:minmax(0,1fr) 200px 150px 120px auto;gap:8px;padding-top:14px}
 .priv-cat{margin-bottom:12px;border-left:4px solid var(--line)}.priv-cat>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:12px 16px;font-size:15px}.priv-cat>summary::-webkit-details-marker{display:none}.priv-cat[open] .tu-ar{transform:rotate(90deg)}
+.pv-grip{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;color:var(--muted);padding:6px 4px;margin:0 -8px 0 -8px;font-size:14px;letter-spacing:-2px;align-self:center}.pv-grip:hover{color:var(--ink)}
+.pv-dragging{opacity:.35}.pv-before{box-shadow:inset 0 3px 0 var(--sun)}.pv-after{box-shadow:inset 0 -3px 0 var(--sun)}.priv-cat.pv-over{outline:2px dashed var(--sun);outline-offset:-2px}
+.pv-ghost{position:fixed;pointer-events:none;z-index:9999;opacity:.95;background:var(--surface);box-shadow:0 8px 22px rgba(0,0,0,.22);border-radius:10px;cursor:grabbing}
 .priv-cat.pc-hi{border-left-color:#E53935}.priv-cat.pc-no{border-left-color:var(--sun)}.priv-cat.pc-lo{border-left-color:#B0BEC5}.priv-cat.pc-lo .tt{opacity:.85}
 .pc-note{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-weight:600;font-size:13.5px;line-height:1.35;margin:2px 0}
 .pc-step{display:block;margin-top:2px}
@@ -4610,16 +4613,36 @@ const privCat=t=>t.prio==='hoch'||t.prio==='niedrig'?t.prio:'normal';
 let PRIV_OPEN=(()=>{ try{ return JSON.parse(lsGet('sonnenplan-privcat')||'{}')||{}; }catch(e){ return {}; } })();
 const privCatOpen=k=>PRIV_OPEN[k]!==false;
 document.addEventListener('toggle',e=>{ const d=e.target; if(!d||!d.matches||!d.matches('details.priv-cat[data-pcat]')) return; PRIV_OPEN={...PRIV_OPEN,[d.dataset.pcat]:d.open}; lsSet('sonnenplan-privcat',JSON.stringify(PRIV_OPEN)); },true);
+// Ziehen & Ablegen (Maus und Finger, über den Griff ⋮⋮): auf eine Zeile = davor/dahinter einsortieren, auf eine Kategorie = dort ans Ende.
+// Die Reihenfolge wird je Kategorie als ord gespeichert.
+let PV_DRAG=null;
+function pvClear(){ document.querySelectorAll('.pv-before,.pv-after,.pv-over').forEach(x=>x.classList.remove('pv-before','pv-after','pv-over')); }
+document.addEventListener('pointerdown',e=>{ const g=e.target.closest&&e.target.closest('.pv-grip'); if(!g) return; const row=g.closest('[data-pvrow]'); if(!row) return; e.preventDefault();
+  const r=row.getBoundingClientRect(), gh=row.cloneNode(true); gh.className+=' pv-ghost'; gh.style.width=r.width+'px'; gh.style.left=r.left+'px'; gh.style.top=r.top+'px'; document.body.appendChild(gh);
+  row.classList.add('pv-dragging'); PV_DRAG={id:g.dataset.pvid,row,gh,dy:e.clientY-r.top,tgt:null}; },true);
+document.addEventListener('pointermove',e=>{ if(!PV_DRAG) return; e.preventDefault(); PV_DRAG.gh.style.top=(e.clientY-PV_DRAG.dy)+'px';
+  const vh=innerHeight||800; if(e.clientY<70) scrollBy(0,-14); else if(e.clientY>vh-70) scrollBy(0,14);
+  pvClear(); const el=document.elementFromPoint(e.clientX,e.clientY); if(!el){ PV_DRAG.tgt=null; return; }
+  const row=el.closest('[data-pvrow]'), cat=el.closest('details.priv-cat[data-pcat]');
+  if(row&&row.dataset.pvrow!==PV_DRAG.id&&cat){ const r=row.getBoundingClientRect(), before=e.clientY<r.top+r.height/2; row.classList.add(before?'pv-before':'pv-after'); PV_DRAG.tgt={cat:cat.dataset.pcat,row:row.dataset.pvrow,before}; }
+  else if(cat){ cat.classList.add('pv-over'); PV_DRAG.tgt={cat:cat.dataset.pcat}; } else PV_DRAG.tgt=null; },{passive:false});
+function pvEnd(apply){ const d=PV_DRAG; if(!d) return; PV_DRAG=null; d.gh.remove(); d.row.classList.remove('pv-dragging'); pvClear(); if(!apply||!d.tgt) return;
+  const k=d.tgt.cat, box=document.querySelector(`details.priv-cat[data-pcat="${k}"]`);
+  const ids=(box?[...box.querySelectorAll('[data-pvrow]')].map(x=>x.dataset.pvrow):[]).filter(x=>x!==d.id&&S.priv[x]);
+  let at=ids.length; if(d.tgt.row){ const i=ids.indexOf(d.tgt.row); if(i>=0) at=d.tgt.before?i:i+1; } ids.splice(at,0,d.id);
+  const moved=privCat(S.priv[d.id])!==k; ids.forEach((id,i)=>{ const t=S.priv[id]; if(!t) return; const nt={...t,ord:i}; if(id===d.id) nt.prio=k; if(nt.ord!==t.ord||nt.prio!==t.prio) privPut(nt); });
+  if(moved){ PRIV_OPEN={...PRIV_OPEN,[k]:true}; lsSet('sonnenplan-privcat',JSON.stringify(PRIV_OPEN)); toast('Verschoben nach „'+(PRIV_CATS.find(c=>c[0]===k)||[])[1]+'“.'); } }
+document.addEventListener('pointerup',()=>pvEnd(true)); document.addEventListener('pointercancel',()=>pvEnd(false));
 // Private To-Dos im selben Look wie die normalen To-Dos: Abhaken, Titel, Zeile mit Firma/Fälligkeit/Dringlichkeit, gruppiert nach Fälligkeit
 function privLi(t,stOf){ const st=stOf(t), late=t.due&&t.due<TODAY()&&st!=='erledigt';
-  return `<div class="li ${st==='erledigt'?'done':''}"><input type="checkbox" class="ck" data-chg="privToggle" data-id="${t.id}" ${st==='erledigt'?'checked':''} aria-label="Erledigt"><div class="body clickable" data-act="privEdit" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="mt">${t.firm?`<span class="pill firm-pill">${esc(t.firm)}</span>`:''}${t.pid?`<span>${esc(projName(t.pid))}</span>`:''}${t.due?`<span class="${late?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${st==='angefangen'?'<span class="pill warn">angefangen</span>':''}${t.notes?`<span class="muted">${esc(String(t.notes).slice(0,80))}</span>`:''}${st==='erledigt'&&t.doneAt?`<span class="done-by">✓ erledigt ${esc(stampTxt(t.doneAt))}</span>`:''}</div></div>
+  return `<div class="li ${st==='erledigt'?'done':''}" ${st!=='erledigt'?`data-pvrow="${t.id}"`:''}>${st!=='erledigt'?`<span class="pv-grip" data-pvid="${t.id}" title="Ziehen: in andere Kategorie oder an andere Stelle" aria-hidden="true">⋮⋮</span>`:''}<input type="checkbox" class="ck" data-chg="privToggle" data-id="${t.id}" ${st==='erledigt'?'checked':''} aria-label="Erledigt"><div class="body clickable" data-act="privEdit" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="mt">${t.firm?`<span class="pill firm-pill">${esc(t.firm)}</span>`:''}${t.pid?`<span>${esc(projName(t.pid))}</span>`:''}${t.due?`<span class="${late?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${st==='angefangen'?'<span class="pill warn">angefangen</span>':''}${t.notes?`<span class="muted">${esc(String(t.notes).slice(0,80))}</span>`:''}${st==='erledigt'&&t.doneAt?`<span class="done-by">✓ erledigt ${esc(stampTxt(t.doneAt))}</span>`:''}</div></div>
     ${st!=='erledigt'?`<button type="button" class="icon-btn" title="${st==='angefangen'?'Wieder auf offen':'Als angefangen markieren'}" data-act="privStart" data-id="${t.id}">${st==='angefangen'?'◐':'○'}</button>`:''}<button type="button" class="icon-btn task-del" title="Löschen" data-act="privDel" data-id="${t.id}">${ic('x')}</button></div>`; }
 function privList(all,stOf,firms){ const t=TODAY(), ff=UI.privF||'', list=all.filter(x=>!ff||(x.firm||'')===ff), open=list.filter(x=>stOf(x)!=='erledigt'), done=list.filter(x=>stOf(x)==='erledigt');
   const groups=[['Überfällig',x=>x.due&&x.due<t],['Heute',x=>x.due===t],['Diese Woche',x=>x.due>t&&x.due<=addDays(t,7)],['Später',x=>x.due>addDays(t,7)],['Ohne Datum',x=>!x.due]];
   const srt=(a,b)=>(a.prio==='hoch'?0:1)-(b.prio==='hoch'?0:1)||(stOf(a)==='angefangen'?0:1)-(stOf(b)==='angefangen'?0:1)||String(a.due||'9').localeCompare(String(b.due||'9'));
   return `${firms.length?`<div class="chips"><button class="chip ${!ff?'on':''}" data-act="privF" data-v="">Alle <span class="mono small">${all.filter(x=>stOf(x)!=='erledigt').length}</span></button>${firms.map(f=>`<button class="chip ${ff===f?'on':''}" data-act="privF" data-v="${esc(f)}">${esc(f)} <span class="mono small">${all.filter(x=>x.firm===f&&stOf(x)!=='erledigt').length}</span></button>`).join('')}</div>`:''}
     <div class="row"><label class="tog-sw"><input type="checkbox" data-chg="privDoneSw" ${UI.privShowDone?'checked':''}><span class="sw" aria-hidden="true"></span><span>Erledigte einblenden${done.length?` <span class="mono small muted">(${done.length})</span>`:''}</span></label></div>
-    ${open.length?PRIV_CATS.map(([k,l,cls])=>{ const g=open.filter(x=>privCat(x)===k).sort((a,b)=>{ const la=a.due&&a.due<t?0:1, lb=b.due&&b.due<t?0:1; return la-lb||(stOf(a)==='angefangen'?0:1)-(stOf(b)==='angefangen'?0:1)||String(a.due||'9').localeCompare(String(b.due||'9')); });
+    ${open.length?PRIV_CATS.map(([k,l,cls])=>{ const g=open.filter(x=>privCat(x)===k).sort((a,b)=>{ const oa=a.ord??1e9, ob=b.ord??1e9; if(oa!==ob) return oa-ob; /* eigene Reihenfolge (per Ziehen) zuerst */ const la=a.due&&a.due<t?0:1, lb=b.due&&b.due<t?0:1; return la-lb||(stOf(a)==='angefangen'?0:1)-(stOf(b)==='angefangen'?0:1)||String(a.due||'9').localeCompare(String(b.due||'9')); });
         const late=g.filter(x=>x.due&&x.due<t).length;
         return `<details class="card priv-cat ${cls}" data-pcat="${k}" ${privCatOpen(k)?'open':''}><summary><span class="tu-ar" aria-hidden="true">▸</span><b>${l}</b> <span class="cnt-b">${g.length}</span>${late?` <span class="pill bad">${late} überfällig</span>`:''}</summary>
           <div class="list">${g.map(x=>privLi(x,stOf)).join('')||'<div class="small muted" style="padding:8px 16px">Nichts in dieser Kategorie.</div>'}</div></details>`; }).join('')
