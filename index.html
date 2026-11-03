@@ -663,7 +663,8 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .ord-appr-b{border-left:4px solid var(--sun)}
 #menu{max-height:calc(100vh - 24px);overflow-y:auto}
 .menu-h{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:8px 12px 2px}
-.pinb{margin-bottom:18px}.pinb .card-h{flex-wrap:wrap}.pinb-sub{margin-right:auto}
+.pinb{margin-bottom:18px}.pin-mob>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px}.pin-mob>summary::-webkit-details-marker{display:none}.pin-mob[open] .tu-ar{transform:rotate(90deg)}
+.pin-mob .pin-new-i{position:static}.pin-mob-h{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0}.pin-mob .tu-ar{font-size:13px;width:16px}.pin-mob-b{padding:0 16px 10px}.pinb .card-h{flex-wrap:wrap}.pinb-sub{margin-right:auto}
 .pin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;padding:4px 16px 16px}
 .pin{position:relative;background:#FFF6B3;color:#1E1E1E;border-radius:4px 4px 14px 4px;padding:16px 14px 10px;box-shadow:0 2px 6px rgba(0,0,0,.12);transform:rotate(-.6deg);display:flex;flex-direction:column;gap:6px;min-width:0}
 .pin:nth-child(2n){transform:rotate(.7deg);background:#FFF0C2}.pin:nth-child(3n){transform:rotate(-.2deg);background:#FDF5D0}
@@ -2420,7 +2421,15 @@ function pinCard(p){ const neu=SINCE_FROM&&String(p.at||'')>SINCE_FROM&&(p.by||'
   return `<article class="pin ${p.top?'top':''}"><span class="pin-n" aria-hidden="true">📌</span>${neu?'<span class="pin-new">NEU</span>':''}${p.top?'<span class="pin-imp">Wichtig</span>':''}
     <h3>${esc(p.title||'')}</h3>${p.img?`<img data-blob="${esc(p.img)}" alt="" class="pin-img">`:''}${p.text?`<div class="pin-tx">${pinText(p.text)}</div>`:''}
     <div class="pin-f"><span class="who-chip">${esc(p.by||'?')}</span><span>${esc(fmtD(String(p.at||'').slice(0,10)))}</span>${p.until?`<span title="Verschwindet danach automatisch">bis ${esc(fmtD(p.until).slice(3))}</span>`:''}${pinCan(p)?`<button type="button" class="lnk" data-act="pinEdit" data-id="${esc(p.id)}">Bearbeiten</button>`:''}</div></article>`; }
-function pinboardHtml(){ const ps=pinsActive(), show=UI.pinAll?ps:ps.slice(0,6);
+// Am Handy eingeklappt (nur Kopfzeile mit Anzahl und „neu“), per Antippen ausklappbar; am Laptop immer offen
+var PIN_OPEN=false;
+document.addEventListener('toggle',e=>{ if(e.target&&e.target.id==='pinDet') PIN_OPEN=e.target.open; },true);
+function pinboardHtml(){ const ps=pinsActive(), show=UI.pinAll?ps:ps.slice(0,6), mob=window.matchMedia&&matchMedia('(max-width:900px)').matches;
+  const nNew=ps.filter(p=>SINCE_FROM&&String(p.at||'')>SINCE_FROM&&(p.by||'')!==meK()).length, nTop=ps.filter(p=>p.top).length;
+  if(mob) return `<details class="card pinb pin-mob" id="pinDet" ${PIN_OPEN?'open':''}><summary class="card-h"><h2 class="pin-mob-h"><span class="tu-ar" aria-hidden="true">▸</span> 📌 Pinnwand ${ps.length?`<span class="cnt-b">${ps.length}</span>`:''}${nNew?`<span class="pin-new pin-new-i">${nNew} NEU</span>`:''}${nTop?`<span class="pin-imp pin-new-i">${nTop} wichtig</span>`:''}</h2></summary>
+    <div class="pin-mob-b"><button class="btn sun sm" data-act="pinNew">${ic('plus')}Anheften</button></div>
+    ${show.length?`<div class="pin-grid">${show.map(pinCard).join('')}</div>`:'<div class="empty" style="padding:6px 16px 16px">Noch nichts angeheftet.</div>'}
+    ${ps.length>6?`<button class="btn ghost sm more-b" data-act="pinAll">${UI.pinAll?'Weniger anzeigen':'+ '+(ps.length-6)+' weitere anzeigen'}</button>`:''}</details>`;
   return `<section class="card pinb"><div class="card-h"><h2>📌 Pinnwand ${ps.length?`<span class="cnt-b">${ps.length}</span>`:''}</h2><span class="small muted pinb-sub">News für alle · keine Aufgaben</span><button class="btn sun sm" data-act="pinNew">${ic('plus')}Anheften</button></div>
     ${show.length?`<div class="pin-grid">${show.map(pinCard).join('')}</div>`:'<div class="empty" style="padding:6px 16px 16px">Noch nichts angeheftet. Hier kommen Neuigkeiten für alle hin – z. B. Betriebsurlaub, neue Kollegin, Info vom Lieferanten, Firmenfeier.</div>'}
     ${ps.length>6?`<button class="btn ghost sm more-b" data-act="pinAll">${UI.pinAll?'Weniger anzeigen':'+ '+(ps.length-6)+' weitere anzeigen'}</button>`:''}</section>`; }
