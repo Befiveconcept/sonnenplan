@@ -1069,7 +1069,7 @@ textarea.autogrow{resize:vertical;overflow:hidden;min-height:40px!important;max-
 @keyframes recp{50%{opacity:.25}}
 .meet-live{min-height:1.4em;font-style:italic;color:var(--muted);font-size:13px}
 .meet-tx{width:100%;font-size:14px;line-height:1.5;resize:vertical}
-.mt-note{grid-template-columns:22px 220px minmax(0,1fr);align-items:start}
+.mt-note{grid-template-columns:22px 220px minmax(0,1fr);align-items:start}.mt-known>textarea,.mt-known>select,.mt-known>input:not(.ck){opacity:.6}
 @media (max-width:640px){ .mt-note{grid-template-columns:22px minmax(0,1fr)} .mt-note textarea{grid-column:2} }
 /* Notizen als Karten, Statusverlauf aufklappbar */
 .ps-stack{display:flex;flex-direction:column;gap:14px}
@@ -6442,10 +6442,10 @@ function findRelated(t){ const pw=t.projectId&&S.projects[t.projectId]?toks(S.pr
   return best; }
 function mtProjOpts(cur){ return fileProjOpts(cur).replace('– nicht zugeordnet –','– kein Projekt –'); }
 function mtRow(i,t){ const byK={}; staff().forEach(s=>{ byK[shortWho(s.name).toLowerCase()]=s.name; }); const who=byK[String(t.who||'').toLowerCase()]||'';
-  return `<div class="sug mt-row"><input type="checkbox" class="ck" id="mt_c${i}" checked aria-label="übernehmen"><textarea class="inp autogrow mt-tt" id="mt_t${i}" rows="1" placeholder="Aufgabe" aria-label="Aufgabe">${esc(String(t.title||'').slice(0,400))}</textarea>
+  return `<div class="sug mt-row ${t.relDup?'mt-known':''}"><input type="checkbox" class="ck" id="mt_c${i}" ${t.relDup?'':'checked'} aria-label="übernehmen"><textarea class="inp autogrow mt-tt" id="mt_t${i}" rows="1" placeholder="Aufgabe" aria-label="Aufgabe">${esc(String(t.title||'').slice(0,400))}</textarea>
     <select class="inp mt-p ${t.projectId?'':'none'}" id="mt_p${i}" data-chg="mtRowP" aria-label="Projekt">${mtProjOpts(t.projectId||'')}</select>
     <select class="inp" id="mt_w${i}" aria-label="Zuständig"><option value="">– niemand –</option>${staff().map(s=>`<option value="${esc(s.name)}" ${s.name===who?'selected':''}>${esc(shortWho(s.name))}</option>`).join('')}</select>
-    <input class="inp" type="date" id="mt_d${i}" value="${/^\d{4}-\d{2}-\d{2}$/.test(t.due||'')?t.due:''}" aria-label="Fällig">${prioSel('mt_r'+i,PRIO[t.prio]?t.prio:'normal')}<input class="inp" id="mt_e${i}" value="${esc(t.ext||'')}" placeholder="extern bei …" aria-label="Liegt extern bei">${t.rel&&S.tasks[t.rel]?(()=>{ const x=S.tasks[t.rel]; return `<div class="mt-rel" data-rel="${x.id}"><span>↔ Hängt vermutlich zusammen mit: <b>${esc(x.title)}</b> <span class="muted">· ${esc([projName(x.pid),x.who?shortWho(x.who):'niemand',x.due?'fällig '+fmtD(x.due):''].filter(Boolean).join(' · '))}${t.relBy?' · erkannt per '+t.relBy:''}</span></span><select class="inp" id="mt_a${i}" aria-label="Was tun?"><option value="update" ${t.relation==='update'?'selected':''}>Als Update zum bestehenden To-Do</option><option value="erledigt" ${t.relation==='erledigt'?'selected':''}>Bestehendes To-Do erledigt (mit Update)</option><option value="neu" ${t.relation==='neu'?'selected':''}>Trotzdem als neues To-Do anlegen</option></select></div>`; })():''}</div>`; }
+    <input class="inp" type="date" id="mt_d${i}" value="${/^\d{4}-\d{2}-\d{2}$/.test(t.due||'')?t.due:''}" aria-label="Fällig">${prioSel('mt_r'+i,PRIO[t.prio]?t.prio:'normal')}<input class="inp" id="mt_e${i}" value="${esc(t.ext||'')}" placeholder="extern bei …" aria-label="Liegt extern bei">${t.rel&&S.tasks[t.rel]?(()=>{ const x=S.tasks[t.rel]; return `<div class="mt-rel" data-rel="${x.id}" ${t.relDup?'data-dup="1"':''}><span>↔ ${t.relDup?'Gibt es schon':'Hängt vermutlich zusammen mit'}: <b>${esc(x.title)}</b> <span class="muted">· ${esc([projName(x.pid),x.who?shortWho(x.who):'niemand',x.due?'fällig '+fmtD(x.due):''].filter(Boolean).join(' · '))}${t.relBy?' · erkannt per '+t.relBy:''}</span></span><select class="inp" id="mt_a${i}" aria-label="Was tun?"><option value="update" ${t.relation==='update'?'selected':''}>Als Update zum bestehenden To-Do</option><option value="erledigt" ${t.relation==='erledigt'?'selected':''}>Bestehendes To-Do erledigt (mit Update)</option><option value="neu" ${t.relation==='neu'?'selected':''}>Trotzdem als neues To-Do anlegen</option></select></div>`; })():''}</div>`; }
 function showMailTodos(m,pid,why,todos,summary,files,text){
   const isMail=m.kind!=='list', nOpen=todos.filter(t=>!t.projectId).length;
   openSheet({title:isMail?'Aus E-Mail: '+(m.subject||'(ohne Betreff)').slice(0,70):'Mehrere To-Dos einlesen · '+todos.length,wide:1,html:`<div class="fld full">
@@ -8237,34 +8237,59 @@ async function meetEval(id){
   toast('Claude wertet das Meeting aus …');
   const plist=arr('projects').filter(p=>['laufend','planung','onhold'].includes(catOf(p))).map(p=>`${p.id} | ${p.name} | ${p.nr||''} | ${String(p.place||'').replace(/\n/g,' ')} | ${p.customer||''}`).join('\n');
   const roster=staff().map(s=>`${shortWho(s.name)} = ${s.name.replace(/\s*\([^)]*\)$/,'')} (${ROLES[s.role]||s.role})`).join('\n');
+  // Abgleich: Was steht schon in To-Dos und Notizen? Projekte aus diesem Meeting (ausgewählt oder in der Mitschrift genannt) zuerst
+  const txL=tx.toLowerCase(), hot=pid=>!!pid&&((m.pids||[]).includes(pid)||(!!S.projects[pid]&&String(S.projects[pid].name||'').length>2&&txL.includes(String(S.projects[pid].name).toLowerCase())))?1:0, own=new Set(m.todoIds||[]), lim14=addDays(TODAY(),-14);
+  const ctxOpen=arr('tasks').filter(x=>x&&!x.done&&!x.example).sort((a,b)=>(own.has(b.id)-own.has(a.id))||(hot(b.pid)-hot(a.pid))||String(b.upd||'').localeCompare(String(a.upd||''))).slice(0,150).map(x=>`${x.id} | ${String(x.title).replace(/\s+/g,' ').slice(0,140)} | ${projName(x.pid)||'-'} | ${x.who?shortWho(x.who):'-'} | ${String(((x.upd2||[]).slice(-1)[0]||{}).t||'').replace(/\s+/g,' ').slice(0,100)}`).join('\n')||'-';
+  const ctxDone=arr('tasks').filter(x=>x&&x.done&&String(x.doneAt||'').slice(0,10)>=lim14).sort((a,b)=>hot(b.pid)-hot(a.pid)).slice(0,50).map(x=>`- ${String(x.title).replace(/\s+/g,' ').slice(0,120)} (${projName(x.pid)||'-'})`).join('\n')||'-';
+  let ctxNotes=''; arr('projects').filter(p=>['laufend','planung','onhold'].includes(catOf(p))).sort((a,b)=>hot(b.id)-hot(a.id)).forEach(p=>{ if(ctxNotes.length>14000) return; const bs=['notes','updates'].flatMap(k=>noteBlocks(p[k])).slice(-8).map(b=>'  - '+b.replace(/\s+/g,' ').slice(0,240)); if(bs.length) ctxNotes+=p.id+' ('+p.name+'):\n'+bs.join('\n')+'\n'; });
   const prompt=`Heute ist ${TODAY()}. Mitschrift (automatische Spracherkennung, daher Tippfehler möglich) eines internen Meetings bei nutz die Sonne GmbH (PV, Speicher, Ladesäulen) vom ${m.date}.
 Teilnehmer: ${(m.who||[]).map(shortWho).join(', ')||'-'}${(m.ext||[]).length?'\nExterne: '+m.ext.map(x=>x.name+(x.firm?' ('+x.firm+')':'')+(x.k==='kunden'?' [Kunde]':x.k==='lieferanten'?' [Lieferant]':'')).join(', '):''}${(m.pids||[]).length?'\nThemen-Projekte: '+m.pids.map(projName).join(', '):''}
 """${tx.slice(0,24000)}"""
 Projekte (ID | Name | Nummer | Ort | Kunde):\n${plist}
 Mitarbeiter (Kürzel = Name, Rolle):\n${roster}\nNamen genau so schreiben wie in dieser Liste (z. B. Marc immer mit c).
 1) summary: kurze Zusammenfassung in 3–6 Stichpunkten (je Zeile ein „- “).
-2) notes: Für JEDES besprochene Projekt eine sachliche Notiz (Stand, Entscheidungen, Probleme) in 1–3 Sätzen. projectId aus der Liste, allgemeine Themen (Lager, Büro, Fahrzeuge, Personal) → "intern".
-3) todos: alle vereinbarten Aufgaben, kurz im Imperativ, je mit projectId, zuständigem Kürzel (nur wenn genannt/klar), Frist (nur wenn genannt), prio dringend|hoch|normal|niedrig.
-Antworte nur mit JSON: {"summary":"","notes":[{"projectId":"","note":""}],"todos":[{"title":"","projectId":"","who":"","due":"","prio":"normal"}]}`;
+WICHTIG – nichts doppelt: Gleiche alles mit dem Stand in der App ab, auch wenn es anders formuliert ist.
+Offene To-Dos (ID | Aufgabe | Projekt | Wer | letztes Update):\n${ctxOpen}
+In den letzten 14 Tagen erledigte To-Dos (nicht erneut vorschlagen, außer im Meeting wurde klar gesagt, dass es neu zu tun ist):\n${ctxDone}
+Vorhandene Notizen je Projekt (Auszug):\n${ctxNotes||'-'}
+2) notes: Für jedes besprochene Projekt eine sachliche Notiz in 1–3 Sätzen, aber NUR mit dem, was NEU gegenüber den vorhandenen Notizen ist (Stand, Entscheidungen, Probleme). projectId aus der Liste, allgemeine Themen (Lager, Büro, Fahrzeuge, Personal) → "intern". Eine Notiz nie auf mehrere Einträge verteilen.
+known: Was im Meeting besprochen wurde, aber inhaltlich schon in den Notizen steht, kommt NICHT in notes, sondern hierher, mit dem passenden vorhandenen Eintrag in "existing".
+3) todos: alle vereinbarten Aufgaben, kurz im Imperativ, je mit projectId, zuständigem Kürzel (nur wenn genannt/klar), Frist (nur wenn genannt), prio dringend|hoch|normal|niedrig. Prüfe jede gegen die offenen To-Dos und setze "relation" und "existingId" (ID aus der Liste):
+- "neu": gibt es noch nicht, existingId leer
+- "dup": dieselbe Aufgabe gibt es schon, und das Meeting bringt nichts Neues dazu
+- "update": gibt es schon, und das Meeting bringt neue Infos oder Fortschritt; schreibe dann in "title" nur die Neuigkeit
+- "erledigt": im Meeting wurde gesagt, dass dieses offene To-Do erledigt ist
+Jede Aufgabe nur einmal aufführen. Im Zweifel, ob es dieselbe Sache ist: nur bei klar gleicher Sache verknüpfen.
+Antworte nur mit JSON: {"summary":"","notes":[{"projectId":"","note":""}],"known":[{"projectId":"","note":"","existing":""}],"todos":[{"title":"","projectId":"","who":"","due":"","prio":"normal","relation":"neu","existingId":""}]}`;
   let r; try{ r=await SAMPLE.json(prompt,{modelTier:'default'}); }catch(e){ return toast(SAMPLE_ERR[e&&e.code]||'Auswertung nicht möglich.'); }
   const okP=x=>x&&(S.projects[x]||x===INTERN)?x:'';
-  const notes=(r&&Array.isArray(r.notes)?r.notes:[]).filter(n=>n&&String(n.note||'').trim()).map(n=>({pid:okP(n.projectId),note:String(n.note).trim()}));
-  const todos=(r&&Array.isArray(r.todos)?r.todos:[]).filter(t=>t&&String(t.title||'').trim()).slice(0,40).map(t=>({...t,projectId:okP(t.projectId)}));
-  todos.forEach(t=>{ const fr=findRelated(t); if(fr&&fr.strong){ t.rel=fr.id; t.relation='update'; t.relBy='Wortvergleich'; } });
-  const nrow=(n,i)=>`<div class="sug mt-note"><input type="checkbox" class="ck" id="mn_c${i}" checked aria-label="übernehmen"><select class="inp" id="mn_p${i}" aria-label="Projekt">${mtProjOpts(n.pid)}</select><textarea class="inp" id="mn_t${i}" rows="2" aria-label="Notiz">${esc(n.note)}</textarea></div>`;
+  // Zur Sicherheit auch ohne KI-Urteil: Steckt der Text fast vollständig schon in einem Eintrag des Projekts?
+  const noteKnown=(pid,txt)=>{ const p=S.projects[pid]; if(!p) return ''; const a=toks(txt); if(a.size<4) return ''; for(const b of ['notes','updates'].flatMap(k=>noteBlocks(p[k]))){ const t=noteParts(b).text, bt=toks(t); let c=0; a.forEach(w=>{ if(bt.has(w)) c++; }); if(c/a.size>=0.8) return t; } return ''; };
+  const mkNote=(n,ex)=>{ const pid=okP(n.projectId), note=String(n.note).trim(), hit=ex||noteKnown(pid,note); return {pid,note,known:hit?String(hit).slice(0,200):''}; };
+  const notes=[...(r&&Array.isArray(r.notes)?r.notes:[]).filter(n=>n&&String(n.note||'').trim()).map(n=>mkNote(n,'')),...(r&&Array.isArray(r.known)?r.known:[]).filter(n=>n&&String(n.note||'').trim()).map(n=>mkNote(n,String(n.existing||'').trim()||'schon in den Notizen'))].sort((a,b)=>(a.known?1:0)-(b.known?1:0));
+  const seenT=new Set(); let dropT=0; const todos=(r&&Array.isArray(r.todos)?r.todos:[]).filter(t=>t&&String(t.title||'').trim()).slice(0,40).map(t=>({...t,projectId:okP(t.projectId)})).filter(t=>{ const k=t.projectId+'|'+dupNorm(t.title); if(seenT.has(k)) return false; seenT.add(k); return true; })
+    .filter(t=>{ const x=S.tasks[t.existingId], rl=String(t.relation||'').toLowerCase();
+      if(x&&!x.done&&['update','erledigt','dup'].includes(rl)){ t.rel=x.id; t.relation=rl==='dup'?'update':rl; t.relDup=rl==='dup'; t.relBy='KI-Abgleich'; return true; }
+      const d=dupTask({title:t.title,pid:t.projectId,who:''}); if(d&&d.done){ dropT++; return false; } if(d){ t.rel=d.id; t.relation='update'; t.relDup=true; t.relBy='gleicher Titel'; return true; }
+      const fr=findRelated(t); if(fr&&fr.strong){ t.rel=fr.id; t.relation='update'; t.relBy='Wortvergleich'; } else t.relation='neu'; return true; }).sort((a,b)=>(a.relDup?1:0)-(b.relDup?1:0));
+  const nDupT=todos.filter(t=>t.relDup).length, nNewN=notes.filter(n=>!n.known).length, nKnownN=notes.length-nNewN;
+  const nrow=(n,i)=>`<div class="sug mt-note ${n.known?'mt-known':''}"><input type="checkbox" class="ck" id="mn_c${i}" ${n.known?'':'checked'} aria-label="übernehmen"><select class="inp" id="mn_p${i}" aria-label="Projekt">${mtProjOpts(n.pid)}</select><textarea class="inp" id="mn_t${i}" rows="2" aria-label="Notiz">${esc(n.note)}</textarea>${n.known?`<div class="mt-rel">↔ Steht schon drin: <span class="muted">${esc(n.known)}</span></div>`:''}</div>`;
   openSheet({title:'Auswertung · '+(m.title||'Meeting'),wide:1,html:`<div class="fld full">${r.summary?`<div class="hint" style="margin-bottom:10px">${esc(r.summary).replace(/\n/g,'<br>')}</div>`:''}
-    <div class="sec-t" style="margin:0 0 6px">Notizen für die Projekte (${notes.length})</div><div class="sug-list">${notes.map(nrow).join('')||'<div class="small muted">Keine Projekt-Notizen erkannt.</div>'}</div>
-    <div class="sec-t" style="margin:14px 0 6px">To-Dos (${todos.length})</div><div class="mt-head"><span></span><span>Aufgabe</span><span>Projekt</span><span>Wer</span><span>Fällig</span><span>Dringlichkeit</span><span>extern</span></div>
+    ${nKnownN||nDupT||dropT?`<div class="small muted" style="margin-bottom:10px">🔎 Mit den Notizen und To-Dos abgeglichen: ${[nKnownN?nKnownN+' Notiz'+(nKnownN>1?'en':'')+' schon bekannt':'',nDupT?nDupT+' To-Do'+(nDupT>1?'s':'')+' gibt es schon':'',dropT?dropT+' gerade erledigte'+(dropT>1?'':'s')+' To-Do'+(dropT>1?'s':'')+' weggelassen':''].filter(Boolean).join(' · ')}. Schon Vorhandenes ist nicht angehakt.</div>`:''}
+    <div class="sec-t" style="margin:0 0 6px">Notizen für die Projekte (${nNewN}${nKnownN?' neu, '+nKnownN+' schon bekannt':''})</div><div class="sug-list">${notes.map(nrow).join('')||'<div class="small muted">Keine Projekt-Notizen erkannt.</div>'}</div>
+    <div class="sec-t" style="margin:14px 0 6px">To-Dos (${todos.length-nDupT}${nDupT?' neu oder mit Update, '+nDupT+' gibt es schon':''})</div><div class="mt-head"><span></span><span>Aufgabe</span><span>Projekt</span><span>Wer</span><span>Fällig</span><span>Dringlichkeit</span><span>extern</span></div>
     <div class="sug-list" id="mt_list">${todos.map((t,i)=>mtRow(i,t)).join('')}</div><button type="button" class="btn ghost sm" data-act="mtAddRow" style="margin-top:6px">${ic('plus')}Weiteres To-Do</button></div>`,saveLabel:'Übernehmen',
-    onSave:()=>{ let nn=0; const ids=[];
+    onSave:()=>{ let nn=0; const ids=[], linked=[];
       notes.forEach((n,i)=>{ if(!$('#mn_c'+i).checked) return; const pid=$('#mn_p'+i).value, txt=$('#mn_t'+i).value.trim(); if(!pid||!txt) return; const pidR=pid===INTERN&&!S.projects[INTERN]?'':pid; if(!pidR||!S.projects[pidR]) return;
         const p=clone(S.projects[pidR]); p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+nowStamp()+' ('+meK()+'): Meeting „'+(m.title||'')+'“: '+txt; delete p.now; delete p.nowD; put('projects',p); nn++; });
-      document.querySelectorAll('#mt_list .mt-row').forEach(row=>{ const g=s=>row.querySelector('[id^="mt_'+s+'"]'); if(!g('c').checked) return; const title=g('t').value.trim(); if(!title) return; const p=g('p').value;
-        const relBox=row.querySelector('.mt-rel'), act=relBox?g('a').value:'neu';
+      document.querySelectorAll('#mt_list .mt-row').forEach(row=>{ const g=s=>row.querySelector('[id^="mt_'+s+'"]'), relBox=row.querySelector('.mt-rel');
+        // schon vorhandenes To-Do: nichts anlegen, aber im Meetingbericht verlinken
+        if(!g('c').checked){ if(relBox&&relBox.dataset.dup&&S.tasks[relBox.dataset.rel]) linked.push(relBox.dataset.rel); return; } const title=g('t').value.trim(); if(!title) return; const p=g('p').value;
+        const act=relBox?g('a').value:'neu';
         if(relBox&&act!=='neu'&&S.tasks[relBox.dataset.rel]){ const x=clone(S.tasks[relBox.dataset.rel]); x.upd2=[...(x.upd2||[]),{d:TODAY(),tm:nowStamp().slice(9),by:meK(),t:'Meeting „'+(m.title||'')+'“: '+title,at:new Date().toISOString()}]; if(act==='erledigt'){ x.done=true; x.doneAt=new Date().toISOString(); x.doneBy=meK(); x.doneNote=title; } put('tasks',x); ids.push(x.id); return; }
         const t={id:uid(),title,who:g('w').value,due:g('d').value,ext:g('e').value.trim(),pid:p===INTERN&&!S.projects[INTERN]?'':p,done:false,prio:(g('r')||{}).value||'normal',src:'meeting',notes:'Aus Meeting „'+(m.title||'')+'“ vom '+fmtD(m.date)};
         ['due','ext'].forEach(k=>{ if(!t[k]) delete t[k]; }); put('tasks',t); ids.push(t.id); });
-      put('meetings',{...clone(S.meetings[id]),tx:meetTx(S.meetings[id]),summary:String(r.summary||''),status:'ausgewertet',todoIds:[...new Set([...(S.meetings[id].todoIds||[]),...ids])]});
+      put('meetings',{...clone(S.meetings[id]),tx:meetTx(S.meetings[id]),summary:String(r.summary||''),status:'ausgewertet',todoIds:[...new Set([...(S.meetings[id].todoIds||[]),...ids,...linked])]});
       toast(nn+' Notiz'+(nn===1?'':'en')+' · '+ids.length+' To-Do'+(ids.length===1?'':'s')+' übernommen.'); }});
 }
 function meetPrint(id){ const m=S.meetings[id]; if(!m) return; const tasks=(m.todoIds||[]).map(x=>S.tasks[x]).filter(Boolean);
