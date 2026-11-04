@@ -679,6 +679,12 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .pin h3{margin:0;font-size:15px;line-height:1.3;overflow-wrap:anywhere}.pin-tx{font-size:13.5px;line-height:1.5;overflow-wrap:anywhere}.pin-tx a{color:#0B57D0}
 .pin-img{width:100%;max-height:180px;object-fit:cover;border-radius:6px}.pin-f{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:11.5px;opacity:.8;margin-top:auto;padding-top:4px}.pin-f .lnk{margin-left:auto;color:#1E1E1E}
 .pin-new,.pin-imp{position:absolute;top:6px;right:8px;font-size:10px;font-weight:700;letter-spacing:.05em;padding:1px 6px;border-radius:8px;background:#1E1E1E;color:#F4DB02}.pin-imp{right:auto;left:8px;background:#E53935;color:#fff}
+.brief-strip{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin-bottom:14px}.brief-strip>span{margin-right:auto}
+#carBox{position:fixed;inset:0;z-index:10000;background:#0B0B0B;color:#fff;display:flex;flex-direction:column;gap:16px;padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));overflow-y:auto}
+.car-top{display:flex;align-items:center;justify-content:space-between;font-size:18px}.car-x{background:none;border:1px solid #666;color:#fff;border-radius:999px;padding:10px 18px;font:inherit;cursor:pointer}
+.car-mid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;text-align:center;min-height:120px}.car-pos{color:#F4DB02;font-size:15px;font-weight:600}.car-now{font-size:clamp(22px,5vw,34px);font-weight:700;line-height:1.3;overflow-wrap:anywhere}
+.car-btns{display:grid;grid-template-columns:1fr 2fr 1fr;gap:10px}.car-btns button{min-height:96px;border-radius:18px;border:0;background:#2A2A2A;color:#fff;font:inherit;font-size:30px;font-weight:700;cursor:pointer}.car-btns .car-main{background:#F4DB02;color:#111;font-size:22px}
+.car-rate{justify-content:center;color:#fff}.car-rate input{width:min(60vw,320px)}.car-hint{text-align:center;font-size:13px;color:#AAA;line-height:1.4}
 .spk-ctl{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}.spk-rate{display:inline-flex;align-items:center;gap:4px;font-size:13px;padding:0 4px}.spk-rate input{width:110px;accent-color:#F4DB02}
 .brief{line-height:1.55}.brief-hi{font-size:16px;font-weight:600;margin-bottom:4px}.brief-top{background:#FFF9C4;border-radius:10px;padding:8px 12px;margin:10px 0;color:#1E1E1E}.brief-top ol{margin:4px 0 0 18px;padding:0}.brief-top li{margin:3px 0}
 .brief-h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;opacity:.7;margin-top:6px}.brief-g{margin:16px 0 6px;font-size:15px}
@@ -2393,16 +2399,16 @@ function briefShow(fresh){ if(!ME) return; if(!SAMPLE&&(fresh||!BRIEF||BRIEF.d!=
     briefMake().then(b=>{ b.seen=true; briefSave(b); if(box()) box().innerHTML=briefHtml(b); }).catch(e=>{ if(box()) box().innerHTML=`<div class="empty">Briefing konnte nicht erstellt werden: ${esc(e&&e.message||e)}</div>`; }).finally(()=>{ BRIEF_RUN=false; }); };
   const ok=BRIEF&&BRIEF.d===TODAY()&&!fresh;
   openSheet({title:'☀️ Dein Morgen-Briefing · '+fmtD(TODAY()),wide:1,html:`<div class="fld full" id="briefBox">${briefHtml(ok?BRIEF:null)}</div>`,saveLabel:'Gelesen',onSave:()=>{ if(BRIEF_Q.st!=='stop') briefStop(); if(BRIEF&&BRIEF.d===TODAY()&&!BRIEF.seen){ BRIEF.seen=true; briefSave(BRIEF); } },
-    extraBtn:`${window.speechSynthesis?`<span class="spk-ctl"><button type="button" class="btn sun sm" id="briefSpk" data-act="briefSpeak">${BRIEF_Q.st==='play'?'⏸ Pause':BRIEF_Q.st==='pause'?'▶ Weiter':'🔊 Vorlesen'}</button><button type="button" class="btn ghost sm" id="briefStop" data-act="briefStop" title="Vorlesen beenden" ${BRIEF_Q.st==='stop'?'hidden':''}>⏹</button><label class="spk-rate" title="Sprechtempo"><span>🐢</span><input type="range" id="briefRate" min="0.7" max="2" step="0.05" value="${briefRate()}" aria-label="Sprechtempo"><span>🐇</span><b id="briefRateV" class="mono small">${briefRate().toFixed(2).replace('.',',').replace(/0$/,'')}×</b></label></span>`:''}<button type="button" class="btn ghost sm" data-act="briefRegen">↻ Neu erstellen</button>`});
+    extraBtn:`${window.speechSynthesis?`<span class="spk-ctl"><button type="button" class="btn sun sm" id="briefSpk" data-act="briefSpeak">${BRIEF_Q.st==='play'?'⏸ Pause':BRIEF_Q.st==='pause'?'▶ Weiter':'🔊 Vorlesen'}</button><button type="button" class="btn ghost sm" id="briefStop" data-act="briefStop" title="Vorlesen beenden" ${BRIEF_Q.st==='stop'?'hidden':''}>⏹</button><label class="spk-rate" title="Sprechtempo"><span>🐢</span><input type="range" id="briefRate" min="0.7" max="2" step="0.05" value="${briefRate()}" aria-label="Sprechtempo"><span>🐇</span><b id="briefRateV" class="mono small">${briefRate().toFixed(2).replace('.',',').replace(/0$/,'')}×</b></label><button type="button" class="btn sm" data-act="carStart" title="Großansicht fürs Auto: Ton über Bluetooth, Lenkradtasten, Bildschirm bleibt an">🚗 Im Auto hören</button></span>`:''}<button type="button" class="btn ghost sm" data-act="briefRegen">↻ Neu erstellen</button>`});
   BRIEF_REGEN=regen;
   if(ok){ if(!BRIEF.seen){ BRIEF.seen=true; briefSave(BRIEF); } } else regen(); }
 // 🔊 Vorlesen mit der Sprachausgabe des Geräts (Browser, Handy) – Satz für Satz, damit lange Texte nicht abbrechen
 var BRIEF_SPK=false;
 function briefSpeakText(b){ const d=(b&&b.data)||{}, AMP={gruen:'läuft gut',gelb:'bitte im Blick behalten',rot:'dringend'}, out=[];
   out.push('Dein Morgen-Briefing für '+new Date().toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'})+'.'); if(d.gruss) out.push(d.gruss);
-  if(d.top&&d.top.length) out.push('Heute am wichtigsten:',...d.top.map((s,i)=>['Erstens','Zweitens','Drittens'][i]+': '+s));
-  [['laufend','Die laufenden Projekte.'],['planung','Die Projekte in Planung.']].forEach(([c,l])=>{ const xs=(d.p||[]).filter(x=>S.projects[x.id]&&catOf(S.projects[x.id])===c).sort((a,b)=>({rot:0,gelb:1,gruen:2}[a.ampel]-{rot:0,gelb:1,gruen:2}[b.ampel])); if(!xs.length) return; out.push(l);
-    xs.forEach(x=>{ out.push(S.projects[x.id].name+'. '+(AMP[x.ampel]||'')+'.'); if(x.stand) out.push(x.stand); if(x.tun&&x.tun.length) out.push('Zu tun: '+x.tun.join('. ')+'.'); }); });
+  if(d.top&&d.top.length) out.push('\u0001Heute am wichtigsten:',...d.top.map((s,i)=>['Erstens','Zweitens','Drittens'][i]+': '+s));
+  [['laufend','Die laufenden Projekte.'],['planung','Die Projekte in Planung.']].forEach(([c,l])=>{ const xs=(d.p||[]).filter(x=>S.projects[x.id]&&catOf(S.projects[x.id])===c).sort((a,b)=>({rot:0,gelb:1,gruen:2}[a.ampel]-{rot:0,gelb:1,gruen:2}[b.ampel])); if(!xs.length) return; out.push('\u0001'+l);
+    xs.forEach(x=>{ out.push('\u0001'+S.projects[x.id].name+'. '+(AMP[x.ampel]||'')+'.'); if(x.stand) out.push(x.stand); if(x.tun&&x.tun.length) out.push('Zu tun: '+x.tun.join('. ')+'.'); }); });
   out.push('Das war dein Briefing. Einen guten Tag!');
   // Kürzel buchstabieren statt als Wort lesen (EP → E P), Abkürzungen ausschreiben
   return out.join('\n').replace(/\b([A-ZÄÖÜ]{2,3})\b/g,m=>/^(PV|OK)$/.test(m)?m:m.split('').join(' ')).replace(/\bkWp\b/g,'Kilowatt Peak').replace(/\bkWh\b/g,'Kilowattstunden').replace(/\bz\. ?B\./g,'zum Beispiel').replace(/\bca\./g,'circa'); }
@@ -2411,17 +2417,62 @@ function briefVoice(){ const vs=speechSynthesis.getVoices().filter(v=>/^de(-|_|$
 var BRIEF_Q={parts:[],i:0,st:'stop'}; // st: stop | play | pause
 const briefRate=()=>{ const r=parseFloat(lsGet('sonnenplan-spkrate')||''); return r>=0.6&&r<=2.2?r:1.15; };
 function briefSpkUi(){ const st=BRIEF_Q.st, b=$('#briefSpk'), s=$('#briefStop'), r=$('#briefRateV');
-  if(b) b.textContent=st==='play'?'⏸ Pause':st==='pause'?'▶ Weiter':'🔊 Vorlesen'; if(s) s.hidden=st==='stop'; if(r) r.textContent=briefRate().toFixed(2).replace('.',',').replace(/0$/,'')+'×'; }
+  if(b) b.textContent=st==='play'?'⏸ Pause':st==='pause'?'▶ Weiter':'🔊 Vorlesen'; if(s) s.hidden=st==='stop'; if(r) r.textContent=briefRate().toFixed(2).replace('.',',').replace(/0$/,'')+'×'; carSync(); }
 function briefSpeakNext(){ const ss=window.speechSynthesis, q=BRIEF_Q; if(q.st!=='play') return;
-  if(!$('#briefBox')){ q.st='stop'; ss.cancel(); return; } // Fenster zu → aufhören
+  if(!$('#briefBox')&&!CAR.on){ q.st='stop'; ss.cancel(); return; } // Fenster zu → aufhören
   if(q.i>=q.parts.length){ q.st='stop'; q.i=0; BRIEF_SPK=false; briefSpkUi(); return; }
-  const u=new SpeechSynthesisUtterance(q.parts[q.i]), v=briefVoice(); u.lang='de-DE'; if(v) u.voice=v; u.rate=briefRate();
-  const tok=q.tok=(q.tok||0)+1; u.onend=u.onerror=()=>{ if(q.st==='play'&&q.tok===tok){ q.i++; briefSpeakNext(); } }; ss.speak(u); }
+  const txt=q.parts[q.i], u=new SpeechSynthesisUtterance(txt), v=briefVoice(); u.lang='de-DE'; if(v) u.voice=v; u.rate=briefRate();
+  const tok=q.tok=(q.tok||0)+1, nx=()=>{ if(q.st==='play'&&q.tok===tok){ clearTimeout(q.wd); q.i++; briefSpeakNext(); } }; u.onend=u.onerror=nx;
+  // Manche Handys melden das Satzende nicht: dann nach großzügiger Wartezeit trotzdem weiter, statt still hängenzubleiben
+  clearTimeout(q.wd); q.wd=setTimeout(()=>{ if(q.st==='play'&&q.tok===tok){ q.tok++; ss.cancel(); q.i++; briefSpeakNext(); } },txt.length*150/u.rate+6000);
+  ss.speak(u); carSync(); }
 function briefSpeak(){ const ss=window.speechSynthesis; if(!ss) return toast('Vorlesen geht in diesem Browser leider nicht.'); const q=BRIEF_Q;
   if(q.st==='play'){ q.st='pause'; q.tok++; ss.cancel(); briefSpkUi(); return; }       // Pause (der angefangene Satz wird bei „Weiter“ neu gelesen)
   if(q.st==='pause'){ q.st='play'; BRIEF_SPK=true; briefSpkUi(); briefSpeakNext(); return; } // Weiter
   if(!BRIEF||BRIEF.d!==TODAY()||!BRIEF.data) return toast('Das Briefing wird noch erstellt – gleich nochmal versuchen.');
-  ss.cancel(); q.parts=briefSpeakText(BRIEF).split(/\n|(?<=[^\d\s][.!?])\s+(?=[A-ZÄÖÜ])/).map(s=>s.trim()).filter(Boolean); q.i=0; q.st='play'; BRIEF_SPK=true; briefSpkUi(); briefSpeakNext(); }
+  ss.cancel(); const raw=briefSpeakText(BRIEF).split(/\n|(?<=[^\d\s][.!?])\s+(?=[A-ZÄÖÜ])/).map(s=>s.trim()).filter(Boolean); q.marks=[0]; q.parts=raw.map((s,i)=>{ if(s[0]==='\u0001'&&i) q.marks.push(i); return s.replace(/^\u0001/,''); }); q.i=0; q.st='play'; BRIEF_SPK=true; briefSpkUi(); briefSpeakNext(); }
+// Vor/zurück springt abschnittsweise (Projekt für Projekt); zurück wiederholt erst den aktuellen Abschnitt
+function briefSkip(dir){ const q=BRIEF_Q, m=q.marks||[]; if(q.st==='stop'||!m.length) return; const to=dir>0?m.find(x=>x>q.i):[...m].reverse().find(x=>x<q.i); q.i=to==null?(dir>0?q.parts.length:0):to;
+  q.tok=(q.tok||0)+1; clearTimeout(q.wd); if(q.st==='play'){ speechSynthesis.cancel(); briefSpeakNext(); } else carSync(); }
+/* ---------- 🚗 Im Auto hören: Ton über Bluetooth / CarPlay / Android Auto, Tasten am Lenkrad, Bildschirm bleibt an ---------- */
+// Die Sprachausgabe allein meldet sich beim Auto nicht als Medienquelle. Darum läuft im Hintergrund eine unhörbare Audiospur:
+// Sie hält den Bluetooth-Kanal offen (sonst fehlt oft das erste Wort) und macht Lenkradtasten und Anzeige im Auto über die Media Session nutzbar.
+var CAR={on:false,aud:null,lock:null,msg:''};
+function carSilence(){ const sec=10, rate=8000, n=sec*rate, b=new ArrayBuffer(44+n*2), v=new DataView(b), w=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
+  w(0,'RIFF'); v.setUint32(4,36+n*2,true); w(8,'WAVEfmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,rate,true); v.setUint32(28,rate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,'data'); v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++) v.setInt16(44+i*2,i%2?1:-1,true); // kleinste mögliche Auslenkung: unhörbar, zählt aber als laufendes Audio
+  return URL.createObjectURL(new Blob([b],{type:'audio/wav'})); }
+function carAudioPlay(){ if(!CAR.aud){ CAR.aud=new Audio(carSilence()); CAR.aud.loop=true;
+    CAR.aud.addEventListener('playing',()=>{ CAR.ran=true; });
+    // Anruf o. Ä. unterbricht → Vorlesen pausiert. Nur wenn die Spur wirklich lief: Ein abgelehnter Start soll das Vorlesen nicht anhalten
+    CAR.aud.addEventListener('pause',()=>{ const ran=CAR.ran; CAR.ran=false; if(ran&&CAR.on&&BRIEF_Q.st==='play'&&!document.hidden) briefSpeak(); }); }
+  const p=CAR.aud.play(); if(p&&p.catch) p.catch(()=>{}); }
+async function carWake(){ try{ if(CAR.on&&navigator.wakeLock&&!CAR.lock){ CAR.lock=await navigator.wakeLock.request('screen'); CAR.lock.addEventListener('release',()=>{ CAR.lock=null; }); } }catch(e){} }
+function carSession(on){ const ms=navigator.mediaSession; if(!ms) return; const set=(a,f)=>{ try{ ms.setActionHandler(a,on?f:null); }catch(e){} }; const go=()=>{ if(BRIEF_Q.st!=='play') briefSpeak(); };
+  set('play',go); set('pause',()=>{ if(BRIEF_Q.st==='play') briefSpeak(); }); set('stop',()=>carClose()); set('nexttrack',()=>briefSkip(1)); set('previoustrack',()=>briefSkip(-1)); if(!on){ ms.metadata=null; ms.playbackState='none'; } }
+function carSec(){ const q=BRIEF_Q, m=q.marks||[]; let k=0; m.forEach((x,i)=>{ if(x<=q.i) k=i; }); return {n:k+1,tot:m.length,t:q.parts[m[k]]||''}; }
+function carSync(){ if(!CAR.on) return; const q=BRIEF_Q, st=q.st, s=carSec(), el=$('#carNow'), n=$('#carPos');
+  if(CAR.aud){ if(st==='play'&&CAR.aud.paused) carAudioPlay(); else if(st!=='play'&&!CAR.msg&&!CAR.aud.paused) CAR.aud.pause(); } // beim Laden weiterlaufen lassen: Der Start im Klick darf nicht verloren gehen
+  if(el) el.textContent=CAR.msg||(st==='stop'?'Briefing zu Ende. Mit „Vorlesen“ startest du es noch einmal.':s.t); if(n) n.textContent=!CAR.msg&&st!=='stop'&&s.tot?'Abschnitt '+s.n+' von '+s.tot:'';
+  const ms=navigator.mediaSession; if(ms){ ms.playbackState=st==='play'?'playing':st==='pause'?'paused':'none'; const sig=s.t+st; if(window.MediaMetadata&&CAR.sig!==sig&&st!=='stop'){ CAR.sig=sig; try{ ms.metadata=new MediaMetadata({title:s.t||'Morgen-Briefing',artist:'Morgen-Briefing',album:'nutz die Sonne'}); }catch(e){} } } }
+async function carStart(){ const ss=window.speechSynthesis; if(!ss) return toast('Vorlesen geht in diesem Browser leider nicht.'); if(CAR.on) return;
+  // alles Akustische muss direkt im Klick starten, sonst blockt das Handy den Ton
+  if(BRIEF_Q.st!=='stop') briefStop(); if(SHEET) closeSheet(); CAR.on=true; CAR.msg='Briefing wird geladen …';
+  const o=document.createElement('div'); o.id='carBox'; o.setAttribute('role','dialog'); o.setAttribute('aria-label','Morgen-Briefing im Auto');
+  o.innerHTML=`<div class="car-top"><b>🚗 Morgen-Briefing</b><button type="button" class="car-x" data-act="carClose">Beenden</button></div><div class="car-mid"><div id="carPos" class="car-pos"></div><div id="carNow" class="car-now"></div></div>
+    <div class="car-btns"><button type="button" data-act="briefBack" aria-label="Vorheriger Abschnitt">⏮</button><button type="button" id="briefSpk" class="car-main" data-act="briefSpeak">🔊 Vorlesen</button><button type="button" data-act="briefFwd" aria-label="Nächster Abschnitt">⏭</button></div>
+    <label class="spk-rate car-rate"><span>🐢</span><input type="range" id="briefRate" min="0.7" max="2" step="0.05" value="${briefRate()}" aria-label="Sprechtempo"><span>🐇</span><b id="briefRateV" class="mono">${briefRate().toFixed(2).replace('.',',').replace(/0$/,'')}×</b></label>
+    <div class="car-hint">Handy per Bluetooth mit dem Auto verbinden und am Radio die Quelle „Bluetooth“ wählen. Vor der Abfahrt starten, dann das Handy nicht mehr bedienen.</div>`;
+  document.body.appendChild(o); carAudioPlay(); carSession(true); carWake(); try{ const u=new SpeechSynthesisUtterance(' '); u.volume=0; ss.speak(u); }catch(e){} carSync();
+  try{ if(!BRIEF||BRIEF.d!==TODAY()||!BRIEF.data) BRIEF=await briefLoad(); while(BRIEF_RUN) await new Promise(r=>setTimeout(r,500));
+    if(!BRIEF||BRIEF.d!==TODAY()||!BRIEF.data){ if(!SAMPLE) throw new Error('Das Briefing braucht die KI – geht nur in der veröffentlichten App.'); CAR.msg='Dein Briefing wird erstellt … das dauert etwa eine halbe Minute.'; carSync(); BRIEF_RUN=true; try{ const b=await briefMake(); b.seen=true; briefSave(b); }finally{ BRIEF_RUN=false; } }
+    if(!CAR.on) return; if(!BRIEF.seen){ BRIEF.seen=true; briefSave(BRIEF); } CAR.msg=''; briefSpeak(); }
+  catch(e){ CAR.msg='Briefing konnte nicht geladen werden: '+(e&&e.message||e); carSync(); } }
+function carClose(){ if(!CAR.on) return; briefStop(); CAR.on=false; CAR.msg=''; CAR.sig=''; if(CAR.aud) CAR.aud.pause(); carSession(false); try{ if(CAR.lock) CAR.lock.release(); }catch(e){} CAR.lock=null; const o=$('#carBox'); if(o) o.remove(); }
+// Zurück in die App (z. B. nach Bildschirm-Aus): Bildschirm wieder wachhalten und abgerissenes Vorlesen fortsetzen
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState!=='visible'||!CAR.on) return; carWake(); if(BRIEF_Q.st==='play'&&!speechSynthesis.speaking){ carAudioPlay(); briefSpeakNext(); } });
+const briefDashStrip=()=>briefOn()&&window.speechSynthesis?`<div class="brief-strip"><span>☀️ <b>Morgen-Briefing</b></span><button type="button" class="btn ghost sm" data-act="briefShow">Lesen</button><button type="button" class="btn sun sm" data-act="carStart">🚗 Im Auto hören</button></div>`:'';
+queueMicrotask(()=>Object.assign(A,{ carStart:()=>{ carStart(); }, carClose:()=>carClose(), briefBack:()=>briefSkip(-1), briefFwd:()=>briefSkip(1) }));
 function briefStop(){ const q=BRIEF_Q; q.st='stop'; q.i=0; q.tok=(q.tok||0)+1; BRIEF_SPK=false; if(window.speechSynthesis) speechSynthesis.cancel(); briefSpkUi(); }
 const briefSpkBtn=briefSpkUi;
 document.addEventListener('input',e=>{ if(e.target.id!=='briefRate') return; lsSet('sonnenplan-spkrate',String(e.target.value)); briefSpkUi(); });
@@ -2430,7 +2481,7 @@ if(window.speechSynthesis){ try{ speechSynthesis.getVoices(); speechSynthesis.on
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&SINCE_DONE&&!SHEET) setTimeout(()=>briefAuto().catch(()=>{}),1200); });
 setInterval(()=>{ if(document.visibilityState==='visible'&&SINCE_DONE&&!SHEET&&(!BRIEF||BRIEF.d!==TODAY())) briefAuto().catch(()=>{}); },30*60000);
 // Beim ersten Öffnen des Tages (auf irgendeinem Gerät) automatisch – danach nur noch über den Knopf
-async function briefAuto(){ if(!briefOn()||!SAMPLE||BRIEF_RUN) return; if(BRIEF&&BRIEF.d===TODAY()&&BRIEF.seen) return;
+async function briefAuto(){ if(!briefOn()||!SAMPLE||BRIEF_RUN||CAR.on) return; if(BRIEF&&BRIEF.d===TODAY()&&BRIEF.seen) return;
   BRIEF=await briefLoad(); if(BRIEF&&BRIEF.d===TODAY()&&BRIEF.seen) return; if(SHEET){ setTimeout(()=>briefAuto().catch(()=>{}),3000); return; } briefShow(); }
 /* ---------- 📌 Pinnwand auf der Startseite: News für alle, keine Aufgaben ---------- */
 // Sammlung pins: {id,title,text,img,until,top,by,at}. Jeder darf anheften; bearbeiten/abnehmen nur, wer es angeheftet hat, oder Admins.
@@ -2739,7 +2790,7 @@ function vDash(){
   // 4) Noch zu bestellen, je Projekt gebündelt
   const nd=needAll(), ndP=[...new Set(nd.map(n=>n.pid))].map(pid=>({pid,its:nd.filter(n=>n.pid===pid)})).sort((a,b)=>b.its.length-a.its.length);
   const ndRow=g=>`<div class="nd-row"><div style="min-width:0" class="clickable" data-act="openAt" data-id="${g.pid}" data-at="material"><div class="tt">${esc(projName(g.pid)||'ohne Projekt')}</div><div class="small muted nd-its">${g.its.slice(0,3).map(n=>esc((n.qty?qn(n.qty)+' '+(n.unit||'')+' ':'')+n.art)).join(' · ')}${g.its.length>3?' · +'+(g.its.length-3):''}</div></div><button class="btn sun sm" data-act="needOrder" data-pid="${g.pid}">Bestellen</button></div>`;
-  return dashHero(t)+hrDashStrip()+wvDashStrip()+(ordApprover()?ordApprBanner():'')+gsearchBox()+pinboardHtml()+`<div class="dash-grid">
+  return dashHero(t)+briefDashStrip()+hrDashStrip()+wvDashStrip()+(ordApprover()?ordApprBanner():'')+gsearchBox()+pinboardHtml()+`<div class="dash-grid">
     <section class="card dash-todo"><div class="card-h"><h2>Meine offenen To-Dos <span class="cnt-b">${my.length}</span></h2>${myLate?`<span class="pill bad">${myLate} überfällig</span>`:''}<button class="btn ghost sm" data-act="myTasks">Alle</button></div>
       ${ME?`<div class="list">${my.slice(0,7).map(taskLi).join('')||'<div class="empty"><b>Alles erledigt</b>Du hast keine offenen Aufgaben.</div>'}</div>${my.length>7?`<button class="btn ghost sm more-b" data-act="myTasks">+ ${my.length-7} weitere anzeigen</button>`:''}`:'<div class="empty">Unten links „Wer bist du?“ wählen, dann erscheinen hier deine Aufgaben.</div>'}</section>
     <section class="card dash-dl"><div class="card-h"><h2>Offene Lieferungen <span class="cnt-b">${dl.length}</span></h2><button class="btn ghost sm" data-act="nav" data-v="orders">Alle</button></div>
