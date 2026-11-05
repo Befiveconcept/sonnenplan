@@ -277,6 +277,9 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .dcol.today{box-shadow:0 0 0 2px var(--sun) inset}
 .dcol.past{opacity:.6}
 .dash-week{margin-top:14px}
+/* Übersicht: Pinnwand und Mitteilungen nebeneinander */
+.dash-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:stretch;margin-bottom:14px}.dash-pair>*{min-width:0;margin:0}
+@media (max-width:1100px){.dash-pair{grid-template-columns:minmax(0,1fr)}}
 /* Übersicht: Meine To-Dos als kompakte Kacheln in zwei Spalten */
 .dash-grid.dash-2{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
 .td-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:4px 14px 14px}
@@ -308,6 +311,9 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .stk-c.open .stk-n{white-space:normal}
 .stk-late{flex:none;width:8px;height:8px;border-radius:50%;background:#E53935}
 .stk-more{display:block;margin:0 auto}
+#stkPop{position:fixed;z-index:60;width:340px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);overflow:auto;border-radius:16px;box-shadow:0 10px 32px rgba(0,0,0,.28);animation:stkPopIn .12s ease-out}#stkPop .pcard{box-shadow:none}
+@keyframes stkPopIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#stkPop{animation:none}}
 @media (max-width:900px){.rx{padding:14px 12px}}
 @media (max-width:520px){.stk.wide{grid-column:auto}.stk-grid{grid-template-columns:minmax(0,1fr)}}
 /* Bestellung: Ablagefläche für die echte Bestell-Mail */
@@ -2186,7 +2192,7 @@ const ICONS = {download:'<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M
 const ic = (n,extra='')=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ${extra}>${ICONS[n]}</svg>`;
 
 /* ========== Datenhaltung (gemeinsame Datenbank, sonst lokal) ========== */
-const COLLS = ['projects','tasks','orders','offers','events','reports','plan','log','files','stock','picks','chat','meetings','hrtime','hrabs','hrstaff','hrdocs','sales','pins'];
+const COLLS = ['projects','tasks','orders','offers','events','reports','plan','log','files','stock','picks','chat','meetings','hrtime','hrabs','hrstaff','hrdocs','sales','pins','psum'];
 const S = {pins:{},projects:{},tasks:{},orders:{},offers:{},events:{},reports:{},plan:{},log:{},hrtime:{},hrabs:{},hrstaff:{},hrdocs:{},kunden:{},lieferanten:{},artikel:{},sales:{},fin:{},anlagen:{},config:{staff:[]}};
 let DB=null, MODE='init', READONLY=false;
 const LS_KEY='sonnenplan-v1';
@@ -3029,7 +3035,7 @@ function vDash(){
     return `<div class="dl-row ${due?'due':''}" data-act="editOrder" data-id="${o.id}"><div class="dl-date"><b>${o.delivery?esc(fmtD(o.delivery).slice(3,9)):'–'}</b><span>${o.delivery?esc(relDay(o.delivery)):'ohne Termin'}</span></div>
       <div style="min-width:0"><div class="tt">${esc(o.supplier||'Lieferant')}</div><div class="small muted">${esc(projName(o.pid)||'ohne Projekt')} · ${(o.items||[]).length} Pos.</div></div>
       ${due?`<button class="btn sun sm" data-act="dlvYes" data-id="${o.id}">Angekommen?</button>`:`<span class="pill ${st.cls}">${esc(st.k)}</span>`}</div>`; };
-  return dashHero(t)+briefDashStrip()+hrDashStrip()+wvDashStrip()+(ordApprover()?ordApprBanner():'')+gsearchBox()+pinboardHtml()+nfCardHtml()+`<div class="dash-grid dash-2">
+  return dashHero(t)+briefDashStrip()+hrDashStrip()+wvDashStrip()+(ordApprover()?ordApprBanner():'')+gsearchBox()+`<div class="dash-pair">${pinboardHtml()}${nfCardHtml()}</div>`+`<div class="dash-grid dash-2">
     <section class="card dash-todo"><div class="card-h"><h2>Meine offenen To-Dos <span class="cnt-b">${my.length}</span></h2>${myLate?`<span class="pill bad">${myLate} überfällig</span>`:''}<button class="btn ghost sm" data-act="myTasks">Alle</button></div>
       ${ME?(my.length?`<div class="td-tiles">${my.slice(0,10).map(tile).join('')}</div>`:'<div class="empty"><b>Alles erledigt</b>Du hast keine offenen Aufgaben.</div>')+(my.length>10?`<button class="btn ghost sm more-b" data-act="myTasks">+ ${my.length-10} weitere anzeigen</button>`:''):'<div class="empty">Unten links „Wer bist du?“ wählen, dann erscheinen hier deine Aufgaben.</div>'}</section>
     <section class="card dash-dl"><div class="card-h"><h2>Offene Lieferungen <span class="cnt-b">${dl.length}</span></h2><button class="btn ghost sm" data-act="nav" data-v="orders">Alle</button></div>
@@ -3047,8 +3053,8 @@ function stepRail(p){
 }
 function radarHtml(t){
   // Radar als Stapel: je Status-Kategorie ein nach unten aufgefächerter Stapel, von jedem Projekt ist der Titel zu sehen. Klick klappt die Kachel der Projektübersicht auf.
-  const all=arr('projects').filter(p=>p&&!isIntern(p)); if(!all.length) return '';
-  const more=UI.rxMore||{}, CAP=12, cats=['laufend','planung','onhold','erledigt','abgesagt'];
+  const cats=['laufend','planung'], all=arr('projects').filter(p=>p&&!isIntern(p)&&cats.includes(catOf(p))); if(!all.length) return '';
+  const more=UI.rxMore||{}, CAP=12;
   const item=p=>{ const open=UI.rxOpen===p.id, late=openTasks(p.id).some(x=>x.due&&x.due<t);
     return `<div class="stk-c ${open?'open':''}"><button type="button" class="stk-t" data-act="rxOpen" data-id="${esc(p.id)}" aria-expanded="${open}"><span class="stk-n" title="${esc(p.name)}">${esc(p.name)}</span>${late?'<span class="stk-late" title="Überfällige Aufgaben"></span>':''}</button>${open?projCard(p):''}</div>`; };
   const stack=c=>{ const its=all.filter(p=>catOf(p)===c).sort((a,b)=>String(a.name).localeCompare(String(b.name),'de',{numeric:true})); if(!its.length) return '';
@@ -3056,6 +3062,23 @@ function radarHtml(t){
     return `<div class="stk c-${c} ${hasOpen?'wide':''}"><h3>${esc(CATS[c])} <span class="cnt-b">${its.length}</span></h3><div class="stk-pile">${shown.map(item).join('')}</div>${its.length>CAP?`<button type="button" class="btn ghost sm stk-more" data-act="rxMore" data-v="${c}">${more[c]||openIdx>=CAP?'Weniger anzeigen':'+ '+(its.length-CAP)+' weitere'}</button>`:''}</div>`; };
   return `<section class="rx"><div class="rx-top"><h2>Projekt-Radar${briefOn()?' <button type="button" class="btn sm brief-btn" data-act="briefShow" title="Alle laufenden und geplanten Projekte in einfacher Sprache">☀️ Morgen-Briefing</button>':''}</h2></div>
     <div class="stk-grid">${cats.map(stack).join('')}</div></section>`;
+}
+// Maus über einem Projekttitel im Stapel: die Kachel schwebt daneben ein, ohne dass der Stapel springt. Am Handy gibt es kein Darüberfahren, dort bleibt das Antippen.
+let STK_T=0, STK_ID='';
+function stkHide(){ clearTimeout(STK_T); STK_ID=''; const o=$('#stkPop'); if(o) o.remove(); }
+function stkShow(btn){ const p=S.projects[btn.dataset.id]; if(!p||UI.rxOpen===p.id||SHEET) return stkHide(); stkHide(); STK_ID=p.id;
+  const o=document.createElement('div'); o.id='stkPop'; o.innerHTML=projCard(p); document.body.appendChild(o); blobImgs();
+  const r=btn.getBoundingClientRect(), w=o.offsetWidth, h=o.offsetHeight, vw=document.documentElement.clientWidth, vh=innerHeight, gap=8;
+  o.style.left=(r.right+gap+w<=vw-12?r.right+gap:r.left-gap-w>=12?r.left-gap-w:Math.max(12,vw-w-12))+'px'; o.style.top=Math.max(12,Math.min(r.top-6,vh-h-12))+'px'; }
+if(window.matchMedia&&matchMedia('(hover:hover)').matches){
+  document.addEventListener('mouseover',e=>{ if(!e.target.closest) return; const b=e.target.closest('.stk-t'), inPop=e.target.closest('#stkPop');
+    if(inPop){ clearTimeout(STK_T); return; }
+    clearTimeout(STK_T); if(b){ if(b.dataset.id!==STK_ID) STK_T=setTimeout(()=>{ if(b.isConnected) stkShow(b); },140); return; }
+    if($('#stkPop')) STK_T=setTimeout(stkHide,180); });
+  document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('.stk-t,#stkPop')) stkHide(); },true);
+  document.addEventListener('scroll',e=>{ if(!(e.target.closest&&e.target.closest('#stkPop'))) stkHide(); },true);
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') stkHide(); });
+  document.documentElement.addEventListener('mouseleave',()=>{ clearTimeout(STK_T); STK_T=setTimeout(stkHide,180); });
 }
 function vDashOld(){
   const t=TODAY(), act=activeProjects();
@@ -3374,14 +3397,40 @@ function filterProjects(cat){
 // Reihenfolge für Vor/Zurück in der Projektakte = aktuelle Liste
 // Passt das offene Projekt nicht (mehr) in die Liste, z. B. nach dem Wechsel auf Onhold: an seiner Stelle einsortieren, statt auf alle Projekte umzuspringen.
 function navList(cur){ const l=filterProjects(UI.q.trim()?'alle':UI.projFilter); if(cur&&!l.some(x=>x.id===cur.id)) return [...l,cur].sort((SORTS[UI.sort]||SORTS.az)[1]); return l.length?l:arr('projects').sort(SORTS.az[1]); }
+/* ---------- Aktueller Stand auf der Projektkachel: KI-Zusammenfassung des neuesten Stands ---------- */
+// Quelle: neueste Notizen, Updates zu To-Dos und erledigte To-Dos. Ändert sich etwas, gilt die alte Zusammenfassung nicht mehr: Bis die neue fertig ist, steht der neueste Eintrag im Wortlaut da, nie ein veralteter Stand.
+// Eigene Sammlung psum statt am Projekt speichern: So kann das Schreiben keine gleichzeitige Änderung am Projekt überschreiben und löst keine Hinweise aus.
+function sumSources(p){ const out=[], stamp=s=>{ s=String(s||''); return s.length>10?s.slice(0,10)+' '+s.slice(11,16):s; };
+  ['updates','notes'].forEach(k=>noteBlocks(p[k]).forEach(b=>{ const np=noteParts(b), m=String(np.d||'').match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})?/), y=m?(m[3]?(m[3].length===2?'20'+m[3]:m[3]):TODAY().slice(0,4)):''; out.push({at:m?y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0')+' '+(np.tm||'00:00'):'',by:np.by||'',kind:'Notiz',t:String(np.text||'').trim()}); }));
+  arr('tasks').filter(x=>x.pid===p.id).forEach(x=>{ (x.upd2||[]).forEach(u=>out.push({at:u.d?u.d+' '+(u.tm||updTime(u)||'00:00'):stamp(u.at),by:u.by||'',kind:'Update zu „'+x.title+'“',t:String(u.t||'').trim()})); if(x.done&&x.doneAt) out.push({at:stamp(x.doneAt),by:x.doneBy||'',kind:'Erledigt',t:x.title}); });
+  if(!out.length&&p.now) out.push({at:p.nowD||'',by:'',kind:'Stand',t:String(p.now).trim()});
+  return out.map((s,i)=>({...s,i})).filter(s=>s.t).sort((a,b)=>b.at.localeCompare(a.at)||b.i-a.i).slice(0,8); } // gleiche Zeit: der später eingetragene zählt
+// Was steht auf der Kachel? {t,d,by,ai}; ai=false: neuester Eintrag im Wortlaut
+function sumView(p){ const src=sumSources(p); if(!src.length) return null; const n=src[0], d=/^\d{4}-\d{2}-\d{2}/.test(n.at)?n.at.slice(0,10):'', k=strHash(src.map(s=>s.at+'|'+s.kind+'|'+s.t).join('\n')), s=(S.psum||{})[p.id];
+  if(s&&s.k===k&&s.t) return {t:s.t,d,by:n.by,ai:true};
+  if(src.length>1||n.t.length>160) sumQueue(p.id);
+  return {t:(n.kind==='Notiz'||n.kind==='Stand'?'':n.kind+': ')+n.t,d,by:n.by,ai:false}; }
+const SUM_Q=new Set(), SUM_TRIED=new Set(); let SUM_T=0, SUM_RUN=false;
+function sumQueue(id){ const p=S.projects[id]; if(!SAMPLE||READONLY||!p||p.example||!mayWrite('projects')||SUM_Q.has(id)) return; const src=sumSources(p), k=strHash(src.map(s=>s.at+'|'+s.kind+'|'+s.t).join('\n')); if(SUM_TRIED.has(id+k)) return; SUM_Q.add(id); clearTimeout(SUM_T); SUM_T=setTimeout(sumRun,2500+Math.random()*1500); } // kurz warten: Mehrere Einträge am Stück ergeben nur eine Anfrage
+async function sumRun(){ if(SUM_RUN||!SAMPLE) return; SUM_RUN=true; const jobs=[]; for(const id of [...SUM_Q]){ if(jobs.length>=8) break; SUM_Q.delete(id); const p=S.projects[id]; if(!p) continue; const src=sumSources(p), k=strHash(src.map(s=>s.at+'|'+s.kind+'|'+s.t).join('\n')); if(((S.psum||{})[id]||{}).k===k||SUM_TRIED.has(id+k)) continue; SUM_TRIED.add(id+k); jobs.push({p,src,k}); }
+  try{ if(jobs.length){ const r=await SAMPLE.json(`Fasse für jedes Projekt eines Solar-Installationsbetriebs den absolut aktuellsten Stand zusammen, für die Anzeige auf einer kleinen Projektkachel.
+Regeln:
+- Höchstens 2 kurze Sätze, zusammen höchstens 180 Zeichen, einfache Sprache.
+- Der neueste Eintrag zählt am meisten. Ältere Einträge nur, wenn sie für den heutigen Stand noch gelten. Was ein neuerer Eintrag überholt hat, weglassen.
+- Nur Angaben aus den Einträgen verwenden, nichts erfinden und nichts bewerten. Kürzel unverändert lassen. Kein Datum davorsetzen.
+${jobs.map((j,i)=>`### ${i+1}. ${j.p.name}\n${j.src.map(s=>`${s.at||'ohne Datum'} · ${s.kind}${s.by?' · '+s.by:''}: ${s.t.replace(/\s+/g,' ').slice(0,500)}`).join('\n')}`).join('\n\n')}
+Antworte nur mit JSON: {"s":[{"i":1,"t":"…"}]}`,{modelTier:'quick',bg:true});
+      (r&&Array.isArray(r.s)?r.s:[]).forEach(x=>{ const j=jobs[(+x.i||0)-1], t=String(x.t||'').trim().slice(0,240); if(!j||!t) return; const o={id:j.p.id,k:j.k,t,at:new Date().toISOString()}; S.psum=S.psum||{}; S.psum[j.p.id]=o; if(MODE==='cloud'&&DB) DB.collection('psum').doc(j.p.id).set(o).catch(()=>{}); });
+      if(MODE!=='cloud') saveLocal(); scheduleRender(); } }catch(e){ /* dann bleibt der neueste Eintrag im Wortlaut stehen */ }
+  SUM_RUN=false; if(SUM_Q.size) SUM_T=setTimeout(sumRun,1500); }
 function projCard(p){
-  const pp=pipe(p), cat=catOf(p), nw=nowOf(p), active=['planung','laufend'].includes(cat), pct=pp.pct, nt=openTasks(p.id).length;
+  const pp=pipe(p), cat=catOf(p), sv=sumView(p), active=['planung','laufend'].includes(cat), pct=pp.pct, nt=openTasks(p.id).length;
   const own=UI.sort==='own'&&ME;
   return `<article class="pcard c-${cat} ${p.cover?'has-cover':''}" data-act="openProject" data-id="${p.id}" tabindex="0"${own?` data-drag="proj:${p.id}" data-drop-proj="${p.id}"`:''}>${p.cover?`<div class="pc-cover"><img data-blob="${esc(p.cover)}" alt="" loading="lazy"></div>`:''}
     <div class="pc-top"><span class="type t-${p.type} hot" data-act="openAt" data-id="${p.id}" data-at="infos" title="Projektdaten öffnen">${TYPES[p.type]||''}</span><span class="pill ${CAT_CLS[cat]}">${CATS[cat]}</span></div>
     <div class="pc-head"><div class="ring hot" data-act="openAt" data-id="${p.id}" data-at="status" title="Statusverlauf öffnen" style="--p:${pct}" role="img" aria-label="${pp.work} von ${pp.total} Statusschritten"><span>${pp.work}<small>/${pp.total}</small></span></div>
       <div style="min-width:0"><h3>${esc(p.name)}</h3><div class="sub hot" data-act="openAt" data-id="${p.id}" data-at="infos" title="Projektdaten öffnen">${esc([p.nr,p.pl?shortWho(p.pl):''].filter(Boolean).join(' · ')||'Projektdaten ergänzen')}</div></div></div>
-    <div class="pc-st hot" data-act="openAt" data-id="${p.id}" data-at="notes" title="Notizen öffnen"><span class="eyebrow">Status · letzte Notiz${nw&&nw.d?' vom '+esc(fmtD(nw.d).slice(3)):''}${nw&&nw.by?' · '+esc(nw.by):''}</span><b class="pc-note">${nw?esc(nw.t):'<span class="muted">Noch keine Notiz – hier klicken und schreiben</span>'}</b><span class="small muted pc-step" data-act="openAt" data-id="${p.id}" data-at="status">Ablauf: ${pp.last?esc(pp.label):'noch kein Schritt'}</span></div>
+    <div class="pc-st hot" data-act="openAt" data-id="${p.id}" data-at="notes" title="Notizen öffnen"><span class="eyebrow">Aktueller Stand${sv&&sv.d?' · '+esc(fmtD(sv.d).slice(3)):''}${sv&&sv.by?' · '+esc(sv.by):''}</span><b class="pc-note" ${sv&&sv.ai?'title="Von der KI aus den neuesten Einträgen zusammengefasst"':''}>${sv?esc(sv.t):'<span class="muted">Noch keine Notiz – hier klicken und schreiben</span>'}</b><span class="small muted pc-step" data-act="openAt" data-id="${p.id}" data-at="status">Ablauf: ${pp.last?esc(pp.label):'noch kein Schritt'}</span></div>
     ${(()=>{ const ot=openTasks(p.id); if(ot.length) return `<div class="pc-nx hot" data-act="openAt" data-id="${p.id}" data-at="tasks" title="Offene To-Dos"><span>Offene To-Dos · ${ot.length}</span>${ot.slice(0,3).map(t=>`<div class="pc-task">${t.ext?'↗ ':''}${esc(t.title)} <b>${esc(t.ext?t.ext:(t.who?shortWho(t.who):'offen'))}</b>${t.due?` · ${esc(fmtD(t.due).slice(3))}`:''}</div>`).join('')}${ot.length>3?`<div class="small muted">+ ${ot.length-3} weitere</div>`:''}</div>`;
       return active?`<div class="pc-nx hot" data-act="openAt" data-id="${p.id}" data-at="next" title="Keine offenen To-Dos – Next Step zuweisen"><span>Offene To-Dos · keine</span>${pp.next?'<div class="pc-task">Vorschlag: '+esc(pp.nextLabel)+'</div>':''}</div>`:''; })()}
     <div class="pc-foot hot" data-act="openAt" data-id="${p.id}" data-at="tasks" title="Aufgaben öffnen">${active?whoChips(p.id)||'<span class="small muted">keine offenen Aufgaben</span>':`<span class="small muted">${p.wartung?'Wartungsvertrag':''}</span>`}${nt?`<span class="pc-cnt">${nt} offen</span>`:''}</div>
