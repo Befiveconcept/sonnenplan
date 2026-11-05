@@ -684,6 +684,7 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .car-top{display:flex;align-items:center;justify-content:space-between;font-size:18px}.car-x{background:none;border:1px solid #666;color:#fff;border-radius:999px;padding:10px 18px;font:inherit;cursor:pointer}
 .car-mid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;text-align:center;min-height:120px}.car-pos{color:#F4DB02;font-size:15px;font-weight:600}.car-now{font-size:clamp(22px,5vw,34px);font-weight:700;line-height:1.3;overflow-wrap:anywhere}
 .car-btns{display:grid;grid-template-columns:1fr 2fr 1fr;gap:10px}.car-btns button{min-height:96px;border-radius:18px;border:0;background:#2A2A2A;color:#fff;font:inherit;font-size:30px;font-weight:700;cursor:pointer}.car-btns .car-main{background:#F4DB02;color:#111;font-size:22px}
+.car-test{display:inline-block;margin-top:8px;font-size:13px;padding:7px 14px}.car-diag{margin-top:8px;color:#F4DB02;font-size:12px;overflow-wrap:anywhere;user-select:text;-webkit-user-select:text}
 .car-rate{justify-content:center;color:#fff}.car-rate input{width:min(60vw,320px)}.car-hint{text-align:center;font-size:13px;color:#AAA;line-height:1.4}
 .spk-ctl{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}.spk-rate{display:inline-flex;align-items:center;gap:4px;font-size:13px;padding:0 4px}.spk-rate input{width:110px;accent-color:#F4DB02}
 .brief{line-height:1.55}.brief-hi{font-size:16px;font-weight:600;margin-bottom:4px}.brief-top{background:#FFF9C4;border-radius:10px;padding:8px 12px;margin:10px 0;color:#1E1E1E}.brief-top ol{margin:4px 0 0 18px;padding:0}.brief-top li{margin:3px 0}
@@ -2422,38 +2423,50 @@ function briefSpeakNext(){ const ss=window.speechSynthesis, q=BRIEF_Q; if(q.st!=
   if(!$('#briefBox')&&!CAR.on){ q.st='stop'; ss.cancel(); return; } // Fenster zu → aufhören
   if(q.i>=q.parts.length){ q.st='stop'; q.i=0; BRIEF_SPK=false; briefSpkUi(); return; }
   const txt=q.parts[q.i], u=new SpeechSynthesisUtterance(txt), v=briefVoice(); u.lang='de-DE'; if(v) u.voice=v; u.rate=briefRate();
-  const tok=q.tok=(q.tok||0)+1, nx=()=>{ if(q.st==='play'&&q.tok===tok){ clearTimeout(q.wd); q.i++; briefSpeakNext(); } }; u.onend=u.onerror=nx;
+  const tok=q.tok=(q.tok||0)+1, nx=()=>{ if(q.st==='play'&&q.tok===tok){ clearTimeout(q.wd); q.i++; briefSpeakNext(); } }; u.onend=nx;
+  // Blockiert das Gerät die Stimme, nicht still durch den Text laufen, sondern anhalten und den Grund zeigen
+  u.onerror=ev=>{ const c=ev&&ev.error; if(CAR.on&&c&&!['interrupted','canceled'].includes(c)&&q.st==='play'&&q.tok===tok){ clearTimeout(q.wd); q.tok++; q.st='pause'; CAR.err=c; briefSpkUi(); return; } nx(); };
   // Manche Handys melden das Satzende nicht: dann nach großzügiger Wartezeit trotzdem weiter, statt still hängenzubleiben
   clearTimeout(q.wd); q.wd=setTimeout(()=>{ if(q.st==='play'&&q.tok===tok){ q.tok++; ss.cancel(); q.i++; briefSpeakNext(); } },txt.length*150/u.rate+6000);
   ss.speak(u); carSync(); }
 function briefSpeak(){ const ss=window.speechSynthesis; if(!ss) return toast('Vorlesen geht in diesem Browser leider nicht.'); const q=BRIEF_Q;
   if(q.st==='play'){ q.st='pause'; q.tok++; ss.cancel(); briefSpkUi(); return; }       // Pause (der angefangene Satz wird bei „Weiter“ neu gelesen)
+  CAR.err='';
   if(q.st==='pause'){ q.st='play'; BRIEF_SPK=true; briefSpkUi(); briefSpeakNext(); return; } // Weiter
   if(!BRIEF||BRIEF.d!==TODAY()||!BRIEF.data) return toast('Das Briefing wird noch erstellt – gleich nochmal versuchen.');
-  ss.cancel(); const raw=briefSpeakText(BRIEF).split(/\n|(?<=[^\d\s][.!?])\s+(?=[A-ZÄÖÜ])/).map(s=>s.trim()).filter(Boolean); q.marks=[0]; q.parts=raw.map((s,i)=>{ if(s[0]==='\u0001'&&i) q.marks.push(i); return s.replace(/^\u0001/,''); }); q.i=0; q.st='play'; BRIEF_SPK=true; briefSpkUi(); briefSpeakNext(); }
+  if(ss.speaking||ss.pending) ss.cancel(); const raw=briefSpeakText(BRIEF).split(/\n|(?<=[^\d\s][.!?])\s+(?=[A-ZÄÖÜ])/).map(s=>s.trim()).filter(Boolean); q.marks=[0]; q.parts=raw.map((s,i)=>{ if(s[0]==='\u0001'&&i) q.marks.push(i); return s.replace(/^\u0001/,''); }); q.i=0; q.st='play'; BRIEF_SPK=true; briefSpkUi(); briefSpeakNext(); }
 // Vor/zurück springt abschnittsweise (Projekt für Projekt); zurück wiederholt erst den aktuellen Abschnitt
 function briefSkip(dir){ const q=BRIEF_Q, m=q.marks||[]; if(q.st==='stop'||!m.length) return; const to=dir>0?m.find(x=>x>q.i):[...m].reverse().find(x=>x<q.i); q.i=to==null?(dir>0?q.parts.length:0):to;
   q.tok=(q.tok||0)+1; clearTimeout(q.wd); if(q.st==='play'){ speechSynthesis.cancel(); briefSpeakNext(); } else carSync(); }
 /* ---------- 🚗 Im Auto hören: Ton über Bluetooth / CarPlay / Android Auto, Tasten am Lenkrad, Bildschirm bleibt an ---------- */
 // Die Sprachausgabe allein meldet sich beim Auto nicht als Medienquelle. Darum läuft im Hintergrund eine unhörbare Audiospur:
 // Sie hält den Bluetooth-Kanal offen (sonst fehlt oft das erste Wort) und macht Lenkradtasten und Anzeige im Auto über die Media Session nutzbar.
-var CAR={on:false,aud:null,lock:null,msg:''};
-function carSilence(){ const sec=10, rate=8000, n=sec*rate, b=new ArrayBuffer(44+n*2), v=new DataView(b), w=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
+var CAR={on:false,aud:null,lock:null,msg:'',err:'',started:false,testing:false};
+function carWav(sec,hz){ const rate=8000, n=sec*rate, b=new ArrayBuffer(44+n*2), v=new DataView(b), w=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
   w(0,'RIFF'); v.setUint32(4,36+n*2,true); w(8,'WAVEfmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,rate,true); v.setUint32(28,rate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,'data'); v.setUint32(40,n*2,true);
-  for(let i=0;i<n;i++) v.setInt16(44+i*2,i%2?1:-1,true); // kleinste mögliche Auslenkung: unhörbar, zählt aber als laufendes Audio
+  // ohne hz: kleinste mögliche Auslenkung, unhörbar, zählt aber als laufendes Audio. Mit hz: hörbarer Prüfton
+  for(let i=0;i<n;i++) v.setInt16(44+i*2,hz?Math.round(Math.sin(2*Math.PI*hz*i/rate)*12000):(i%2?1:-1),true);
   return URL.createObjectURL(new Blob([b],{type:'audio/wav'})); }
-function carAudioPlay(){ if(!CAR.aud){ CAR.aud=new Audio(carSilence()); CAR.aud.loop=true;
-    CAR.aud.addEventListener('playing',()=>{ CAR.ran=true; });
-    // Anruf o. Ä. unterbricht → Vorlesen pausiert. Nur wenn die Spur wirklich lief: Ein abgelehnter Start soll das Vorlesen nicht anhalten
-    CAR.aud.addEventListener('pause',()=>{ const ran=CAR.ran; CAR.ran=false; if(ran&&CAR.on&&BRIEF_Q.st==='play'&&!document.hidden) briefSpeak(); }); }
-  const p=CAR.aud.play(); if(p&&p.catch) p.catch(()=>{}); }
+// Die Spur nie mit dem Vorlesen koppeln: Beginnt die Stimme, kann das Handy die Spur anhalten. Das darf die Stimme nicht stoppen und die Spur nicht ständig neu starten.
+function carAudioPlay(){ if(!CAR.aud){ CAR.aud=new Audio(carWav(10)); CAR.aud.loop=true; } CAR.started=true; const p=CAR.aud.play(); if(p&&p.catch) p.catch(()=>{}); }
+// Tonprüfung im Auto: Was kommt an? Hörbarer Ton (echte Mediendatei), Stimme mit und ohne Hintergrundspur. Daran erkennt man, wo der Ton hängen bleibt.
+const carSay=(txt,log)=>new Promise(res=>{ const ss=speechSynthesis, u=new SpeechSynthesisUtterance(txt), v=briefVoice(); u.lang='de-DE'; if(v) u.voice=v; let done=false, go=false; const end=r=>{ if(done) return; done=true; clearTimeout(t); res(r); }, t=setTimeout(()=>end(go?'Zeitlimit':'startete nicht'),12000); u.onstart=()=>{ go=true; }; u.onend=()=>end('gesprochen'); u.onerror=e=>end('Fehler: '+(e&&e.error||'?')); ss.speak(u); });
+async function carTest(){ if(CAR.testing) return; const q=BRIEF_Q, ss=speechSynthesis, el=$('#carNow'), sh=s=>{ if(el) el.textContent=s; }, wait=ms=>new Promise(r=>setTimeout(r,ms)); CAR.testing=true;
+  if(q.st==='play'){ q.st='pause'; q.tok=(q.tok||0)+1; clearTimeout(q.wd); ss.cancel(); briefSpkUi(); }
+  const tone=new Audio(carWav(2,660)), toneP=tone.play(); // im Klick starten
+  const r={}; sh('Test 1: Piepton'); try{ await toneP; r.ton='gestartet'; }catch(e){ r.ton='blockiert ('+(e&&e.name||'?')+')'; } await wait(2300); tone.pause();
+  sh('Test 2: Stimme mit Hintergrundspur'); carAudioPlay(); await wait(600); r.spur=CAR.aud.paused?'läuft nicht':'läuft'; r.s2=await carSay('Test zwei. Stimme mit Hintergrundspur.'); r.spurDanach=CAR.aud.paused?'angehalten':'läuft'; await wait(500);
+  sh('Test 3: Stimme ohne Hintergrundspur'); CAR.aud.pause(); CAR.started=false; await wait(800); r.s3=await carSay('Test drei. Stimme ohne Hintergrundspur.');
+  const vs=ss.getVoices(), de=vs.filter(v=>/^de/i.test(v.lang)), bv=briefVoice(), c=$('#carPos'); CAR.testing=false; if(c) c.textContent='Tonprüfung fertig';
+  sh('Was kam im Auto an: der Piepton, Test 2, Test 3? Bitte zusammen mit dieser Zeile an Claude schicken.'); const d=$('#carDiag'); if(d) d.textContent=`Ton: ${r.ton} · Spur: ${r.spur}, danach ${r.spurDanach} · Test 2: ${r.s2} · Test 3: ${r.s3} · Stimmen: ${vs.length} (deutsch ${de.length}) · gewählt: ${bv?bv.name:'keine'} · Wachhalten: ${CAR.lock?'an':navigator.wakeLock?'aus':'nicht verfügbar'} · ${/iPhone|iPad/.test(navigator.userAgent)?'iPhone/iPad':/Android/.test(navigator.userAgent)?'Android':navigator.platform}`; }
 async function carWake(){ try{ if(CAR.on&&navigator.wakeLock&&!CAR.lock){ CAR.lock=await navigator.wakeLock.request('screen'); CAR.lock.addEventListener('release',()=>{ CAR.lock=null; }); } }catch(e){} }
 function carSession(on){ const ms=navigator.mediaSession; if(!ms) return; const set=(a,f)=>{ try{ ms.setActionHandler(a,on?f:null); }catch(e){} }; const go=()=>{ if(BRIEF_Q.st!=='play') briefSpeak(); };
   set('play',go); set('pause',()=>{ if(BRIEF_Q.st==='play') briefSpeak(); }); set('stop',()=>carClose()); set('nexttrack',()=>briefSkip(1)); set('previoustrack',()=>briefSkip(-1)); if(!on){ ms.metadata=null; ms.playbackState='none'; } }
 function carSec(){ const q=BRIEF_Q, m=q.marks||[]; let k=0; m.forEach((x,i)=>{ if(x<=q.i) k=i; }); return {n:k+1,tot:m.length,t:q.parts[m[k]]||''}; }
-function carSync(){ if(!CAR.on) return; const q=BRIEF_Q, st=q.st, s=carSec(), el=$('#carNow'), n=$('#carPos');
-  if(CAR.aud){ if(st==='play'&&CAR.aud.paused) carAudioPlay(); else if(st!=='play'&&!CAR.msg&&!CAR.aud.paused) CAR.aud.pause(); } // beim Laden weiterlaufen lassen: Der Start im Klick darf nicht verloren gehen
-  if(el) el.textContent=CAR.msg||(st==='stop'?'Briefing zu Ende. Mit „Vorlesen“ startest du es noch einmal.':s.t); if(n) n.textContent=!CAR.msg&&st!=='stop'&&s.tot?'Abschnitt '+s.n+' von '+s.tot:'';
+function carSync(){ if(!CAR.on||CAR.testing) return; const q=BRIEF_Q, st=q.st, s=carSec(), el=$('#carNow'), n=$('#carPos');
+  // beim Laden weiterlaufen lassen: Der Start im Klick darf nicht verloren gehen. Nach Pause/Weiter genau einmal neu starten.
+  if(CAR.aud){ if(st==='play'&&!CAR.started) carAudioPlay(); else if(st!=='play'&&!CAR.msg){ CAR.started=false; if(!CAR.aud.paused) CAR.aud.pause(); } }
+  if(el) el.textContent=CAR.msg||(CAR.err?'Das Handy hat die Stimme blockiert ('+CAR.err+'). Tippe auf „Weiter“ oder mache die Tonprüfung.':st==='stop'?'Briefing zu Ende. Mit „Vorlesen“ startest du es noch einmal.':s.t); if(n) n.textContent=!CAR.msg&&st!=='stop'&&s.tot?'Abschnitt '+s.n+' von '+s.tot:'';
   const ms=navigator.mediaSession; if(ms){ ms.playbackState=st==='play'?'playing':st==='pause'?'paused':'none'; const sig=s.t+st; if(window.MediaMetadata&&CAR.sig!==sig&&st!=='stop'){ CAR.sig=sig; try{ ms.metadata=new MediaMetadata({title:s.t||'Morgen-Briefing',artist:'Morgen-Briefing',album:'nutz die Sonne'}); }catch(e){} } } }
 async function carStart(){ const ss=window.speechSynthesis; if(!ss) return toast('Vorlesen geht in diesem Browser leider nicht.'); if(CAR.on) return;
   // alles Akustische muss direkt im Klick starten, sonst blockt das Handy den Ton
@@ -2462,17 +2475,19 @@ async function carStart(){ const ss=window.speechSynthesis; if(!ss) return toast
   o.innerHTML=`<div class="car-top"><b>🚗 Morgen-Briefing</b><button type="button" class="car-x" data-act="carClose">Beenden</button></div><div class="car-mid"><div id="carPos" class="car-pos"></div><div id="carNow" class="car-now"></div></div>
     <div class="car-btns"><button type="button" data-act="briefBack" aria-label="Vorheriger Abschnitt">⏮</button><button type="button" id="briefSpk" class="car-main" data-act="briefSpeak">🔊 Vorlesen</button><button type="button" data-act="briefFwd" aria-label="Nächster Abschnitt">⏭</button></div>
     <label class="spk-rate car-rate"><span>🐢</span><input type="range" id="briefRate" min="0.7" max="2" step="0.05" value="${briefRate()}" aria-label="Sprechtempo"><span>🐇</span><b id="briefRateV" class="mono">${briefRate().toFixed(2).replace('.',',').replace(/0$/,'')}×</b></label>
-    <div class="car-hint">Handy per Bluetooth mit dem Auto verbinden und am Radio die Quelle „Bluetooth“ wählen. Vor der Abfahrt starten, dann das Handy nicht mehr bedienen.</div>`;
-  document.body.appendChild(o); carAudioPlay(); carSession(true); carWake(); try{ const u=new SpeechSynthesisUtterance(' '); u.volume=0; ss.speak(u); }catch(e){} carSync();
+    <div class="car-hint">Handy per Bluetooth mit dem Auto verbinden und am Radio die Quelle „Bluetooth“ wählen. Vor der Abfahrt starten, dann das Handy nicht mehr bedienen.<br><button type="button" class="car-x car-test" data-act="carTest">🔧 Ton prüfen (im Stand)</button><div id="carDiag" class="car-diag"></div></div>`;
+  document.body.appendChild(o); carAudioPlay(); carSession(true); carWake(); carSync();
+  // Muss das Briefing erst geladen werden, startet die Stimme außerhalb des Klicks: darum hier schon freischalten (iPhone)
+  if(!BRIEF||BRIEF.d!==TODAY()||!BRIEF.data) try{ const u=new SpeechSynthesisUtterance(' '); u.volume=0; ss.speak(u); }catch(e){}
   try{ if(!BRIEF||BRIEF.d!==TODAY()||!BRIEF.data) BRIEF=await briefLoad(); while(BRIEF_RUN) await new Promise(r=>setTimeout(r,500));
     if(!BRIEF||BRIEF.d!==TODAY()||!BRIEF.data){ if(!SAMPLE) throw new Error('Das Briefing braucht die KI – geht nur in der veröffentlichten App.'); CAR.msg='Dein Briefing wird erstellt … das dauert etwa eine halbe Minute.'; carSync(); BRIEF_RUN=true; try{ const b=await briefMake(); b.seen=true; briefSave(b); }finally{ BRIEF_RUN=false; } }
     if(!CAR.on) return; if(!BRIEF.seen){ BRIEF.seen=true; briefSave(BRIEF); } CAR.msg=''; briefSpeak(); }
   catch(e){ CAR.msg='Briefing konnte nicht geladen werden: '+(e&&e.message||e); carSync(); } }
-function carClose(){ if(!CAR.on) return; briefStop(); CAR.on=false; CAR.msg=''; CAR.sig=''; if(CAR.aud) CAR.aud.pause(); carSession(false); try{ if(CAR.lock) CAR.lock.release(); }catch(e){} CAR.lock=null; const o=$('#carBox'); if(o) o.remove(); }
+function carClose(){ if(!CAR.on) return; briefStop(); CAR.on=false; CAR.msg=''; CAR.err=''; CAR.sig=''; CAR.started=false; if(CAR.aud) CAR.aud.pause(); carSession(false); try{ if(CAR.lock) CAR.lock.release(); }catch(e){} CAR.lock=null; const o=$('#carBox'); if(o) o.remove(); }
 // Zurück in die App (z. B. nach Bildschirm-Aus): Bildschirm wieder wachhalten und abgerissenes Vorlesen fortsetzen
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState!=='visible'||!CAR.on) return; carWake(); if(BRIEF_Q.st==='play'&&!speechSynthesis.speaking){ carAudioPlay(); briefSpeakNext(); } });
 const briefDashStrip=()=>briefOn()&&window.speechSynthesis?`<div class="brief-strip"><span>☀️ <b>Morgen-Briefing</b></span><button type="button" class="btn ghost sm" data-act="briefShow">Lesen</button><button type="button" class="btn sun sm" data-act="carStart">🚗 Im Auto hören</button></div>`:'';
-queueMicrotask(()=>Object.assign(A,{ carStart:()=>{ carStart(); }, carClose:()=>carClose(), briefBack:()=>briefSkip(-1), briefFwd:()=>briefSkip(1) }));
+queueMicrotask(()=>Object.assign(A,{ carStart:()=>{ carStart(); }, carClose:()=>carClose(), carTest:()=>{ carTest(); }, briefBack:()=>briefSkip(-1), briefFwd:()=>briefSkip(1) }));
 function briefStop(){ const q=BRIEF_Q; q.st='stop'; q.i=0; q.tok=(q.tok||0)+1; BRIEF_SPK=false; if(window.speechSynthesis) speechSynthesis.cancel(); briefSpkUi(); }
 const briefSpkBtn=briefSpkUi;
 document.addEventListener('input',e=>{ if(e.target.id!=='briefRate') return; lsSet('sonnenplan-spkrate',String(e.target.value)); briefSpkUi(); });
@@ -2633,9 +2648,13 @@ function orderState(o){
 }
 // Mehrtägige Einträge: je Tag ein Eintrag (first/last markieren Anfang und Ende)
 function eachDay(s,e,from,to,fn){ const last=e&&e>s?e:s; let d=s<from?from:s; const stop=last>to?to:last; while(d<=stop){ fn(d,d===s,d===last); d=addDays(d,1); } }
+// Termine für mehrere Personen: who = erste Person, who2 = weitere. calSplit macht daraus je Person einen Eintrag (für Ansichten mit Zeile je Person)
+const evWhos=e=>[e.who,...(e.who2||[])].filter(Boolean);
+const itemHas=(x,n)=>!!n&&(x.who===n||(x.whos||[]).includes(n));
+const calSplit=x=>x.whos&&x.whos.length>1?x.whos.map(w=>({...x,who:w})):[x];
 function calItems(from,to){
   const out=[];
-  arr('events').forEach(e=>{ if(!e.date) return; const multi=!!(e.end&&e.end>e.date); eachDay(e.date,e.end,from,to,(d,first,last)=>out.push({d,k:e.kind||'intern',t:e.title,m:[e.time,projName(e.pid),e.who,multi?'bis '+fmtD(e.end):''].filter(Boolean).join(' · '),act:'editEvent',id:e.id,who:e.who,ref:'event:'+e.id,first,last,multi,rz:true})); });
+  arr('events').forEach(e=>{ if(!e.date) return; const multi=!!(e.end&&e.end>e.date), whos=evWhos(e); eachDay(e.date,e.end,from,to,(d,first,last)=>out.push({d,k:e.kind||'intern',t:e.title,m:[e.time,projName(e.pid),whos.join(', '),multi?'bis '+fmtD(e.end):''].filter(Boolean).join(' · '),act:'editEvent',id:e.id,who:e.who,whos,ref:'event:'+e.id,first,last,multi,rz:true})); });
   arr('orders').forEach(o=>{ const st=orderState(o); if(o.delivery&&o.delivery>=from&&o.delivery<=to&&st.open) out.push({d:o.delivery,k:'lief',t:'Lieferung: '+(o.supplier||'Lieferant'),m:[projName(o.pid),(o.items||[]).length+' Pos.'].filter(Boolean).join(' · '),act:'receive',id:o.id,ref:'order:'+o.id,first:true,last:true}); });
   arr('tasks').forEach(t=>{ if(!t.done&&t.due&&t.due>=from&&t.due<=to) out.push({d:t.due,k:'todo',t:t.title,m:[t.who,projName(t.pid)].filter(Boolean).join(' · '),act:'editTask',id:t.id,who:t.who,ref:'task:'+t.id,first:true,last:true}); });
   activeProjects().forEach(p=>{ if(p.start&&p.start>=from&&p.start<=to) out.push({d:p.start,k:'proj',t:'Baubeginn '+p.name,m:TYPES[p.type],act:'openProject',id:p.id,ref:'pstart:'+p.id,first:true,last:true});
@@ -2773,10 +2792,10 @@ function vDash(){
   // 1) Wochenplanung Mo–Fr (eigene Einträge zuerst)
   const items=calItems(mon,days[4]).filter(x=>x.k!=='todo');
   const tim=x=>(x.e&&x.e.time)||'';
-  const srt=(a,b)=>((b.who===ME)-(a.who===ME))||tim(a).localeCompare(tim(b));
+  const srt=(a,b)=>(itemHas(b,ME)-itemHas(a,ME))||tim(a).localeCompare(tim(b));
   const dayCol=(d,l)=>{ const its=items.filter(x=>x.d===d).sort(srt);
     return `<div class="dcol ${d===t?'today':''} ${d<t?'past':''}"><div class="dcol-h"><b>${l}</b><span>${fmtD(d).slice(3)}</span></div>
-      ${its.map(x=>`<div class="dev k-${x.k} ${ME&&x.who===ME?'me':''}" data-act="${x.act}" data-id="${x.id}"><span class="dev-bar"></span><div style="min-width:0"><div class="dev-t">${tim(x)?`<b class="mono">${esc(tim(x))}</b> `:''}${x.multi&&!x.first?'↳ ':''}${esc(x.t)}</div><div class="dev-m">${esc([x.who?shortWho(x.who):'',x.e&&x.e.pid?projName(x.e.pid):'',x.lbl||(x.k==='lief'?'Lieferung':x.k==='proj'?'Projekt':EV_KINDS[x.k]||'')].filter(Boolean).join(' · '))}</div></div>${ME&&x.who===ME?'<span class="me-tag">Du</span>':''}</div>`).join('')||'<div class="dev-empty">Nichts eingetragen</div>'}
+      ${its.map(x=>`<div class="dev k-${x.k} ${itemHas(x,ME)?'me':''}" data-act="${x.act}" data-id="${x.id}"><span class="dev-bar"></span><div style="min-width:0"><div class="dev-t">${tim(x)?`<b class="mono">${esc(tim(x))}</b> `:''}${x.multi&&!x.first?'↳ ':''}${esc(x.t)}</div><div class="dev-m">${esc([x.whos&&x.whos.length>1?x.whos.map(shortWho).join(', '):x.who?shortWho(x.who):'',x.e&&x.e.pid?projName(x.e.pid):'',x.lbl||(x.k==='lief'?'Lieferung':x.k==='proj'?'Projekt':EV_KINDS[x.k]||'')].filter(Boolean).join(' · '))}</div></div>${itemHas(x,ME)?'<span class="me-tag">Du</span>':''}</div>`).join('')||'<div class="dev-empty">Nichts eingetragen</div>'}
       <button class="btn ghost sm" data-act="newPlan" data-date="${d}" data-who="${esc(ME||'')}">${ic('plus')}Eintrag</button></div>`; };
   // 2) Meine To-Dos
   const my=ME?arr('tasks').filter(x=>!x.done&&taskHas(x,ME)).sort(byDue):[];
@@ -3509,7 +3528,7 @@ const GEN='Allgemein (Termine, Lieferungen)';
 function planCard(x){
   const cont=x.multi&&!x.first, rz=x.rz&&x.last?`<span class="rz" title="Ziehen zum Verlängern oder Verkürzen" aria-hidden="true"></span>`:'';
   if(x.hr) return `<div class="en k-abw" data-act="hrAbsEdit" data-id="${x.id}"><span class="tag">abwesend</span> ${esc(x.t)}</div>`; // Urlaub/Krank aus HR
-  if(!x.ref||!x.ref.startsWith('plan:')) return `<div class="en ${cont?'cont':''} k-${x.k==='lief'?'lief':x.k==='todo'?'todo':'kunde'}" data-act="${x.act}" data-id="${x.id}" data-drag="${x.ref||''}"><span class="small muted">${x.k==='lief'?'Lieferung':x.k==='todo'?'Frist':'Termin'}</span> ${cont?'↳ ':''}${esc(x.t)}${rz}</div>`;
+  if(!x.ref||!x.ref.startsWith('plan:')) return `<div class="en ${cont?'cont':''} k-${esc(x.k||'kunde')}" data-act="${x.act}" data-id="${x.id}" data-drag="${x.ref||''}"><span class="small muted">${x.k==='lief'?'Lieferung':x.k==='todo'?'Frist':esc(EV_KINDS[x.k]||'Termin')}</span> ${cont?'↳ ':''}${esc(x.t)}${rz}</div>`;
   const e=x.e, mat=e.mat||[], ok=mat.filter(m=>m.ok).length, pj=e.pid&&S.projects[e.pid];
   return `<div class="en pe ${cont?'cont':''} k-${e.kind==='abw'?'abw':e.kind==='haus'?'intern':'bau'}" data-act="editPlan" data-id="${x.id}" data-drag="${x.ref}">
     ${cont?'↳ ':''}${e.time&&!cont?`<b class="mono">${esc(e.time)}</b> `:''}${pj?`<b>${esc(pj.name)}</b><br>`:''}${esc(e.t||'')}
@@ -3517,7 +3536,7 @@ function planCard(x){
 }
 function vTeamWeek(){
   const ws=weekStart(), days=[0,1,2,3,4,5].map(i=>addDays(ws,i)), t=TODAY(), kw=kwOf(ws);
-  const all=calItems(ws,addDays(ws,5)).filter(x=>x.k!=='proj');
+  const base=calItems(ws,addDays(ws,5)).filter(x=>x.k!=='proj'), all=base.flatMap(calSplit); // Termin mit mehreren Personen: in jeder Personen-Zeile
   const names=staff().map(s=>s.name);
   const whoOf=x=>{ if(names.includes(x.who)) return x.who; if(x.k==='abw') return 'Abwesenheiten'; return GEN; };
   const monteure=staff().filter(s=>s.role==='Monteur').map(s=>s.name), others=staff().filter(s=>s.role!=='Monteur').map(s=>s.name);
@@ -3532,8 +3551,8 @@ function vTeamWeek(){
   people.forEach(pn=>{ const role=(staff().find(s=>s.name===pn)||{}).role;
     g+=`<div class="who">${esc(pn)}${role?`<span class="small muted">${esc(ROLES[role]||role)}</span>`:''}</div>`+dd.map(d=>`<div class="cell" data-drop-d="${d}" data-drop-who="${esc(dropWho(pn))}">${all.filter(x=>x.d===d&&whoOf(x)===pn).sort(byTime).map(planCard).join('')}${pn!==GEN?`<button class="add-en" data-act="newPlan" data-date="${d}" data-who="${esc(pn==='Abwesenheiten'?'':pn)}" ${pn==='Abwesenheiten'?'data-kind="abw"':''} aria-label="Eintrag ${esc(pn)} ${fmtD(d)}">+</button>`:''}</div>`).join(''); });
   // Handy: Tagesliste
-  const dayList=dd.map(d=>{ const its=all.filter(x=>x.d===d&&(!sel||whoOf(x)===sel)).sort(byTime);
-    return `<div class="day-blk ${d===t?'today':''}" data-drop-d="${d}"><div class="day-h"><b>${fmtD(d)}</b><button class="btn ghost sm" data-act="newPlan" data-date="${d}" data-who="${esc(sel)}">${ic('plus')}Eintrag</button></div>${its.map(x=>`<div class="day-it"><span class="small muted">${esc(whoOf(x)===GEN?'':shortWho(whoOf(x)))}</span>${planCard(x)}</div>`).join('')||'<div class="small muted">Nichts geplant.</div>'}</div>`; }).join('');
+  const dayList=dd.map(d=>{ const its=(sel?all:base).filter(x=>x.d===d&&(!sel||whoOf(x)===sel)).sort(byTime); // Tagesliste: jeden Termin nur einmal, mit allen Kürzeln
+    return `<div class="day-blk ${d===t?'today':''}" data-drop-d="${d}"><div class="day-h"><b>${fmtD(d)}</b><button class="btn ghost sm" data-act="newPlan" data-date="${d}" data-who="${esc(sel)}">${ic('plus')}Eintrag</button></div>${its.map(x=>`<div class="day-it"><span class="small muted">${esc(!sel&&x.whos&&x.whos.length>1?x.whos.map(shortWho).join(', '):whoOf(x)===GEN?'':shortWho(whoOf(x)))}</span>${planCard(x)}</div>`).join('')||'<div class="small muted">Nichts geplant.</div>'}</div>`; }).join('');
   const whoOpts=names;
   return head('KW '+kw+' · '+fmtD(ws)+' – '+fmtD(days[4]),'Wochenplanung Team',`<button class="icon-btn" data-act="weekNav" data-v="-1" aria-label="Vorwoche">${ic('left')}</button><button class="btn sm" data-act="weekNav" data-v="0">Diese Woche</button><button class="icon-btn" data-act="weekNav" data-v="1" aria-label="Folgewoche">${ic('right')}</button><button class="btn" data-act="copyWeek">Vorwoche übernehmen</button><button class="btn sun" data-act="weekPrint" title="Wochenansicht als PDF / auf Papier">${ic('report')}Woche drucken</button><button class="btn sun" data-act="monteurSheet" title="Persönlicher Wochenplan je Monteur: Termine, Material, Lückenfüller">${ic('report')}Monteur-Pläne</button>`)+
    `<div class="chips"><button class="chip ${!sel?'on':''}" data-act="weekWho" data-v="">Alle</button>${whoOpts.map(n=>`<button class="chip ${sel===n?'on':''}" data-act="weekWho" data-v="${esc(n)}">${esc(shortWho(n))}</button>`).join('')}<button class="chip" data-act="nav" data-v="calendar">Monatskalender</button></div>
@@ -3544,11 +3563,12 @@ function vTeamWeek(){
 const MAT_COLS=[{k:'ok',label:'✓',type:'check',w:'26px'},{k:'qty',label:'Menge',type:'number',w:'64px'},{k:'unit',label:'Einh.',w:'56px',options:['Stk','m','Pal','Rolle','psch']},{k:'art',label:'Material / Werkzeug',w:'1fr',options:[...MAT_DC,...MAT_AC,...MAT_KABEL,'Benning PV1-1','Benning IT200','Teleskopstapler','Leiter','Akkuschrauber','PSA / Absturzsicherung']}];
 const stampTxt=s=>{ if(!s) return ''; if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return fmtD(s); const d=new Date(s); return fmtD(iso(d))+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
 function planTrail(e){ const a=[]; if(e.by) a.push('Eingetragen von '+e.by+(e.at?' am '+stampTxt(e.at):'')); if(e.updBy) a.push('zuletzt geändert von '+e.updBy+' am '+stampTxt(e.updAt)); return a.join(' · '); }
-function planForm(e,onSave,onDelete){
+function planForm(e,onSave,onDelete,also){
   const trail=e.by?`<div class="trail">${esc(planTrail(e))}${(e.log||[]).length>1?`<details><summary>Alle Änderungen (${e.log.length})</summary>${e.log.slice().reverse().map(l=>`<div>${esc(stampTxt(l.at))} · ${esc(l.by)}</div>`).join('')}</details>`:''}</div>`:'';
   openSheet({title:e.t?'Einsatz bearbeiten':'Einsatz planen',wide:1,value:e,fields:[
     ...(trail?[{k:'trail',label:'Spur',type:'html',html:trail}]:[]),
     {k:'who',label:'Mitarbeiter',type:'select',options:[['','– niemand –'],...staff().map(s=>[s.name,s.name])]},{k:'kind',label:'Art',type:'select',options:Object.entries(PLAN_KINDS)},
+    ...(also?[{k:'alsox',label:'Auch einplanen für (jede Person bekommt einen eigenen Eintrag)',type:'html',full:1,html:whoPick([],'pl-also')}]:[]),
     {k:'d',label:'Datum',type:'date',req:1},{k:'end',label:'bis (bei mehreren Tagen)',type:'date'},{k:'time',label:'Uhrzeit',type:'time'},
     {k:'pid',label:'Kunde / Projekt',type:'select',options:projOpts()},{k:'t',label:'Aufgabe',req:1,ph:'z. B. DC-Montage Feld 7, Zählertermin, Lager aufräumen'},
     {k:'note',label:'Hinweise',type:'textarea',ph:'Ansprechpartner, Zugang, Besonderheiten'},
@@ -4017,13 +4037,15 @@ function evTodoSave(e){ let n=0; document.querySelectorAll('#ev_td .ev-td').forE
 queueMicrotask(()=>Object.assign(A,{ /* A wird weiter unten angelegt */
   evTodoAdd:d=>{ const box=$('#ev_td'); if(!box) return; const who=d.k==='go'?((($('#f_who')||{}).value)||''):''; box.insertAdjacentHTML('beforeend',evTodoRow({who,title:evTodoText(d.k),due:d.k==='go'?((($('#f_date')||{}).value)||''):evTodoDue()})); const r=box.lastElementChild; (who?r.querySelector('.evt-t'):r.querySelector('.evt-w')).focus(); },
   evTodoDel:(d,el)=>{ const r=el.closest('.ev-td'); if(r) r.remove(); } }));
+// Personen ankreuzen (Termin und neuer Einsatz teilen sich dieselbe Auswahl)
+function whoPick(cur,cls){ const l=staffUniq().map(s=>s.name); cur.forEach(n=>{ if(n&&!l.includes(n)) l.push(n); }); return `<div class="tw-grid">${l.map(n=>`<label class="tw-opt"><input type="checkbox" class="ck ${cls}" value="${esc(n)}" ${cur.includes(n)?'checked':''}><span class="who-chip">${esc(shortWho(n))}</span><span class="small">${esc(n.replace(/\s*\([^)]*\)$/,''))}</span></label>`).join('')||'<span class="small muted">Noch keine Mitarbeiter angelegt.</span>'}</div>`; }
 function eventForm(e,pre){
   const isNew=!e; e=e?clone(e):{id:uid(),date:TODAY(),kind:'bau',...(pre||{})};
   openSheet({title:isNew?'Neuer Termin':'Termin bearbeiten',value:e,fields:[
     {k:'title',label:'Titel',req:1,full:1,ph:'z. B. Zählersetzung Westnetz'},{k:'kind',label:'Art',type:'select',options:Object.entries(EV_KINDS)},{k:'pid',label:'Projekt',type:'select',options:projOpts()},
-    {k:'date',label:'Datum',type:'date',req:1},{k:'end',label:'bis (bei mehreren Tagen)',type:'date'},{k:'time',label:'Uhrzeit',type:'time'},{k:'who',label:'Wer',type:'select',options:[['','– alle / niemand –'],...staff().map(s=>[s.name,s.name])]},{k:'place',label:'Ort'},{k:'notes',label:'Notiz',type:'textarea'},
+    {k:'date',label:'Datum',type:'date',req:1},{k:'end',label:'bis (bei mehreren Tagen)',type:'date'},{k:'time',label:'Uhrzeit',type:'time'},{k:'place',label:'Ort'},{k:'whox',label:'Wer (mehrere möglich – nichts angekreuzt = alle / niemand)',type:'html',full:1,html:whoPick(evWhos(e),'ev-who')},{k:'notes',label:'Notiz',type:'textarea'},
     {k:'evtd',label:'To-Dos zu diesem Termin',type:'html',full:1,html:evTodoHtml(e)}],
-    onSave:v=>{ delete v.evtd; Object.assign(e,v); put('events',e); const n=evTodoSave(e); toast('Termin gespeichert'+(n?' · '+n+' To-Do'+(n>1?'s':'')+' angelegt':'')+'.'); },
+    onSave:v=>{ delete v.evtd; delete v.whox; const sel=[...document.querySelectorAll('.ev-who:checked')].map(x=>x.value), main=sel.includes(e.who)?e.who:(sel[0]||''), rest=sel.filter(n=>n!==main); Object.assign(e,v); e.who=main; if(rest.length) e.who2=rest; else delete e.who2; put('events',e); const n=evTodoSave(e); toast('Termin gespeichert'+(n?' · '+n+' To-Do'+(n>1?'s':'')+' angelegt':'')+'.'); },
     onDelete:isNew?null:()=>{ del('events',e.id); closeSheet(); }});
 }
 const ORDER_COLS=[{k:'qty',label:'Menge',type:'number',w:'64px'},{k:'unit',label:'Einh.',w:'58px',options:['Stk','m','kWp','Pal','psch']},{k:'artNr',label:'Art.-Nr.',w:'0.45fr'},{k:'art',label:'Artikel',w:'1fr',options:[...MAT_DC,...MAT_AC,...MAT_KABEL,'PV-Module','Wechselrichter','Unterkonstruktion','Speichersystem','Ladesäule','Zählerschrank','Wandlermessschrank','Trafostation','EZA-Regler']},{k:'price',label:'EP netto €',type:'number',w:'86px'},{k:'extra',label:'Zusatz',type:'check',w:'48px'}];
@@ -5275,7 +5297,7 @@ function moveRef(ref,date,who){
     const delta=daysBetween(e.d,date); e.d=date; if(e.end) e.end=addDays(e.end,delta);
     if(who==='__abw'){ e.kind='abw'; e.who=''; } else if(who==='__none'){ e.who=''; } else if(staffWho){ e.who=staffWho; if(e.kind==='abw'&&w.entries[+ix].who==='') e.kind='abw'; }
     const ww=clone(w); ww.entries.splice(+ix,1); savePlanEntry(e,ww,true); }
-  else if(t==='event'){ const e=clone(S.events[id]); if(!e) return; const delta=daysBetween(e.date,date); e.date=date; if(e.end) e.end=addDays(e.end,delta); if(staffWho) e.who=staffWho; put('events',e); }
+  else if(t==='event'){ const e=clone(S.events[id]); if(!e) return; const delta=daysBetween(e.date,date); e.date=date; if(e.end) e.end=addDays(e.end,delta); if(staffWho&&!evWhos(e).includes(staffWho)) e.who=staffWho; put('events',e); } // auf eine Person ziehen, die schon dabei ist: nur das Datum ändert sich
   else if(t==='task'){ const k=clone(S.tasks[id]); if(!k) return; k.due=date; if(staffWho) k.who=staffWho; put('tasks',k); }
   else if(t==='order'){ const o=clone(S.orders[id]); if(!o) return; o.delivery=date; put('orders',o); }
   else if(t==='pstart'||t==='pend'){ const p=clone(S.projects[id]); if(!p) return; const n=t==='pstart'?11:23; p[t==='pstart'?'start':'end']=date; if(/^\d{4}-/.test((p.ms||{})['m'+n]||'')) p.ms={...p.ms,['m'+n]:date}; put('projects',p); }
@@ -5492,7 +5514,7 @@ const A = {
  editPlan:d=>{ const [wid,ix]=d.id.split('|'); const w=S.plan[wid]; if(!w||!w.entries[+ix]) return; const e=clone(w.entries[+ix]);
    planForm(e, v=>{ const ww=clone(S.plan[wid]); ww.entries.splice(+ix,1); savePlanEntry({...e,...v},ww); },
      ()=>{ const ww=clone(S.plan[wid]); ww.entries.splice(+ix,1); put('plan',ww); closeSheet(); }); },
- newPlan:d=>planForm({d:d.date||TODAY(),kind:d.kind||'bau',who:d.who||'',mat:[]}, v=>savePlanEntry(v)),
+ newPlan:d=>planForm({d:d.date||TODAY(),kind:d.kind||'bau',who:d.who||'',mat:[]}, v=>{ const more=[...document.querySelectorAll('.pl-also:checked')].map(x=>x.value).filter(n=>n!==v.who); savePlanEntry(v,null,more.length>0); more.forEach(n=>savePlanEntry({...v,who:n},null,true)); if(more.length) toast('Für '+(more.length+(v.who?1:0))+' Personen eingeplant.'); },null,true),
  weekWho:d=>{ UI.weekWho=d.v; render(); },
  matStd:d=>{ const L={dc:MAT_DC,ac:MAT_AC,tool:['Benning PV1-1 (DC-Messung)','Benning IT200 (AC-Messung)','Akkuschrauber + Bits','Leiter','PSA / Absturzsicherung','Crimpzange MC4','Abisolierwerkzeug','Fotodoku: Handy geladen']}[d.v]||[]; addMatRows(L.map(a=>({art:a,unit:'Stk'}))); },
  matFromOrder:()=>{ const pid=($('#f_pid')||{}).value; if(!pid){ toast('Bitte zuerst Kunde / Projekt wählen.'); return; }
@@ -5858,7 +5880,7 @@ function todoUpdBlock(p){
 
 /* ========== Wochenansicht drucken ========== */
 function printWeek(){
-  const ws=weekStart(), days=[0,1,2,3,4,5].map(i=>addDays(ws,i)), kw=kwOf(ws), all=calItems(ws,addDays(ws,5)).filter(x=>x.k!=='proj');
+  const ws=weekStart(), days=[0,1,2,3,4,5].map(i=>addDays(ws,i)), kw=kwOf(ws), all=calItems(ws,addDays(ws,5)).filter(x=>x.k!=='proj').flatMap(calSplit);
   const dd=all.some(e=>e.d===days[5])?days:days.slice(0,5), names=staff().map(s=>s.name);
   const whoOf=x=>names.includes(x.who)?x.who:x.k==='abw'?'Abwesend':'Allgemein';
   const people=[...names.filter(n=>all.some(x=>whoOf(x)===n)),...names.filter(n=>!all.some(x=>whoOf(x)===n))]; if(all.some(x=>whoOf(x)==='Allgemein')) people.push('Allgemein'); if(all.some(x=>whoOf(x)==='Abwesend')) people.unshift('Abwesend');
@@ -5890,7 +5912,7 @@ setTimeout(()=>checkWeekPrint(),15000);
 function matSource(it){ const s=stockFind(it.art,it.artNr); if(s) return [s.loc||'Lager',firmOf(s)!==FIRMS()[0]?firmShort(firmOf(s)):''].filter(Boolean).join(' · ');
   return it.src||''; }
 function monteurPage(name,ws){
-  const days=[0,1,2,3,4,5].map(i=>addDays(ws,i)), end=days[5], all=calItems(ws,end).filter(x=>x.who===name&&x.k!=='todo');
+  const days=[0,1,2,3,4,5].map(i=>addDays(ws,i)), end=days[5], all=calItems(ws,end).filter(x=>itemHas(x,name)&&x.k!=='todo');
   const dd=all.some(x=>x.d===days[5])?days:days.slice(0,5);
   const pids=new Set(all.map(x=>x.e&&x.e.pid).filter(Boolean));
   const dayBlock=d=>{ const its=all.filter(x=>x.d===d).sort((a,b)=>((a.e&&a.e.time)||'').localeCompare((b.e&&b.e.time)||''));
@@ -6197,7 +6219,7 @@ function aiSnapshot(q,hist){
   const ot=arr('tasks').filter(t=>!t.done);
   out.push('OFFENE TO-DOS (id | Titel | Projekt | wer | fällig | Dringlichkeit | angelegt | letztes Update):\n'+ot.map(t=>[t.id,t.title.slice(0,140),projName(t.pid)||(t.pool?'Allgemein':'-'),t.ext?'extern: '+t.ext:(t.who?shortWho(t.who):'niemand'),t.due||'',t.prio||'normal',t.created||String(t.at||'').slice(0,10),lastUp(t)].join(' | ')).join('\n'));
   const dn=arr('tasks').filter(t=>t.done&&String(t.doneAt||'')>=addDays(t0,-30)); if(dn.length) out.push('IN DEN LETZTEN 30 TAGEN ERLEDIGT (Titel | Projekt | wer | erledigt am):\n'+dn.map(t=>[t.title.slice(0,100),projName(t.pid)||'-',t.doneBy||shortWho(t.who||''),String(t.doneAt).slice(0,10)].join(' | ')).join('\n'));
-  const ev=arr('events').filter(e=>e.date>=addDays(t0,-7)&&e.date<=addDays(t0,45)).sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||''))); if(ev.length) out.push('TERMINE (id | Datum | Uhrzeit | Titel | Art | wer | Projekt | Ort):\n'+ev.map(e=>[e.id,e.date,e.time||'',e.title||'',EV_KINDS[e.kind]||'',e.who?shortWho(e.who):'',projName(e.pid)||'',e.place||''].join(' | ')).join('\n'));
+  const ev=arr('events').filter(e=>e.date>=addDays(t0,-7)&&e.date<=addDays(t0,45)).sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||''))); if(ev.length) out.push('TERMINE (id | Datum | Uhrzeit | Titel | Art | wer | Projekt | Ort):\n'+ev.map(e=>[e.id,e.date,e.time||'',e.title||'',EV_KINDS[e.kind]||'',evWhos(e).map(shortWho).join(', '),projName(e.pid)||'',e.place||''].join(' | ')).join('\n'));
   const oo=arr('orders').filter(o=>orderState(o).open); if(oo.length) out.push('OFFENE BESTELLUNGEN (id | Lieferant | Projekt | bestellt | Liefertermin | Status | bestellt über | Positionen):\n'+oo.map(o=>[o.id,o.supplier||'',projName(o.pid)||'-',o.ordered||'',o.delivery||'',orderState(o).k,o.buyer||'',(o.items||[]).slice(0,5).map(i=>(i.qty||'')+' '+(i.unit||'')+' '+i.art).join('; ')].join(' | ')).join('\n'));
   const wk=arr('plan').flatMap(w=>(w.entries||[]).filter(e=>e.d>=mon&&e.d<=addDays(mon,11)).map(e=>[e.d,e.who?shortWho(e.who):'-',e.t||'',projName(e.pid)||''].join(' | '))); if(wk.length) out.push('WOCHENPLANUNG diese + nächste Woche (Datum | wer | was | Projekt):\n'+wk.join('\n'));
   const st=arr('stock').filter(s=>+s.qty>0).slice(0,80); if(st.length) out.push('LAGER (Artikel | Bestand | Lagerort):\n'+st.map(s=>[s.art,qn(s.qty)+' '+(s.unit||''),s.loc||''].join(' | ')).join('\n'));
