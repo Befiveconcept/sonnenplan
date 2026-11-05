@@ -291,30 +291,53 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .td-up{flex:none;padding:3px 5px}
 @media (max-width:1100px){.dash-grid.dash-2{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:640px){.td-tiles{grid-template-columns:minmax(0,1fr);padding:4px 10px 12px;gap:6px}}
-/* Projekt-Radar: je Status-Kategorie ein nach unten aufgefaecherter Stapel */
+/* Projekt-Radar: links je Status ein aufgefaecherter Stapel, rechts die grosse Flaeche */
 .rx{margin-top:14px;border:1px solid var(--line);border-radius:18px;background:var(--surface);padding:18px}
 .rx-top{margin-bottom:12px}.rx-top h2{margin:0}
-.stk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:18px 14px;align-items:start}
-.stk{min-width:0}.stk.wide{grid-column:span 2}
+.rx-wrap{display:grid;grid-template-columns:minmax(0,430px) minmax(0,1fr);gap:18px;align-items:stretch;min-height:440px}
+.stk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 12px;align-items:start;align-content:start}
+.stk{min-width:0}
 .stk h3{display:flex;align-items:center;gap:8px;margin:0 2px 10px;font-size:14px}.stk h3 .cnt-b{margin-left:auto}
 .stk-pile{display:flex;flex-direction:column;padding-bottom:10px}
 .stk-c{position:relative;margin-top:-7px;background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--cc,var(--line));border-radius:11px;box-shadow:0 -2px 5px rgba(0,0,0,.09);min-width:0}
 .stk-c:first-child{margin-top:0}
 .stk-c:last-child{padding-bottom:9px;box-shadow:0 -2px 5px rgba(0,0,0,.09),0 3px 7px rgba(0,0,0,.1)}
-.stk-c.open{margin:-7px 0 8px;box-shadow:0 4px 14px rgba(0,0,0,.16);z-index:1}.stk-c.open:first-child{margin-top:0}
-.stk-c.open+.stk-c{margin-top:0}
 .stk-c .pcard{border:0;border-radius:0 0 10px 10px;box-shadow:none}
 .stk-t{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;color:var(--ink);font:inherit;font-size:13.5px;font-weight:600;text-align:left;padding:9px 12px 13px;cursor:pointer;min-width:0}
-.stk-c:last-child .stk-t,.stk-c.open .stk-t{padding-bottom:9px}
+.stk-c:last-child .stk-t{padding-bottom:9px}
 .stk-t:hover .stk-n{text-decoration:underline;text-decoration-color:var(--sun);text-decoration-thickness:2px;text-underline-offset:2px}
 .stk-n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.stk-c.open .stk-n{white-space:normal}
 .stk-late{flex:none;width:8px;height:8px;border-radius:50%;background:#E53935}
 .stk-more{display:block;margin:0 auto}
+.stk-c.open{background:var(--sun);border-color:var(--sun);z-index:1}.stk-c.open .stk-t{color:#111}.stk-c.open>.pcard{display:none}
+.rx-panel{position:relative;min-width:0;display:flex;flex-direction:column;border-radius:16px;overflow:hidden;border:1px solid var(--line)}
+.rx-panel>.pcard{flex:1;border:0;border-radius:0;box-shadow:none;padding:24px 26px;gap:16px;cursor:pointer;transform:none!important}
+.rx-panel .pc-head h3{font-size:24px;line-height:1.15}
+.rx-panel .pc-st{flex:1}
+.rx-panel .pc-note{display:block;-webkit-line-clamp:unset;overflow:visible;font-size:18px;line-height:1.4;margin:6px 0}
+.rx-panel .pc-task{font-size:14px;margin:4px 0}
+.rx-x{position:absolute;z-index:2;right:14px;bottom:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:12.5px;border-radius:999px;padding:4px 12px;cursor:pointer}.rx-x:hover{background:var(--sun);border-color:var(--sun);color:#111}
+/* Ruhezustand in unserer CI: schwarz, Sonnengelb, grosse Sonne */
+.rxi{flex:1;position:relative;overflow:hidden;background:#0B0B0B;color:#fff;display:flex;min-height:100%}
+.rxi-sun{position:absolute;width:250px;height:250px;right:-72px;top:-72px;fill:var(--sun)}
+.rxi-rays{transform-origin:100px 100px;animation:rxiSpin 60s linear infinite}
+@keyframes rxiSpin{to{transform:rotate(360deg)}}
+.rxi-c{position:relative;display:flex;flex-direction:column;gap:18px;padding:170px 30px 30px;justify-content:flex-end;width:100%;box-sizing:border-box}
+.rxi-ey{font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--sun)}
+.rxi h3{margin:-10px 0 0;font-family:var(--f-display);font-size:38px;line-height:1.05;letter-spacing:-.02em;color:#fff}.rxi h3 em{font-style:normal;color:var(--sun)}
+.rxi-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.rxi-s{background:#1B1B1B;border:1px solid #2C2C2C;border-radius:12px;padding:12px;min-width:0}.rxi-s b{display:block;font-family:var(--f-display);font-size:30px;line-height:1;color:var(--sun)}.rxi-s span{display:block;margin-top:5px;font-size:12px;color:#BDBDBD}
+.rxi-s.hot{background:var(--sun);border-color:var(--sun)}.rxi-s.hot b,.rxi-s.hot span{color:#111}
+.rxi-nx{display:flex;flex-direction:column;gap:2px;border-left:3px solid var(--sun);padding-left:12px;font-size:12.5px;color:#BDBDBD}.rxi-nx b{font-size:15px;color:#fff;font-weight:600}
+.rxi-h{font-size:12.5px;color:#9A9A9A}
+@media (prefers-reduced-motion:reduce){.rxi-rays{animation:none}}
 #stkPop{position:fixed;z-index:60;width:340px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);overflow:auto;border-radius:16px;box-shadow:0 10px 32px rgba(0,0,0,.28);animation:stkPopIn .12s ease-out}#stkPop .pcard{box-shadow:none}
 @keyframes stkPopIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){#stkPop{animation:none}}
-@media (max-width:900px){.rx{padding:14px 12px}}
+@media (max-width:1100px){.rx-wrap{grid-template-columns:minmax(0,300px) minmax(0,1fr)}.stk-grid{grid-template-columns:minmax(0,1fr)}.rxi h3{font-size:30px}.rxi-g{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:900px){.rx{padding:14px 12px}.rx-wrap{display:block;min-height:0}.rx-panel{display:none}
+  .stk-c.open{background:var(--surface);border-color:var(--line);border-top-color:var(--cc,var(--line));margin:-7px 0 8px;box-shadow:0 4px 14px rgba(0,0,0,.16)}.stk-c.open:first-child{margin-top:0}.stk-c.open+.stk-c{margin-top:0}.stk-c.open .stk-t{color:var(--ink);padding-bottom:9px}.stk-c.open .stk-n{white-space:normal}.stk-c.open>.pcard{display:flex}
+  .stk-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stk.wide{grid-column:span 2}}
 @media (max-width:520px){.stk.wide{grid-column:auto}.stk-grid{grid-template-columns:minmax(0,1fr)}}
 /* Bestellung: Ablagefläche für die echte Bestell-Mail */
 .ord-mz{border:2px dashed var(--line);border-radius:12px;padding:12px 14px;background:var(--sunken);transition:border-color .15s,background .15s}.ord-mz.over{border-color:var(--sun);background:var(--sun-soft);color:#111}
@@ -3051,9 +3074,21 @@ function stepRail(p){
     h+=`<button type="button" class="rs ${st} ${i===pp.last?'cur':''} ${k&&starts.has(i)?'gap':''} ${isOpt?'opt':''}" data-act="railStep" data-pid="${p.id}" data-i="${i}" title="${esc(lbl)}${v?' · '+esc(msVal(v)):''}"><span class="rs-l">${esc(lbl)}</span><span class="rs-b"></span><span class="rs-n">${k+1}</span></button>`; });
   return `<div class="rail" role="list" aria-label="Statusschritte" style="--n:${pp.seq.length}">${h}</div>`;
 }
+// Rechte Fläche im Radar: angeklicktes (oder überfahrenes) Projekt groß, sonst das Lagebild in unserer CI
+const rxProjects=()=>arr('projects').filter(p=>p&&!isIntern(p)&&['laufend','planung'].includes(catOf(p)));
+function rxIdleHtml(){ const t=TODAY(), ps=rxProjects(), ids=new Set(ps.map(p=>p.id)), open=ps.flatMap(p=>openTasks(p.id)), late=open.filter(x=>x.due&&x.due<t).length, first=String(ME||'').replace(/\s*\([^)]*\)$/,'').split(' ')[0];
+  const nx=calItems(t,addDays(t,21)).filter(x=>x.k!=='todo'&&x.k!=='abw'&&x.first!==false).map(x=>({x,pid:x.ref.startsWith('event:')?S.events[x.id]?.pid:x.ref.startsWith('order:')?S.orders[x.id]?.pid:x.k==='proj'?x.id:x.e&&x.e.pid})).find(o=>ids.has(o.pid));
+  const stat=(n,l,c)=>`<div class="rxi-s ${c||''}"><b>${n}</b><span>${l}</span></div>`;
+  return `<div class="rxi"><svg class="rxi-sun" viewBox="0 0 200 200" aria-hidden="true"><g class="rxi-rays">${Array.from({length:12},(_,i)=>`<rect x="94" y="6" width="12" height="38" rx="6" transform="rotate(${i*30} 100 100)"/>`).join('')}</g><circle cx="100" cy="100" r="42"/></svg>
+    <div class="rxi-c"><div class="rxi-ey">Projekt-Radar · heute</div><h3>Alles im Blick${first?', <em>'+esc(first)+'</em>':''}.</h3>
+      <div class="rxi-g">${stat(ps.filter(p=>catOf(p)==='laufend').length,'laufend')}${stat(ps.filter(p=>catOf(p)==='planung').length,'in Planung')}${stat(open.length,'offene To-Dos')}${stat(late,'überfällig',late?'hot':'')}</div>
+      ${nx?`<div class="rxi-nx"><span>Nächster Termin</span><b>${esc(fmtD(nx.x.d))} · ${esc(nx.x.t)}</b><span>${esc(projName(nx.pid)||'')}</span></div>`:''}
+      <div class="rxi-h">Links ein Projekt anklicken oder mit der Maus darüberfahren.</div></div></div>`; }
+function rxPanelInner(id){ const pin=id==null, pid=pin?UI.rxOpen:id, p=pid&&S.projects[pid]; if(!p) return rxIdleHtml();
+  return `${pid===UI.rxOpen?`<button type="button" class="rx-x" data-act="rxOpen" data-id="${esc(pid)}">✕ Schließen</button>`:''}${projCard(p,true)}`; }
 function radarHtml(t){
-  // Radar als Stapel: je Status-Kategorie ein nach unten aufgefächerter Stapel, von jedem Projekt ist der Titel zu sehen. Klick klappt die Kachel der Projektübersicht auf.
-  const cats=['laufend','planung'], all=arr('projects').filter(p=>p&&!isIntern(p)&&cats.includes(catOf(p))); if(!all.length) return '';
+  // Radar als Stapel: je Status-Kategorie ein nach unten aufgefächerter Stapel, von jedem Projekt ist der Titel zu sehen. Klick zeigt die Kachel rechts groß (am Handy direkt im Stapel).
+  const cats=['laufend','planung'], all=rxProjects(); if(!all.length) return '';
   const more=UI.rxMore||{}, CAP=12;
   const item=p=>{ const open=UI.rxOpen===p.id, late=openTasks(p.id).some(x=>x.due&&x.due<t);
     return `<div class="stk-c ${open?'open':''}"><button type="button" class="stk-t" data-act="rxOpen" data-id="${esc(p.id)}" aria-expanded="${open}"><span class="stk-n" title="${esc(p.name)}">${esc(p.name)}</span>${late?'<span class="stk-late" title="Überfällige Aufgaben"></span>':''}</button>${open?projCard(p):''}</div>`; };
@@ -3061,24 +3096,27 @@ function radarHtml(t){
     const hasOpen=its.some(p=>p.id===UI.rxOpen), openIdx=its.findIndex(p=>p.id===UI.rxOpen), shown=more[c]||openIdx>=CAP?its:its.slice(0,CAP);
     return `<div class="stk c-${c} ${hasOpen?'wide':''}"><h3>${esc(CATS[c])} <span class="cnt-b">${its.length}</span></h3><div class="stk-pile">${shown.map(item).join('')}</div>${its.length>CAP?`<button type="button" class="btn ghost sm stk-more" data-act="rxMore" data-v="${c}">${more[c]||openIdx>=CAP?'Weniger anzeigen':'+ '+(its.length-CAP)+' weitere'}</button>`:''}</div>`; };
   return `<section class="rx"><div class="rx-top"><h2>Projekt-Radar${briefOn()?' <button type="button" class="btn sm brief-btn" data-act="briefShow" title="Alle laufenden und geplanten Projekte in einfacher Sprache">☀️ Morgen-Briefing</button>':''}</h2></div>
-    <div class="stk-grid">${cats.map(stack).join('')}</div></section>`;
+    <div class="rx-wrap"><div class="stk-grid">${cats.map(stack).join('')}</div><div class="rx-panel" id="rxPanel">${rxPanelInner()}</div></div></section>`;
 }
-// Maus über einem Projekttitel im Stapel: die Kachel schwebt daneben ein, ohne dass der Stapel springt. Am Handy gibt es kein Darüberfahren, dort bleibt das Antippen.
+// Maus über einem Projekttitel: Am Laptop erscheint die Kachel rechts in der großen Fläche, ohne dass etwas springt. In schmalen Fenstern schwebt sie daneben. Am Handy gibt es kein Darüberfahren, dort bleibt das Antippen.
 let STK_T=0, STK_ID='';
-function stkHide(){ clearTimeout(STK_T); STK_ID=''; const o=$('#stkPop'); if(o) o.remove(); }
-function stkShow(btn){ const p=S.projects[btn.dataset.id]; if(!p||UI.rxOpen===p.id||SHEET) return stkHide(); stkHide(); STK_ID=p.id;
+const stkPanel=()=>innerWidth>900?$('#rxPanel'):null;
+function stkHide(){ clearTimeout(STK_T); const o=$('#stkPop'); if(o) o.remove(); const pn=stkPanel(); if(STK_ID&&pn){ pn.innerHTML=rxPanelInner(); blobImgs(); } STK_ID=''; }
+function stkShow(btn){ const p=S.projects[btn.dataset.id]; if(!p||SHEET) return stkHide(); const pn=stkPanel();
+  if(pn){ clearTimeout(STK_T); STK_ID=p.id; pn.innerHTML=rxPanelInner(p.id); blobImgs(); return; }
+  if(UI.rxOpen===p.id) return stkHide(); stkHide(); STK_ID=p.id;
   const o=document.createElement('div'); o.id='stkPop'; o.innerHTML=projCard(p); document.body.appendChild(o); blobImgs();
   const r=btn.getBoundingClientRect(), w=o.offsetWidth, h=o.offsetHeight, vw=document.documentElement.clientWidth, vh=innerHeight, gap=8;
   o.style.left=(r.right+gap+w<=vw-12?r.right+gap:r.left-gap-w>=12?r.left-gap-w:Math.max(12,vw-w-12))+'px'; o.style.top=Math.max(12,Math.min(r.top-6,vh-h-12))+'px'; }
 if(window.matchMedia&&matchMedia('(hover:hover)').matches){
-  document.addEventListener('mouseover',e=>{ if(!e.target.closest) return; const b=e.target.closest('.stk-t'), inPop=e.target.closest('#stkPop');
-    if(inPop){ clearTimeout(STK_T); return; }
-    clearTimeout(STK_T); if(b){ if(b.dataset.id!==STK_ID) STK_T=setTimeout(()=>{ if(b.isConnected) stkShow(b); },140); return; }
-    if($('#stkPop')) STK_T=setTimeout(stkHide,180); });
+  document.addEventListener('mouseover',e=>{ if(!e.target.closest) return; const b=e.target.closest('.stk-t');
+    if(e.target.closest('#stkPop,#rxPanel')){ clearTimeout(STK_T); return; }
+    clearTimeout(STK_T); if(b){ if(b.dataset.id!==STK_ID) STK_T=setTimeout(()=>{ if(b.isConnected) stkShow(b); },120); return; }
+    if(STK_ID) STK_T=setTimeout(stkHide,220); });
   document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('.stk-t,#stkPop')) stkHide(); },true);
-  document.addEventListener('scroll',e=>{ if(!(e.target.closest&&e.target.closest('#stkPop'))) stkHide(); },true);
+  document.addEventListener('scroll',e=>{ if($('#stkPop')&&!(e.target.closest&&e.target.closest('#stkPop'))) stkHide(); },true);
   document.addEventListener('keydown',e=>{ if(e.key==='Escape') stkHide(); });
-  document.documentElement.addEventListener('mouseleave',()=>{ clearTimeout(STK_T); STK_T=setTimeout(stkHide,180); });
+  document.documentElement.addEventListener('mouseleave',()=>{ clearTimeout(STK_T); STK_T=setTimeout(stkHide,220); });
 }
 function vDashOld(){
   const t=TODAY(), act=activeProjects();
@@ -3423,7 +3461,7 @@ Antworte nur mit JSON: {"s":[{"i":1,"t":"…"}]}`,{modelTier:'quick',bg:true});
       (r&&Array.isArray(r.s)?r.s:[]).forEach(x=>{ const j=jobs[(+x.i||0)-1], t=String(x.t||'').trim().slice(0,240); if(!j||!t) return; const o={id:j.p.id,k:j.k,t,at:new Date().toISOString()}; S.psum=S.psum||{}; S.psum[j.p.id]=o; if(MODE==='cloud'&&DB) DB.collection('psum').doc(j.p.id).set(o).catch(()=>{}); });
       if(MODE!=='cloud') saveLocal(); scheduleRender(); } }catch(e){ /* dann bleibt der neueste Eintrag im Wortlaut stehen */ }
   SUM_RUN=false; if(SUM_Q.size) SUM_T=setTimeout(sumRun,1500); }
-function projCard(p){
+function projCard(p,big){
   const pp=pipe(p), cat=catOf(p), sv=sumView(p), active=['planung','laufend'].includes(cat), pct=pp.pct, nt=openTasks(p.id).length;
   const own=UI.sort==='own'&&ME;
   return `<article class="pcard c-${cat} ${p.cover?'has-cover':''}" data-act="openProject" data-id="${p.id}" tabindex="0"${own?` data-drag="proj:${p.id}" data-drop-proj="${p.id}"`:''}>${p.cover?`<div class="pc-cover"><img data-blob="${esc(p.cover)}" alt="" loading="lazy"></div>`:''}
@@ -3431,7 +3469,7 @@ function projCard(p){
     <div class="pc-head"><div class="ring hot" data-act="openAt" data-id="${p.id}" data-at="status" title="Statusverlauf öffnen" style="--p:${pct}" role="img" aria-label="${pp.work} von ${pp.total} Statusschritten"><span>${pp.work}<small>/${pp.total}</small></span></div>
       <div style="min-width:0"><h3>${esc(p.name)}</h3><div class="sub hot" data-act="openAt" data-id="${p.id}" data-at="infos" title="Projektdaten öffnen">${esc([p.nr,p.pl?shortWho(p.pl):''].filter(Boolean).join(' · ')||'Projektdaten ergänzen')}</div></div></div>
     <div class="pc-st hot" data-act="openAt" data-id="${p.id}" data-at="notes" title="Notizen öffnen"><span class="eyebrow">Aktueller Stand${sv&&sv.d?' · '+esc(fmtD(sv.d).slice(3)):''}${sv&&sv.by?' · '+esc(sv.by):''}</span><b class="pc-note" ${sv&&sv.ai?'title="Von der KI aus den neuesten Einträgen zusammengefasst"':''}>${sv?esc(sv.t):'<span class="muted">Noch keine Notiz – hier klicken und schreiben</span>'}</b><span class="small muted pc-step" data-act="openAt" data-id="${p.id}" data-at="status">Ablauf: ${pp.last?esc(pp.label):'noch kein Schritt'}</span></div>
-    ${(()=>{ const ot=openTasks(p.id); if(ot.length) return `<div class="pc-nx hot" data-act="openAt" data-id="${p.id}" data-at="tasks" title="Offene To-Dos"><span>Offene To-Dos · ${ot.length}</span>${ot.slice(0,3).map(t=>`<div class="pc-task">${t.ext?'↗ ':''}${esc(t.title)} <b>${esc(t.ext?t.ext:(t.who?shortWho(t.who):'offen'))}</b>${t.due?` · ${esc(fmtD(t.due).slice(3))}`:''}</div>`).join('')}${ot.length>3?`<div class="small muted">+ ${ot.length-3} weitere</div>`:''}</div>`;
+    ${(()=>{ const ot=openTasks(p.id); if(ot.length) return `<div class="pc-nx hot" data-act="openAt" data-id="${p.id}" data-at="tasks" title="Offene To-Dos"><span>Offene To-Dos · ${ot.length}</span>${ot.slice(0,big?6:3).map(t=>`<div class="pc-task">${t.ext?'↗ ':''}${esc(t.title)} <b>${esc(t.ext?t.ext:(t.who?shortWho(t.who):'offen'))}</b>${t.due?` · ${esc(fmtD(t.due).slice(3))}`:''}</div>`).join('')}${ot.length>(big?6:3)?`<div class="small muted">+ ${ot.length-(big?6:3)} weitere</div>`:''}</div>`;
       return active?`<div class="pc-nx hot" data-act="openAt" data-id="${p.id}" data-at="next" title="Keine offenen To-Dos – Next Step zuweisen"><span>Offene To-Dos · keine</span>${pp.next?'<div class="pc-task">Vorschlag: '+esc(pp.nextLabel)+'</div>':''}</div>`:''; })()}
     <div class="pc-foot hot" data-act="openAt" data-id="${p.id}" data-at="tasks" title="Aufgaben öffnen">${active?whoChips(p.id)||'<span class="small muted">keine offenen Aufgaben</span>':`<span class="small muted">${p.wartung?'Wartungsvertrag':''}</span>`}${nt?`<span class="pc-cnt">${nt} offen</span>`:''}</div>
   </article>`;
