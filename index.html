@@ -643,6 +643,7 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .who-more-f{display:flex;flex-direction:column;gap:6px;justify-content:flex-end;min-height:100%}.who2-row{display:flex;gap:4px;align-items:center}.who2-row .inp{flex:1}
 .who-plus{align-self:flex-start;border:1px dashed var(--line);background:none;border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;color:var(--muted);cursor:pointer}.who-plus:hover{border-color:var(--ink);color:var(--ink)}
 .who-more{font-family:var(--f-mono);font-size:11px;color:var(--muted);align-self:center;white-space:nowrap;margin-right:4px;background:none;border:0;padding:1px 4px;border-radius:6px;cursor:pointer}button.who-more:hover{background:var(--sunken);color:var(--ink)}
+.mi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.mi-it{position:relative;display:flex;flex-direction:column;gap:5px;border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;min-width:0}.mi-it:has(input:checked){background:var(--sun-soft);border-color:var(--sun)}.mi-it img{width:100%;height:110px;object-fit:contain;background:var(--sunken);border-radius:6px}.mi-it .ck{position:absolute;top:12px;left:12px;z-index:1}.mi-it span{overflow-wrap:anywhere}
 .tc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px}.tc-p{display:flex;align-items:center;gap:8px;text-align:left;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font:inherit;cursor:pointer;color:inherit}.tc-p:hover{border-color:var(--sun);background:var(--sun-soft)}
 .tw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px}.tw-opt{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;cursor:pointer}.tw-opt:has(input:checked){background:var(--sun-soft);border-color:var(--sun)}
 .ev-td{display:grid;grid-template-columns:minmax(120px,170px) minmax(0,1fr) 140px 32px;gap:6px;align-items:center;margin-bottom:6px}
@@ -4559,13 +4560,16 @@ document.addEventListener('paste',e=>{
   if(!files.length&&text.trim().length<30) return; e.preventDefault();
   ordersFromDrop(files,text,UI.view==='project'?UI.pid||'':'');
 });
+// Beleg aus einer Mail: immer zuerst das PDF. Ein Bild nur, wenn es kein PDF gibt und das Bild groß genug ist, um kein Logo zu sein.
+const isImgAtt=a=>/^image\//i.test(a.type||'')||/\.(jpe?g|png|gif|webp|bmp|tiff?|heic)$/i.test(a.name||'');
+function mailDocAtt(att){ const l=att||[]; return l.find(x=>/pdf/i.test(x.type)||/\.pdf$/i.test(x.name))||l.filter(x=>isImgAtt(x)&&x.blob.size>=50000).sort((a,b)=>b.blob.size-a.blob.size)[0]||null; }
 async function ordersFromDrop(files,text,pid){
   let file=null, mail=null;
   for(const f of [...(files||[])]){
     const n=(f.name||'').toLowerCase();
-    if(n.endsWith('.eml')||f.type==='message/rfc822'){ const m=parseEml(await f.arrayBuffer()); mail=m; const at=m.att.find(x=>/pdf|image\/(jpe?g|png|webp)/i.test(x.type)||/\.(pdf|jpe?g|png|webp)$/i.test(x.name)); if(at&&!file) file=new File([at.blob],at.name||'Anhang.pdf',{type:at.type==='application/octet-stream'&&/\.pdf$/i.test(at.name)?'application/pdf':at.type}); }
+    if(n.endsWith('.eml')||f.type==='message/rfc822'){ const m=parseEml(await f.arrayBuffer()); mail=m; const at=mailDocAtt(m.att); if(at&&!file) file=new File([at.blob],at.name||'Anhang.pdf',{type:at.type==='application/octet-stream'&&/\.pdf$/i.test(at.name)?'application/pdf':at.type}); }
     else if(n.endsWith('.msg')){ const ab=await f.arrayBuffer(); let pm=null; try{ pm=parseMsg(ab); }catch(e){ pm=null; }
-      if(pm&&(pm.text.trim()||pm.att.length)){ mail={...pm,subject:pm.subject||f.name.replace(/\.msg$/i,'')}; const at=pm.att.find(x=>/pdf|image\/(jpe?g|png|webp)/i.test(x.type)||/\.(pdf|jpe?g|png|webp)$/i.test(x.name)); if(at&&!file) file=new File([at.blob],at.name,{type:/\.pdf$/i.test(at.name)?'application/pdf':at.type}); continue; }
+      if(pm&&(pm.text.trim()||pm.att.length)){ mail={...pm,subject:pm.subject||f.name.replace(/\.msg$/i,'')}; const at=mailDocAtt(pm.att); if(at&&!file) file=new File([at.blob],at.name,{type:/\.pdf$/i.test(at.name)?'application/pdf':at.type}); continue; }
       const m=parseMsgLoose(ab); mail={...m,subject:f.name.replace(/\.msg$/i,'')}; if(m.pdf&&!file) file=new File([m.pdf],f.name.replace(/\.msg$/i,'')+'.pdf',{type:'application/pdf'}); }
     else if(/pdf|image\//.test(f.type)||/\.(pdf|jpe?g|png|webp)$/i.test(n)){ if(!file) file=f; }
   }
@@ -4960,12 +4964,17 @@ function dupWarn(name,where){ askPop('⚠️ <b>Schon einmal hochgeladen:</b> '+
 function dupAsk(list,total){ return new Promise(res=>{ A.dupAll=()=>{ closeSheet(); res('all'); };
   openSheet({title:list.length>1?list.length+' Dateien gibt es schon':'Diese Datei gibt es schon',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Diese Datei${list.length>1?'en wurden':' wurde'} bereits hochgeladen:</div>${list.map(d=>`<div class="sug"><div style="min-width:0"><b>${esc(d.name)}</b><div class="small muted">liegt schon in: ${esc(d.hit)}</div></div></div>`).join('')}</div>`,
     saveLabel:list.length<total?'Doppelte überspringen':'Nicht nochmal ablegen',extraBtn:`<button type="button" class="btn" data-act="dupAll">Trotzdem ablegen</button>`,onSave:()=>res('skip')}); }); }
+// Nachfrage: Welche Bilder aus der Mail sollen in die Datenablage? Nichts ist vorausgewählt.
+function mailImgAsk(list,done){ if(SHEET){ setTimeout(()=>mailImgAsk(list,done),1200); return; } const urls=list.map(x=>URL.createObjectURL(x.a.blob)), free=()=>urls.forEach(u=>URL.revokeObjectURL(u));
+  openSheet({title:list.length===1?'Bild aus der Mail übernehmen?':list.length+' Bilder aus der Mail übernehmen?',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:10px">Nur anhaken, was wirklich in die Datenablage soll, zum Beispiel Baustellenfotos. Logos und Signaturen einfach weglassen. In der Original-Mail bleibt alles erhalten.</div>
+    <div class="mi-grid">${list.map((x,i)=>`<label class="mi-it"><input type="checkbox" class="ck" id="mi_c${i}"><img src="${urls[i]}" alt="${esc(x.a.name||'Bild')}"><span class="small muted">${esc(String(x.a.name||'Bild').slice(0,40))} · ${Math.max(1,Math.round(x.a.blob.size/1024))} KB</span></label>`).join('')}</div></div>`,saveLabel:'Ausgewählte übernehmen',
+    onSave:()=>{ const sel=list.filter((x,i)=>$('#mi_c'+i).checked); setTimeout(free,2000); if(sel.length) done(sel); }}); }
 async function ingestFiles(files,text,pidHint){
   const fl0=[...(files||[])], fps=await Promise.all(fl0.map(f=>fileFp(f)));
   const dups=fl0.map((f,i)=>({f,name:f.name||'Datei',hit:findDup(fps[i],f.name,f.size)})).filter(x=>x.hit);
   if(!fl0.length&&text&&text.trim().length>20){ const h=findDup(await fileFp(text)); if(h){ const ch=await dupAsk([{name:'Eingefügter Text',hit:h}],1); if(ch!=='all') return; } }
   if(dups.length){ const ch=await dupAsk(dups,fl0.length); if(ch!=='all'){ files=fl0.filter(f=>!dups.some(d=>d.f===f)); if(!files.length) return; } }
-  const recs=[], stamp=new Date().toISOString();
+  const recs=[], mailImgs=[], stamp=new Date().toISOString();
   const mk=(o)=>({id:uid(),date:TODAY(),at:stamp,...o});
   const upload=async f=>{ if(!ASSETS) return null; try{ const type=f.type||(/\.pdf$/i.test(f.name)?'application/pdf':''); const r=await ASSETS.upload(f,type?{type}:undefined); return {asset:r.id,mime:r.contentType}; }catch(e){ return {err:e&&e.code||'Fehler'}; } };
   const addFile=async(f,parent,ctx)=>{ const up=await upload(f); const isPdf=/pdf/.test(f.type)||/\.pdf$/i.test(f.name); const txt=isPdf?await pdfText(f):'';
@@ -4987,7 +4996,9 @@ async function ingestFiles(files,text,pidHint){
       // Original-Mail mit ablegen, damit jeder sie in Outlook öffnen kann
       const upM=await upload(new File([ab],f.name||'mail'+(n.endsWith('.eml')?'.eml':'.msg'),{type:n.endsWith('.eml')?'message/rfc822':'application/vnd.ms-outlook'}));
       if(upM&&upM.asset){ mail.orig=f.name; mail.origAsset=upM.asset; }
-      for(const a of (m.att||[])){ if(/^image\/(gif|png)$/i.test(a.type)&&a.blob.size<15000) continue; // Logos/Signaturen überspringen
+      for(const a of (m.att||[])){
+        // Bilder aus Mails sind oft Logos und Signaturen: nur auf Nachfrage übernehmen (sehr kleine gar nicht anbieten). In der Original-Mail bleiben sie erhalten.
+        if(isImgAtt(a)){ if(a.blob.size>=15000) mailImgs.push({a,mail,ctx}); continue; }
         const r=await addFile(new File([a.blob],a.name,{type:a.type}),mail.id,ctx); if(!r.pid){ r.pid=mail.pid; r.why=mail.why?'aus der Mail':''; } }
     } else await addFile(f,'','');
   }
@@ -5000,6 +5011,10 @@ async function ingestFiles(files,text,pidHint){
   const n=recs.filter(r=>r.pid).length;
   toast(recs.length+' Eintr'+(recs.length===1?'ag':'äge')+' abgelegt · '+n+' einem Projekt zugeordnet'+(recs.length-n&&SAMPLE?' · Claude prüft den Rest …':''));
   if(pidHint&&pidHint!==INTERN&&SAMPLE) setTimeout(()=>fileCheck(pidHint,recs),300);
+  if(mailImgs.length) mailImgAsk(mailImgs,async sel=>{ const start=recs.length;
+    for(const {a,mail,ctx} of sel){ const r=await addFile(new File([a.blob],a.name,{type:a.type}),mail.id,ctx); const pm=(S.files[mail.id]||mail).pid; if(pidHint){ r.pid=pidHint; r.why='in der Projektakte abgelegt'; } else if(!r.pid&&pm){ r.pid=pm; r.why='aus der Mail'; } }
+    recs.slice(start).forEach(r=>{ if(!STD_RX.test(r.name)){ r.orig=r.name; r.name=stdName(r.date,r.kind,stemOf(r.name),extOf(r.name)); } r.auto=r.pid?'regel':''; put('files',r); });
+    toast(sel.length+' Bild'+(sel.length===1?'':'er')+' übernommen.'); });
   // Rest mit Claude zuordnen
   for(const r of recs.filter(r=>!r.pid)){ const a=await aiClassify(r); if(!a) continue; const cur=S.files[r.id]; if(!cur||cur.pid) continue; const nu=clone(cur);
     if(a.projectId&&(S.projects[a.projectId]||a.projectId===INTERN)){ nu.pid=a.projectId; nu.why='Claude: '+String(a.why||'').slice(0,120); nu.auto='claude'; }
