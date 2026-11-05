@@ -2253,7 +2253,7 @@ function put(coll,obj){
   const what=describeChange(coll,prev,obj);
   obj.upd=now; obj.updBy=meK(); if(!prev){ obj.at=obj.at||now; obj.by=obj.by||meK(); }
   if(coll==='tasks') wvAuto(obj); // Text wie "Wiedervorlage in 2 Wochen" setzt das Datum
-  if(coll==='orders'&&!prev&&!obj.appr&&!obj.example) obj.appr=obj.status==='entwurf'&&!ordNoAppr()?'offen':'ok'; // nur Entwuerfe brauchen die Freigabe durch HH / AvE
+  if(coll==='orders'&&!prev&&!obj.appr&&!obj.example){ obj.appr=obj.status==='entwurf'&&!ordNoAppr()?'offen':'ok'; if(obj.appr==='offen') ordNotifyAsk(); } // nur Entwuerfe brauchen die Freigabe durch HH / AvE; wer einstellt, soll die Antwort mitbekommen
   if(what) obj.hist=(obj.hist||[]).concat([{at:now,by:meK(),a:what}]).slice(-150);
   S[coll][obj.id]=obj; scheduleRender(); if(coll==='tasks'&&!prev&&!obj.done&&!obj.relOk) relQueue(obj.id); // neues To-Do: gegen bestehende prüfen
   if(MODE!=='cloud'){ saveLocal(); return; }
@@ -2309,7 +2309,7 @@ var LIVE_READY={}, LIVE_FEED=[], LIVE_PEERS=[];
 const LIVE_COLL={pins:'📌 Pinnwand',tasks:'To-Do',projects:'Projekt',orders:'Bestellung',events:'Termin',plan:'Wochenplanung',reports:'Rapport',offers:'Angebot',meetings:'Meeting',sales:'Beleg',stock:'Lager',hrabs:'Abwesenheit',picks:'Kommissionierung',files:'Datei'};
 function liveDiff(k,old,neu){ if(!LIVE_READY[k]){ LIVE_READY[k]=1; return; }
   if(k==='chat'&&ME){ const rooms=myRooms(); Object.values(neu).filter(m=>m&&!(old&&old[m.id])&&m.from&&m.from!==ME&&rooms.includes(m.room)&&String(m.at)>lastRead(m.room)&&!(UI.view==='chat'&&UI.room===m.room&&document.visibilityState==='visible')).slice(0,3).forEach(m=>liveToast({c:'chat',id:m.room,by:shortWho(m.from),t:'💬 Neue Chat-Nachricht',a:String(m.text||'').slice(0,90),pid:'',at:Date.now()})); return; } if(!LIVE_COLL[k]||!ME) return; const me=meK(), hits=[];
-  Object.entries(neu).forEach(([id,x])=>{ const p=old&&old[id]; if(!x||(p&&p.upd===x.upd)||!x.updBy||x.updBy===me||seenElsewhere(x.upd)) return; if((k==='sales'&&!canSee('sales'))||(k==='hrabs'&&!isAdmin())) return;
+  Object.entries(neu).forEach(([id,x])=>{ const p=old&&old[id]; if(!x||(p&&p.upd===x.upd)||!x.updBy||x.updBy===me||seenElsewhere(x.upd)) return; if(k==='orders'&&p&&p.appr!==x.appr&&ordMine(x)) return; // dazu kommt die eigene Freigabe-Meldung if((k==='sales'&&!canSee('sales'))||(k==='hrabs'&&!isAdmin())) return;
     const h=(x.hist||[]).slice(-1)[0], what=h&&h.by===x.updBy&&h.at===x.upd?h.a:(p?'geändert':'neu angelegt');
     const lbl=k==='projects'?x.name:k==='plan'?'KW '+String(id).slice(2):k==='sales'?((SALE_T[x.type]||[''])[0]+' '+(x.nr||'Entwurf')+' · '+((x.cust&&x.cust.name)||'')):x.title||x.name||x.art||x.supplier||'';
     hits.push({c:k,id,by:x.updBy,t:LIVE_COLL[k]+(lbl?' „'+String(lbl).slice(0,50)+'“':''),a:String(what||'').slice(0,90),pid:x.pid||'',at:Date.now()}); });
@@ -2318,7 +2318,7 @@ function liveDiff(k,old,neu){ if(!LIVE_READY[k]){ LIVE_READY[k]=1; return; }
 function liveToast(h){ let box=$('#liveBox'); if(!box){ box=document.createElement('div'); box.id='liveBox'; box.setAttribute('aria-live','polite'); document.body.appendChild(box); }
   const el=document.createElement('button'); el.type='button'; el.className='live-t'; el.dataset.act='openRec'; el.dataset.c=h.c; el.dataset.id=h.id;
   el.innerHTML=`<span class="live-dot"></span><span class="who-chip">${esc(h.by)}</span><span class="live-tx"><b>${esc(h.t)}</b>${h.a?'<br>'+esc(h.a):''}${h.pid&&h.c!=='projects'?' <span class="muted">· '+esc(projName(h.pid)||'')+'</span>':''}</span>`;
-  box.prepend(el); while(box.children.length>4) box.lastChild.remove(); setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(),400); },9000); }
+  box.prepend(el); while(box.children.length>4) box.lastChild.remove(); setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(),400); },h.long?30000:9000); }
 // Wo bin ich gerade / tippe ich? (an alle anderen über Supabase Presence)
 let LIVE_TY=0, LIVE_LAST='';
 function liveWhere(){ const t=SHEET&&SHEET.title; if(t) return String(t).slice(0,60); const p=UI.view==='project'&&S.projects[UI.pid]; return p?'Projekt '+p.name:VIEW_T[UI.view]||(NAV.find(n=>n[0]===UI.view)||[])[1]||'Übersicht'; }
@@ -3676,7 +3676,7 @@ function ordRefresh(){ if(SHEET&&SHEET.title==='Bestellungen zur Freigabe'){ clo
 function ordMerge(ids){ const os=ids.map(id=>S.orders[id]).filter(Boolean); if(os.length<2) return; const base=clone(os[0]), multi=new Set(os.map(o=>o.pid)).size>1;
   base.items=os.flatMap(o=>(o.items||[]).map(i=>({...i,art:multi&&o.pid&&!String(i.art).includes('['+projName(o.pid)+']')?i.art+' ['+projName(o.pid)+']':i.art})));
   base.notes=[...new Set(os.map(o=>o.notes).filter(Boolean))].join('\n'); base.mergedFrom=os.slice(1).map(o=>o.id); base.delivery=os.map(o=>o.delivery).filter(Boolean).sort()[0]||base.delivery;
-  base.docs=os.flatMap(o=>o.docs||[]); base.appr='ok'; if(base.status==='entwurf') base.status='freigegeben'; base.apprBy=meK(); base.apprAt=new Date().toISOString();
+  base.apprFor=[...new Set(os.flatMap(o=>[o.by,o.orderedBy?shortWho(o.orderedBy):'']).filter(Boolean))]; base.docs=os.flatMap(o=>o.docs||[]); base.appr='ok'; if(base.status==='entwurf') base.status='freigegeben'; base.apprBy=meK(); base.apprAt=new Date().toISOString();
   if(multi) base.pids=[...new Set(os.map(o=>o.pid).filter(Boolean))];
   put('orders',base); os.slice(1).forEach(o=>del('orders',o.id)); toast(os.length+' Bestellungen bei „'+(base.supplier||'')+'“ zusammengefasst und freigegeben.'); ordRefresh(); }
 // Browser-Benachrichtigung (wenn erlaubt), z. B. wenn die App im Hintergrund offen ist
@@ -3700,6 +3700,17 @@ const ORD_FIX_T=setInterval(()=>{ if(MODE!=='cloud'||!ME||!LIVE_READY.orders||!m
 let ORD_SEEN=null;
 setInterval(()=>{ if(!ordApprover()||MODE!=='cloud'||!LIVE_READY.orders) return; const P=ordPending(); if(ORD_SEEN===null){ ORD_SEEN=new Set(P.map(o=>o.id)); return; }
   P.filter(o=>!ORD_SEEN.has(o.id)&&o.by!==meK()).forEach(o=>{ ORD_SEEN.add(o.id); ordNotify(o); toast('Neue Bestellung zur Freigabe: '+(o.supplier||'')+' · '+(projName(o.pid)||'')); }); },3000);
+// Freigabe oder Storno → die Person informieren, die die Bestellung eingestellt hat (auch nachträglich beim nächsten Öffnen; gemerkt je Person wie der Chat-Lesestand, „#ordok“)
+function ordMine(o){ const me=meK(); return o.by===me||(!!o.orderedBy&&shortWho(o.orderedBy)===me)||(o.apprFor||[]).includes(me); }
+function ordNotifyAsk(){ try{ if('Notification' in window&&Notification.permission==='default') Notification.requestPermission(); }catch(e){} }
+function ordAnswerCheck(){ if(MODE!=='cloud'||!ME||!LIVE_READY.orders) return; const last=lastRead('#ordok'), me=meK(); if(!last){ markRead('#ordok'); seenPush(true); return; }
+  const hits=arr('orders').filter(o=>o.apprAt&&String(o.apprAt)>last&&['ok','storno'].includes(o.appr)&&o.apprBy&&o.apprBy!==me&&o.apprBy!=='auto'&&ordMine(o)); if(!hits.length) return;
+  const perm='Notification' in window&&Notification.permission==='granted'; if(document.visibilityState!=='visible'&&!perm) return; // App im Hintergrund, ohne Benachrichtigung würde es niemand sehen
+  markRead('#ordok'); seenPush(true);
+  hits.slice(0,5).forEach(o=>{ const ok=o.appr==='ok', t=ok?'✓ Deine Bestellung ist freigegeben':'✕ Deine Bestellung wurde storniert', a=[o.supplier,projName(o.pid),!ok&&o.stornoWhy?'Grund: '+o.stornoWhy:''].filter(Boolean).join(' · ').slice(0,120);
+    liveToast({c:'orders',id:o.id,by:o.apprBy,t,a,pid:'',at:Date.now(),long:1}); if(perm) try{ const n=new Notification(t,{body:a+' · von '+o.apprBy,tag:'ordok-'+o.id}); n.onclick=()=>window.focus(); }catch(e){} }); }
+// Erst nach kurzer Wartezeit: bis dahin ist der geräteübergreifende Lesestand geladen
+setInterval(()=>{ if(SINCE_DONE&&(window.ORD_WAIT=(window.ORD_WAIT||0)+1)>=3) ordAnswerCheck(); },3000);
 
 /* ========== Angebote ========== */
 function offersTable(os){
