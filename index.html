@@ -3300,7 +3300,7 @@ function projStatus(p){
     return `<div><div class="eyebrow nb-eb"><span>${l} · ${blocks.length}</span>${adm?`<button class="btn ghost sm" data-act="editNoteAll" data-pid="${p.id}" data-k="${k}">${ic('edit')}Ganzen Text bearbeiten</button>`:''}</div><div class="nb-list">${blocks.map(({b,i})=>nbCard(b,k,i)).join('')}</div></div>`; };
   const allNb=['updates','notes'].flatMap(k=>noteBlocks(p[k]).map((b,i)=>({b,i,k,key:nbKey(noteParts(b))}))).sort((a,b)=>b.key.localeCompare(a.key));
   const top3=allNb.slice(0,3), restN=allNb.length-top3.length;
-  const nw=nowOf(p), tasks=openTasks(p.id).sort((a,b)=>taskActKey(b).localeCompare(taskActKey(a))), active=['planung','laufend'].includes(catOf(p));
+  const nw=nowOf(p), tasks=ptSorted(openTasks(p.id)), active=['planung','laufend'].includes(catOf(p));
   const nxTask=pp.next&&arr('tasks').find(t=>t.pid===p.id&&t.ms===pp.next&&!t.done);
   const dn=arr('tasks').filter(x=>x.pid===p.id&&x.done).sort((a,b)=>String(b.doneAt||'').localeCompare(String(a.doneAt||'')));
   return `<div class="ps-grid">
@@ -3481,7 +3481,9 @@ function projInfos(p){
 }
 
 /* ========== To-Dos ========== */
-const byDue=(a,b)=>(a.done-b.done)||(a.due||'9999').localeCompare(b.due||'9999');
+// Bei gleichem Datum feste Reihenfolge (Anlagedatum): Sonst springen To-Dos nach einem Update, wenn die Datenbank sie neu lädt
+const taskBorn=t=>String(t.at||t.created||'');
+const byDue=(a,b)=>(a.done-b.done)||(a.due||'9999').localeCompare(b.due||'9999')||taskBorn(a).localeCompare(taskBorn(b))||String(a.id).localeCompare(String(b.id));
 // Dringlichkeit: dringend > hoch > normal > niedrig, innerhalb dann überfällig zuerst, dann nach Fälligkeit
 const PRIO={dringend:['dringend',3,'bad'],hoch:['hoch',2,'warn'],normal:['normal',1,''],niedrig:['niedrig',0,'']};
 const prioN=t=>(PRIO[t.prio]||PRIO.normal)[1];
@@ -5801,12 +5803,12 @@ const updKey=x=>(x.d||'')+' '+(updTime(x)||'00:00')+(x.at||'');
 // Letzte Aktivität eines To-Dos: neuestes Update, sonst Anlagezeitpunkt (Format JJJJ-MM-TT HH:MM)
 const isoLocal=s=>{ const a=new Date(s); return isNaN(a)?'':iso(a)+' '+String(a.getHours()).padStart(2,'0')+':'+String(a.getMinutes()).padStart(2,'0'); };
 const taskActKey=t=>{ const u=(t.upd2||[]).map(x=>(x.d||'')+' '+(updTime(x)||'00:00')).sort().pop()||''; const c=t.at?isoLocal(t.at):''; return u>c?u:c; };
-// To-Dos im Projekt sortieren: zuletzt bearbeitet, Fälligkeit, alphabetisch, nach Person (mit Zwischenüberschrift je Person)
-const PT_SORTS=[['akt','Zuletzt bearbeitet'],['due','Fälligkeit'],['az','Alphabetisch (A–Z)'],['who','Nach Person']];
-function ptSortKey(){ return PT_SORTS.some(s=>s[0]===UI.ptSort)?UI.ptSort:'akt'; }
+// To-Dos im Projekt sortieren: Standard ist das Anlagedatum, damit ein To-Do nach einem Update an seinem Platz bleibt. „Zuletzt bearbeitet“ nur, wenn man es selbst wählt.
+const PT_SORTS=[['neu','Neueste zuerst'],['akt','Zuletzt bearbeitet'],['due','Fälligkeit'],['az','Alphabetisch (A–Z)'],['who','Nach Person']];
+function ptSortKey(){ return PT_SORTS.some(s=>s[0]===UI.ptSort)?UI.ptSort:'neu'; }
 function ptSortSel(){ const k=ptSortKey(); return `<select class="catsel pt-sort" data-chg="ptSort" aria-label="To-Dos sortieren" title="To-Dos sortieren">${PT_SORTS.map(([v,l])=>`<option value="${v}" ${v===k?'selected':''}>↕ ${l}</option>`).join('')}</select>`; }
 function ptSorted(list){ const k=ptSortKey(), due=t=>t.due||'9999', az=(a,b)=>String(a.title||'').localeCompare(String(b.title||''),'de',{sensitivity:'base'}), wk=t=>t.who?shortWho(t.who):'￿';
-  return list.slice().sort(k==='due'?(a,b)=>due(a).localeCompare(due(b))||az(a,b):k==='az'?az:k==='who'?(a,b)=>wk(a).localeCompare(wk(b),'de')||due(a).localeCompare(due(b))||az(a,b):(a,b)=>taskActKey(b).localeCompare(taskActKey(a))); }
+  return list.slice().sort(k==='due'?(a,b)=>due(a).localeCompare(due(b))||az(a,b):k==='az'?az:k==='who'?(a,b)=>wk(a).localeCompare(wk(b),'de')||due(a).localeCompare(due(b))||az(a,b):k==='akt'?(a,b)=>taskActKey(b).localeCompare(taskActKey(a)):(a,b)=>taskBorn(b).localeCompare(taskBorn(a))||String(a.id).localeCompare(String(b.id))); }
 function ptListHtml(list,empty){ const s=ptSorted(list); if(!s.length) return empty; if(ptSortKey()!=='who') return `<div class="list">${s.map(taskLi).join('')}</div>`;
   const g=[]; s.forEach(t=>{ const w=t.who?shortWho(t.who):'nicht zugewiesen'; if(!g.length||g[g.length-1][0]!==w) g.push([w,[]]); g[g.length-1][1].push(t); });
   return g.map(([w,ts])=>`<div class="grp-h">${esc(w)} · ${ts.length}</div><div class="list">${ts.map(taskLi).join('')}</div>`).join(''); }
