@@ -4858,7 +4858,7 @@ const chDraft=r=>(chDrafts()[r]||{}).t||'', chDraftP=r=>(chDrafts()[r]||{}).p||'
 function chDraftSave(){ lsSet('sonnenplan-chatdraft',JSON.stringify(chDrafts())); }
 function chDraftSet(r,t){ const d=chDrafts(); d[r]={...(d[r]||{}),t}; if(!t&&!d[r].p) delete d[r]; chDraftSave(); }
 function chDraftPid(r,p){ const d=chDrafts(); d[r]={...(d[r]||{}),p}; if(!p&&!d[r].t) delete d[r]; chDraftSave(); }
-let CH_DT; document.addEventListener('input',e=>{ if(e.target.id!=='chatIn') return; const v=e.target.value, r=UI.room||'team'; chDrafts()[r]={...(chDrafts()[r]||{}),t:v}; clearTimeout(CH_DT); CH_DT=setTimeout(()=>chDraftSet(r,v),300); });
+let CH_DT; document.addEventListener('input',e=>{ if(e.target.id!=='chatIn') return; const v=e.target.value, r=UI.room||'team'; chDrafts()[r]={...(chDrafts()[r]||{}),t:v}; clearTimeout(CH_DT); CH_DT=setTimeout(chDraftSave,300); }); // verzögert nur speichern, was aktuell gilt: Sonst käme direkt nach dem Senden der alte Text zurück
 document.addEventListener('change',e=>{ if(e.target.id==='chatPid') chDraftPid(UI.room||'team',e.target.value); });
 const CH_EMO='😀 😂 😊 😍 😘 😎 🤔 😅 😉 🙂 😇 🥳 😴 😢 😭 😡 😱 🤯 🙈 🤷 👍 👎 👌 👏 🙌 🙏 💪 👋 🤝 ✌️ ❤️ 🧡 💛 💚 💙 🔥 ⭐ ✨ 🎉 🎂 ☀️ 🌞 ⚡ 🔋 🔌 🏠 🚐 🛠️ 🔧 📦 📅 ⏰ ✅ ❌ ⚠️ ❓ ❗ 💶 ☕ 🍺'.split(' ');
 const gifRecent=()=>{ try{ return JSON.parse(lsGet('sonnenplan-gifs')||'[]').filter(gifOk); }catch(e){ return []; } };
