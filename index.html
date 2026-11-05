@@ -322,19 +322,16 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .rxi-sun{position:absolute;width:250px;height:250px;right:-72px;top:-72px;fill:var(--sun)}
 .rxi-rays{transform-origin:100px 100px;animation:rxiSpin 60s linear infinite}
 @keyframes rxiSpin{to{transform:rotate(360deg)}}
-.rxi-c{position:relative;display:flex;flex-direction:column;gap:18px;padding:170px 30px 30px;justify-content:flex-end;width:100%;box-sizing:border-box}
+.rxi-c{position:relative;display:flex;flex-direction:column;padding:170px 26px 26px;justify-content:flex-end;width:100%;box-sizing:border-box}
 .rxi-ey{font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--sun)}
 .rxi h3{margin:-10px 0 0;font-family:var(--f-display);font-size:38px;line-height:1.05;letter-spacing:-.02em;color:#fff}.rxi h3 em{font-style:normal;color:var(--sun)}
-.rxi-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.rxi-s{background:#1B1B1B;border:1px solid #2C2C2C;border-radius:12px;padding:12px;min-width:0}.rxi-s b{display:block;font-family:var(--f-display);font-size:30px;line-height:1;color:var(--sun)}.rxi-s span{display:block;margin-top:5px;font-size:12px;color:#BDBDBD}
-.rxi-s.hot{background:var(--sun);border-color:var(--sun)}.rxi-s.hot b,.rxi-s.hot span{color:#111}
-.rxi-nx{display:flex;flex-direction:column;gap:2px;border-left:3px solid var(--sun);padding-left:12px;font-size:12.5px;color:#BDBDBD}.rxi-nx b{font-size:15px;color:#fff;font-weight:600}
-.rxi-h{font-size:12.5px;color:#9A9A9A}
+.rxi-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.rxi-s{background:#1B1B1B;border:1px solid #2C2C2C;border-radius:14px;padding:18px 16px;min-width:0;text-align:left;font:inherit;cursor:pointer;transition:background .15s,border-color .15s}.rxi-s b{display:block;font-family:var(--f-display);font-size:48px;line-height:1;color:var(--sun)}.rxi-s span{display:block;margin-top:8px;font-size:13.5px;color:#D6D6D6}.rxi-s:hover,.rxi-s:focus-visible{background:var(--sun);border-color:var(--sun)}.rxi-s:hover b,.rxi-s:hover span,.rxi-s:focus-visible b,.rxi-s:focus-visible span{color:#111}
 @media (prefers-reduced-motion:reduce){.rxi-rays{animation:none}}
 #stkPop{position:fixed;z-index:60;width:340px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);overflow:auto;border-radius:16px;box-shadow:0 10px 32px rgba(0,0,0,.28);animation:stkPopIn .12s ease-out}#stkPop .pcard{box-shadow:none}
 @keyframes stkPopIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){#stkPop{animation:none}}
-@media (max-width:1100px){.rx-wrap{grid-template-columns:minmax(0,300px) minmax(0,1fr)}.stk-grid{grid-template-columns:minmax(0,1fr)}.rxi h3{font-size:30px}.rxi-g{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:1100px){.rx-wrap{grid-template-columns:minmax(0,300px) minmax(0,1fr)}.stk-grid{grid-template-columns:minmax(0,1fr)}.rxi h3{font-size:30px}.rxi-s b{font-size:36px}.rxi-s{padding:14px 12px}}
 @media (max-width:900px){.rx{padding:14px 12px}.rx-wrap{display:block;min-height:0}.rx-panel{display:none}
   .stk-c.open{background:var(--surface);border-color:var(--line);border-top-color:var(--cc,var(--line));margin:-7px 0 8px;box-shadow:0 4px 14px rgba(0,0,0,.16)}.stk-c.open:first-child{margin-top:0}.stk-c.open+.stk-c{margin-top:0}.stk-c.open .stk-t{color:var(--ink);padding-bottom:9px}.stk-c.open .stk-n{white-space:normal}.stk-c.open>.pcard{display:flex}
   .stk-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stk.wide{grid-column:span 2}}
@@ -3076,14 +3073,11 @@ function stepRail(p){
 }
 // Rechte Fläche im Radar: angeklicktes (oder überfahrenes) Projekt groß, sonst das Lagebild in unserer CI
 const rxProjects=()=>arr('projects').filter(p=>p&&!isIntern(p)&&['laufend','planung'].includes(catOf(p)));
-function rxIdleHtml(){ const t=TODAY(), ps=rxProjects(), ids=new Set(ps.map(p=>p.id)), open=ps.flatMap(p=>openTasks(p.id)), late=open.filter(x=>x.due&&x.due<t).length, first=String(ME||'').replace(/\s*\([^)]*\)$/,'').split(' ')[0];
-  const nx=calItems(t,addDays(t,21)).filter(x=>x.k!=='todo'&&x.k!=='abw'&&x.first!==false).map(x=>({x,pid:x.ref.startsWith('event:')?S.events[x.id]?.pid:x.ref.startsWith('order:')?S.orders[x.id]?.pid:x.k==='proj'?x.id:x.e&&x.e.pid})).find(o=>ids.has(o.pid));
-  const stat=(n,l,c)=>`<div class="rxi-s ${c||''}"><b>${n}</b><span>${l}</span></div>`;
-  return `<div class="rxi"><svg class="rxi-sun" viewBox="0 0 200 200" aria-hidden="true"><g class="rxi-rays">${Array.from({length:12},(_,i)=>`<rect x="94" y="6" width="12" height="38" rx="6" transform="rotate(${i*30} 100 100)"/>`).join('')}</g><circle cx="100" cy="100" r="42"/></svg>
-    <div class="rxi-c"><div class="rxi-ey">Projekt-Radar · heute</div><h3>Alles im Blick${first?', <em>'+esc(first)+'</em>':''}.</h3>
-      <div class="rxi-g">${stat(ps.filter(p=>catOf(p)==='laufend').length,'laufend')}${stat(ps.filter(p=>catOf(p)==='planung').length,'in Planung')}${stat(open.length,'offene To-Dos')}${stat(late,'überfällig',late?'hot':'')}</div>
-      ${nx?`<div class="rxi-nx"><span>Nächster Termin</span><b>${esc(fmtD(nx.x.d))} · ${esc(nx.x.t)}</b><span>${esc(projName(nx.pid)||'')}</span></div>`:''}
-      <div class="rxi-h">Links ein Projekt anklicken oder mit der Maus darüberfahren.</div></div></div>`; }
+// Ruhezustand der rechten Fläche: drei klickbare Verkaufs-Kennzahlen. Nur für alle mit Zugriff auf den Bereich Verkauf; die anderen sehen nur die Sonne.
+function rxIdleHtml(){ const sun=`<svg class="rxi-sun" viewBox="0 0 200 200" aria-hidden="true"><g class="rxi-rays">${Array.from({length:12},(_,i)=>`<rect x="94" y="6" width="12" height="38" rx="6" transform="rotate(${i*30} 100 100)"/>`).join('')}</g><circle cx="100" cy="100" r="42"/></svg>`;
+  if(!canSee('sales')) return `<div class="rxi">${sun}</div>`;
+  const stat=(tab,l)=>{ const n=saleOpenList(tab).length; return `<button type="button" class="rxi-s" data-act="vkGo" data-tab="${tab}" data-st="allopen" aria-label="${esc(l)}: ${n} anzeigen"><b>${n}</b><span>${esc(l)}</span></button>`; };
+  return `<div class="rxi">${sun}<div class="rxi-c"><div class="rxi-g">${stat('auftrag','Offene Aufträge')}${stat('angebot','Offene Angebote')}${stat('rechnung','Offene Rechnungen')}</div></div></div>`; }
 function rxPanelInner(id){ const pin=id==null, pid=pin?UI.rxOpen:id, p=pid&&S.projects[pid]; if(!p) return rxIdleHtml();
   return `${pid===UI.rxOpen?`<button type="button" class="rx-x" data-act="rxOpen" data-id="${esc(pid)}">✕ Schließen</button>`:''}${projCard(p,true)}`; }
 function radarHtml(t){
@@ -7733,6 +7727,8 @@ const SALE_TXT={angebot:['Vielen Dank für Ihre Anfrage. Gerne unterbreiten wir 
 function saleNew(type,pre){ const t=SALE_TXT[type]||['',''], tx=saleTextStd(type), term=payTermStd();
   return {id:uid(),type,status:isInv(type)?'entwurf':'offen',date:TODAY(),perf:dDE(TODAY()),perfMode:'datum',perfFrom:TODAY(),perfTo:TODAY(),cust:{name:'',addr:''},custNr:'',pid:'',subject:'',title:(tx&&tx.title)||SALE_T[type][0],textId:tx?tx.id:'',intro:tx?tx.intro:t[0],outro:tx?tx.outro:t[1],items:[],termId:term?term.id:'',payDays:term?+term.days:+(SCFG().payDays??14),payText:term?termText(term,type):'',...(pre||{})}; }
 
+// Offene Belege je Bereich: gleiche Zahl auf der Uebersicht und in der Liste. Rechnungen inkl. Abschlaegen mit Restbetrag, ohne Entwuerfe.
+function saleOpenList(tab){ return arr('sales').filter(s=>tab==='rechnung'?(s.type==='rechnung'||s.type==='abschlag')&&!['entwurf','bezahlt','storniert'].includes(s.status)&&saleSums(s).open>0.005:tab==='auftrag'?s.type==='auftrag'&&['offen','versendet','angenommen'].includes(s.status):s.type===tab&&['offen','versendet'].includes(s.status)); }
 // ---------- Liste ----------
 function vSales(){
   const tab=SALE_T[UI.vkTab]?UI.vkTab:'rechnung', q=String(UI.vkQ||'').toLowerCase(), y=TODAY().slice(0,4);
@@ -7740,7 +7736,7 @@ function vSales(){
   const tabList=all.filter(s=>tab==='rechnung'?(['rechnung','storno','gutschrift'].includes(s.type)):s.type===tab), inv2=isInv(tab);
   const stTabs=inv2?[['','Alle'],['entwurf','Entwurf'],['offen','Offen'],['ueber','Überfällig'],['teilbezahlt','Teilbezahlt'],['bezahlt','Bezahlt'],['storniert','Storniert']]:tab==='lieferschein'?[['','Alle'],['offen','Offen'],['nichtber','Nicht berechnet'],['erledigt','Erledigt']]:[['','Alle'],['offen','Offen'],['versendet','Versendet'],['angenommen','Angenommen'],['abgelehnt','Abgelehnt'],['erledigt','Erledigt']];
   const stF=k=>s=>k==='ueber'?saleOver(s):k==='offen'&&inv2?['offen','versendet'].includes(s.status)&&!saleOver(s):k==='nichtber'?!s.invoiced:s.status===k;
-  let list=tabList; if(UI.vkSt) list=list.filter(stF(UI.vkSt));
+  let list=tabList; if(UI.vkSt==='allopen') list=saleOpenList(tab); else if(UI.vkSt) list=list.filter(stF(UI.vkSt));
   if(q) list=list.filter(s=>[s.nr,s.cust&&s.cust.name,s.subject,projName(s.pid)].join(' ').toLowerCase().includes(q));
   list.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.nr||'').localeCompare(String(a.nr||'')));
   const openRec=inv.filter(s=>!['bezahlt','storniert'].includes(s.status)).reduce((a,s)=>a+Math.max(0,saleSums(s).open),0), over=inv.filter(saleOver), umsatz=inv.filter(s=>String(s.date).slice(0,4)===y).reduce((a,s)=>a+saleBy(s).net,0); // Stornorechnungen sind negativ und gleichen aus
@@ -7757,7 +7753,7 @@ function vSales(){
     <div class="chips">${['angebot','auftrag','lieferschein','abschlag','rechnung'].map(k=>`<button class="chip ${k===tab?'on':''}" data-act="nav" data-v="vk:${k}">${SALE_T[k][2]} <span class="mono small">${all.filter(s=>k==='rechnung'?(['rechnung','storno','gutschrift'].includes(s.type)):s.type===k).length}</span></button>`).join('')}</div>
     <div class="row"><input class="search" id="vkQ" type="search" placeholder="Suchen: Nummer, Kunde, Betreff, Projekt" value="${esc(UI.vkQ||'')}" aria-label="Suchen">
       ${isAdmin()?`<button class="btn ghost sm" data-act="saleCfg">Einstellungen</button>`:''}</div>
-    <div class="vk-st">${stTabs.map(([k,l])=>`<button class="${(UI.vkSt||'')===k?'on':''} ${k==='ueber'?'bad':''}" data-act="vkSt" data-v="${k}">${l} <span class="mono">${k?tabList.filter(stF(k)).length:tabList.length}</span></button>`).join('')}</div>
+    <div class="vk-st">${['rechnung','auftrag','angebot'].includes(tab)?`<button class="${UI.vkSt==='allopen'?'on':''}" data-act="vkSt" data-v="allopen">Alle offenen <span class="mono">${saleOpenList(tab).length}</span></button>`:''}${stTabs.map(([k,l])=>`<button class="${(UI.vkSt||'')===k?'on':''} ${k==='ueber'?'bad':''}" data-act="vkSt" data-v="${k}">${l} <span class="mono">${k?tabList.filter(stF(k)).length:tabList.length}</span></button>`).join('')}</div>
     <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nr.</th><th>Art</th><th>Datum</th>${inv2?'<th>Fällig am</th>':''}<th>Kunde</th><th>Projekt</th>${tab==='lieferschein'?'':'<th class="r">Netto</th>'}<th class="r">${tab==='lieferschein'?'':'Brutto'}</th><th>Status</th></tr></thead><tbody>${rows||`<tr><td colspan="${cols}"><div class="empty">Noch nichts angelegt.</div></td></tr>`}</tbody>
       ${list.length&&tab!=='lieferschein'?`<tfoot><tr class="vk-sum"><td colspan="${inv2?6:5}">${list.length} Belege</td><td class="mono r">${euro(sm.n)}</td><td class="mono r">${euro(sm.g)}</td><td>${inv2?'offen <b class="mono">'+euro(sm.o)+'</b>':''}</td></tr></tfoot>`:''}</table></div></div>`;
 }
