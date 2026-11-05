@@ -3197,7 +3197,8 @@ function filterProjects(cat){
     return true; }).sort((SORTS[UI.sort]||SORTS.status)[1]);
 }
 // Reihenfolge für Vor/Zurück in der Projektakte = aktuelle Liste
-function navList(){ const l=filterProjects(UI.q.trim()?'alle':UI.projFilter); return l.length?l:arr('projects').sort(SORTS.az[1]); }
+// Passt das offene Projekt nicht (mehr) in die Liste, z. B. nach dem Wechsel auf Onhold: an seiner Stelle einsortieren, statt auf alle Projekte umzuspringen.
+function navList(cur){ const l=filterProjects(UI.q.trim()?'alle':UI.projFilter); if(cur&&!l.some(x=>x.id===cur.id)) return [...l,cur].sort((SORTS[UI.sort]||SORTS.az)[1]); return l.length?l:arr('projects').sort(SORTS.az[1]); }
 function projCard(p){
   const pp=pipe(p), cat=catOf(p), nw=nowOf(p), active=['planung','laufend'].includes(cat), pct=pp.pct, nt=openTasks(p.id).length;
   const own=UI.sort==='own'&&ME;
@@ -3264,7 +3265,7 @@ function vProject(){
   else if(UI.ptab==='verlauf') body=`<div class="card"><div class="card-h"><h3>Verlauf</h3><span class="small muted">Jede Änderung an Projekt, Aufgaben, Bestellungen, Terminen und Angeboten mit Kürzel und Zeitpunkt</span></div><div class="card-b">${histList(allHist().filter(h=>h.pid===p.id),true)}</div></div>`;
   else body=projInfos(p);
   if(UI.ptab!=='timeline') TL_INIT=''; // beim nächsten Öffnen der Timeline wieder mit der Startansicht beginnen
-  const nl=navList(); let ix=nl.findIndex(x=>x.id===p.id); const list=ix<0?arr('projects').sort(SORTS.az[1]):nl; if(ix<0) ix=list.findIndex(x=>x.id===p.id);
+  const list=navList(p), ix=list.findIndex(x=>x.id===p.id);
   const prev=list[ix-1], next=list[ix+1];
   const allAz=arr('projects').sort(SORTS.az[1]);
   const pnav=`<div class="pnav">
@@ -4704,13 +4705,12 @@ let PV_DRAG=null;
 function pvClear(){ document.querySelectorAll('.pv-before,.pv-after,.pv-over').forEach(x=>x.classList.remove('pv-before','pv-after','pv-over')); }
 document.addEventListener('pointerdown',e=>{ const g=e.target.closest&&e.target.closest('.pv-grip'); if(!g) return; const row=g.closest('[data-pvrow]'); if(!row) return; e.preventDefault();
   const r=row.getBoundingClientRect(), gh=row.cloneNode(true); gh.className+=' pv-ghost'; gh.style.width=r.width+'px'; gh.style.left=r.left+'px'; gh.style.top=r.top+'px'; document.body.appendChild(gh);
-  row.classList.add('pv-dragging'); PV_DRAG={id:g.dataset.pvid,row,gh,dy:e.clientY-r.top,tgt:null}; },true);
-document.addEventListener('pointermove',e=>{ if(!PV_DRAG) return; e.preventDefault(); PV_DRAG.gh.style.top=(e.clientY-PV_DRAG.dy)+'px';
-  const vh=innerHeight||800; if(e.clientY<70) scrollBy(0,-14); else if(e.clientY>vh-70) scrollBy(0,14);
-  pvClear(); const el=document.elementFromPoint(e.clientX,e.clientY); if(!el){ PV_DRAG.tgt=null; return; }
+  row.classList.add('pv-dragging'); const d=PV_DRAG={id:g.dataset.pvid,row,gh,dy:e.clientY-r.top,tgt:null,x:e.clientX,y:e.clientY}; edgeScroll(()=>PV_DRAG===d?{x:d.x,y:d.y}:null,()=>pvHover(d.x,d.y)); },true);
+document.addEventListener('pointermove',e=>{ if(!PV_DRAG) return; e.preventDefault(); PV_DRAG.x=e.clientX; PV_DRAG.y=e.clientY; PV_DRAG.gh.style.top=(e.clientY-PV_DRAG.dy)+'px'; pvHover(e.clientX,e.clientY); },{passive:false});
+function pvHover(cx,cy){ const e={clientX:cx,clientY:cy}; pvClear(); const el=document.elementFromPoint(cx,cy); if(!el){ PV_DRAG.tgt=null; return; }
   const row=el.closest('[data-pvrow]'), cat=el.closest('details.priv-cat[data-pcat]');
   if(row&&row.dataset.pvrow!==PV_DRAG.id&&cat){ const r=row.getBoundingClientRect(), before=e.clientY<r.top+r.height/2; row.classList.add(before?'pv-before':'pv-after'); PV_DRAG.tgt={cat:cat.dataset.pcat,row:row.dataset.pvrow,before}; }
-  else if(cat){ cat.classList.add('pv-over'); PV_DRAG.tgt={cat:cat.dataset.pcat}; } else PV_DRAG.tgt=null; },{passive:false});
+  else if(cat){ cat.classList.add('pv-over'); PV_DRAG.tgt={cat:cat.dataset.pcat}; } else PV_DRAG.tgt=null; }
 function pvEnd(apply){ const d=PV_DRAG; if(!d) return; PV_DRAG=null; d.gh.remove(); d.row.classList.remove('pv-dragging'); pvClear(); if(!apply||!d.tgt) return;
   const k=d.tgt.cat, box=document.querySelector(`details.priv-cat[data-pcat="${k}"]`);
   const ids=(box?[...box.querySelectorAll('[data-pvrow]')].map(x=>x.dataset.pvrow):[]).filter(x=>x!==d.id&&S.priv[x]);
@@ -5334,10 +5334,22 @@ function mergeTask(srcId,dstId){
       else put('tasks',{...clone(src),done:true,doneAt:new Date().toISOString(),doneBy:meK(),doneNote:'als Update übernommen in: '+x.title});
       toast('Als Update in „'+x.title.slice(0,40)+'“ übernommen.'); }});
 }
+// Beim Ziehen am Rand automatisch scrollen, solange der Zeiger dort steht (auch ohne ihn zu bewegen): erst der Bereich unter dem Zeiger, dann die Seite.
+// get liefert die Zeigerposition oder null, wenn nicht mehr gezogen wird; onScroll aktualisiert das Ablageziel.
+function edgeScroll(get,onScroll){ const ZONE=90, MAX=24, speed=d=>d<ZONE?Math.ceil(MAX*(1-Math.max(d,0)/ZONE)):0;
+  const tick=()=>{ const p=get(); if(!p) return; let moved=false, node=document.elementFromPoint(p.x,p.y);
+    const vh=innerHeight||document.documentElement.clientHeight, vw=innerWidth||document.documentElement.clientWidth, seen={v:false,h:false};
+    for(;node&&node!==document.documentElement&&node!==document.body;node=node.parentElement){ const cs=getComputedStyle(node), r=node.getBoundingClientRect();
+      if(!seen.v&&/auto|scroll/.test(cs.overflowY)&&node.scrollHeight>node.clientHeight+1){ const dy=speed(p.y-r.top)?-speed(p.y-r.top):speed(r.bottom-p.y); if(dy){ const b=node.scrollTop; node.scrollTop=b+dy; if(node.scrollTop!==b){ moved=true; seen.v=true; } } }
+      if(!seen.h&&/auto|scroll/.test(cs.overflowX)&&node.scrollWidth>node.clientWidth+1){ const dx=speed(p.x-r.left)?-speed(p.x-r.left):speed(r.right-p.x); if(dx){ const b=node.scrollLeft; node.scrollLeft=b+dx; if(node.scrollLeft!==b){ moved=true; seen.h=true; } } } }
+    if(!seen.v){ const dy=speed(p.y)?-speed(p.y):speed(vh-p.y); if(dy){ const b=window.scrollY; window.scrollBy(0,dy); if(window.scrollY!==b) moved=true; } }
+    if(moved&&onScroll) onScroll(); requestAnimationFrame(tick); };
+  requestAnimationFrame(tick); }
 function startDrag(){
   DRAG.started=true; const g=document.createElement('div'); g.className='drag-ghost';
   g.textContent=DRAG.mode==='resize'?'↔ Ende auf Tag ziehen':(DRAG.el.innerText||'').replace(/\s+/g,' ').trim().slice(0,48);
   document.body.appendChild(g); DRAG.ghost=g; DRAG.el.classList.add('dragging-src'); document.body.classList.add('dragging'); moveGhost(DRAG.x,DRAG.y);
+  const d=DRAG, pos=()=>({x:d.cx??d.x,y:d.cy??d.y}); edgeScroll(()=>DRAG===d&&d.started?pos():null,()=>{ const p=pos(); moveGhost(p.x,p.y); });
 }
 function moveGhost(x,y){
   if(!DRAG||!DRAG.ghost) return; DRAG.ghost.style.left=(x+14)+'px'; DRAG.ghost.style.top=(y+14)+'px';
@@ -5353,6 +5365,7 @@ document.addEventListener('pointerdown',e=>{
 });
 document.addEventListener('pointermove',e=>{
   if(!DRAG) return; const dist=Math.hypot(e.clientX-DRAG.x,e.clientY-DRAG.y);
+  DRAG.cx=e.clientX; DRAG.cy=e.clientY;
   if(!DRAG.started){ if(DRAG.touch){ if(dist>10) endDrag(); return; } if(dist<6) return; startDrag(); }
   e.preventDefault(); moveGhost(e.clientX,e.clientY);
 });
