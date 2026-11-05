@@ -2227,6 +2227,7 @@ function put(coll,obj){
   if(!mayWrite(coll)){ toast('Keine Bearbeitungsrechte für „'+((AREAS.find(a=>a[0]===COLL_AREA[coll])||[])[1]||coll)+'“. Bitte EP oder AvE fragen.'); scheduleRender(); return; }
   if(dupGuard(coll,obj)) return; // nichts doppelt: gleiches To-Do / gleiches Update / gleiche Notiz wird nicht noch einmal gespeichert
   const prev=S[coll][obj.id], now=new Date().toISOString();
+  if(coll==='tasks'||coll==='projects') msWatch(coll,prev,obj); // Neues Update, erledigtes To-Do, neue Notiz: Ist damit ein Statusschritt erreicht?
   if(!ME&&MODE==='cloud') askMe();
   const what=describeChange(coll,prev,obj);
   obj.upd=now; obj.updBy=meK(); if(!prev){ obj.at=obj.at||now; obj.by=obj.by||meK(); }
@@ -5219,7 +5220,7 @@ function localTodos(text){
 }
 async function suggestTodos(pid,text){
   if(!text||text.trim().length<8) return;
-  const p=S.projects[pid]; if(!p) return;
+  const p=S.projects[pid]; if(!p) return; msDrop(pid); // Diese Prüfung fragt den Status gleich mit ab
   if(!SAMPLE){ const lt=localTodos(text); if(lt.length) showSuggest(pid,[],lt,true); return; }
   toast('Claude prüft die Notiz auf Aufgaben und Status …');
   const roster=staff().map(s=>`${shortWho(s.name)} = ${s.name.replace(/\s*\([^)]*\)$/,'')} (${ROLES[s.role]||s.role})`).join('\n');
@@ -5694,6 +5695,35 @@ function applyMs(p,i,val){
   return msg;
 }
 function setMs(pid,i,val){ const p=clone(S.projects[pid]); const msg=applyMs(p,i,val); put('projects',p); if(msg) toast(msg); }
+/* ---------- Status-Prüfung: Neue Updates, erledigte To-Dos und Notizen darauf prüfen, ob ein Statusschritt erreicht ist ---------- */
+// put() meldet alles Neue hier an (auch aus Meeting, KI, Belegen, Handy). Nach kurzer Sammelpause EINE Prüfung je Projekt. Abgehakt wird nur, was man bestätigt.
+// Abgelehnte Schritte werden 14 Tage nicht erneut vorgeschlagen (je Gerät). Notizen über saveNote prüft suggestTodos schon mit, darum entfallen sie hier (msDrop).
+var MS_Q={}, MS_T=null;
+const msNoGet=()=>{ try{ return JSON.parse(lsGet('sonnenplan-msno')||'{}')||{}; }catch(e){ return {}; } };
+const msActive=pid=>{ const p=S.projects[pid]; return !!p&&!p.example&&!isIntern(p)&&['planung','laufend','onhold'].includes(catOf(p))&&mayWrite('projects'); };
+function msQueue(pid,kind,text,linked){ if(!msActive(pid)) return; const q=MS_Q[pid]=MS_Q[pid]||{texts:[],linked:[]}; if(text) q.texts.push({kind,t:String(text).replace(/\s+/g,' ').trim().slice(0,600)}); if(linked) q.linked.push(linked); clearTimeout(MS_T); MS_T=setTimeout(msRun,1500); }
+function msDrop(pid){ const q=MS_Q[pid]; if(q) q.texts=q.texts.filter(x=>x.kind!=='note'); }
+function msWatch(coll,prev,obj){ try{
+    if(coll==='tasks'&&obj.pid){ if(obj.done&&!(prev&&prev.done)) msQueue(obj.pid,'done','To-Do erledigt: '+obj.title+(obj.doneNote?' – '+obj.doneNote:''),+obj.ms||0);
+      const old=new Set(((prev&&prev.upd2)||[]).map(tuKey)); (obj.upd2||[]).filter(u=>!old.has(tuKey(u))).forEach(u=>msQueue(obj.pid,'upd','Update zu „'+obj.title+'“: '+u.t)); }
+    if(coll==='projects'&&prev) ['notes','updates'].forEach(k=>{ const was=new Set(noteBlocks(prev[k])); noteBlocks(obj[k]).filter(b=>!was.has(b)).forEach(b=>{ const t=noteParts(b).text; if(!/^Projekt (auf|von) /.test(t)) msQueue(obj.id,'note','Notiz: '+t); }); });
+  }catch(e){} }
+async function msRun(){ const jobs=Object.entries(MS_Q).slice(0,5); MS_Q={}; const no=msNoGet(), lim=addDays(TODAY(),-14);
+  for(const [pid,q] of jobs){ const p=S.projects[pid]; if(!msActive(pid)) continue; const pp=pipe(p), ms=p.ms||{}, offen=[...pp.seq.filter(n=>!ms['m'+n]),...[30,31,32].filter(n=>!ms['m'+n])], blocked=n=>no[pid+'|'+n]&&no[pid+'|'+n]>=lim, out=[];
+    [...new Set(q.linked)].filter(n=>n&&offen.includes(n)&&!blocked(n)).forEach(n=>out.push({n,date:TODAY(),why:'Das zugehörige To-Do ist erledigt.'}));
+    const rest=offen.filter(n=>!blocked(n)&&!out.some(o=>o.n===n));
+    if(SAMPLE&&q.texts.length&&rest.length) try{ const r=await SAMPLE.json(`Heute ist ${TODAY()}. Solar-Installationsbetrieb, Projekt „${p.name}“. Neu eingetragen:
+${q.texts.map(x=>'- '+x.t).join('\n').slice(0,3000)}
+Schon erreichte Statusschritte: ${pp.seq.filter(n=>ms['m'+n]).map(n=>PIPE[n-1]).join(', ')||'keine'}
+Noch offene Statusschritte (Nummer. Schritt):
+${rest.map(n=>n+'. '+PIPE[n-1]).join('\n')}
+Sagt ein Eintrag klar, dass einer der offenen Schritte jetzt tatsächlich erreicht ist? Beispiele: „Angebot ist raus“ → Angebot versendet, „Auftrag erhalten“ → Beauftragt, „Zähler wurde gesetzt“ → Zähler eingebaut. Absichten, Pläne, Termine in der Zukunft, Fragen und Teilschritte zählen NICHT („wir müssen noch bestellen“, „Zählertermin am Freitag“). Im Zweifel nichts vorschlagen. date = genanntes Datum, sonst heute.
+Antworte nur mit JSON: {"status":[{"n":7,"date":"JJJJ-MM-TT","why":"kurzes Zitat aus dem Eintrag"}]}`,{modelTier:'quick',bg:true});
+        (r&&Array.isArray(r.status)?r.status:[]).forEach(s=>{ const n=+s.n; if(rest.includes(n)&&!out.some(o=>o.n===n)) out.push({n,date:/^\d{4}-\d{2}-\d{2}$/.test(s.date||'')?s.date:TODAY(),why:String(s.why||'').slice(0,160)}); }); }catch(e){}
+    if(out.length) msAsk(pid,out.slice(0,4)); } }
+function msAsk(pid,list){ if(SHEET){ setTimeout(()=>msAsk(pid,list),1200); return; } const p=S.projects[pid]; if(!p) return; const open=list.filter(s=>!(p.ms||{})['m'+s.n]); if(!open.length) return;
+  openSheet({title:'Status abhaken? · '+p.name,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Nach dem letzten Eintrag könnte dieser Schritt erreicht sein. Bitte kurz prüfen:</div>${open.map((s,i)=>`<div class="sug sug-st"><input type="checkbox" class="ck" id="msq_c${i}" checked aria-label="abhaken"><div style="min-width:0"><b>${esc(PIPE[s.n-1])}</b>${s.why?`<div class="small muted">„${esc(s.why)}“</div>`:''}</div><input class="inp" type="date" id="msq_d${i}" value="${esc(s.date)}" aria-label="Datum"></div>`).join('')}</div>`,saveLabel:'Abhaken',
+    onSave:()=>{ const c=clone(S.projects[pid]); if(!c) return; let n=0; const msgs=[], no=msNoGet(); open.forEach((s,i)=>{ if($('#msq_c'+i).checked){ const m=applyMs(c,s.n,$('#msq_d'+i).value||TODAY()); if(m) msgs.push(m); n++; } else no[pid+'|'+s.n]=TODAY(); }); lsSet('sonnenplan-msno',JSON.stringify(no)); if(n){ put('projects',c); toast('Status: '+open.filter((s,i)=>$('#msq_c'+i).checked).map(s=>PIPE[s.n-1]).join(', ')+(msgs.length?' · '+msgs.join(' '):'')); } }}); }
 const CHG = {
  permView:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; const p={...(perms[d.n]||{}),role:''}; const vs=new Set(viewsOf(d.n)); if(!p.v2&&Array.isArray(p.edit)) p.edit=editsOf(d.n); p.v2=true; if(el.checked) vs.add(d.v); else vs.delete(d.v); p.views=[...vs]; perms[d.n]=p; putConfig({...(S.config||{}),perms}); },
  permEdit:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; const p={...(perms[d.n]||{}),views:viewsOf(d.n)}; const es=new Set(editsOf(d.n)); p.v2=true; if(el.checked) es.add(d.v); else es.delete(d.v); p.edit=[...es]; perms[d.n]=p; putConfig({...(S.config||{}),perms}); },
