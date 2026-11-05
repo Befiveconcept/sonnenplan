@@ -1154,6 +1154,26 @@ textarea.autogrow{resize:vertical;overflow:hidden;min-height:40px!important;max-
 .dy-t{flex:1;min-width:0;white-space:pre-wrap}
 .dy-a{display:inline-flex;gap:2px;opacity:.5}.dy-e:hover .dy-a{opacity:1}
 .dy-a .icon-btn{width:24px;height:24px}
+/* Projektseite: Notizen als Zeitleiste, To-Dos farbig nach Fälligkeit */
+.ps-grid{gap:18px}.ps-side,.ps-main{gap:18px}.ps-grid>div>.card{border-radius:18px}.ps-grid .card-h h3{font-size:19px}
+.ps-notes .quick-note{border-radius:14px;padding:12px 14px;gap:8px}.ps-notes .quick-note textarea{border-radius:10px}
+.ps-notes .nb-list{padding:4px 0 0;gap:0}.ps-notes .q-box{margin-bottom:14px}
+.ps-notes .nb-list .nb.dy{position:relative;background:none;border:0;border-radius:0;padding:0 0 22px 26px}
+.ps-notes .nb-list .nb.dy:last-child{padding-bottom:6px}
+.ps-notes .nb.dy::before{content:"";position:absolute;left:0;top:5px;width:12px;height:12px;box-sizing:border-box;border-radius:50%;background:var(--surface);border:2px solid #B9B6A8;z-index:1}
+.ps-notes .nb.dy::after{content:"";position:absolute;left:5px;top:12px;bottom:-6px;width:2px;background:var(--line)}.ps-notes .nb.dy:last-child::after{display:none}
+.ps-notes .card-b>.nb-list>.nb.dy:first-child::before,.ps-notes .card-b>.nb-list>.q-box+.nb.dy::before{background:var(--sun);border-color:var(--sun);box-shadow:0 0 0 4px var(--sun-soft)}
+.ps-notes .dy-h{align-items:center;gap:6px 8px;margin-bottom:5px}.ps-notes .dy-d{background:none;padding:0;font-size:12.5px}
+.ps-notes .dy-h b{order:3;flex:1 1 100%;font-size:16px;line-height:1.35}.ps-notes .dy-st{order:2}
+.dy-who{display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap}.dy-i{font-size:12.5px;color:var(--muted)}
+.ps-notes .dy-sum{font-size:14.5px;line-height:1.6}.ps-notes .dy-sum .muted{color:inherit}.ps-notes .dy-sum li{margin:3px 0}.ps-notes .dy-t{line-height:1.6}
+.ps-notes .nb-more>summary{text-align:center;border:1px solid var(--line);border-radius:12px;font-size:13.5px;padding:9px 12px}
+.ps-side .li{margin:0 0 8px;border:1px solid var(--line);border-radius:12px;padding:11px 12px}.ps-side .list{border:0}
+.ps-side .li.cf-late,.ps-side .li.cf-today,.ps-side .li.cf-week,.ps-side .li.cf-later,.ps-side .li.cf-none{border:1px solid color-mix(in srgb,var(--cf) 45%,var(--line));border-left:5px solid var(--cf);background:color-mix(in srgb,var(--cf) 9%,var(--surface))}
+.cf-late{--cf:#E53935}.cf-today{--cf:#F57C00}.cf-week{--cf:#F4DB02}.cf-later{--cf:#3D8BD9}.cf-none{--cf:#A8A69B}
+.ps-side .li.cf-week{background:color-mix(in srgb,var(--cf) 16%,var(--surface))}
+.ps-side .li[class*="cf-"] .tu-inl{border-left-color:var(--cf);background:color-mix(in srgb,var(--cf) 10%,var(--surface))}
+.cf-lg{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11.5px;color:var(--muted);margin:0 0 10px}.cf-lg i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px;background:var(--cf)}
 .dy-task{font-size:13.5px;opacity:.85}
 .dy-t .lnk,.dy-lh .lnk{display:inline;text-align:left;white-space:normal;font:inherit;font-weight:600;padding:0}
 .dy-link{margin-top:8px;border-left:3px solid var(--sun);padding:4px 0 4px 10px;display:flex;flex-direction:column;gap:3px;font-size:13.5px}
@@ -3161,7 +3181,9 @@ function whoMoreHtml(t){ const ex=t.who2||[]; return `<div id="who_more" class="
 const whoMoreRow=n=>`<div class="who2-row"><input class="inp who2-in" list="staffList" value="${esc(n||'')}" placeholder="weitere Person" aria-label="Weitere zuständige Person"><button type="button" class="icon-btn" data-act="whoMoreDel" aria-label="Entfernen">✕</button></div>`;
 function taskLi(t){  const late=t.due&&t.due<TODAY()&&!t.done;
   const bsel=UI.bulk&&['todos','pool'].includes(UI.view);
-  return `<div class="li ${t.done?'done':''} ${bsel&&SEL.has(t.id)?'sel':''}" data-drag="task:${t.id}"${t.done?'':` data-drop-task="${t.id}"`}>${bsel?`<input type="checkbox" class="sel-ck" data-chg="selTask" data-id="${t.id}" ${SEL.has(t.id)?'checked':''} aria-label="Auswählen: ${esc(t.title)}" title="Für Mehrfachbearbeitung auswählen">`:''}<input type="checkbox" class="ck" data-chg="toggleTask" data-id="${t.id}" ${t.done?'checked':''} aria-label="Erledigt"><div class="body clickable" data-act="editTask" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="mt">${t.ext?`<span class="pill ext-pill" title="Liegt extern">extern: ${esc(t.ext)}</span>`:''}${t.pid&&S.projects[t.pid]&&!(UI.view==='project'&&UI.pid===t.pid)?`<button type="button" class="proj-link" data-act="openProject" data-id="${esc(t.pid)}" title="Zum Projekt ${esc(projName(t.pid))}">📁 ${esc(projName(t.pid))} ↗</button>`:t.pid?`<span>${esc(projName(t.pid))}</span>`:''}${t.due?`<span class="${late?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${t.wv&&!t.done?`<span class="pill wv-pill ${t.wv<=TODAY()?'bad':''}" title="${esc(t.wvNote||'Wiedervorlage')}">🔔 WV ${t.wv<=TODAY()?(t.wv===TODAY()?'heute':'seit '+fmtD(t.wv).slice(0,6)):fmtD(t.wv).slice(0,6)}</span>`:''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?`<span class="pill ${PRIO[t.prio][2]}">${PRIO[t.prio][0]}</span>`:''}${t.pool?'<span class="pill">allgemein</span>':''}${t.from&&S.tasks[t.from]?`<span class="pill link-pill" data-act="editTask" data-id="${esc(t.from)}" title="Folgt aus: ${esc(S.tasks[t.from].title)}">↰ aus: ${esc(S.tasks[t.from].title.slice(0,32))}${S.tasks[t.from].title.length>32?'…':''}</span>`:''}${(()=>{ const k=taskKids(t.id).filter(x=>!x.done).length; return k?`<span class="pill link-pill" title="Offene Folge-To-Dos">↳ ${k} Folge-To-Do${k>1?'s':''}</span>`:''; })()}${t.by&&t.by!=='?'?`<span class="by-line">angelegt ${esc(t.by)} ${esc(fmtD((t.at||'').slice(0,10)).slice(3))}</span>`:''}${t.done?`<span class="done-by">✓ erledigt von <b>${esc(t.doneBy||t.updBy||'?')}</b>${t.doneAt?' · '+esc(stampTxt(t.doneAt)):''}${t.doneNote?' – '+esc(t.doneNote):''}</span>`:''}</div>${taskUpdInline(t)}</div>
+  // Farbe nach Fälligkeit (sichtbar auf der Projektseite)
+  const cf=t.done?'':!t.due?'cf-none':late?'cf-late':t.due===TODAY()?'cf-today':t.due<=addDays(TODAY(),7)?'cf-week':'cf-later';
+  return `<div class="li ${cf} ${t.done?'done':''} ${bsel&&SEL.has(t.id)?'sel':''}" data-drag="task:${t.id}"${t.done?'':` data-drop-task="${t.id}"`}>${bsel?`<input type="checkbox" class="sel-ck" data-chg="selTask" data-id="${t.id}" ${SEL.has(t.id)?'checked':''} aria-label="Auswählen: ${esc(t.title)}" title="Für Mehrfachbearbeitung auswählen">`:''}<input type="checkbox" class="ck" data-chg="toggleTask" data-id="${t.id}" ${t.done?'checked':''} aria-label="Erledigt"><div class="body clickable" data-act="editTask" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="mt">${t.ext?`<span class="pill ext-pill" title="Liegt extern">extern: ${esc(t.ext)}</span>`:''}${t.pid&&S.projects[t.pid]&&!(UI.view==='project'&&UI.pid===t.pid)?`<button type="button" class="proj-link" data-act="openProject" data-id="${esc(t.pid)}" title="Zum Projekt ${esc(projName(t.pid))}">📁 ${esc(projName(t.pid))} ↗</button>`:t.pid?`<span>${esc(projName(t.pid))}</span>`:''}${t.due?`<span class="${late?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${t.wv&&!t.done?`<span class="pill wv-pill ${t.wv<=TODAY()?'bad':''}" title="${esc(t.wvNote||'Wiedervorlage')}">🔔 WV ${t.wv<=TODAY()?(t.wv===TODAY()?'heute':'seit '+fmtD(t.wv).slice(0,6)):fmtD(t.wv).slice(0,6)}</span>`:''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?`<span class="pill ${PRIO[t.prio][2]}">${PRIO[t.prio][0]}</span>`:''}${t.pool?'<span class="pill">allgemein</span>':''}${t.from&&S.tasks[t.from]?`<span class="pill link-pill" data-act="editTask" data-id="${esc(t.from)}" title="Folgt aus: ${esc(S.tasks[t.from].title)}">↰ aus: ${esc(S.tasks[t.from].title.slice(0,32))}${S.tasks[t.from].title.length>32?'…':''}</span>`:''}${(()=>{ const k=taskKids(t.id).filter(x=>!x.done).length; return k?`<span class="pill link-pill" title="Offene Folge-To-Dos">↳ ${k} Folge-To-Do${k>1?'s':''}</span>`:''; })()}${t.by&&t.by!=='?'?`<span class="by-line">angelegt ${esc(t.by)} ${esc(fmtD((t.at||'').slice(0,10)).slice(3))}</span>`:''}${t.done?`<span class="done-by">✓ erledigt von <b>${esc(t.doneBy||t.updBy||'?')}</b>${t.doneAt?' · '+esc(stampTxt(t.doneAt)):''}${t.doneNote?' – '+esc(t.doneNote):''}</span>`:''}</div>${taskUpdInline(t)}</div>
     <div class="li-side">${t.done?'':`<button type="button" class="task-upd" data-act="taskQuickUpd" data-id="${t.id}" title="Update zu diesem To-Do eintragen" aria-label="Update eintragen: ${esc(t.title)}">${ic('plus')}Update</button>`}${(t.who2||[]).length?`<button type="button" class="who-more" data-act="taskWhoMulti" data-id="${t.id}" title="Ebenfalls zuständig: ${esc(t.who2.join(', '))} – ändern">+ ${esc(t.who2.map(shortWho).join(' '))}</button>`:''}<select class="who-sel ${t.who?'':'none'}" data-chg="taskWho" data-id="${t.id}" aria-label="Zuständig für: ${esc(t.title)}" title="Zuständigkeit ändern"><option value="">offen</option>${(()=>{ const cw=whoCanon(t.who), l=staffUniq().map(s=>s.name); if(cw&&!l.includes(cw)) l.push(cw); return l.map(n=>`<option value="${esc(n)}" ${n===cw?'selected':''}>${esc(shortWho(n))}</option>`).join(''); })()}<option value="__multi">👥 mehrere Personen …</option><option value="__ext">→ liegt extern …</option>${t.ext?'<option value="__int">→ wieder intern</option>':''}</select></div>${isAdmin()?`<button type="button" class="icon-btn task-del" title="Aufgabe löschen" aria-label="Aufgabe löschen: ${esc(t.title)}" data-act="taskDel" data-id="${t.id}">${ic('x')}</button>`:''}</div>`;
 }
 
@@ -3311,7 +3333,7 @@ function projStatus(p){
   const dn=arr('tasks').filter(x=>x.pid===p.id&&x.done).sort((a,b)=>String(b.doneAt||'').localeCompare(String(a.doneAt||'')));
   return `<div class="ps-grid">
   <div class="ps-main">
-  <div class="card ps-notes"><div class="card-h"><h3>Notizen</h3><span class="small muted">eine Notiz pro Tag · neueste oben · To-Do auf eine Notiz ziehen = verknüpfen</span></div><div class="card-b" style="display:flex;flex-direction:column;gap:12px">
+  <div class="card ps-notes"><div class="card-h"><h3>Notizen ${allNb.length?`<span class="cnt-b">${allNb.length}</span>`:''}</h3><span class="small muted">To-Do auf eine Notiz ziehen = verknüpfen</span></div><div class="card-b" style="display:flex;flex-direction:column;gap:12px">
     <div class="quick-note"><textarea id="qn_${p.id}" rows="2" placeholder="Neue Notiz … (Datum und Kürzel ${esc(meK())} kommen automatisch dazu, Strg+Enter speichert)" aria-label="Neue Notiz">${esc(QN[p.id]||'')}</textarea>
       <div class="row">${(()=>{ const m=(UI.qnMode||{})[p.id]||'notes', ot=openTasks(p.id);
         return `<select class="catsel" id="qnf_${p.id}" data-chg="qnMode" data-pid="${p.id}" aria-label="Speichern als">${[['notes','Als Notiz'],['todo','Als To-Do'],['tupd','Als Update zu To-Do']].map(([k,l])=>`<option value="${k}" ${m===k?'selected':''}>${l}</option>`).join('')}</select>
@@ -3332,7 +3354,7 @@ function projStatus(p){
   <div class="ps-side">
    <div class="card"><div class="card-b" style="display:flex;flex-direction:column;gap:12px">
     <div><div class="eyebrow wm-head"><span>Wer macht gerade was · ${tasks.length} offen</span><button class="btn sun sm" data-act="newTask" data-pid="${p.id}" style="font-weight:700">${ic('plus')}Aufgabe</button></div>
-      ${tasks.length>1?`<div style="margin:2px 0 6px">${ptSortSel()}</div>`:''}${ptListHtml(tasks,'<div class="small muted">Keine offenen Aufgaben.</div>')}
+      ${tasks.length>1?`<div style="margin:2px 0 6px">${ptSortSel()}</div>`:''}${tasks.length?`<div class="cf-lg">${[['cf-late','überfällig'],['cf-today','heute'],['cf-week','diese Woche'],['cf-later','später'],['cf-none','ohne Datum']].map(([c,l])=>`<span class="${c}"><i></i>${l}</span>`).join('')}</div>`:''}${ptListHtml(tasks,'<div class="small muted">Keine offenen Aufgaben.</div>')}
       ${dn.length?`<label class="tog-sw" style="margin-top:8px"><input type="checkbox" data-chg="toggleDoneSw" ${UI.todoShowDone?'checked':''}><span class="sw" aria-hidden="true"></span><span class="small">Erledigte einblenden (${dn.length})</span></label>${UI.todoShowDone?`<div class="list done-list">${dn.map(taskLi).join('')}</div>`:''}`:''}</div>
     <div><div class="eyebrow"><span>Standardisiert als Nächstes</span>${SAMPLE?`<button class="btn ghost sm" data-act="aiNext" data-pid="${p.id}" title="Claude schlägt konkrete nächste Schritte vor (Fristen, Pflichten, Netzbetreiber …)">✨ KI-Vorschläge</button>`:''}</div>
       ${active&&pp.next?`<div class="nxbox"><b>${esc(pp.nextLabel)}</b>${pp.afterNext?`<span class="small muted">danach${pp.flow.opt.includes(pp.afterNext)?' optional':''}: ${esc(PIPE_DO[pp.afterNext-1])}</span>`:''}
@@ -5850,9 +5872,9 @@ const updKey=x=>(x.d||'')+' '+(updTime(x)||'00:00')+(x.at||'');
 // Letzte Aktivität eines To-Dos: neuestes Update, sonst Anlagezeitpunkt (Format JJJJ-MM-TT HH:MM)
 const isoLocal=s=>{ const a=new Date(s); return isNaN(a)?'':iso(a)+' '+String(a.getHours()).padStart(2,'0')+':'+String(a.getMinutes()).padStart(2,'0'); };
 const taskActKey=t=>{ const u=(t.upd2||[]).map(x=>(x.d||'')+' '+(updTime(x)||'00:00')).sort().pop()||''; const c=t.at?isoLocal(t.at):''; return u>c?u:c; };
-// To-Dos im Projekt sortieren: Standard ist das Anlagedatum, damit ein To-Do nach einem Update an seinem Platz bleibt. „Zuletzt bearbeitet“ nur, wenn man es selbst wählt.
-const PT_SORTS=[['neu','Neueste zuerst'],['akt','Zuletzt bearbeitet'],['due','Fälligkeit'],['az','Alphabetisch (A–Z)'],['who','Nach Person']];
-function ptSortKey(){ return PT_SORTS.some(s=>s[0]===UI.ptSort)?UI.ptSort:'neu'; }
+// To-Dos im Projekt sortieren: Standard ist die Fälligkeit (passt zu den Farben), ein To-Do bleibt nach einem Update an seinem Platz. „Zuletzt bearbeitet“ nur, wenn man es selbst wählt.
+const PT_SORTS=[['due','Fälligkeit'],['neu','Neueste zuerst'],['akt','Zuletzt bearbeitet'],['az','Alphabetisch (A–Z)'],['who','Nach Person']];
+function ptSortKey(){ return PT_SORTS.some(s=>s[0]===UI.ptSort)?UI.ptSort:'due'; }
 function ptSortSel(){ const k=ptSortKey(); return `<select class="catsel pt-sort" data-chg="ptSort" aria-label="To-Dos sortieren" title="To-Dos sortieren">${PT_SORTS.map(([v,l])=>`<option value="${v}" ${v===k?'selected':''}>↕ ${l}</option>`).join('')}</select>`; }
 function ptSorted(list){ const k=ptSortKey(), due=t=>t.due||'9999', az=(a,b)=>String(a.title||'').localeCompare(String(b.title||''),'de',{sensitivity:'base'}), wk=t=>t.who?shortWho(t.who):'￿';
   return list.slice().sort(k==='due'?(a,b)=>due(a).localeCompare(due(b))||az(a,b):k==='az'?az:k==='who'?(a,b)=>wk(a).localeCompare(wk(b),'de')||due(a).localeCompare(due(b))||az(a,b):k==='akt'?(a,b)=>taskActKey(b).localeCompare(taskActKey(a)):(a,b)=>taskBorn(b).localeCompare(taskBorn(a))||String(a.id).localeCompare(String(b.id))); }
@@ -8508,7 +8530,10 @@ const DY_SUM_FROM='2026-10-28';
 function dyCard(p,x,adm){
   const hd=(p.dayHeads||{})[x.d], notes=x.items.filter(e=>e.kind==='note'), tk=x.items.filter(e=>e.kind!=='note'), k='t'+p.id+x.d;
   const n=c=>tk.filter(e=>e.kind===c).length, sum=[n('new')?n('new')+' neu':'',n('upd')?n('upd')+' Update'+(n('upd')>1?'s':''):'',n('done')?n('done')+' erledigt':''].filter(Boolean).join(' · ');
-  const head=`<div class="dy-h"><span class="dy-d">${esc(dyDate(x.d))}</span>${hd&&hd.t?`<b>${esc(hd.t)}</b>`:''}</div>`, drop=x.d?`data-drop-note="${x.d}" data-pid="${p.id}"`:'';
+  // Wer hat eingetragen, von wem kam die Info („EP · Info: AvE“)
+  const wr=new Set(), inf=new Set(); x.items.forEach(e=>{ const [a,b]=String(e.by||'').split(/\s*·\s*Info:\s*/); if(a) wr.add(a.trim()); if(b) b.split(/,\s*/).forEach(c=>c&&inf.add(c.trim())); });
+  const who=wr.size||inf.size?`<span class="dy-who">${[...wr].map(c=>`<span class="who-chip">${esc(c)}</span>`).join('')}${inf.size?`<span class="dy-i">Info:</span>${[...inf].map(c=>`<span class="who-chip">${esc(c)}</span>`).join('')}`:''}</span>`:'';
+  const head=`<div class="dy-h"><span class="dy-d">${esc(dyDate(x.d))}</span>${who}${hd&&hd.t?`<b>${esc(hd.t)}</b>`:''}</div>`, drop=x.d?`data-drop-note="${x.d}" data-pid="${p.id}"`:'';
   if(x.d>=DY_SUM_FROM){
     const kd='d'+p.id+x.d, cnt=[notes.length?notes.length+' Notiz'+(notes.length>1?'en':''):'',sum?'To-Dos: '+sum:'',x.links.length?x.links.length+' verknüpft':''].filter(Boolean).join(' · ');
     const s=hd&&hd.s||''; // bis die neue Fassung da ist, bleibt die letzte stehen
@@ -8527,7 +8552,7 @@ function dyCard(p,x,adm){
 }
 function projVerlauf(p,adm){
   if(SAMPLE) setTimeout(()=>diaryHeads(p.id),400);
-  const days=diaryDays(p), top=days.slice(0,5), rest=days.slice(5);
+  const days=diaryDays(p), top=days.slice(0,3), rest=days.slice(3);
   return `<div class="nb-list">${p.questions?`<div class="q-box"><div class="eyebrow nb-eb"><span>Zu klärende Fragen</span><span class="small muted">${qLines(p.questions).filter(l=>{ const x=S.tasks[(p.qTasks||{})[qKey(l)]]; return x&&x.done; }).length} von ${qLines(p.questions).length} geklärt</span></div>${qHtml(p)}</div>`:''}${top.map(x=>dyCard(p,x,adm)).join('')||'<div class="empty">Noch keine Notizen.</div>'}</div>
     ${rest.length||p.scope?`<details class="nb-more" ${UI.nbAll?'open':''} data-nball="1"><summary>${rest.length?`Ältere Notizen (${rest.length} Tage)`:'Weitere Einträge'}${p.scope?' · Auftrag':''} anzeigen</summary>
       <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px"><div class="nb-list">${rest.map(x=>dyCard(p,x,adm)).join('')}</div>
