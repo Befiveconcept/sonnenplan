@@ -644,6 +644,20 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .who-plus{align-self:flex-start;border:1px dashed var(--line);background:none;border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;color:var(--muted);cursor:pointer}.who-plus:hover{border-color:var(--ink);color:var(--ink)}
 .who-more{font-family:var(--f-mono);font-size:11px;color:var(--muted);align-self:center;white-space:nowrap;margin-right:4px;background:none;border:0;padding:1px 4px;border-radius:6px;cursor:pointer}button.who-more:hover{background:var(--sunken);color:var(--ink)}
 .mi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.mi-it{position:relative;display:flex;flex-direction:column;gap:5px;border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;min-width:0}.mi-it:has(input:checked){background:var(--sun-soft);border-color:var(--sun)}.mi-it img{width:100%;height:110px;object-fit:contain;background:var(--sunken);border-radius:6px}.mi-it .ck{position:absolute;top:12px;left:12px;z-index:1}.mi-it span{overflow-wrap:anywhere}
+.nf-strip{position:sticky;top:6px;z-index:25;display:flex;justify-content:flex-end;height:42px;padding-right:18px;pointer-events:none}.nf-strip:empty{height:0}.nf-strip .nf-bell{pointer-events:auto}
+.nf-bell{position:relative;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:18px;line-height:1;cursor:pointer;padding:0;flex:none}.nf-bell:hover{border-color:var(--ink)}.nf-bell.has{border-color:var(--sun);background:var(--sun-soft)}
+.nf-bell.pulse{animation:nfPulse 1s ease 3}@keyframes nfPulse{50%{box-shadow:0 0 0 7px color-mix(in srgb,var(--sun) 45%,transparent)}}
+.nf-c{position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;padding:0 5px;box-sizing:border-box;border-radius:999px;background:#111;color:var(--sun);font-size:11px;font-weight:700;line-height:19px;text-align:center}
+.mobile-top .nf-bell{width:34px;height:34px;font-size:15px;background:transparent;border-color:#555}.mobile-top .nf-bell.has{background:rgba(244,219,2,.2);border-color:var(--sun)}.mobile-top .nf-c{background:var(--sun);color:#111}
+@media (max-width:900px){.nf-strip{display:none}}
+.nf-card{margin-bottom:18px}.nf-card .card-h{flex-wrap:wrap}.nf-card h2{margin-right:auto}.nf-list{display:flex;flex-direction:column}
+.nf-row{display:flex;align-items:stretch;border-top:1px solid var(--line)}.nf-row.un{background:var(--sun-soft)}.nf-row.un.p-urgent{background:color-mix(in srgb,var(--bad) 10%,var(--surface))}
+.nf-main{flex:1;min-width:0;display:flex;gap:10px;text-align:left;background:none;border:0;padding:10px 6px 10px 16px;font:inherit;color:inherit;cursor:pointer}.nf-main:hover{background:rgba(0,0,0,.03)}
+.nf-ic{font-size:18px;line-height:1.3}.nf-b{min-width:0;display:flex;flex-direction:column;gap:1px}.nf-t{font-size:14px;font-weight:500;display:flex;flex-wrap:wrap;align-items:center;gap:6px}.nf-row.un .nf-t{font-weight:700}
+.nf-pr{font-size:10.5px;font-weight:700;border-radius:999px;padding:1px 7px;background:var(--sun);color:#111}.p-urgent .nf-pr{background:var(--bad);color:#fff}
+.nf-x{font-size:13px;line-height:1.4;overflow-wrap:anywhere}.nf-x.mini{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}.nf-w{font-size:12px;color:var(--muted)}
+.nf-rd{flex:none;width:40px;background:none;border:0;cursor:pointer;display:grid;place-items:center}.nf-rd i{width:10px;height:10px;border-radius:50%;border:2px solid var(--line)}.nf-row.un .nf-rd i{background:#111;border-color:#111}.nf-rd:hover i{border-color:var(--ink)}
+.nf-top{margin-bottom:8px;align-items:center}
 .tc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px}.tc-p{display:flex;align-items:center;gap:8px;text-align:left;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font:inherit;cursor:pointer;color:inherit}.tc-p:hover{border-color:var(--sun);background:var(--sun-soft)}
 .tw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px}.tw-opt{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;cursor:pointer}.tw-opt:has(input:checked){background:var(--sun-soft);border-color:var(--sun)}
 .ev-td{display:grid;grid-template-columns:minmax(120px,170px) minmax(0,1fr) 140px 32px;gap:6px;align-items:center;margin-bottom:6px}
@@ -1631,6 +1645,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
   <aside class="side" id="side"></aside>
   <div style="min-width:0">
     <div class="mobile-top" id="mtop"></div>
+    <div class="nf-strip" id="nfStrip"></div>
     <main class="main"><div class="wrap" id="view"><div class="empty"><b>Sonnenplan wird geladen</b>Projekte, To-Dos und Termine erscheinen gleich.</div></div></main>
   </div>
 </div>
@@ -1760,6 +1775,8 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
     id,
     async set(body){ const data=stripDel(JSON.parse(JSON.stringify(body))); (cache[coll]=cache[coll]||new Map()).set(id,data); emit(coll);
       const pk=coll+'/'+id; pend[pk]=(pend[pk]||0)+1; let error; try{ ({error}=await sb.from('docs').upsert({coll,id,data})); } finally{ pend[pk]--; } if(error) throw Object.assign(new Error(error.message),{code:error.code||'write_failed'}); ping(coll,id); },
+    // Nur anlegen, nie überschreiben (Mitteilungen an andere): Gibt es den Datensatz schon, passiert nichts
+    async insert(body){ const data=stripDel(JSON.parse(JSON.stringify(body))); const {error}=await sb.from('docs').insert({coll,id,data}); if(error&&error.code!=='23505') throw Object.assign(new Error(error.message),{code:error.code||'write_failed'}); if(!error){ if(cache[coll]){ cache[coll].set(id,data); emit(coll); } ping(coll,id); } },
     async update(part){ await load(coll); const cur=(cache[coll]||new Map()).get(id)||{}; return this.set(merge(cur,part)); },
     async delete(){ if(cache[coll]){ cache[coll].delete(id); emit(coll); } const {error}=await sb.from('docs').delete().eq('coll',coll).eq('id',id); if(error) throw Object.assign(new Error(error.message),{code:error.code||'write_failed'}); ping(coll,id,true); },
     async get(){ await load(coll); const d=cache[coll].get(id); return {exists:!!d,id,data:()=>d}; },
@@ -2255,6 +2272,7 @@ function put(coll,obj){
   if(coll==='tasks') wvAuto(obj); // Text wie "Wiedervorlage in 2 Wochen" setzt das Datum
   if(coll==='orders'&&!prev&&!obj.appr&&!obj.example){ obj.appr=obj.status==='entwurf'&&!ordNoAppr()?'offen':'ok'; if(obj.appr==='offen') ordNotifyAsk(); } // nur Entwuerfe brauchen die Freigabe durch HH / AvE; wer einstellt, soll die Antwort mitbekommen
   if(what) obj.hist=(obj.hist||[]).concat([{at:now,by:meK(),a:what}]).slice(-150);
+  if(NF_WATCH.includes(coll)) nfWatch(coll,prev,obj); // Mitteilungen an die Beteiligten
   S[coll][obj.id]=obj; scheduleRender(); if(coll==='tasks'&&!prev&&!obj.done&&!obj.relOk) relQueue(obj.id); // neues To-Do: gegen bestehende prüfen
   if(MODE!=='cloud'){ saveLocal(); return; }
   const key=coll+'/'+obj.id, body=JSON.parse(JSON.stringify(obj));
@@ -2263,6 +2281,7 @@ function put(coll,obj){
 function del(coll,id){
   if(!mayWrite(coll)){ toast('Keine Rechte zum Löschen. Bitte EP oder AvE fragen.'); return; }
   const prev=S[coll][id];
+  if(coll==='events'&&prev) nfWatch(coll,prev,null);
   delete S[coll][id]; scheduleRender();
   if(prev&&coll!=='log'){ const l={id:'d'+uid(),at:new Date().toISOString(),by:meK(),a:'Gelöscht: '+recLabel(coll,prev),coll,pid:prev.pid||(coll==='projects'?prev.id:'')}; S.log[l.id]=l; if(MODE==='cloud') DB.collection('log').doc(l.id).set(l).catch(()=>{}); }
   if(MODE!=='cloud'){ saveLocal(); return; }
@@ -2309,7 +2328,7 @@ var LIVE_READY={}, LIVE_FEED=[], LIVE_PEERS=[];
 const LIVE_COLL={pins:'📌 Pinnwand',tasks:'To-Do',projects:'Projekt',orders:'Bestellung',events:'Termin',plan:'Wochenplanung',reports:'Rapport',offers:'Angebot',meetings:'Meeting',sales:'Beleg',stock:'Lager',hrabs:'Abwesenheit',picks:'Kommissionierung',files:'Datei'};
 function liveDiff(k,old,neu){ if(!LIVE_READY[k]){ LIVE_READY[k]=1; return; }
   if(k==='chat'&&ME){ const rooms=myRooms(); Object.values(neu).filter(m=>m&&!(old&&old[m.id])&&m.from&&m.from!==ME&&rooms.includes(m.room)&&String(m.at)>lastRead(m.room)&&!(UI.view==='chat'&&UI.room===m.room&&document.visibilityState==='visible')).slice(0,3).forEach(m=>liveToast({c:'chat',id:m.room,by:shortWho(m.from),t:'💬 Neue Chat-Nachricht',a:String(m.text||'').slice(0,90),pid:'',at:Date.now()})); return; } if(!LIVE_COLL[k]||!ME) return; const me=meK(), hits=[];
-  Object.entries(neu).forEach(([id,x])=>{ const p=old&&old[id]; if(!x||(p&&p.upd===x.upd)||!x.updBy||x.updBy===me||seenElsewhere(x.upd)) return; if(k==='orders'&&p&&p.appr!==x.appr&&ordMine(x)) return; // dazu kommt die eigene Freigabe-Meldung if((k==='sales'&&!canSee('sales'))||(k==='hrabs'&&!isAdmin())) return;
+  Object.entries(neu).forEach(([id,x])=>{ const p=old&&old[id]; if(!x||(p&&p.upd===x.upd)||!x.updBy||x.updBy===me||seenElsewhere(x.upd)) return; if(k==='orders'&&p&&p.appr!==x.appr&&ordMine(x)) return; if(k==='tasks'&&ME&&taskHas(x,ME)&&!(p&&taskHas(p,ME))) return; // dazu kommt die eigene Mitteilung if((k==='sales'&&!canSee('sales'))||(k==='hrabs'&&!isAdmin())) return;
     const h=(x.hist||[]).slice(-1)[0], what=h&&h.by===x.updBy&&h.at===x.upd?h.a:(p?'geändert':'neu angelegt');
     const lbl=k==='projects'?x.name:k==='plan'?'KW '+String(id).slice(2):k==='sales'?((SALE_T[x.type]||[''])[0]+' '+(x.nr||'Entwurf')+' · '+((x.cust&&x.cust.name)||'')):x.title||x.name||x.art||x.supplier||'';
     hits.push({c:k,id,by:x.updBy,t:LIVE_COLL[k]+(lbl?' „'+String(lbl).slice(0,50)+'“':''),a:String(what||'').slice(0,90),pid:x.pid||'',at:Date.now()}); });
@@ -2566,6 +2585,93 @@ function pinForm(p0){ const isNew=!p0, p=p0?clone(p0):{id:uid(),title:'',text:''
     onDelete:!isNew&&pinCan(p)?()=>{ if(!confirm('Diesen Zettel von der Pinnwand nehmen?')) return; del('pins',p.id); closeSheet(); toast('Von der Pinnwand genommen.'); }:null,deleteLabel:'Abnehmen'}); }
 document.addEventListener('change',e=>{ if(e.target.id==='pin_img') PIN_FILE=e.target.files&&e.target.files[0]||null; });
 queueMicrotask(()=>Object.assign(A,{ pinNew:()=>pinForm(), pinEdit:d=>{ const p=S.pins[d.id]; if(p&&pinCan(p)) pinForm(p); }, pinAll:()=>{ UI.pinAll=!UI.pinAll; render(); } }));
+/* ---------- 🔔 Mitteilungen: Glocke und Dashboard-Feld lesen dieselbe Liste ---------- */
+// Jede Person hat einen eigenen Bereich in der Datenbank (Sammlung notif:<kürzel>). Geladen wird nur der eigene; mit 07_benachrichtigungen_schutz.sql erzwingt das auch der Server.
+// put()/del() melden Änderungen an nfWatch: Dort wird entschieden, wer betroffen ist. Eigene Aktionen erzeugen nichts. Die Kennung ergibt sich aus dem Ereignis, doppelt anlegen geht nicht.
+// Neuer Ereignistyp: in nfWatch per nfSend verschicken, bei neuem Bereich NF_CAT ergänzen.
+var NF_WATCH=['tasks','orders','projects','events','plan'];
+const NF_CAT={tasks:['📋','todos','Aufgabe ansehen'],orders:['📦','orders','Bestellung ansehen'],projects:['🏗️','projects','Projekt ansehen'],events:['📅','week','Termin ansehen'],plan:['🗓️','week','Wochenplanung ansehen']};
+const NF_PRIO={info:'',action:'Handlungsbedarf',urgent:'Dringend'};
+var NF={}, NF_KEY='', NF_UNSUB=null, NF_INIT=false, NF_FLT='alle', NF_PULSE=0, NF_RM_T=0;
+const NF_SENT=new Set();
+const nfK=k=>String(k||'').trim().toLowerCase(), nfColl=k=>'notif:'+nfK(k);
+const nfTeam=()=>new Set(staff().map(s=>nfK(shortWho(s.name))));
+const nfName=k=>{ const s=staff().find(x=>nfK(shortWho(x.name))===nfK(k)); return s?s.name.replace(/\s*\([^)]*\)$/,''):String(k||''); };
+const nfLocalAll=()=>{ try{ return JSON.parse(lsGet('sonnenplan-nf')||'{}')||{}; }catch(e){ return {}; } };
+// self: Erinnerungen an sich selbst; sonst bekommt niemand eine Mitteilung über die eigene Aktion
+function nfSend(to,n,self){ const k=nfK(to); if(!k||!ME||(!self&&k===nfK(meK()))||!nfTeam().has(k)) return; const id='n'+strHash([n.type,n.c,n.rid,n.stamp,k].join('|')).slice(1); if(NF_SENT.has(id)) return; NF_SENT.add(id);
+  const doc={id,to:k,type:n.type,prio:n.prio||'info',title:n.title,text:String(n.text||'').slice(0,300),c:n.c,rid:n.rid,pid:n.pid||'',by:self?'':meK(),at:new Date().toISOString(),read:false};
+  if(MODE==='cloud'&&DB){ const ref=DB.collection(nfColl(k)).doc(id); try{ (ref.insert?ref.insert(doc):ref.set(doc)).catch(()=>{}); }catch(e){} }
+  else { const a=nfLocalAll(), c=nfColl(k); a[c]=a[c]||{}; if(!a[c][id]) a[c][id]=doc; lsSet('sonnenplan-nf',JSON.stringify(a)); if(k===NF_KEY) nfApply(a[c]); } }
+const nfTaskPeople=t=>[...new Set([...taskWhos(t).map(shortWho),t.by].filter(Boolean))];
+const nfMentions=txt=>{ const team=nfTeam(), out=[]; String(txt||'').replace(/(^|[\s(])@([A-Za-zÄÖÜäöüß]{2,6})\b/g,(m,a,k)=>{ if(team.has(nfK(k))) out.push(k); return m; }); return out; };
+// Wer ist betroffen? Nur Zuständige und Beteiligte, nie alle.
+function nfWatch(coll,prev,obj){ try{ if(!ME||(obj&&obj.example)||(prev&&prev.example)) return; const me=nfName(meK()), now=new Date().toISOString(), one=(list,n)=>[...new Set(list)].forEach(k=>nfSend(k,n));
+    if(coll==='tasks'){ const t=obj, q='„'+String(t.title||'').slice(0,80)+'“', base={c:'tasks',rid:t.id,pid:t.pid}, who=taskWhos(t).map(shortWho), was=prev?taskWhos(prev).map(shortWho):[], neu=who.filter(k=>!was.includes(k)), told=new Set(neu);
+      if(neu.length) one(neu,{...base,type:prev?'task_assign':'task_new',prio:t.prio==='dringend'?'urgent':'action',stamp:(t.at||'')+'|'+now.slice(0,16),title:prev?'Aufgabe übertragen':'Neue Aufgabe',text:(prev?me+' hat dir die Aufgabe '+q+' übertragen.':'Dir wurde die neue Aufgabe '+q+' zugewiesen.')+(t.due?' Fällig am '+fmtD(t.due)+'.':'')});
+      if(!prev) return; const ppl=nfTaskPeople(t), rest=ppl.filter(k=>!told.has(k)), oldU=new Set((prev.upd2||[]).map(tuKey));
+      (t.upd2||[]).filter(u=>!oldU.has(tuKey(u))).forEach(u=>{ const ment=nfMentions(u.t); one(ment,{...base,type:'task_mention',prio:'action',stamp:tuKey(u),title:'Du wurdest erwähnt',text:me+' hat dich in einem Update zu '+q+' erwähnt: '+u.t}); one(ppl.filter(k=>!ment.some(m=>nfK(m)===nfK(k))),{...base,type:'task_upd',stamp:tuKey(u),title:'Aufgabe aktualisiert',text:me+' hat ein Update zu '+q+' hinzugefügt: '+u.t}); });
+      if((t.due||'')!==(prev.due||'')) one(rest,{...base,type:'task_due',stamp:(t.due||'keine')+'|'+now.slice(0,16),title:'Frist geändert',text:t.due?'Die Frist der Aufgabe '+q+' wurde auf den '+fmtD(t.due)+' geändert.':'Die Frist der Aufgabe '+q+' wurde entfernt.'});
+      if(!!t.done!==!!prev.done) one(ppl,{...base,type:t.done?'task_done':'task_open',stamp:(t.doneAt||'')+'|'+now.slice(0,16),title:t.done?'Aufgabe erledigt':'Aufgabe wieder geöffnet',text:me+(t.done?' hat die Aufgabe '+q+' erledigt.':' hat die Aufgabe '+q+' wieder geöffnet.')});
+      if(t.prio!==prev.prio&&t.prio==='dringend') one(rest,{...base,type:'task_prio',prio:'urgent',stamp:now.slice(0,16),title:'Aufgabe ist dringend',text:me+' hat die Aufgabe '+q+' als dringend markiert.'});
+      else if((t.title||'')!==(prev.title||'')||(t.notes||'')!==(prev.notes||'')) one(rest,{...base,type:'task_edit',stamp:now.slice(0,16),title:'Aufgabe geändert',text:me+' hat die Aufgabe '+q+' geändert.'});
+    }
+    if(coll==='orders'){ const o=obj, base={c:'orders',rid:o.id,pid:o.pid}, lb=[o.supplier,projName(o.pid)].filter(Boolean).join(' · ')||'Bestellung', own=[o.by,o.orderedBy?shortWho(o.orderedBy):'',...(o.apprFor||[])].filter(Boolean), pl=S.projects[o.pid]&&S.projects[o.pid].pl?[shortWho(S.projects[o.pid].pl)]:[];
+      if(ordWait(o)&&!(prev&&prev.appr==='offen')) one(ORD_APPROVERS,{...base,type:'order_req',prio:'action',stamp:o.at||o.id,title:'Freigabe erforderlich',text:'Die Bestellung ('+lb+') von '+me+' benötigt deine Freigabe.'});
+      if(prev&&prev.appr!==o.appr&&o.apprBy!=='auto'&&['ok','storno'].includes(o.appr)) one(own,{...base,type:o.appr==='ok'?'order_ok':'order_no',prio:o.appr==='ok'?'info':'action',stamp:o.apprAt||now,title:o.appr==='ok'?'Bestellung freigegeben':'Bestellung storniert',text:o.appr==='ok'?'Deine Bestellung ('+lb+') wurde von '+me+' freigegeben.':'Deine Bestellung ('+lb+') wurde von '+me+' storniert.'+(o.stornoWhy?' Grund: '+o.stornoWhy:'')});
+      else if(prev&&o.appr==='ok'&&prev.appr==='ok'){ const a=orderState(prev).k, b=orderState(o).k; if(a!==b) one([...own,...pl],{...base,type:'order_st',stamp:b+'|'+now.slice(0,16),title:'Bestellung: '+b,text:'Der Status der Bestellung ('+lb+') ist jetzt: '+b+'.'}); }
+    }
+    if(coll==='projects'&&prev){ const p=obj, base={c:'projects',rid:p.id,pid:p.id}, pl=p.pl?shortWho(p.pl):'';
+      if((p.pl||'')!==(prev.pl||'')&&pl) nfSend(pl,{...base,type:'proj_pl',prio:'action',stamp:pl+'|'+now.slice(0,16),title:'Projektleitung übertragen',text:me+' hat dir die Projektleitung für „'+p.name+'“ übertragen.'});
+      if(catOf(p)!==catOf(prev)&&pl) nfSend(pl,{...base,type:'proj_cat',stamp:catOf(p)+'|'+now.slice(0,16),title:'Projektstatus geändert',text:'Das Projekt „'+p.name+'“ ist jetzt „'+CATS[catOf(p)]+'“.'});
+      ['notes','updates'].forEach(k=>{ const old=new Set(noteBlocks(prev[k])); noteBlocks(p[k]).filter(b=>!old.has(b)).forEach(b=>{ const tx=noteParts(b).text; one(nfMentions(tx),{...base,type:'proj_mention',prio:'action',stamp:strHash(b),title:'Du wurdest erwähnt',text:me+' hat dich im Projekt „'+p.name+'“ erwähnt: '+tx}); }); }); }
+    if(coll==='projects'&&!prev&&obj.pl) nfSend(shortWho(obj.pl),{c:'projects',rid:obj.id,pid:obj.id,type:'proj_pl',prio:'action',stamp:shortWho(obj.pl)+'|'+now.slice(0,16),title:'Projektleitung übertragen',text:me+' hat dir die Projektleitung für „'+obj.name+'“ übertragen.'});
+    if(coll==='events'){ const e=obj||prev, w=evWhos(e).map(shortWho), base={c:'events',rid:e.id,pid:e.pid}, q='„'+String(e.title||'').slice(0,80)+'“', dt=x=>fmtD(x.date)+(x.time?' '+x.time:'');
+      if(!obj) one(w,{...base,type:'ev_del',prio:'action',stamp:now.slice(0,16),title:'Termin abgesagt',text:me+' hat den Termin '+q+' ('+dt(e)+') gelöscht.'});
+      else { const old=prev?evWhos(prev).map(shortWho):[], neu=w.filter(k=>!old.includes(k)); one(neu,{...base,type:'ev_new',prio:'action',stamp:e.id+'|'+now.slice(0,16),title:'Neuer Termin für dich',text:me+' hat dich für den Termin '+q+' am '+dt(e)+' eingetragen.'});
+        if(prev&&['date','end','time','place','title'].some(f=>(e[f]||'')!==(prev[f]||''))) one(w.filter(k=>!neu.includes(k)),{...base,type:'ev_chg',stamp:dt(e)+'|'+now.slice(0,16),title:'Termin geändert',text:me+' hat den Termin '+q+' geändert: jetzt '+dt(e)+(e.place?', '+e.place:'')+'.'}); } }
+    if(coll==='plan'){ const t0=TODAY(), old={}; ((prev&&prev.entries)||[]).forEach(x=>{ if(x.at) old[x.at]=x; }); (obj.entries||[]).forEach(x=>{ if(!x.at||!x.who||x.kind==='abw'||(x.end||x.d)<t0) return; const o=old[x.at]; if(o&&o.d===x.d&&(o.end||'')===(x.end||'')&&(o.time||'')===(x.time||'')&&o.who===x.who&&o.t===x.t) return; const fresh=!o&&!x.updBy;
+        nfSend(shortWho(x.who),{c:'plan',rid:obj.id,pid:x.pid,type:fresh?'plan_new':'plan_chg',prio:fresh?'action':'info',stamp:x.at+'|'+x.d+'|'+x.who+'|'+now.slice(0,16),title:fresh?'Neuer Einsatz':'Einsatz geändert',text:(fresh?me+' hat dich eingeplant: ':me+' hat deinen Einsatz geändert: ')+String(x.t||'').slice(0,80)+' am '+fmtD(x.d)+(x.time?' '+x.time:'')+'.'}); }); }
+  }catch(e){ console.warn('Mitteilung nicht erzeugt',e); } }
+// Erinnerungen entstehen beim Empfänger: pro Tag und Vorgang höchstens einmal, auch auf mehreren Geräten
+function nfRemind(){ if(!ME||!NF_INIT) return; const t=TODAY(), tm=addDays(t,1), me=meK();
+  arr('tasks').filter(x=>!x.done&&x.due&&taskHas(x,ME)&&(x.due===t||x.due===tm)).slice(0,15).forEach(x=>nfSend(me,{c:'tasks',rid:x.id,pid:x.pid,type:'rem_due',prio:x.due===t?'urgent':'action',stamp:x.due,title:x.due===t?'Heute fällig':'Frist steht bevor',text:'„'+String(x.title).slice(0,80)+'“ ist '+(x.due===t?'heute':'morgen')+' fällig.'},true));
+  arr('events').filter(e=>e.date===tm&&evWhos(e).includes(ME)).forEach(e=>nfSend(me,{c:'events',rid:e.id,pid:e.pid,type:'rem_ev',prio:'info',stamp:e.date,title:'Termin morgen',text:'„'+String(e.title||'').slice(0,80)+'“'+(e.time?' um '+e.time:'')+'.'},true));
+  try{ wvDue(null,true).slice(0,15).forEach(x=>nfSend(me,{c:'tasks',rid:x.id,pid:x.pid,type:'rem_wv',prio:'action',stamp:t,title:'Wiedervorlage fällig',text:'„'+String(x.title).slice(0,80)+'“ ist heute zur Wiedervorlage dran.'},true)); }catch(e){} }
+function nfSub(){ if(!ME||!DBREADY_NF()) return; const k=nfK(meK()); if(!k||k==='?'||k===NF_KEY) return; if(NF_UNSUB) try{ NF_UNSUB(); }catch(e){} NF_UNSUB=null; NF_KEY=k; NF={}; NF_INIT=false;
+  if(MODE==='cloud'&&DB) try{ NF_UNSUB=DB.collection(nfColl(k)).onSnapshot(s=>{ const o={}; s.docs.forEach(d=>{ o[d.id]=d.data(); }); nfApply(o); },()=>{}); }catch(e){} else nfApply(nfLocalAll()[nfColl(k)]||{}); }
+const DBREADY_NF=()=>MODE==='cloud'?!!DB&&!!LIVE_READY.tasks:MODE==='local';
+function nfApply(o){ const first=!NF_INIT, fresh=first?[]:Object.values(o).filter(n=>n&&!NF[n.id]&&!n.read); NF=o; NF_INIT=true;
+  if(first){ nfClean(); setTimeout(nfRemind,1500); }
+  if(fresh.length){ NF_PULSE=Date.now(); const perm='Notification' in window&&Notification.permission==='granted'; fresh.filter(n=>n.prio!=='info'&&nfVisible(n)).slice(0,3).forEach(n=>{ liveToast({c:n.c,id:n.rid,by:n.by||'🔔',t:n.title,a:String(n.text).slice(0,120),pid:'',at:Date.now(),long:1}); if(perm&&document.visibilityState!=='visible') try{ const x=new Notification(n.title,{body:n.text,tag:n.id}); x.onclick=()=>{ window.focus(); A.nfGo({id:n.id}); }; }catch(e){} }); }
+  scheduleRender(); nfListPaint(); }
+function nfClean(){ const old=addDays(TODAY(),-90), l=Object.values(NF).sort((a,b)=>String(b.at).localeCompare(String(a.at))); l.forEach((n,i)=>{ if(i>=300||(n.read&&String(n.at).slice(0,10)<old)) nfDrop(n.id); }); }
+function nfDrop(id){ delete NF[id]; if(MODE==='cloud'&&DB) try{ DB.collection(nfColl(NF_KEY)).doc(id).delete().catch(()=>{}); }catch(e){} else { const a=nfLocalAll(); if(a[nfColl(NF_KEY)]) delete a[nfColl(NF_KEY)][id]; lsSet('sonnenplan-nf',JSON.stringify(a)); } }
+// Sichtbar nur, was zum eigenen Konto gehört und wofür die aktuellen Rechte reichen (auch wenn sie sich inzwischen geändert haben)
+const nfVisible=n=>!!n&&n.to===NF_KEY&&!!NF_CAT[n.c]&&canSee(NF_CAT[n.c][1]);
+const nfList=()=>Object.values(NF).filter(nfVisible).sort((a,b)=>String(b.at).localeCompare(String(a.at)));
+const nfUnread=()=>nfList().filter(n=>!n.read).length;
+function nfWhen(at){ const d=new Date(at), m=Math.round((Date.now()-d)/60000), hm=d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}); if(m<1) return 'gerade eben'; if(m<60) return 'vor '+m+' Minute'+(m>1?'n':''); const dd=isoLocal(at).slice(0,10), t=TODAY(); if(dd===t) return 'heute, '+hm; if(dd===addDays(t,-1)) return 'gestern, '+hm; return fmtD(dd)+', '+hm; }
+function nfMark(id,read){ const n=NF[id]; if(!n||!!n.read===read) return; const c={...n,read,readAt:read?new Date().toISOString():''}; NF[id]=c; if(MODE==='cloud'&&DB) try{ DB.collection(nfColl(NF_KEY)).doc(id).set(c).catch(()=>{}); }catch(e){} else { const a=nfLocalAll(), k=nfColl(NF_KEY); a[k]=a[k]||{}; a[k][id]=c; lsSet('sonnenplan-nf',JSON.stringify(a)); } }
+function nfRow(n,mini){ const ic0=NF_CAT[n.c][0]; return `<div class="nf-row ${n.read?'':'un'} p-${esc(n.prio)}"><button type="button" class="nf-main" data-act="nfGo" data-id="${esc(n.id)}" title="${esc(NF_CAT[n.c][2])}"><span class="nf-ic" aria-hidden="true">${ic0}</span><span class="nf-b"><span class="nf-t">${esc(n.title)}${NF_PRIO[n.prio]?`<span class="nf-pr">${NF_PRIO[n.prio]}</span>`:''}</span><span class="nf-x ${mini?'mini':''}">${esc(n.text)}</span><span class="nf-w">${esc(nfWhen(n.at))}</span></span></button><button type="button" class="nf-rd" data-act="nfRead" data-id="${esc(n.id)}" data-v="${n.read?0:1}" title="${n.read?'Als ungelesen markieren':'Als gelesen markieren'}" aria-label="${n.read?'Als ungelesen markieren':'Als gelesen markieren'}"><i></i></button></div>`; }
+function nfBellHtml(){ if(!ME||!NF_INIT) return ''; const c=nfUnread(); return `<button type="button" class="nf-bell ${c?'has':''} ${Date.now()-NF_PULSE<8000?'pulse':''}" data-act="nfOpen" aria-label="Mitteilungen${c?': '+c+' ungelesen':''}" title="Mitteilungen">🔔${c?`<span class="nf-c">${c>99?'99+':c}</span>`:''}</button>`; }
+function nfPaint(){ const s=$('#nfStrip'); if(s) s.innerHTML=nfBellHtml(); }
+function nfCardHtml(){ if(!ME||!NF_INIT) return ''; const l=nfList(), c=l.filter(n=>!n.read).length;
+  return `<section class="card nf-card"><div class="card-h"><h2>Mitteilungen &amp; Benachrichtigungen ${c?`<span class="cnt-b">${c} neu</span>`:''}</h2>${c?'<button class="btn ghost sm" data-act="nfAll">Alle gelesen</button>':''}<button class="btn ghost sm" data-act="nfOpen">Alle anzeigen</button></div>
+    ${l.length?`<div class="nf-list">${l.slice(0,6).map(n=>nfRow(n,true)).join('')}</div>`:'<div class="empty" style="padding:6px 16px 18px"><b>Alles ruhig</b>Hier erscheint, was für dich wichtig ist: neue Aufgaben, Freigaben und Änderungen an deinen Vorgängen.</div>'}</section>`; }
+function nfListHtml(){ const all=nfList(), l=NF_FLT==='neu'?all.filter(n=>!n.read):all, c=all.filter(n=>!n.read).length;
+  return `<div class="row nf-top"><div class="chips"><button type="button" class="chip ${NF_FLT==='alle'?'on':''}" data-act="nfFlt" data-v="alle">Alle <span class="mono small">${all.length}</span></button><button type="button" class="chip ${NF_FLT==='neu'?'on':''}" data-act="nfFlt" data-v="neu">Ungelesen <span class="mono small">${c}</span></button></div><span class="spacer"></span>${c?'<button type="button" class="btn ghost sm" data-act="nfAll">Alle als gelesen markieren</button>':''}</div>
+    <div class="nf-list">${l.map(n=>nfRow(n,false)).join('')||`<div class="empty"><b>${NF_FLT==='neu'?'Nichts Ungelesenes':'Noch keine Mitteilungen'}</b>Hier erscheint, was für dich wichtig ist.</div>`}</div>`; }
+function nfListPaint(){ const b=$('#nfBox'); if(b) b.innerHTML=nfListHtml(); }
+setInterval(()=>{ try{ nfSub(); if(Date.now()-NF_RM_T>30*60000&&NF_INIT){ NF_RM_T=Date.now(); nfRemind(); } }catch(e){} },2000);
+queueMicrotask(()=>Object.assign(A,{
+  nfOpen:()=>{ NF_FLT='alle'; openSheet({title:'🔔 Mitteilungen',wide:1,html:`<div class="fld full" id="nfBox">${nfListHtml()}</div>`,saveLabel:'Schließen',onSave:()=>{}}); },
+  nfFlt:d=>{ NF_FLT=d.v; nfListPaint(); },
+  nfRead:d=>{ nfMark(d.id,d.v==='1'); scheduleRender(); nfListPaint(); },
+  nfAll:()=>{ nfList().filter(n=>!n.read).forEach(n=>nfMark(n.id,true)); scheduleRender(); nfListPaint(); },
+  // Beim Öffnen gelten die aktuellen Rechte, und der Vorgang muss noch existieren
+  nfGo:d=>{ const n=NF[d.id]; if(!n) return; nfMark(n.id,true); scheduleRender(); nfListPaint(); if(!nfVisible(n)) return toast('Dafür hast du keinen Zugriff mehr.'); if(!S[n.c]||!S[n.c][n.rid]) return toast('Dieser Vorgang ist nicht mehr vorhanden.'); closeSheet(); A.openRec({c:n.c,id:n.rid}); }
+}));
 /* ---------- 🧹 Doppelte aufräumen (Admin): gleiche offene To-Dos, gleiche Updates, gleiche Notizen ---------- */
 function dupScan(){ const groups={}, tk=[], up=[], nt=[];
   arr('tasks').filter(t=>t&&!t.done&&!t.example&&dupNorm(t.title).length>=3).forEach(t=>{ const k=(t.pid||(t.pool?'#pool':'#'+(t.who||'')))+'|'+dupNorm(t.title); (groups[k]=groups[k]||[]).push(t); });
@@ -2727,7 +2833,7 @@ function navSide(cur,cnt){ NAV_CUR=cur; const pins=navPins();
   $('#side').innerHTML = `<div class="brand"><div class="wordmark"><span class="y">NUTZ DIE</span> <span class="g">SONNE</span></div><small>Projektsteuerung</small></div>`+
     navSide(cur,cnt)+
     `<div class="side-me"><button class="me-btn" data-act="meProfile" title="Mein Profil: Farbe, Passwort, Kürzel">${ME?`<span class="who-chip">${esc(meK())}</span> <span class="me-n">${esc(ME.replace(/\s*\([^)]*\)$/,''))}</span><span class="me-gear" aria-hidden="true">⚙</span>`:'<span class="who-chip open">?</span> Wer bist du?'}</button><button class="me-btn" data-act="sbLogout" title="Abmelden">⎋ Abmelden</button><div class="foot">${MODE==='cloud'?'● Synchronisiert über alle Geräte':MODE==='local'?'○ Lokaler Modus (nur dieses Gerät)':'Verbinde …'}</div></div>`;
-  $('#mtop').innerHTML = (UI.view==='project'?`<button class="icon-btn" data-act="nav" data-v="projects" aria-label="Zurück">${ic('back')}</button>`:'<div class="wordmark"><span class="y">NUTZ DIE</span> <span class="g">SONNE</span></div>')+`<b>${UI.view==='dash'?'':VIEW_T[UI.view]||''}</b><button class="btn sun sm" data-act="newMenu">${ic('plus')}Neu</button>`;
+  $('#mtop').innerHTML = (UI.view==='project'?`<button class="icon-btn" data-act="nav" data-v="projects" aria-label="Zurück">${ic('back')}</button>`:'<div class="wordmark"><span class="y">NUTZ DIE</span> <span class="g">SONNE</span></div>')+`<b>${UI.view==='dash'?'':VIEW_T[UI.view]||''}</b>${nfBellHtml()}<button class="btn sun sm" data-act="newMenu">${ic('plus')}Neu</button>`; nfPaint();
   const tb=[['dash','Übersicht','dash'],['projects','Projekte','proj'],['week','Kalender','cal'],['todos','To-Dos','todo']];
   const inMore=!tb.some(t=>t[0]===cur);
   $('#tabbar').innerHTML = tb.map(([v,l,i])=>`<button class="${cur===v?'on':''}" data-act="nav" data-v="${v}">${ic(i)}${l}</button>`).join('')+`<button class="${inMore?'on':''}" data-act="moreMenu">${ic('more')}Mehr${MEET_ON?'<span class="rec-lamp tb-rec" aria-label="Meeting-Aufnahme läuft"></span>':''}${cnt.chat?`<span class="tb-dot" aria-label="${cnt.chat} ungelesene Chat-Nachrichten">${cnt.chat}</span>`:''}</button>`;
@@ -2811,7 +2917,7 @@ function needAll(){ const out=[];
   return out; }
 function vDash(){
   const t=TODAY(), mon=mondayOf(t), days=[0,1,2,3,4].map(i=>addDays(mon,i));
-  if(!arr('projects').length) return dashHero(t)+smartDropHtml()+pinboardHtml()+emptyStart();
+  if(!arr('projects').length) return dashHero(t)+smartDropHtml()+pinboardHtml()+nfCardHtml()+emptyStart();
   // 1) Wochenplanung Mo–Fr (eigene Einträge zuerst)
   const items=calItems(mon,days[4]).filter(x=>x.k!=='todo');
   const tim=x=>(x.e&&x.e.time)||'';
@@ -2832,7 +2938,7 @@ function vDash(){
   // 4) Noch zu bestellen, je Projekt gebündelt
   const nd=needAll(), ndP=[...new Set(nd.map(n=>n.pid))].map(pid=>({pid,its:nd.filter(n=>n.pid===pid)})).sort((a,b)=>b.its.length-a.its.length);
   const ndRow=g=>`<div class="nd-row"><div style="min-width:0" class="clickable" data-act="openAt" data-id="${g.pid}" data-at="material"><div class="tt">${esc(projName(g.pid)||'ohne Projekt')}</div><div class="small muted nd-its">${g.its.slice(0,3).map(n=>esc((n.qty?qn(n.qty)+' '+(n.unit||'')+' ':'')+n.art)).join(' · ')}${g.its.length>3?' · +'+(g.its.length-3):''}</div></div><button class="btn sun sm" data-act="needOrder" data-pid="${g.pid}">Bestellen</button></div>`;
-  return dashHero(t)+briefDashStrip()+hrDashStrip()+wvDashStrip()+(ordApprover()?ordApprBanner():'')+gsearchBox()+pinboardHtml()+`<div class="dash-grid">
+  return dashHero(t)+briefDashStrip()+hrDashStrip()+wvDashStrip()+(ordApprover()?ordApprBanner():'')+gsearchBox()+pinboardHtml()+nfCardHtml()+`<div class="dash-grid">
     <section class="card dash-todo"><div class="card-h"><h2>Meine offenen To-Dos <span class="cnt-b">${my.length}</span></h2>${myLate?`<span class="pill bad">${myLate} überfällig</span>`:''}<button class="btn ghost sm" data-act="myTasks">Alle</button></div>
       ${ME?`<div class="list">${my.slice(0,7).map(taskLi).join('')||'<div class="empty"><b>Alles erledigt</b>Du hast keine offenen Aufgaben.</div>'}</div>${my.length>7?`<button class="btn ghost sm more-b" data-act="myTasks">+ ${my.length-7} weitere anzeigen</button>`:''}`:'<div class="empty">Unten links „Wer bist du?“ wählen, dann erscheinen hier deine Aufgaben.</div>'}</section>
     <section class="card dash-dl"><div class="card-h"><h2>Offene Lieferungen <span class="cnt-b">${dl.length}</span></h2><button class="btn ghost sm" data-act="nav" data-v="orders">Alle</button></div>
@@ -2919,7 +3025,7 @@ function vDashOld(){
   const delLate = del7.filter(o=>o.delivery<t);
   const offOpen = arr('offers').filter(o=>['versendet','nachfassen'].includes(o.status));
   const offSum = offOpen.reduce((a,o)=>a+(+o.sum||0),0);
-  if(!arr('projects').length) return dashHero(t)+smartDropHtml()+pinboardHtml()+emptyStart();
+  if(!arr('projects').length) return dashHero(t)+smartDropHtml()+pinboardHtml()+nfCardHtml()+emptyStart();
   const cc = k=>arr('projects').filter(p=>catOf(p)===k).length;
   const lauf = act.filter(p=>catOf(p)==='laufend').sort(byPipe), plan = act.filter(p=>catOf(p)==='planung').sort(byPipe);
   const week = calItems(t,addDays(t,7));
@@ -3679,8 +3785,6 @@ function ordMerge(ids){ const os=ids.map(id=>S.orders[id]).filter(Boolean); if(o
   base.apprFor=[...new Set(os.flatMap(o=>[o.by,o.orderedBy?shortWho(o.orderedBy):'']).filter(Boolean))]; base.docs=os.flatMap(o=>o.docs||[]); base.appr='ok'; if(base.status==='entwurf') base.status='freigegeben'; base.apprBy=meK(); base.apprAt=new Date().toISOString();
   if(multi) base.pids=[...new Set(os.map(o=>o.pid).filter(Boolean))];
   put('orders',base); os.slice(1).forEach(o=>del('orders',o.id)); toast(os.length+' Bestellungen bei „'+(base.supplier||'')+'“ zusammengefasst und freigegeben.'); ordRefresh(); }
-// Browser-Benachrichtigung (wenn erlaubt), z. B. wenn die App im Hintergrund offen ist
-function ordNotify(o){ try{ if(!('Notification' in window)||Notification.permission!=='granted') return; const n=new Notification('Bestellung zur Freigabe',{body:(o.supplier||'')+' · '+(projName(o.pid)||'')+' · '+(o.items||[]).length+' Pos.'+(o.orderedBy?' · von '+shortWho(o.orderedBy):''),tag:'ord-'+o.id}); n.onclick=()=>{ window.focus(); ordApprSheet(); }; }catch(e){} }
 queueMicrotask(()=>Object.assign(A,{ /* A wird weiter unten angelegt */
  ordAppr:()=>ordApprSheet(),
  ordApprove:d=>{ if(!ordApprover()) return toast('Freigeben können HH und AvE.'); ordSetAppr(d.id,'ok'); toast('Bestellung freigegeben.'); ordRefresh(); },
@@ -3696,21 +3800,9 @@ queueMicrotask(()=>Object.assign(A,{ /* A wird weiter unten angelegt */
 // Aufräumen: alte Bestellungen von EP / HH / AvE, die noch als „wartet auf Freigabe“ gespeichert sind, einmal freigeben
 const ORD_FIX_T=setInterval(()=>{ if(MODE!=='cloud'||!ME||!LIVE_READY.orders||!mayWrite('orders')) return; clearInterval(ORD_FIX_T);
   const fix=arr('orders').filter(o=>o.appr==='offen'&&ordByNoAppr(o)); fix.forEach(o=>put('orders',{...clone(o),appr:'ok',apprBy:'auto',apprAt:new Date().toISOString()})); },3000);
-// Neue Bestellung eines Kollegen → HH / AvE sofort informieren (Live-Meldung kommt ohnehin; zusätzlich Browser-Benachrichtigung)
-let ORD_SEEN=null;
-setInterval(()=>{ if(!ordApprover()||MODE!=='cloud'||!LIVE_READY.orders) return; const P=ordPending(); if(ORD_SEEN===null){ ORD_SEEN=new Set(P.map(o=>o.id)); return; }
-  P.filter(o=>!ORD_SEEN.has(o.id)&&o.by!==meK()).forEach(o=>{ ORD_SEEN.add(o.id); ordNotify(o); toast('Neue Bestellung zur Freigabe: '+(o.supplier||'')+' · '+(projName(o.pid)||'')); }); },3000);
-// Freigabe oder Storno → die Person informieren, die die Bestellung eingestellt hat (auch nachträglich beim nächsten Öffnen; gemerkt je Person wie der Chat-Lesestand, „#ordok“)
+// Bestellung gehört mir (angelegt, „Bestellt von“ oder in einer Zusammenfassung). Meldungen dazu laufen über die Mitteilungen.
 function ordMine(o){ const me=meK(); return o.by===me||(!!o.orderedBy&&shortWho(o.orderedBy)===me)||(o.apprFor||[]).includes(me); }
 function ordNotifyAsk(){ try{ if('Notification' in window&&Notification.permission==='default') Notification.requestPermission(); }catch(e){} }
-function ordAnswerCheck(){ if(MODE!=='cloud'||!ME||!LIVE_READY.orders) return; const last=lastRead('#ordok'), me=meK(); if(!last){ markRead('#ordok'); seenPush(true); return; }
-  const hits=arr('orders').filter(o=>o.apprAt&&String(o.apprAt)>last&&['ok','storno'].includes(o.appr)&&o.apprBy&&o.apprBy!==me&&o.apprBy!=='auto'&&ordMine(o)); if(!hits.length) return;
-  const perm='Notification' in window&&Notification.permission==='granted'; if(document.visibilityState!=='visible'&&!perm) return; // App im Hintergrund, ohne Benachrichtigung würde es niemand sehen
-  markRead('#ordok'); seenPush(true);
-  hits.slice(0,5).forEach(o=>{ const ok=o.appr==='ok', t=ok?'✓ Deine Bestellung ist freigegeben':'✕ Deine Bestellung wurde storniert', a=[o.supplier,projName(o.pid),!ok&&o.stornoWhy?'Grund: '+o.stornoWhy:''].filter(Boolean).join(' · ').slice(0,120);
-    liveToast({c:'orders',id:o.id,by:o.apprBy,t,a,pid:'',at:Date.now(),long:1}); if(perm) try{ const n=new Notification(t,{body:a+' · von '+o.apprBy,tag:'ordok-'+o.id}); n.onclick=()=>window.focus(); }catch(e){} }); }
-// Erst nach kurzer Wartezeit: bis dahin ist der geräteübergreifende Lesestand geladen
-setInterval(()=>{ if(SINCE_DONE&&(window.ORD_WAIT=(window.ORD_WAIT||0)+1)>=3) ordAnswerCheck(); },3000);
 
 /* ========== Angebote ========== */
 function offersTable(os){
