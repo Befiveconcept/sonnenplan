@@ -1243,7 +1243,7 @@ textarea.autogrow{resize:vertical;overflow:hidden;min-height:40px!important;max-
 .ps-notes .card-b>.nb-list>.nb.dy:first-child::before,.ps-notes .card-b>.nb-list>.q-box+.nb.dy::before{background:var(--sun);border-color:var(--sun);box-shadow:0 0 0 4px var(--sun-soft)}
 .ps-notes .dy-h{align-items:center;gap:6px 8px;margin-bottom:5px}.ps-notes .dy-d{background:none;padding:0;font-size:12.5px}
 .ps-notes .dy-h b{order:3;flex:1 1 100%;font-size:16px;line-height:1.35}.ps-notes .dy-st{order:2}
-.dy-who{display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap}.dy-i{font-size:12.5px;color:var(--muted)}
+
 .ps-notes .dy-sum{font-size:14.5px;line-height:1.6}.ps-notes .dy-sum .muted{color:inherit}.ps-notes .dy-sum li{margin:3px 0}.ps-notes .dy-t{line-height:1.6}
 .ps-notes .nb-more>summary{text-align:center;border:1px solid var(--line);border-radius:12px;font-size:13.5px;padding:9px 12px}
 .ps-side .li{margin:0 0 8px;border:1px solid var(--line);border-radius:12px;padding:11px 12px}.ps-side .list{border:0}
@@ -8835,10 +8835,7 @@ const DY_SUM_FROM='2026-10-28';
 function dyCard(p,x,adm){
   const hd=(p.dayHeads||{})[x.d], notes=x.items.filter(e=>e.kind==='note'), tk=x.items.filter(e=>e.kind!=='note'), k='t'+p.id+x.d;
   const n=c=>tk.filter(e=>e.kind===c).length, sum=[n('new')?n('new')+' neu':'',n('upd')?n('upd')+' Update'+(n('upd')>1?'s':''):'',n('done')?n('done')+' erledigt':''].filter(Boolean).join(' · ');
-  // Wer hat eingetragen, von wem kam die Info („EP · Info: AvE“)
-  const wr=new Set(), inf=new Set(); x.items.forEach(e=>{ const [a,b]=String(e.by||'').split(/\s*·\s*Info:\s*/); if(a) wr.add(a.trim()); if(b) b.split(/,\s*/).forEach(c=>c&&inf.add(c.trim())); });
-  const who=wr.size||inf.size?`<span class="dy-who">${[...wr].map(c=>`<span class="who-chip">${esc(c)}</span>`).join('')}${inf.size?`<span class="dy-i">Info:</span>${[...inf].map(c=>`<span class="who-chip">${esc(c)}</span>`).join('')}`:''}</span>`:'';
-  const head=`<div class="dy-h"><span class="dy-d">${esc(dyDate(x.d))}</span>${who}${hd&&hd.t?`<b>${esc(hd.t)}</b>`:''}</div>`, drop=x.d?`data-drop-note="${x.d}" data-pid="${p.id}"`:'';
+  const head=`<div class="dy-h"><span class="dy-d">${esc(dyDate(x.d))}</span>${hd&&hd.t?`<b>${esc(hd.t)}</b>`:''}</div>`, drop=x.d?`data-drop-note="${x.d}" data-pid="${p.id}"`:'';
   if(x.d>=DY_SUM_FROM){
     const kd='d'+p.id+x.d, cnt=[notes.length?notes.length+' Notiz'+(notes.length>1?'en':''):'',sum?'To-Dos: '+sum:'',x.links.length?x.links.length+' verknüpft':''].filter(Boolean).join(' · ');
     const s=hd&&hd.s||''; // bis die neue Fassung da ist, bleibt die letzte stehen
@@ -8865,7 +8862,7 @@ function projVerlauf(p,adm){
 }
 // Claude: kurze Überschrift je Tag (im Hintergrund, ohne Sonne)
 var DY_RUN={}, DY_TRIED={}, DY_BUSY=new Set(); // var: wird schon beim ersten Zeichnen gelesen; DY_BUSY = Tage, die gerade zusammengefasst werden
-const DY_SUM_V=2; // Version der Zusammenfassung: höher setzen → neue Tage werden neu zusammengefasst
+const DY_SUM_V=3; // Version der Zusammenfassung: höher setzen → neue Tage werden neu zusammengefasst
 async function diaryHeads(pid,forceD){
   const p=S.projects[pid]; if(!p||!SAMPLE||DY_RUN[pid]) return; const hd=p.dayHeads||{};
   if(forceD){ const x=diaryDays(p).find(y=>y.d===forceD); if(x&&x.items.length) return diaryRun(p,[{x,h:dyHash(x)}]); return; }
@@ -8880,14 +8877,16 @@ async function diaryRun(p,todo){
   const pid=p.id; DY_RUN[pid]=true;
   const wantS=todo.some(({x})=>x.d>=DY_SUM_FROM); if(wantS){ todo.forEach(({x})=>{ if(x.d>=DY_SUM_FROM) DY_BUSY.add(pid+'|'+x.d); }); scheduleRender(); }
   // Inhalt des Tages vollständig: Notizen ganz, To-Dos mit allen Updates des Tages
-  const dayText=x=>x.items.map(e=>(e.tm?e.tm+' ':'')+(e.by?e.by+': ':'')+dyPlain(e)).join('\n').slice(0,wantS?6000:1500);
+  const dayWho=e=>{ if(e.kind==='note'){ const f=(String(e.by||'').split(/\s*·\s*Info:\s*/)[1]||'').split(/,\s*/).filter(c=>c&&c!=='KI'); return f.length?' [Info von '+f.join(', ')+']':''; } const t=e.task, z=t.ext?'extern '+t.ext:t.who?shortWho(t.who):''; return ' ['+[z?'zuständig '+z:'',e.kind==='upd'&&e.by?'Update von '+e.by:'',e.kind==='done'&&e.by?'erledigt von '+e.by:''].filter(Boolean).join(', ')+']'; };
+  const dayText=x=>x.items.map(e=>(e.tm?e.tm+' ':'')+dyPlain(e)+dayWho(e).replace(' []','')).join('\n').slice(0,wantS?6000:1500);
   try{ const r=await SAMPLE.json(`Projekt „${p.name}“ eines Solar-Installationsbetriebs (PV-Anlagen, Speicher, Netzanschluss). Tagebuch je Tag (Notizen, neue To-Dos, To-Do-Updates, Erledigtes):
 ${todo.map(({x},i)=>`### ${i+1}. Tag ${x.d}${x.d>=DY_SUM_FROM?' [S]':''}\n${dayText(x)}`).join('\n\n')}
 
 Gib jedem Tag eine kurze Überschrift h (2–6 Wörter, keine Personennamen, kein Datum), z. B. „Zählerschrank verdrahtet, Kran geklärt“.${wantS?`
 Für Tage mit [S] zusätzlich eine Tageszusammenfassung s – präzise und VOLLSTÄNDIG im Inhalt, knapp in der Form:
 - Alle Erkenntnisse und neuen Fakten des Tages (z. B. wer Eigentümer/Ansprechpartner ist, Zusagen, Absagen, Termine, Fristen, Zahlen, technische Ergebnisse, Entscheidungen, Probleme) – nichts Wichtiges weglassen.
-- Danach, was offen ist / als Nächstes kommt und wer (Kürzel) dran ist.
+- Danach, was offen ist / als Nächstes kommt.
+- Kürzel nur dort in Klammern direkt hinter die Aussage setzen, wo die Angabe in eckigen Klammern die Person belegt, z. B. „Simulation wird geprüft (MK)“. Ohne solche Angabe kein Kürzel und keine Vermutung. Das Kürzel „KI“ nie verwenden.
 - Form: 2–5 kurze Sätze oder Stichpunkte mit „- “, keine Füllwörter, Namen/Firmen/Zahlen/Daten exakt übernehmen, nichts erfinden, Überschrift nicht wiederholen.`:''}
 Antworte nur mit JSON in derselben Reihenfolge: {"items":[{"h":"…"${wantS?',"s":"… (nur bei [S], sonst leer)"':''}}]}`,{modelTier:wantS?'default':'quick',bg:true});
     const cur=S.projects[pid]; if(!cur) return; const nh={...(cur.dayHeads||{})};
