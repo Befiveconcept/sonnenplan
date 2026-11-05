@@ -288,29 +288,28 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .td-up{flex:none;padding:3px 5px}
 @media (max-width:1100px){.dash-grid.dash-2{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:640px){.td-tiles{grid-template-columns:minmax(0,1fr);padding:4px 10px 12px;gap:6px}}
-/* Projekt-Radar: drei Spalten nach Lage, darüber die nächsten Termine */
+/* Projekt-Radar: je Status-Kategorie ein nach unten aufgefaecherter Stapel */
 .rx{margin-top:14px;border:1px solid var(--line);border-radius:18px;background:var(--surface);padding:18px}
-.rx-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}.rx-top h2{margin:0}
-.rx .rd-sw{margin:0;background:var(--sunken)}
-.rx .rd-link{color:var(--ink)}
-.rx-evs{display:flex;gap:8px;overflow-x:auto;padding:0 0 10px;margin-bottom:6px;scrollbar-width:thin}
-.rx-evc{flex:0 0 170px;display:flex;flex-direction:column;gap:1px;text-align:left;font:inherit;color:var(--ink);background:var(--sunken);border:1px solid var(--line);border-radius:10px;padding:7px 10px;cursor:pointer;min-width:0}.rx-evc:hover{border-color:var(--sun)}
-.rx-evc b{font-size:12px;font-family:var(--f-mono);font-weight:600}.rx-evc b.today{background:var(--sun);color:#111;align-self:flex-start;padding:0 5px;border-radius:5px}
-.rx-evc span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rx-evt{font-size:13px;font-weight:500}
-.rx-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
-.rx-col{--rx:#2E9E5B;background:var(--sunken);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}.rx-rot{--rx:#E53935}.rx-gelb{--rx:#E0A800}
-.rx-col h3{display:flex;align-items:center;gap:8px;margin:2px 4px 2px;font-size:14px}.rx-col h3 i{width:10px;height:10px;border-radius:50%;background:var(--rx);flex:none}.rx-col h3 .cnt-b{margin-left:auto}
-.rx-none{padding:10px 4px;font-size:12.5px;color:var(--muted)}
-.rx-more{align-self:center}
-.rx-card{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:10px 12px;cursor:pointer;min-width:0;transition:border-color .15s}.rx-card:hover{border-color:var(--rx)}
-.rx-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline}.rx-h b{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rx-h .mono{flex:none;font-size:12px;color:var(--muted)}
-.rx-bar{height:5px;border-radius:3px;background:var(--line);margin:6px 0;overflow:hidden}.rx-bar i{display:block;height:100%;border-radius:3px;background:var(--rx)}
-.rx-ph{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rx-why{margin-top:6px;font-size:12.5px;font-weight:500;color:var(--ink);border-left:3px solid var(--rx);padding-left:7px;line-height:1.3}
-.rx-next{margin-top:6px;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rx-next b{font-family:var(--f-mono);font-size:11px;background:var(--sunken);border-radius:5px;padding:1px 5px;margin-right:3px}
-.rx-ev{display:flex;align-items:center;gap:5px;margin-top:5px;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rx-ev svg{width:13px;height:13px;flex:none}
-.rx-foot{margin-top:10px}
-@media (max-width:900px){.rx{padding:14px 12px}.rx-cols{grid-template-columns:minmax(0,1fr)}}
+.rx-top{margin-bottom:12px}.rx-top h2{margin:0}
+.stk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:18px 14px;align-items:start}
+.stk{min-width:0}.stk.wide{grid-column:span 2}
+.stk h3{display:flex;align-items:center;gap:8px;margin:0 2px 10px;font-size:14px}.stk h3 .cnt-b{margin-left:auto}
+.stk-pile{display:flex;flex-direction:column;padding-bottom:10px}
+.stk-c{position:relative;margin-top:-7px;background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--cc,var(--line));border-radius:11px;box-shadow:0 -2px 5px rgba(0,0,0,.09);min-width:0}
+.stk-c:first-child{margin-top:0}
+.stk-c:last-child{padding-bottom:9px;box-shadow:0 -2px 5px rgba(0,0,0,.09),0 3px 7px rgba(0,0,0,.1)}
+.stk-c.open{margin:-7px 0 8px;box-shadow:0 4px 14px rgba(0,0,0,.16);z-index:1}.stk-c.open:first-child{margin-top:0}
+.stk-c.open+.stk-c{margin-top:0}
+.stk-c .pcard{border:0;border-radius:0 0 10px 10px;box-shadow:none}
+.stk-t{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;color:var(--ink);font:inherit;font-size:13.5px;font-weight:600;text-align:left;padding:9px 12px 13px;cursor:pointer;min-width:0}
+.stk-c:last-child .stk-t,.stk-c.open .stk-t{padding-bottom:9px}
+.stk-t:hover .stk-n{text-decoration:underline;text-decoration-color:var(--sun);text-decoration-thickness:2px;text-underline-offset:2px}
+.stk-n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stk-c.open .stk-n{white-space:normal}
+.stk-late{flex:none;width:8px;height:8px;border-radius:50%;background:#E53935}
+.stk-more{display:block;margin:0 auto}
+@media (max-width:900px){.rx{padding:14px 12px}}
+@media (max-width:520px){.stk.wide{grid-column:auto}.stk-grid{grid-template-columns:minmax(0,1fr)}}
 /* Bestellung: Ablagefläche für die echte Bestell-Mail */
 .ord-mz{border:2px dashed var(--line);border-radius:12px;padding:12px 14px;background:var(--sunken);transition:border-color .15s,background .15s}.ord-mz.over{border-color:var(--sun);background:var(--sun-soft);color:#111}
 .ord-res{margin-top:8px;font-size:12.5px;border-left:3px solid var(--sun);padding-left:9px}.ord-res ul{margin:3px 0 0 16px;padding:0}.ord-res li{margin:1px 0}
@@ -3046,55 +3045,17 @@ function stepRail(p){
     h+=`<button type="button" class="rs ${st} ${i===pp.last?'cur':''} ${k&&starts.has(i)?'gap':''} ${isOpt?'opt':''}" data-act="railStep" data-pid="${p.id}" data-i="${i}" title="${esc(lbl)}${v?' · '+esc(msVal(v)):''}"><span class="rs-l">${esc(lbl)}</span><span class="rs-b"></span><span class="rs-n">${k+1}</span></button>`; });
   return `<div class="rail" role="list" aria-label="Statusschritte" style="--n:${pp.seq.length}">${h}</div>`;
 }
-// Laufende Projekte als „Radar“: jeder Statusschritt ein Segment, aktueller Next Step pulsiert
-// Radar „NEXT“: offenes To-Do als Stichwort (2–3 Wörter). Claude kürzt lange Titel einmal, Ergebnis bleibt im Browser gespeichert
-let SHORT={}, SHORT_RUN=false, RD_TITLES=[]; try{ SHORT=JSON.parse(localStorage.getItem('sonnenplan-short')||'{}')||{}; }catch(e){}
-function shortTitle(s){ s=String(s||''); if(SHORT[s]) return SHORT[s]; const w=s.replace(/\([^)]*\)/g,'').split(/\s+/).filter(Boolean); return w.length<=4?w.join(' '):w.slice(0,4).join(' ')+' …'; }
-function shortenTitles(titles){
-  if(!SAMPLE||SHORT_RUN) return; const need=[...new Set(titles)].filter(x=>!SHORT[x]&&x.replace(/\([^)]*\)/g,'').split(/\s+/).filter(Boolean).length>4).slice(0,40); if(!need.length) return; SHORT_RUN=true;
-  SAMPLE.json(`Fasse jede Aufgabe eines Solar-Installationsbetriebs in 2 bis 3 Wörtern als Stichwort zusammen (z. B. „Kran klären“, „Angebot nachfassen“, „Zähler anmelden“). Keine Namen, kein Satz.\n${need.map((x,i)=>(i+1)+'. '+x).join('\n')}\nAntworte nur mit JSON in derselben Reihenfolge: {"k":["…","…"]}`,{modelTier:'quick',bg:true})
-    .then(r=>{ (r&&Array.isArray(r.k)?r.k:[]).forEach((x,i)=>{ if(need[i]&&String(x||'').trim()) SHORT[need[i]]=String(x).trim().slice(0,40); }); try{ localStorage.setItem('sonnenplan-short',JSON.stringify(SHORT)); }catch(e){} scheduleRender(); })
-    .catch(()=>{}).finally(()=>{ SHORT_RUN=false; });
-}
-function radarHtml(t){ RD_TITLES=[]; setTimeout(()=>shortenTitles(RD_TITLES),300);
-  // Radar als Lagebild: Jedes Projekt steht in der Spalte, die zu seiner Lage passt. Auswahl: laufend (Standard), in Planung oder beides.
-  const rc=['laufend','planung','beide'].includes(UI.rdCat)?UI.rdCat:'laufend';
-  const list=arr('projects').filter(p=>!isIntern(p)).filter(p=>rc==='beide'?['laufend','planung'].includes(catOf(p)):catOf(p)===rc).sort(byPipe);
-  if(!arr('projects').some(p=>['laufend','planung'].includes(catOf(p)))) return '';
-  const ids=new Set(list.map(p=>p.id));
-  // Anstehende Termine (21 Tage): Termine, Lieferungen, Baubeginn/-ende, Teamplanung mit Projektbezug
-  const pidOf=x=>x.ref.startsWith('event:')?S.events[x.id]?.pid:x.ref.startsWith('order:')?S.orders[x.id]?.pid:x.k==='proj'?x.id:x.e&&x.e.pid;
-  const seen=new Set();
-  const evs=calItems(t,addDays(t,21)).filter(x=>x.k!=='todo'&&x.k!=='abw'&&x.first!==false&&ids.has(pidOf(x))).filter(x=>{ const k=x.ref.replace(/\|.*/,'')+x.d+x.t; if(seen.has(k)) return false; seen.add(k); return true; });
-  // Warum steht ein Projekt wo? s=3 braucht Aufmerksamkeit, s=1–2 im Blick behalten
-  const whyOf=p=>{ const out=[], ot=openTasks(p.id), late=ot.filter(x=>x.due&&x.due<t);
-    if(late.length) out.push({s:3,at:'todos',t:late.length+(late.length>1?' Aufgaben überfällig':' Aufgabe überfällig')+' · '+shortWho(late[0].who||'offen')+': '+shortTitle(late[0].title)});
-    arr('orders').filter(o=>o.pid===p.id).forEach(o=>{ const st=orderState(o); if(st.open&&(st.cls==='bad'||st.late)) out.push({s:3,at:'material',t:(st.late?'Lieferung überfällig':'Lieferung unvollständig')+' · '+(o.supplier||'Lieferant')}); });
-    if(catOf(p)==='laufend'){ const nw=nowOf(p), age=nw&&nw.d?Math.round((new Date(t)-new Date(nw.d))/864e5):null, pp=pipe(p);
-      if(age===null) out.push({s:1,at:'status',t:'Noch kein Stand notiert'}); else if(age>30) out.push({s:age>60?2:1,at:'status',t:'Seit '+age+' Tagen kein neuer Stand'});
-      if(pp.next&&!ot.length) out.push({s:1,at:'todos',t:'Niemand am nächsten Schritt: '+pp.nextLabel}); }
-    return out.sort((a,b)=>b.s-a.s); };
-  const card=(p,why,lvl)=>{ const pp=pipe(p), ot=openTasks(p.id).sort(byPrio), nt=ot[0], ev=evs.find(x=>pidOf(x)===p.id); if(nt) RD_TITLES.push(nt.title);
-    return `<div class="rx-card" data-act="openAt" data-id="${esc(p.id)}" data-at="${why[0]?why[0].at:'status'}">
-      <div class="rx-h"><b title="${esc(p.name)}">${esc(p.name)}</b><span class="mono">${pp.pct} %</span></div>
-      <div class="rx-bar"><i style="width:${pp.pct}%"></i></div>
-      <div class="rx-ph">${esc(pp.last?pp.label:'Noch nicht gestartet')}${pp.nextLabel?' → '+esc(pp.nextLabel):''}</div>
-      ${why.slice(0,lvl==='gruen'?0:2).map(w=>`<div class="rx-why">${esc(w.t)}</div>`).join('')}
-      ${nt?`<div class="rx-next" title="${esc(nt.title)}"><b>${esc(nt.ext?'extern':nt.who?shortWho(nt.who):'offen')}</b> ${esc(shortTitle(nt.title))}${ot.length>1?` <span class="muted">+${ot.length-1}</span>`:''}</div>`:''}
-      ${ev?`<div class="rx-ev">${ic('cal')}${esc(fmtD(ev.d))} · ${esc(ev.t)}</div>`:''}</div>`; };
-  const rows=list.map(p=>{ const why=whyOf(p), top=why[0]?why[0].s:0; return {p,why,lvl:top>=3?'rot':top?'gelb':'gruen'}; });
-  const more=UI.rxMore||{}, CAP=6;
-  const col=(k,l)=>{ const its=rows.filter(r=>r.lvl===k), shown=more[k]?its:its.slice(0,CAP);
-    return `<div class="rx-col rx-${k}"><h3><i></i>${l} <span class="cnt-b">${its.length}</span></h3>${shown.map(r=>card(r.p,r.why,k)).join('')||'<div class="rx-none">Keine Projekte</div>'}${its.length>CAP?`<button type="button" class="btn ghost sm rx-more" data-act="rxMore" data-v="${k}">${more[k]?'Weniger anzeigen':'+ '+(its.length-CAP)+' weitere'}</button>`:''}</div>`; };
-  const avg=list.length?Math.round(list.reduce((a,p)=>a+pipe(p).pct,0)/list.length):0;
-  const cntOf=k=>k==='beide'?arr('projects').filter(p=>!isIntern(p)&&['laufend','planung'].includes(catOf(p))).length:arr('projects').filter(p=>!isIntern(p)&&catOf(p)===k).length;
-  return `<section class="rx">
-    <div class="rx-top"><div><h2>Projekt-Radar${briefOn()?' <button type="button" class="btn sm brief-btn" data-act="briefShow" title="Alle laufenden und geplanten Projekte in einfacher Sprache">☀️ Morgen-Briefing</button>':''}</h2><div class="small muted">${list.length} Projekte · im Schnitt ${avg} % Fortschritt · ${list.reduce((a,p)=>a+openTasks(p.id).length,0)} offene Aufgaben</div></div>
-      <div class="rd-sw" role="tablist" aria-label="Projekte im Radar">${[['laufend','Laufend'],['planung','In Planung'],['beide','Beide']].map(([k,l])=>`<button role="tab" class="${rc===k?'on':''}" data-act="rdCat" data-v="${k}">${l} <span class="mono">${cntOf(k)}</span></button>`).join('')}</div></div>
-    ${evs.length?`<div class="rx-evs" aria-label="Anstehende Projekttermine">${evs.slice(0,12).map(x=>`<button type="button" class="rx-evc" data-act="${x.act}" data-id="${esc(x.id)}"><b class="${x.d===t?'today':''}">${esc(fmtD(x.d).slice(0,9))}</b><span class="rx-evt">${esc(x.t)}</span><span class="small muted">${esc(x.k==='proj'?(x.lbl||'Projekt'):projName(pidOf(x)))}</span></button>`).join('')}</div>`:''}
-    <div class="rx-cols">${col('rot','Braucht Aufmerksamkeit')}${col('gelb','Im Blick behalten')}${col('gruen','Läuft')}</div>
-    <div class="small muted rx-foot">Projekt anklicken öffnet es an der passenden Stelle · <button class="rd-link" data-act="projFilter" data-v="aktiv">Alle laufenden & geplanten Projekte</button></div>
-  </section>`;
+function radarHtml(t){
+  // Radar als Stapel: je Status-Kategorie ein nach unten aufgefächerter Stapel, von jedem Projekt ist der Titel zu sehen. Klick klappt die Kachel der Projektübersicht auf.
+  const all=arr('projects').filter(p=>p&&!isIntern(p)); if(!all.length) return '';
+  const more=UI.rxMore||{}, CAP=12, cats=['laufend','planung','onhold','erledigt','abgesagt'];
+  const item=p=>{ const open=UI.rxOpen===p.id, late=openTasks(p.id).some(x=>x.due&&x.due<t);
+    return `<div class="stk-c ${open?'open':''}"><button type="button" class="stk-t" data-act="rxOpen" data-id="${esc(p.id)}" aria-expanded="${open}"><span class="stk-n" title="${esc(p.name)}">${esc(p.name)}</span>${late?'<span class="stk-late" title="Überfällige Aufgaben"></span>':''}</button>${open?projCard(p):''}</div>`; };
+  const stack=c=>{ const its=all.filter(p=>catOf(p)===c).sort((a,b)=>String(a.name).localeCompare(String(b.name),'de',{numeric:true})); if(!its.length) return '';
+    const hasOpen=its.some(p=>p.id===UI.rxOpen), openIdx=its.findIndex(p=>p.id===UI.rxOpen), shown=more[c]||openIdx>=CAP?its:its.slice(0,CAP);
+    return `<div class="stk c-${c} ${hasOpen?'wide':''}"><h3>${esc(CATS[c])} <span class="cnt-b">${its.length}</span></h3><div class="stk-pile">${shown.map(item).join('')}</div>${its.length>CAP?`<button type="button" class="btn ghost sm stk-more" data-act="rxMore" data-v="${c}">${more[c]||openIdx>=CAP?'Weniger anzeigen':'+ '+(its.length-CAP)+' weitere'}</button>`:''}</div>`; };
+  return `<section class="rx"><div class="rx-top"><h2>Projekt-Radar${briefOn()?' <button type="button" class="btn sm brief-btn" data-act="briefShow" title="Alle laufenden und geplanten Projekte in einfacher Sprache">☀️ Morgen-Briefing</button>':''}</h2></div>
+    <div class="stk-grid">${cats.map(stack).join('')}</div></section>`;
 }
 function vDashOld(){
   const t=TODAY(), act=activeProjects();
@@ -4799,6 +4760,18 @@ function dropZoneHtml(pid){
     <div class="dz-ic">${ic('box')}</div><div><b>E-Mail, Rechnung oder AB hierher ziehen</b><div class="small muted">Outlook-Mail: öffnen, <b>Strg+A</b>, <b>Strg+C</b>, dann <b>hier einmal reinklicken</b> und <b>Strg+V</b> – oder „E-Mail-Text einfügen“. Oder .msg/.eml-Datei, PDF, Foto ablegen. Claude liest Positionen, Preise, Liefertermin und ordnet das Projekt zu.</div></div>
     <div class="dz-btns"><button type="button" class="btn sm" data-act="dzPick" data-pid="${esc(pid||'')}">Datei wählen</button><button type="button" class="btn sm" data-act="dzPaste" data-pid="${esc(pid||'')}">E-Mail-Text einfügen</button></div></div>`;
 }
+/* Neues Outlook: Beim Ziehen direkt in den Browser kommt oft gar kein Inhalt an, höchstens interne Daten von Outlook. Dann nicht still scheitern, sondern den Weg erklären. */
+let INNER_DRAG=false; document.addEventListener('dragstart',()=>{ INNER_DRAG=true; },true); document.addEventListener('dragend',()=>{ INNER_DRAG=false; },true);
+const dragTypes=dt=>[...((dt&&dt.types)||[])].map(String);
+const dragIsOutside=dt=>!INNER_DRAG&&!dragTypes(dt).some(t=>t.startsWith('text/x-'));
+function outlookNewHelp(types){ const info='Angekommen: '+(types.join(', ')||'nichts');
+  if(SHEET&&CUR_ORDER){ const m=$('#ordMzMsg')||$('#docStatus'), inp=$('#mailPaste'); if(m) m.textContent='Outlook hat die Mail nicht mitgeschickt. Mail erst auf den Desktop ziehen und die Datei hier ablegen, oder Mailtext kopieren und unten einfügen. ('+info+')'; if(inp) inp.focus(); return; }
+  if(SHEET){ toast('Outlook hat die Mail nicht mitgeschickt. Mail erst auf den Desktop ziehen und die Datei hier ablegen.'); return; }
+  openSheet({title:'Outlook hat die Mail nicht mitgeschickt',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:10px">Das neue Outlook gibt eine Mail beim direkten Ziehen in den Browser nicht als Datei weiter. So kommt sie trotzdem in den Plan:</div>
+    <div class="sec-t" style="margin:0 0 6px">Mit Anhängen</div><ol class="help-ol"><li>Mail aus Outlook auf den <b>Desktop</b> ziehen (es entsteht eine .eml-Datei)</li><li>Diese Datei vom Desktop hier in den Plan ziehen</li></ol>
+    <div class="sec-t" style="margin:12px 0 6px">Nur der Text</div><ol class="help-ol"><li>Mail öffnen, in den Text klicken, <b>Strg + A</b>, dann <b>Strg + C</b></li><li>Hier im Plan <b>Strg + V</b> drücken</li></ol>
+    <div class="small muted" style="margin-top:12px">Technik-Info für Claude: ${esc(info)}</div></div>`,saveLabel:'Verstanden',onSave:()=>{}}); }
+document.addEventListener('drop',e=>{ const dt=e.dataTransfer; if(!dt||!dragIsOutside(dt)||dt.files.length) return; const ty=dragTypes(dt), own=ty.filter(t=>!['text/plain','text/html','text/uri-list','Files'].includes(t)), txt=(dt.getData('text/plain')||'').trim(); if(txt&&!own.length) return; e.preventDefault(); e.stopImmediatePropagation(); document.querySelectorAll('.over').forEach(x=>x.classList.remove('over')); outlookNewHelp(ty); },true);
 document.addEventListener('dragover',e=>{ const z=e.target.closest&&e.target.closest('.dropz'); if(z||SHEET&&CUR_ORDER){ e.preventDefault(); if(z) z.classList.add('over'); const m=SHEET&&CUR_ORDER&&$('#ordMz'); if(m) m.classList.add('over'); } });
 document.addEventListener('dragleave',e=>{ const z=e.target.closest&&e.target.closest('.dropz'); if(z) z.classList.remove('over'); const m=$('#ordMz'); if(m&&!e.relatedTarget) m.classList.remove('over'); });
 document.addEventListener('drop',e=>{ const z=e.target.closest&&e.target.closest('.dropz'); const inOrder=SHEET&&CUR_ORDER&&e.target.closest&&e.target.closest('.sheet');
@@ -5425,7 +5398,7 @@ function vFiles(){
 }
 document.addEventListener('dragover',e=>{ const z=e.target.closest&&e.target.closest('.fdrop'); if(z){ e.preventDefault(); z.classList.add('over'); } });
 document.addEventListener('drop',e=>{ const z=e.target.closest&&e.target.closest('.fdrop'); if(!z) return; e.preventDefault(); e.stopImmediatePropagation(); z.classList.remove('over');
-  const txt=e.dataTransfer.getData('text/plain'); if(!e.dataTransfer.files.length&&isOutlookRow(txt)){ toast('Outlook gibt beim Ziehen nur die Betreffzeile weiter: Mail erst auf den Desktop ziehen, dann die .msg-Datei hier ablegen.'); return; }
+  const txt=e.dataTransfer.getData('text/plain'); if(!e.dataTransfer.files.length&&isOutlookRow(txt)){ toast('Outlook gibt beim Ziehen nur die Betreffzeile weiter: Mail erst auf den Desktop ziehen, dann die Datei (.eml/.msg) hier ablegen.'); return; }
   ingestFiles(e.dataTransfer.files,txt,z.dataset.fdrop||''); },true);
 document.addEventListener('paste',e=>{ const inFiles=UI.view==='files'||(UI.view==='project'&&UI.ptab==='dateien'); if(!inFiles||SHEET) return; const tg=e.target; if(tg&&(tg.tagName==='TEXTAREA'||tg.tagName==='INPUT')) return;
   const files=[...(e.clipboardData.files||[])], text=e.clipboardData.getData('text/plain')||''; if(!files.length&&text.trim().length<30) return; e.preventDefault(); e.stopImmediatePropagation();
@@ -5826,7 +5799,6 @@ const A = {
        const changed=!nw||nw.t!==v.t; put('projects',pp); toast('Stand gespeichert.'); if(changed) suggestTodos(d.pid,v.t); }}); },
  assignNext:d=>{ const p=S.projects[d.pid], pp=pipe(p); taskForm(null,{pid:p.id,title:pp.nextLabel+' – '+p.name,ms:pp.next,who:''}); },
  doneNext:d=>{ const pp=pipe(S.projects[d.pid]); if(!pp.next) return; setMs(d.pid,pp.next,TODAY()); arr('tasks').filter(t=>t.pid===d.pid&&t.ms===pp.next&&!t.done).forEach(t=>put('tasks',{...clone(t),done:true,doneAt:TODAY()})); toast('Status: „'+PIPE[pp.next-1]+'“.'); },
- critAll:()=>{ UI.critAll=true; render(); },
  openAt:d=>{ const id=d.id; if(!S.projects[id]) return; closeSheet(); UI.ptab=['infos','todos','material','timeline'].includes(d.at)?d.at:'status'; go('project',id); if(d.at==='timeline') setTimeout(tlScrollToday,30);
    const focus={notes:()=>{ const t=document.getElementById('qn_'+id); if(t){ t.scrollIntoView({behavior:'smooth',block:'center'}); t.focus({preventScroll:true}); } },
      status:()=>{ const s=document.querySelector('.stage'); s&&s.scrollIntoView({behavior:'smooth',block:'start'}); },
@@ -6725,7 +6697,7 @@ async function readMail(files,text){
 // Kopierter Text ohne Mailkopf mit mehreren kurzen Zeilen = Aufgabenliste
 const isTodoList=t=>{ const ls=String(t||'').split('\n').map(l=>l.trim()).filter(Boolean); return ls.length>=2&&!/^(Von|From|Betreff|Subject|An|To)\s*:/im.test(t)&&ls.filter(l=>l.length<=180).length>=ls.length*0.8; };
 async function mailToTodos(files,text){
-  const txt=String(text||''); if(!(files&&files.length)&&isOutlookRow(txt)){ toast('Outlook gibt beim Ziehen nur die Betreffzeile weiter: Mail erst auf den Desktop ziehen, dann die .msg-Datei hier ablegen – oder Mailtext kopieren und hier einfügen.'); return; }
+  const txt=String(text||''); if(!(files&&files.length)&&isOutlookRow(txt)){ toast('Outlook gibt beim Ziehen nur die Betreffzeile weiter: Mail erst auf den Desktop ziehen, dann die Datei (.eml/.msg) hier ablegen – oder Mailtext kopieren und hier einfügen.'); return; }
   if(!(files&&files.length)&&isTodoList(txt)) return listToTodos(txt);
   const m=await readMail(files,txt); if(!m||m.text.trim().length<10){ toast('Bitte eine E-Mail (.msg/.eml) oder kopierten Mailtext ablegen.'); return; }
   m.kind='mail'; return analyzeTodos(m,files,txt);
@@ -6894,7 +6866,7 @@ function smartDropHtml(){
 }
 async function smartDrop(files,text){
   files=[...(files||[])]; text=String(text||'');
-  if(!files.length&&isOutlookRow(text)){ toast('Outlook gibt beim Ziehen nur die Betreffzeile weiter: Mail erst auf den Desktop ziehen, dann die .msg-Datei hier ablegen – oder Mailtext kopieren und hier einfügen.'); return; }
+  if(!files.length&&isOutlookRow(text)){ toast('Outlook gibt beim Ziehen nur die Betreffzeile weiter: Mail erst auf den Desktop ziehen, dann die Datei (.eml/.msg) hier ablegen – oder Mailtext kopieren und hier einfügen.'); return; }
   if(!files.length&&text.trim().length<3){ toast('Bitte eine Datei, Mail oder Text ablegen.'); return; }
   toast(SAMPLE?'Claude schaut es sich an …':'Wird erkannt …');
   // Inhalt lesen
@@ -8876,7 +8848,7 @@ document.addEventListener('click',e=>{ if(!(e.target.closest&&e.target.closest('
   const u=e.target.closest('.tu'), d=e.target.closest('details.tu-inl[data-tuid]'); if(u&&d&&S.tasks[d.dataset.tuid]) A.editTask({id:d.dataset.tuid}); },true);
 Object.assign(CHG,{ qnMode:(d,el)=>{ UI.qnMode={...(UI.qnMode||{}),[d.pid]:el.value}; render(); }, prioSelCls:(d,el)=>{ el.className='inp prio-sel p-'+el.value; }, mtAllP:(d,el)=>{ if(el.value==='__keep') return; document.querySelectorAll('#mt_list .mt-p').forEach(s=>{ s.value=el.value; s.classList.toggle('none',!el.value); }); }, mtRowP:(d,el)=>el.classList.toggle('none',!el.value), todoSort:(d,el)=>{ UI.todoSort=el.value; saveUI(); render(); } });
 Object.assign(A,{
- rdCat:d=>{ UI.rdCat=d.v; saveUI(); render(); },
+ rxOpen:d=>{ UI.rxOpen=UI.rxOpen===d.id?null:d.id; render(); },
  rxMore:d=>{ UI.rxMore={...(UI.rxMore||{}),[d.v]:!(UI.rxMore||{})[d.v]}; render(); },
  orderBuyer:d=>{ UI.orderBuyer=d.v||''; render(); },
  stockFirm:d=>{ UI.sfirm=d.v||''; render(); },
@@ -8901,6 +8873,9 @@ document.addEventListener('paste',e=>{ if(UI.view!=='todos'||SHEET) return; cons
     const v=$('#view'); if(v){ v.classList.add(dx<0?'swipe-out-l':'swipe-out-r'); setTimeout(()=>{ v.classList.remove('swipe-out-l','swipe-out-r'); b.click(); },150); } else b.click(); },{passive:true}); })();
 // Handy-Schublade: Seitenleiste ein-/ausblenden (Abdunklung dahinter schließt sie)
 function navDrawer(on){ let s=$('#navScrim'); if(!s){ s=document.createElement('div'); s.id='navScrim'; s.onclick=()=>navDrawer(false); document.body.appendChild(s); } document.body.classList.toggle('nav-open',!!on); if(on){ const c=document.querySelector('#side .nav-btn.on'); if(c) c.scrollIntoView({block:'center'}); } }
+// Datei von außen irgendwo im Plan abgelegt, nicht nur im Ablagefeld: wie „Alles hier reinziehen“ behandeln
+document.addEventListener('dragover',e=>{ if(e.defaultPrevented||SHEET||!e.dataTransfer||!dragIsOutside(e.dataTransfer)||!dragTypes(e.dataTransfer).includes('Files')) return; e.preventDefault(); });
+document.addEventListener('drop',e=>{ if(e.defaultPrevented||SHEET||!e.dataTransfer||!dragIsOutside(e.dataTransfer)||!e.dataTransfer.files.length) return; if(e.target.closest&&e.target.closest('input,textarea')) return; e.preventDefault(); smartDrop(e.dataTransfer.files,''); });
 document.addEventListener('click',e=>{
   const a=e.target.closest('[data-act]');
   if(a&&document.body.classList.contains('nav-open')&&a.closest('#side')&&!['navGrp','navToggle','navPin'].includes(a.dataset.act)) navDrawer(false);
