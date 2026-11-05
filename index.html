@@ -1184,9 +1184,9 @@ textarea.autogrow{resize:vertical;overflow:hidden;min-height:40px!important;max-
 .ps-notes .dy-sum{font-size:14.5px;line-height:1.6}.ps-notes .dy-sum .muted{color:inherit}.ps-notes .dy-sum li{margin:3px 0}.ps-notes .dy-t{line-height:1.6}
 .ps-notes .nb-more>summary{text-align:center;border:1px solid var(--line);border-radius:12px;font-size:13.5px;padding:9px 12px}
 .ps-side .li{margin:0 0 8px;border:1px solid var(--line);border-radius:12px;padding:11px 12px}.ps-side .list{border:0}
-.ps-side .li.cf-late,.ps-side .li.cf-today,.ps-side .li.cf-week,.ps-side .li.cf-later,.ps-side .li.cf-none{border:1px solid color-mix(in srgb,var(--cf) 45%,var(--line));border-left:5px solid var(--cf);background:color-mix(in srgb,var(--cf) 9%,var(--surface))}
-.cf-late{--cf:#E53935}.cf-today{--cf:#F57C00}.cf-week{--cf:#F4DB02}.cf-later{--cf:#3D8BD9}.cf-none{--cf:#A8A69B}
-.ps-side .li.cf-week{background:color-mix(in srgb,var(--cf) 16%,var(--surface))}
+.ps-side .li.cf-dringend,.ps-side .li.cf-hoch,.ps-side .li.cf-normal,.ps-side .li.cf-niedrig{border:1px solid color-mix(in srgb,var(--cf) 45%,var(--line));border-left:5px solid var(--cf);background:color-mix(in srgb,var(--cf) 9%,var(--surface))}
+.cf-dringend{--cf:#E53935}.cf-hoch{--cf:#F57C00}.cf-normal{--cf:#3D8BD9}.cf-niedrig{--cf:#A8A69B}
+.ps-side .li.cf-dringend{background:color-mix(in srgb,var(--cf) 16%,var(--surface))}
 .ps-side .li[class*="cf-"] .tu-inl{border-left-color:var(--cf);background:color-mix(in srgb,var(--cf) 10%,var(--surface))}
 .cf-lg{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11.5px;color:var(--muted);margin:0 0 10px}.cf-lg i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px;background:var(--cf)}
 .dy-task{font-size:13.5px;opacity:.85}
@@ -3344,8 +3344,8 @@ function whoMoreHtml(t){ const ex=t.who2||[]; return `<div id="who_more" class="
 const whoMoreRow=n=>`<div class="who2-row"><input class="inp who2-in" list="staffList" value="${esc(n||'')}" placeholder="weitere Person" aria-label="Weitere zuständige Person"><button type="button" class="icon-btn" data-act="whoMoreDel" aria-label="Entfernen">✕</button></div>`;
 function taskLi(t){  const late=t.due&&t.due<TODAY()&&!t.done;
   const bsel=UI.bulk&&['todos','pool'].includes(UI.view);
-  // Farbe nach Fälligkeit (sichtbar auf der Projektseite)
-  const cf=t.done?'':!t.due?'cf-none':late?'cf-late':t.due===TODAY()?'cf-today':t.due<=addDays(TODAY(),7)?'cf-week':'cf-later';
+  // Farbe nach Dringlichkeit (sichtbar auf der Projektseite); ein überfälliges Datum bleibt in der Zeile rot
+  const cf=t.done?'':'cf-'+(PRIO[t.prio]?t.prio:'normal');
   return `<div class="li ${cf} ${t.done?'done':''} ${bsel&&SEL.has(t.id)?'sel':''}" data-drag="task:${t.id}"${t.done?'':` data-drop-task="${t.id}"`}>${bsel?`<input type="checkbox" class="sel-ck" data-chg="selTask" data-id="${t.id}" ${SEL.has(t.id)?'checked':''} aria-label="Auswählen: ${esc(t.title)}" title="Für Mehrfachbearbeitung auswählen">`:''}<input type="checkbox" class="ck" data-chg="toggleTask" data-id="${t.id}" ${t.done?'checked':''} aria-label="Erledigt"><div class="body clickable" data-act="editTask" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="mt">${t.ext?`<span class="pill ext-pill" title="Liegt extern">extern: ${esc(t.ext)}</span>`:''}${t.pid&&S.projects[t.pid]&&!(UI.view==='project'&&UI.pid===t.pid)?`<button type="button" class="proj-link" data-act="openProject" data-id="${esc(t.pid)}" title="Zum Projekt ${esc(projName(t.pid))}">📁 ${esc(projName(t.pid))} ↗</button>`:t.pid?`<span>${esc(projName(t.pid))}</span>`:''}${t.due?`<span class="${late?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${t.wv&&!t.done?`<span class="pill wv-pill ${t.wv<=TODAY()?'bad':''}" title="${esc(t.wvNote||'Wiedervorlage')}">🔔 WV ${t.wv<=TODAY()?(t.wv===TODAY()?'heute':'seit '+fmtD(t.wv).slice(0,6)):fmtD(t.wv).slice(0,6)}</span>`:''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?`<span class="pill ${PRIO[t.prio][2]}">${PRIO[t.prio][0]}</span>`:''}${t.pool?'<span class="pill">allgemein</span>':''}${t.from&&S.tasks[t.from]?`<span class="pill link-pill" data-act="editTask" data-id="${esc(t.from)}" title="Folgt aus: ${esc(S.tasks[t.from].title)}">↰ aus: ${esc(S.tasks[t.from].title.slice(0,32))}${S.tasks[t.from].title.length>32?'…':''}</span>`:''}${(()=>{ const k=taskKids(t.id).filter(x=>!x.done).length; return k?`<span class="pill link-pill" title="Offene Folge-To-Dos">↳ ${k} Folge-To-Do${k>1?'s':''}</span>`:''; })()}${t.by&&t.by!=='?'?`<span class="by-line">angelegt ${esc(t.by)} ${esc(fmtD((t.at||'').slice(0,10)).slice(3))}</span>`:''}${t.done?`<span class="done-by">✓ erledigt von <b>${esc(t.doneBy||t.updBy||'?')}</b>${t.doneAt?' · '+esc(stampTxt(t.doneAt)):''}${t.doneNote?' – '+esc(t.doneNote):''}</span>`:''}</div>${taskUpdInline(t)}</div>
     <div class="li-side">${t.done?'':`<button type="button" class="task-upd" data-act="taskQuickUpd" data-id="${t.id}" title="Update zu diesem To-Do eintragen" aria-label="Update eintragen: ${esc(t.title)}">${ic('plus')}Update</button>`}${(t.who2||[]).length?`<button type="button" class="who-more" data-act="taskWhoMulti" data-id="${t.id}" title="Ebenfalls zuständig: ${esc(t.who2.join(', '))} – ändern">+ ${esc(t.who2.map(shortWho).join(' '))}</button>`:''}<select class="who-sel ${t.who?'':'none'}" data-chg="taskWho" data-id="${t.id}" aria-label="Zuständig für: ${esc(t.title)}" title="Zuständigkeit ändern"><option value="">offen</option>${(()=>{ const cw=whoCanon(t.who), l=staffUniq().map(s=>s.name); if(cw&&!l.includes(cw)) l.push(cw); return l.map(n=>`<option value="${esc(n)}" ${n===cw?'selected':''}>${esc(shortWho(n))}</option>`).join(''); })()}<option value="__multi">👥 mehrere Personen …</option><option value="__ext">→ liegt extern …</option>${t.ext?'<option value="__int">→ wieder intern</option>':''}</select></div>${isAdmin()?`<button type="button" class="icon-btn task-del" title="Aufgabe löschen" aria-label="Aufgabe löschen: ${esc(t.title)}" data-act="taskDel" data-id="${t.id}">${ic('x')}</button>`:''}</div>`;
 }
@@ -3517,7 +3517,7 @@ function projStatus(p){
   <div class="ps-side">
    <div class="card"><div class="card-b" style="display:flex;flex-direction:column;gap:12px">
     <div><div class="eyebrow wm-head"><span>Wer macht gerade was · ${tasks.length} offen</span><button class="btn sun sm" data-act="newTask" data-pid="${p.id}" style="font-weight:700">${ic('plus')}Aufgabe</button></div>
-      ${tasks.length>1?`<div style="margin:2px 0 6px">${ptSortSel()}</div>`:''}${tasks.length?`<div class="cf-lg">${[['cf-late','überfällig'],['cf-today','heute'],['cf-week','diese Woche'],['cf-later','später'],['cf-none','ohne Datum']].map(([c,l])=>`<span class="${c}"><i></i>${l}</span>`).join('')}</div>`:''}${ptListHtml(tasks,'<div class="small muted">Keine offenen Aufgaben.</div>')}
+      ${tasks.length>1?`<div style="margin:2px 0 6px">${ptSortSel()}</div>`:''}${tasks.length?`<div class="cf-lg">${[['cf-dringend','dringend'],['cf-hoch','hoch'],['cf-normal','normal'],['cf-niedrig','niedrig']].map(([c,l])=>`<span class="${c}"><i></i>${l}</span>`).join('')}</div>`:''}${ptListHtml(tasks,'<div class="small muted">Keine offenen Aufgaben.</div>')}
       ${dn.length?`<label class="tog-sw" style="margin-top:8px"><input type="checkbox" data-chg="toggleDoneSw" ${UI.todoShowDone?'checked':''}><span class="sw" aria-hidden="true"></span><span class="small">Erledigte einblenden (${dn.length})</span></label>${UI.todoShowDone?`<div class="list done-list">${dn.map(taskLi).join('')}</div>`:''}`:''}</div>
     <div><div class="eyebrow"><span>Standardisiert als Nächstes</span>${SAMPLE?`<button class="btn ghost sm" data-act="aiNext" data-pid="${p.id}" title="Claude schlägt konkrete nächste Schritte vor (Fristen, Pflichten, Netzbetreiber …)">✨ KI-Vorschläge</button>`:''}</div>
       ${active&&pp.next?`<div class="nxbox"><b>${esc(pp.nextLabel)}</b>${pp.afterNext?`<span class="small muted">danach${pp.flow.opt.includes(pp.afterNext)?' optional':''}: ${esc(PIPE_DO[pp.afterNext-1])}</span>`:''}
@@ -5946,7 +5946,7 @@ const CHG = {
  fileQ:(d,el)=>{ UI.fq=el.value; render(); },
  fileProjF:(d,el)=>{ UI.fproj=el.value; render(); },
  toggleDoneSw:(d,el)=>{ UI.todoShowDone=el.checked; saveUI(); render(); },
- ptSort:(d,el)=>{ UI.ptSort=el.value; saveUI(); render(); },
+ ptSort:(d,el)=>{ UI.ptSort2=el.value; saveUI(); render(); },
  infoField:(d,el)=>{ const p=clone(S.projects[d.pid]); if(!p) return; const k=d.k; let v=el.value.trim();
    if(k==='name'&&!v){ toast('Der Projektname darf nicht leer sein.'); el.value=S.projects[d.pid].name; return; }
    if(['kwp','kwh','lp','value'].includes(k)) v=v===''?'':+String(v).replace(',','.');
@@ -6046,12 +6046,13 @@ const updKey=x=>(x.d||'')+' '+(updTime(x)||'00:00')+(x.at||'');
 // Letzte Aktivität eines To-Dos: neuestes Update, sonst Anlagezeitpunkt (Format JJJJ-MM-TT HH:MM)
 const isoLocal=s=>{ const a=new Date(s); return isNaN(a)?'':iso(a)+' '+String(a.getHours()).padStart(2,'0')+':'+String(a.getMinutes()).padStart(2,'0'); };
 const taskActKey=t=>{ const u=(t.upd2||[]).map(x=>(x.d||'')+' '+(updTime(x)||'00:00')).sort().pop()||''; const c=t.at?isoLocal(t.at):''; return u>c?u:c; };
-// To-Dos im Projekt sortieren: Standard ist die Fälligkeit (passt zu den Farben), ein To-Do bleibt nach einem Update an seinem Platz. „Zuletzt bearbeitet“ nur, wenn man es selbst wählt.
-const PT_SORTS=[['due','Fälligkeit'],['neu','Neueste zuerst'],['akt','Zuletzt bearbeitet'],['az','Alphabetisch (A–Z)'],['who','Nach Person']];
-function ptSortKey(){ return PT_SORTS.some(s=>s[0]===UI.ptSort)?UI.ptSort:'due'; }
+// To-Dos im Projekt sortieren: Standard ist die Dringlichkeit (passt zu den Farben), bei gleicher Dringlichkeit nach Datum. Ein To-Do bleibt nach einem Update an seinem Platz. „Zuletzt bearbeitet“ nur, wenn man es selbst wählt.
+// Eigener Speicherplatz ptSort2: So gilt die neue Standard-Sortierung auch für alle, bei denen noch „Fälligkeit“ gespeichert ist.
+const PT_SORTS=[['prio','Dringlichkeit'],['due','Fälligkeit'],['neu','Neueste zuerst'],['akt','Zuletzt bearbeitet'],['az','Alphabetisch (A–Z)'],['who','Nach Person']];
+function ptSortKey(){ return PT_SORTS.some(s=>s[0]===UI.ptSort2)?UI.ptSort2:'prio'; }
 function ptSortSel(){ const k=ptSortKey(); return `<select class="catsel pt-sort" data-chg="ptSort" aria-label="To-Dos sortieren" title="To-Dos sortieren">${PT_SORTS.map(([v,l])=>`<option value="${v}" ${v===k?'selected':''}>↕ ${l}</option>`).join('')}</select>`; }
 function ptSorted(list){ const k=ptSortKey(), due=t=>t.due||'9999', az=(a,b)=>String(a.title||'').localeCompare(String(b.title||''),'de',{sensitivity:'base'}), wk=t=>t.who?shortWho(t.who):'￿';
-  return list.slice().sort(k==='due'?(a,b)=>due(a).localeCompare(due(b))||az(a,b):k==='az'?az:k==='who'?(a,b)=>wk(a).localeCompare(wk(b),'de')||due(a).localeCompare(due(b))||az(a,b):k==='akt'?(a,b)=>taskActKey(b).localeCompare(taskActKey(a)):(a,b)=>taskBorn(b).localeCompare(taskBorn(a))||String(a.id).localeCompare(String(b.id))); }
+  return list.slice().sort(k==='prio'?(a,b)=>prioN(b)-prioN(a)||due(a).localeCompare(due(b))||az(a,b):k==='due'?(a,b)=>due(a).localeCompare(due(b))||az(a,b):k==='az'?az:k==='who'?(a,b)=>wk(a).localeCompare(wk(b),'de')||due(a).localeCompare(due(b))||az(a,b):k==='akt'?(a,b)=>taskActKey(b).localeCompare(taskActKey(a)):(a,b)=>taskBorn(b).localeCompare(taskBorn(a))||String(a.id).localeCompare(String(b.id))); }
 function ptListHtml(list,empty){ const s=ptSorted(list); if(!s.length) return empty; if(ptSortKey()!=='who') return `<div class="list">${s.map(taskLi).join('')}</div>`;
   const g=[]; s.forEach(t=>{ const w=t.who?shortWho(t.who):'nicht zugewiesen'; if(!g.length||g[g.length-1][0]!==w) g.push([w,[]]); g[g.length-1][1].push(t); });
   return g.map(([w,ts])=>`<div class="grp-h">${esc(w)} · ${ts.length}</div><div class="list">${ts.map(taskLi).join('')}</div>`).join(''); }
