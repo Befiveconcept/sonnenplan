@@ -277,6 +277,11 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .dcol.today{box-shadow:0 0 0 2px var(--sun) inset}
 .dcol.past{opacity:.6}
 .dash-week{margin-top:14px}
+/* Übersicht: Gesamt-Timeline */
+.dtl{margin-top:14px;padding-top:14px}.dtl-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:0 16px 8px}.dtl-top h2{margin:0}.dtl-top .catsel{max-width:280px}
+.dtl-sw{padding:0 16px 8px;display:flex;gap:6px;flex-wrap:wrap}.dtl-sw .chip{display:inline-flex;align-items:center;gap:6px;cursor:pointer}.dtl-dot{width:10px;height:10px;border-radius:3px;flex:none}
+.dtl .dtl-n{border:0;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;letter-spacing:0;text-transform:none;color:#111;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:5}.dtl .dtl-n:hover{background:var(--sun)}
+.dtl .tl-now span{top:auto;bottom:4px}
 /* Übersicht: Pinnwand und Mitteilungen nebeneinander */
 .dash-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:stretch;margin-bottom:14px}.dash-pair>*{min-width:0;margin:0}
 @media (max-width:1100px){.dash-pair{grid-template-columns:minmax(0,1fr)}}
@@ -2868,8 +2873,8 @@ async function initStore(){
 
 /* ========== UI-Zustand ========== */
 const UI = { view:'dash', pid:null, ptab:'status', open:{}, projFilter:'laufend', projType:'', q:'', projMode:'karten', calMode:'monat', week:null, todoWho:'', todoShowDone:false, calMonth:TODAY().slice(0,7), calSel:TODAY(), orderFilter:'offen', offerFilter:'alle' };
-try{ const u=JSON.parse(lsGet('sonnenplan-ui2')||'null'); if(u){ ['view','pid','ptab','projFilter','projMode','todoWho','sort','hide','todoShowDone','todoMode','ptSort2','todoSort'].forEach(k=>{ if(u[k]!=null) UI[k]=u[k]; }); } }catch(e){}
-function saveUI(){ lsSet('sonnenplan-ui2', JSON.stringify({view:UI.view,pid:UI.pid,ptab:UI.ptab,projFilter:UI.projFilter,projMode:UI.projMode,todoWho:UI.todoWho,sort:UI.sort,hide:UI.hide,todoShowDone:UI.todoShowDone,todoMode:UI.todoMode,ptSort2:UI.ptSort2,todoSort:UI.todoSort})); }
+try{ const u=JSON.parse(lsGet('sonnenplan-ui2')||'null'); if(u){ ['view','pid','ptab','projFilter','projMode','todoWho','sort','hide','todoShowDone','todoMode','ptSort2','todoSort','dtlP','dtlL','dtlZ'].forEach(k=>{ if(u[k]!=null) UI[k]=u[k]; }); } }catch(e){}
+function saveUI(){ lsSet('sonnenplan-ui2', JSON.stringify({view:UI.view,pid:UI.pid,ptab:UI.ptab,projFilter:UI.projFilter,projMode:UI.projMode,todoWho:UI.todoWho,sort:UI.sort,hide:UI.hide,todoShowDone:UI.todoShowDone,todoMode:UI.todoMode,ptSort2:UI.ptSort2,todoSort:UI.todoSort,dtlP:UI.dtlP,dtlL:UI.dtlL,dtlZ:UI.dtlZ})); }
 let rq=false; function scheduleRender(){ if(rq) return; rq=true; requestAnimationFrame(()=>{ rq=false; render(); }); }
 function go(view,pid){ UI.view=view; if(pid!==undefined) UI.pid=pid; saveUI(); render(); window.scrollTo(0,0); }
 
@@ -3061,7 +3066,7 @@ function vDash(){
     <section class="card dash-dl"><div class="card-h"><h2>Offene Lieferungen <span class="cnt-b">${dl.length}</span></h2><button class="btn ghost sm" data-act="nav" data-v="orders">Alle</button></div>
       <div class="dl-list">${dl.slice(0,7).map(dlRow).join('')||'<div class="empty">Keine offenen Lieferungen.</div>'}</div>${dl.length>7?`<button class="btn ghost sm more-b" data-act="nav" data-v="orders">+ ${dl.length-7} weitere</button>`:''}</section>
   </div>
-  <section class="card dash-week"><div class="card-h"><h2>Wochenplanung · KW ${kwOf(mon)}</h2><button class="btn ghost sm" data-act="nav" data-v="week">Zur Wochenplanung</button></div><div class="dcols week">${days.map(d=>dayCol(d,d===t?'Heute':new Date(d+'T12:00').toLocaleDateString('de-DE',{weekday:'long'}))).join('')}</div></section>`+radarHtml(t);
+  <section class="card dash-week"><div class="card-h"><h2>Wochenplanung · KW ${kwOf(mon)}</h2><button class="btn ghost sm" data-act="nav" data-v="week">Zur Wochenplanung</button></div><div class="dcols week">${days.map(d=>dayCol(d,d===t?'Heute':new Date(d+'T12:00').toLocaleDateString('de-DE',{weekday:'long'}))).join('')}</div></section>`+radarHtml(t)+dashTimelineHtml(t);
 }
 // Statusleiste der Projektakte: 29 Schritte, Bezeichnungen schräg nach oben, Klick springt zum Schritt
 function stepRail(p){
@@ -3112,6 +3117,37 @@ if(window.matchMedia&&matchMedia('(hover:hover)').matches){
   document.addEventListener('keydown',e=>{ if(e.key==='Escape') stkHide(); });
   document.documentElement.addEventListener('mouseleave',()=>{ clearTimeout(STK_T); STK_T=setTimeout(stkHide,220); });
 }
+/* ---------- Gesamt-Timeline auf der Übersicht: alle laufenden und geplanten Projekte auf einer Zeitachse ---------- */
+// Nutzt dieselben Einträge wie die Timeline im Projekt (tlItems). Auswahl je Gerät: Projekt (dtlP), Arten (dtlL), Zoom (dtlZ). Zeigt 3 Monate zurück und 9 voraus, sonst wird die Fläche unbrauchbar breit.
+const DTL_COL={ms:'#F4DB02',status:'#C9B400',mat:'#6F9BE0',term:'#9B7FDB',task:'#58B073',note:'#A8A69B'};
+const dtlLanes=()=>TL_LANES.filter(([k])=>k!=='mat'||canSee('orders')); // Material nur für alle, die Bestellungen sehen dürfen
+function dtlOn(){ const d={ms:true,term:true}, l=UI.dtlL&&typeof UI.dtlL==='object'?UI.dtlL:d; return k=>!!l[k]; }
+function dashTimelineHtml(t){ const all=rxProjects().sort((a,b)=>String(a.name).localeCompare(String(b.name),'de',{numeric:true})); if(!all.length) return '';
+  const sel=['alle','laufend','planung'].includes(UI.dtlP)||all.some(p=>p.id===UI.dtlP)?UI.dtlP:'alle', on=dtlOn(), lanes=dtlLanes(), z=TL_ZOOM[UI.dtlZ]?UI.dtlZ:'woche', Z=TL_ZOOM[z], CARD=z==='tag'?150:z==='woche'?170:180;
+  const ps=all.filter(p=>sel==='alle'||(sel==='laufend'||sel==='planung'?catOf(p)===sel:p.id===sel)), single=ps.length===1&&sel===ps[0].id, lo=addDays(t,-90), hi=addDays(t,270);
+  const items=ps.flatMap(p=>tlItems(p).filter(i=>on(i.lane)&&lanes.some(l=>l[0]===i.lane)&&i.d>=lo&&i.d<=hi).map(i=>({...i,p})));
+  const ds=items.map(i=>i.d).sort(); let a=ds[0]&&ds[0]<addDays(t,-14)?ds[0]:addDays(t,-14), b=ds.length&&ds[ds.length-1]>addDays(t,30)?ds[ds.length-1]:addDays(t,30); a=addDays(a,-Math.round(Z.days)); b=addDays(b,Math.round(Z.days*2));
+  if(z==='woche') a=mondayOf(a); if(z==='monat') a=a.slice(0,8)+'01';
+  const px=d=>Math.round(dDiff(a,d)/Z.days*Z.w), W=px(b)+Z.w; let head='';
+  for(let d=a; d<=b; ){ const lbl=z==='tag'?new Date(d+'T12:00').toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'}):z==='woche'?'KW '+kw(d)+'<small>'+fmtD(d).slice(3,9)+'</small>':new Date(d+'T12:00').toLocaleDateString('de-DE',{month:'short',year:'2-digit'}), we=z==='tag'&&[0,6].includes(new Date(d+'T12:00').getDay());
+    head+=`<div class="tlh ${we?'we':''}" style="left:${px(d)}px;width:${Z.w}px">${lbl}</div>`; d=z==='monat'?(()=>{ const x=new Date(d+'T12:00'); x.setMonth(x.getMonth()+1); return iso(x).slice(0,8)+'01'; })():addDays(d,Z.days); }
+  const card=(it,x,r)=>{ const lk=it.lane, act=it.act?`data-act="${it.act}" data-id="${esc(it.id)}"`:lk==='ms'&&it.key?`data-act="tlEditMs" data-pid="${esc(it.p.id)}" data-key="${esc(it.key)}"`:`data-act="openAt" data-id="${esc(it.p.id)}" data-at="timeline"`;
+    return `<div class="tlc l-${lk} ${it.k?'k-'+it.k:''} ${it.d>t?'fut':''} ${it.late?'late':''} ${it.ai?'ai':''}" style="left:${x}px;top:${r*44+24}px;width:${CARD}px" ${act} title="${esc(fmtD(it.d)+' · '+it.t+(it.by?' · '+it.by:'')+' · '+it.p.name)}"><b>${esc(fmtD(it.d).slice(3,9))}</b> ${esc(it.t)}</div>`; };
+  const row=(label,its,labelAttr)=>{ const rows=[], cards=[...its].sort((x,y)=>x.d.localeCompare(y.d)).map(it=>{ const x=px(it.d); let r=rows.findIndex(end=>end<=x); if(r<0){ r=rows.length; rows.push(0); } rows[r]=x+CARD+6; return card(it,x,r); }).join('');
+    return `<div class="tll" style="height:${Math.max(1,rows.length)*44+30}px"><button type="button" class="tll-n dtl-n" ${labelAttr}>${esc(label)}</button>${cards}</div>`; };
+  const body=single?lanes.filter(([k])=>items.some(i=>i.lane===k)).map(([k,l])=>row(tlLaneName(k,l),items.filter(i=>i.lane===k),`data-act="openAt" data-id="${esc(ps[0].id)}" data-at="timeline" title="Timeline des Projekts öffnen"`)).join('')
+    :ps.map(p=>({p,its:items.filter(i=>i.p===p)})).filter(x=>x.its.length).map(x=>row(x.p.name,x.its,`data-act="openAt" data-id="${esc(x.p.id)}" data-at="timeline" title="Timeline des Projekts öffnen"`)).join('');
+  setTimeout(dtlScrollRestore,0);
+  return `<section class="card tl-card dtl"><div class="dtl-top"><h2>Projekt-Timeline</h2>
+      <select class="catsel" data-chg="dtlP" aria-label="Projekt wählen"><option value="alle" ${sel==='alle'?'selected':''}>Alle Projekte (${all.length})</option><option value="laufend" ${sel==='laufend'?'selected':''}>Alle laufenden</option><option value="planung" ${sel==='planung'?'selected':''}>Alle in Planung</option><optgroup label="Einzelnes Projekt">${all.map(p=>`<option value="${esc(p.id)}" ${sel===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</optgroup></select>
+      <span class="spacer"></span><div class="cal-sw sm">${Object.entries(TL_ZOOM).map(([k,v])=>`<button type="button" class="${k===z?'on':''}" data-act="dtlZoom" data-v="${k}">${v.lbl}</button>`).join('')}</div><button type="button" class="btn sm" data-act="dtlToday">Heute</button></div>
+    <div class="tl-lanes-sw dtl-sw"><button type="button" class="chip ${lanes.every(([k])=>on(k))?'on':''}" data-act="dtlAll">Alles</button>${lanes.map(([k,l])=>`<label class="chip ${on(k)?'on':''}"><input type="checkbox" data-chg="dtlLane" data-v="${k}" ${on(k)?'checked':''} hidden><i class="dtl-dot" style="background:${DTL_COL[k]}"></i>${esc(tlLaneName(k,l))}</label>`).join('')}</div>
+    <div class="tl-scroll" id="dtlScroll"><div class="tl-canvas" style="width:${W}px"><div class="tl-head">${head}</div><div class="tl-now" style="left:${px(t)}px"><span>Heute</span></div>${body||'<div class="empty" style="position:sticky;left:0;width:min(100%,520px)">Für diese Auswahl gibt es im Zeitraum keine Einträge.</div>'}</div></div></section>`; }
+function dtlScrollRestore(){ const s=$('#dtlScroll'), n=s&&s.querySelector('.tl-now'); if(!s||!n) return; s.scrollLeft=UI.dtlX!=null?UI.dtlX:Math.max(0,n.offsetLeft-s.clientWidth*0.35); }
+document.addEventListener('scroll',e=>{ if(e.target&&e.target.id==='dtlScroll') UI.dtlX=e.target.scrollLeft; },true);
+queueMicrotask(()=>{ Object.assign(A,{ dtlZoom:d=>{ UI.dtlZ=d.v; UI.dtlX=null; saveUI(); render(); }, dtlToday:()=>{ UI.dtlX=null; dtlScrollRestore(); },
+    dtlAll:()=>{ const ls=dtlLanes(), on=dtlOn(), every=ls.every(([k])=>on(k)); UI.dtlL=every?{ms:true,term:true}:Object.fromEntries(ls.map(([k])=>[k,true])); saveUI(); render(); } });
+  Object.assign(CHG,{ dtlP:(d,el)=>{ UI.dtlP=el.value; UI.dtlX=null; saveUI(); render(); }, dtlLane:(d,el)=>{ const on=dtlOn(), n={}; TL_LANES.forEach(([k])=>{ if(on(k)) n[k]=true; }); if(el.checked) n[d.v]=true; else delete n[d.v]; UI.dtlL=n; saveUI(); render(); } }); });
 function vDashOld(){
   const t=TODAY(), act=activeProjects();
   const mwp = act.filter(p=>PV.includes(p.type)).reduce((a,p)=>a+(+p.kwp||0),0)/1000;
