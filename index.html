@@ -118,7 +118,7 @@ a{color:var(--primary)}
 .team .who{font-weight:600;background:var(--sunken)}
 .team .en{border-left:3px solid var(--kc);background:var(--sunken);border-radius:3px;padding:3px 6px;cursor:pointer;line-height:1.35}
 .team .en:hover{outline:1px solid var(--muted)}
-.k-abw{--kc:var(--bad)}
+
 .team .en .tag{display:inline-block;font-size:10.5px;border-radius:3px;padding:0 5px;margin:3px 4px 0 0;background:var(--surface);color:var(--muted)}
 .team .en .tag.ok,.day-it .tag.ok{color:var(--ok)}
 .en .tag{display:inline-block;font-size:10.5px;border-radius:3px;padding:0 5px;margin:3px 4px 0 0;background:var(--surface);color:var(--muted)}
@@ -343,6 +343,7 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 @media (max-width:520px){.stk.wide{grid-column:auto}.stk-grid{grid-template-columns:minmax(0,1fr)}}
 /* Bestellung: Ablagefläche für die echte Bestell-Mail */
 .ord-mz{border:2px dashed var(--line);border-radius:12px;padding:12px 14px;background:var(--sunken);transition:border-color .15s,background .15s}.ord-mz.over{border-color:var(--sun);background:var(--sun-soft);color:#111}
+.ord-pick{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:pointer}.ord-pick:hover{border-color:var(--sun);background:var(--sun-soft)}
 .ord-res{margin-top:8px;font-size:12.5px;border-left:3px solid var(--sun);padding-left:9px}.ord-res ul{margin:3px 0 0 16px;padding:0}.ord-res li{margin:1px 0}
 .dash-car2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
 @media (max-width:900px){.dash-car2{grid-template-columns:minmax(0,1fr)}}
@@ -1532,10 +1533,9 @@ button.link-ms:hover{color:var(--ink)}
 .ag-it .bar{align-self:stretch;border-radius:2px;background:var(--kc,var(--muted))}
 .ag-it .tt{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ag-it .mt{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.k-bau{--kc:var(--primary)} .k-kunde{--kc:var(--t-bess)} .k-evu{--kc:var(--t-ffa)} .k-lief{--kc:var(--sun)} .k-intern{--kc:var(--muted)} .k-todo{--kc:var(--bad)} .k-proj{--kc:var(--ink)}
-.k-urlaub{--kc:#2E9E4F} .k-krank{--kc:#D32F2F} .k-ausw{--kc:#F57C00} .k-teams{--kc:#5B5FC7} .k-sonst{--kc:#8D6E63}
+/* Terminfarben: Rot = abwesend (Krankheit, Urlaub, Lehrgang), Grau = Kundentermin und Baustelle, Gelb = alles andere */ .k-abw,.k-urlaub,.k-krank,.k-lehrgang{--kc:#D32F2F} .k-kunde,.k-bau,.k-proj{--kc:#8A8F98} .k-evu,.k-lief,.k-ausw,.k-teams,.k-intern,.k-sonst,.k-todo{--kc:#F4DB02}
 /* Termine farbig hinterlegt (nach Art), damit man Urlaub, Krankheit, Teams usw. auf einen Blick unterscheidet */
-.cal .ev[class*="k-"],.team .en[class*="k-"],.day-it .en[class*="k-"]{background:color-mix(in srgb,var(--kc) 17%,var(--surface))}
+.cal .ev[class*="k-"],.team .en[class*="k-"],.day-it .en[class*="k-"],.dev[class*="k-"]{background:color-mix(in srgb,var(--kc) 17%,var(--surface))}
 .dev[class*="k-"]{background:color-mix(in srgb,var(--kc,transparent) 11%,var(--surface))}
 
 /* Lists */
@@ -2170,7 +2170,7 @@ const MAT_AC = ['Hauptschalter','eHz-Adapter','eHz-Kassette','Ü-Schutz','Einspe
 const MAT_KABEL = ['1,5mm²','2,5mm²','4mm²','6mm²','10mm²','16mm²','5x4mm²','5x6mm²','5x10mm²','5x16mm²','Kanal 40x40','Kanal 40x60','Kanal 100x60 Metall','KuPa25','KuPa32','KuPa40','Schellen','AluRohr 25','AluRohr 32','AluRohr 40','Alu-Schellen'];
 const MAT_DC = ['PV-Kabel 6mm² rot','PV-Kabel 6mm² schwarz','Erdung 16mm² starr','Erdung 16mm² flexibel','Dachhaken','Schienen Alu 3m','Schienen Alu 6m','Schienenverbinder','Kreuzverbinder','Endklemmen','Mittelklemmen','Stockschrauben'];
 const CREW_ROLES = ['Meister','Vorarbeiter','Facharbeiter','Hilfsarbeiter','Auszubildender'];
-const EV_KINDS = {bau:'Baustelle',kunde:'Kundentermin',evu:'EVU / Zählersetzung',lief:'Lieferung',ausw:'Auswärtstermin',teams:'Teams-Meeting',urlaub:'Urlaub',krank:'Krankheit',intern:'Intern',sonst:'Sonstiges'};
+const EV_KINDS = {bau:'Baustelle',kunde:'Kundentermin',evu:'EVU / Zählersetzung',lief:'Lieferung',ausw:'Auswärtstermin',teams:'Teams-Meeting',urlaub:'Urlaub',krank:'Krankheit',lehrgang:'Lehrgang',intern:'Intern',sonst:'Sonstiges'};
 const ORDER_ST = {entwurf:'Entwurf (noch nicht bestellt)',freigegeben:'freigegeben – noch bestellen',angefragt:'angefragt',bestellt:'bestellt',bestaetigt:'bestätigt',storniert:'storniert'};
 const ordDraft=o=>o.status==='entwurf'||o.status==='freigegeben';
 // Wartet die Bestellung auf Freigabe? Nicht, wenn EP, HH oder AvE sie angelegt bzw. bestellt haben
@@ -3888,7 +3888,7 @@ function vCalendar(){
     cells+=`<div class="dc ${dd.getMonth()!==m-1?'out':''} ${d===t?'today':''} ${d===UI.calSel?'sel':''}" data-act="calSel" data-d="${d}" data-drop-d="${d}"><span class="dn">${dd.getDate()}</span>${its.slice(0,3).map(x=>`<div class="ev k-${x.k} ${x.multi&&!x.first?'cont':''}" data-act="${x.act}" data-id="${x.id}" data-drag="${x.ref||''}" title="${esc(x.t+(x.m?' · '+x.m:''))}">${x.multi&&!x.first?'↳ ':''}${x.who&&staff().some(s=>s.name===x.who)?`<b>${esc(shortWho(x.who))}</b> `:''}${esc(x.t)}${x.rz&&x.last?'<span class="rz" aria-hidden="true"></span>':''}</div>`).join('')}${its.length>3?`<div class="small muted">+${its.length-3}</div>`:''}<div class="dots">${its.slice(0,5).map(x=>`<i class="k-${x.k}"></i>`).join('')}</div></div>`; }
   const sel=calItems(UI.calSel,UI.calSel), up=calItems(t,addDays(t,21));
   return head(MON[m-1]+' '+y,'Kalender',`<button class="icon-btn" data-act="calNav" data-v="-1" aria-label="Vormonat">${ic('left')}</button><button class="btn sm" data-act="calNav" data-v="0">Heute</button><button class="icon-btn" data-act="calNav" data-v="1" aria-label="Folgemonat">${ic('right')}</button>`)+
-  calModeChips()+`<div class="legend"><span class="k-bau">Baustelle / Team</span><span class="k-abw">Abwesend</span><span class="k-kunde">Kunde</span><span class="k-evu">EVU / Zähler</span><span class="k-lief">Lieferung</span><span class="k-todo">To-Do-Frist</span><span class="k-proj">Baubeginn/-ende</span><span class="k-ausw">Auswärtstermin</span><span class="k-teams">Teams-Meeting</span><span class="k-urlaub">Urlaub</span><span class="k-krank">Krankheit</span><span class="k-intern">Intern</span><span class="k-sonst">Sonstiges</span></div>
+  calModeChips()+`<div class="legend"><span class="k-krank">Krankheit / Urlaub / Lehrgang</span><span class="k-kunde">Kundentermin / Baustelle</span><span class="k-sonst">Sonstiges</span></div>
   <div class="small muted">Einträge auf einen anderen Tag ziehen; am rechten Rand ziehen zum Verlängern oder Verkürzen.</div>
   <div class="card" style="overflow:hidden"><div class="cal">${['Mo','Di','Mi','Do','Fr','Sa','So'].map(d=>`<div class="dh">${d}</div>`).join('')}${cells}</div></div>
   <div class="grid2"><div class="card"><div class="card-h"><h3>${fmtDL(UI.calSel)}</h3><button class="btn sm" data-act="newEvent" data-date="${UI.calSel}">${ic('plus')}Termin</button></div><div class="card-b">${agenda(sel)||'<div class="empty">Nichts geplant.</div>'}</div></div>
@@ -4356,6 +4356,21 @@ function docsHtml(o){
 }
 var ORD_MAIL_RES=''; // Ergebnis des letzten Abgleichs mit einer Bestell-Mail (nur zur Anzeige im offenen Formular)
 // Echte Bestell-Mail mit vorhandenen Positionen abgleichen: gleiche Artikel (Nummer, sonst Bezeichnung) ergänzen statt doppelt anlegen. Die Mail gilt als der tatsächliche Stand.
+// Beleg ↔ vorhandene Bestellung. Nummer oder Hinweis der KI = sicher. Sonst Lieferant gleich und mindestens die Hälfte der Positionen gleich. Mehrere oder schwache Treffer: fragen. Bei einer eigenen neuen Bestellung (best) zählt nur die Nummer.
+var ORD_HINT='', ORD_PICK='';
+function ordFindMatch(r,selfId,nr,hint,kind){ const live=x=>x.id!==selfId&&x.status!=='storniert'&&x.appr!=='storno', all=arr('orders').filter(live);
+  if(hint&&S.orders[hint]&&live(S.orders[hint])) return {hit:S.orders[hint]};
+  if(nr){ const h=all.find(x=>String(x.no||'').split('/').some(n=>normNr(n)&&normNr(n)===normNr(nr))); if(h) return {hit:h}; }
+  if(!['ab','ls','re'].includes(kind)) return {};
+  const cl=s=>String(s||'').replace(/\b(gmbh|mbh|ag|kg|co|ug|ohg|se|e\.?\s?k\.?)\b|&/gi,' '), its=r.items||[];
+  const cands=all.filter(x=>(ordDraft(x)||orderState(x).open)&&simWords(cl(x.supplier),cl(r.supplier))>=0.5); if(!cands.length) return {};
+  const scored=cands.map(x=>{ const xi=(x.items||[]).filter(i=>String(i.art||'').trim()), hits=its.filter(i=>xi.some(y=>(normNr(i.artNr)&&normNr(i.artNr)===normNr(y.artNr))||simWords(y.art,i.art)>=0.6)).length, base=Math.min(its.length,xi.length), share=base?hits/base:0, pj=r.projectId&&x.pid?(r.projectId===x.pid?0.3:-0.5):0; return {x,share,score:share+pj}; }).sort((a,b)=>b.score-a.score);
+  const good=scored.filter(s=>s.share>=0.5&&s.score>=0.5); if(good.length===1||(good.length>1&&good[0].score-good[1].score>=0.25)) return {hit:good[0].x};
+  return {ask:(good.length?good:scored).slice(0,6).map(s=>s.x)}; }
+function ordPickSheet(list,kind){ return new Promise(res=>{ ORD_PICK=''; const KN={ab:'Die Auftragsbestätigung',ls:'Der Lieferschein',re:'Die Rechnung'};
+  closeSheet(); openSheet({title:'Zu welcher Bestellung gehört das?',wide:1,saveLabel:'Neue Bestellung anlegen',html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">${esc(KN[kind]||'Der Beleg')} passt zum Lieferanten, aber nicht eindeutig zu einer Bestellung.</div>${list.map(o=>`<button type="button" class="ord-pick" data-act="ordPick" data-id="${esc(o.id)}"><b>${esc(o.supplier||'Bestellung')}${o.no?' · '+esc(o.no):''}</b><span class="small muted">${esc([projName(o.pid),o.ordered?'bestellt '+fmtD(o.ordered):'',orderState(o).k].filter(Boolean).join(' · '))}</span><span class="small">${esc((o.items||[]).slice(0,3).map(i=>(i.qty?qn(+i.qty)+' ':'')+i.art).join(', ')||'keine Positionen')}</span></button>`).join('')}</div>`,onSave:()=>{}});
+  const sh=SHEET, t=setInterval(()=>{ if(SHEET===sh) return; clearInterval(t); res(ORD_PICK); },120); }); }
+queueMicrotask(()=>Object.assign(A,{ ordPick:d=>{ ORD_PICK=d.id; closeSheet(); } }));
 // Belegart aus der KI-Antwort; ohne Angabe gilt eine Mail als Bestellung
 function ordDocKind(r,mail){ const s=String((r&&r.docType)||'').toLowerCase(); return /liefer/.test(s)?'ls':/rechn/.test(s)?'re':/^ab$|auftragsbest|bestätig/.test(s)?'ab':/angebot/.test(s)?'ang':/anfrage|bedarf/.test(s)?'anf':/bestell|mail/.test(s)||mail?'best':''; }
 function ordMergeMail(old,neu,keepQty){ const out=(old||[]).map(i=>({...i})), used=new Set(), add=[], chg=[]; let hit=0;
@@ -4604,7 +4619,7 @@ Regeln:
 - art: Artikelbezeichnung, kurz aber eindeutig (Hersteller/Typ/Leistung behalten, z. B. "JA Solar JAM54D40 450 Wp").
 - artNr: Artikelnummer des Lieferanten, sonst "".
 - price: Einzelpreis netto als Zahl (deutsches Format "1.234,50" → 1234.5). Ist nur der Gesamtpreis der Position genannt, durch die Menge teilen. Brutto-Preise durch 1,19 teilen. Bei Großhändlern (Sonepar, Rexel, Krannich …) ist „PE: 5,96 € / 1 Stück“ der Einzelpreis; „Brutto“ dort ist der Listenpreis, nicht verwenden. Sonst null.
-- docType: Prüfe zuerst genau, was das Dokument ist. "Lieferschein" = Ware wurde geliefert oder versendet (Lieferschein, Versandbestätigung, Packzettel). "Rechnung" = Rechnung. "AB" = der Lieferant bestätigt die Bestellung (Auftragsbestätigung). "Bestellung" = wir bestellen, oder der Shop bestätigt nur den Eingang der Bestellung. "Angebot" = Preisangebot, noch nicht bestellt. "Anfrage" = Bedarf oder Bitte zu bestellen, noch nicht bestellt.
+- docType: Prüfe zuerst genau, was das Dokument ist. "Lieferschein" = Ware wurde geliefert oder versendet (Lieferschein, Versandbestätigung, Packzettel). "Rechnung" = Rechnung. "AB" = der Lieferant oder Shop bestätigt eine Bestellung (Auftragsbestätigung, Bestellbestätigung, „vielen Dank für Ihre Bestellung“). "Bestellung" = wir bestellen selbst beim Lieferanten. "Angebot" = Preisangebot, noch nicht bestellt. "Anfrage" = Bedarf oder Bitte zu bestellen, noch nicht bestellt.
 - docNo: die Nummer dieses Belegs (bei Lieferschein die Lieferscheinnummer, bei Rechnung die Rechnungsnummer), auch wenn sie nur im Betreff steht; sonst "".
 - orderNo: die Bestell-, Auftrags- oder AB-Nummer, auf die sich der Beleg bezieht, auch auf Lieferschein und Rechnung (oft „Ihre Bestellung“, „Auftrag“, „Unser Zeichen“); nicht die Kundennummer; sonst "".
 - date: Datum des Belegs.
@@ -4687,7 +4702,7 @@ async function handleInvoice(file,mail,mailFile){
   }
   // Die Original-Mail (.msg/.eml) als Beleg an der Bestellung behalten – aber nicht zweimal, wenn sie erneut abgelegt wird
   if(mailFile&&ASSETS){ try{ const mfp=await fileFp(mailFile); if(!(o.docs||[]).some(d=>d.fp===mfp)){ const ext=(String(mailFile.name||'').match(/\.(msg|eml)$/i)||['.eml'])[0], base=String(mail&&mail.subject||String(mailFile.name||'').replace(/\.(msg|eml)$/i,'')||'E-Mail').replace(/[\\/:*?"<>|]+/g,' ').trim().slice(0,90); const r=await ASSETS.upload(mailFile,{type:mailFile.type||'application/octet-stream'}); o.docs=(o.docs||[]).concat([{id:r.id,name:base+ext,type:r.contentType,date:TODAY(),kind:'E-Mail',fp:mfp,size:mailFile.size||0}]); } }catch(e){ /* Text und Positionen werden trotzdem übernommen */ } }
-  let found=0, info='', res='';
+  let found=0, info='', res='', autoSave=false; const hint=ORD_HINT; ORD_HINT='';
   let hadItems=(o.items||[]).some(i=>String(i.art||'').trim()), confirm=!CUR_ORDER_NEW; // bestehende Bestellung: Die Mail bestätigt sie, sie ist keine neue Liste
   const mailText=mail?[mail.subject&&'Betreff: '+mail.subject,mail.from&&'Von: '+mail.from,mail.date&&'Datum: '+mail.date,mail.text].filter(Boolean).join('\n'):'';
   const loc=mail?parseMailLocal(mail.text):null;
@@ -4703,7 +4718,9 @@ async function handleInvoice(file,mail,mailFile){
       // 2) Bestellnummer: beim Lieferschein und bei der Rechnung ist die Belegnummer nicht die Bestellnummer
       const nr=String(r.orderNo||(['best','ab',''].includes(kind)?r.docNo:'')||'').trim();
       // 3) Neuer Beleg zu einer vorhandenen Bestellung mit derselben Nummer: keine zweite Bestellung anlegen
-      let linked=''; if(CUR_ORDER_NEW&&nr){ const hit=arr('orders').find(x=>x.id!==o.id&&x.status!=='storniert'&&x.appr!=='storno'&&String(x.no||'').split('/').some(n=>normNr(n)&&normNr(n)===normNr(nr))); if(hit){ const t=clone(hit); t.docs=(t.docs||[]).concat(o.docs||[]); if(o.mail) t.mail=o.mail; o=t; CUR_ORDER=t; CUR_ORDER_NEW=false; confirm=true; hadItems=(t.items||[]).some(i=>String(i.art||'').trim()); linked=t.supplier||'Bestellung'; } }
+      //    Ohne Nummer: Lieferant und Positionen vergleichen; eindeutig = automatisch, sonst fragen statt falsch zuordnen
+      let linked=''; if(CUR_ORDER_NEW&&(isReal||hint)){ const m=ordFindMatch(r,o.id,nr,hint,kind); let hit=m.hit||null; if(!hit&&m.ask&&m.ask.length){ const pickId=await ordPickSheet(m.ask,kind); hit=pickId?S.orders[pickId]:null; }
+        if(hit){ const t=clone(hit); t.docs=(t.docs||[]).concat(o.docs||[]); if(o.mail) t.mail=o.mail; o=t; CUR_ORDER=t; CUR_ORDER_NEW=false; confirm=true; hadItems=(t.items||[]).some(i=>String(i.art||'').trim()); linked=t.supplier||'Bestellung'; autoSave=kind==='ab'; } }
       if(!o.pid&&r.projectId&&(S.projects[r.projectId]||r.projectId===INTERN)){ o.pid=r.projectId; info=' Projekt „'+projName(r.projectId)+'“ zugeordnet.'; }
       const blank=!hadItems, delDate=kind==='ls'?(dv(r.deliveredDate)||dv(r.date)||TODAY()):dv(r.deliveredDate);
       let mg, lsMsg=[];
@@ -4731,12 +4748,13 @@ async function handleInvoice(file,mail,mailFile){
       const doc=file&&ASSETS?(o.docs||[]).find(d=>d.fp===fp):null; if(doc){ doc.kind=r.docType||''; doc.docNo=r.docNo||''; }
       info=found+' Position'+(found===1?'':'en')+' übernommen'+(mg.hit?', '+mg.hit+' waren schon da':'')+'.'+info+' Bitte prüfen und speichern.';
       { const li=a=>a.length?`<ul>${a.slice(0,8).map(s=>`<li>${esc(s)}</li>`).join('')}${a.length>8?`<li>… und ${a.length-8} weitere</li>`:''}</ul>`:'', isLs=kind==='ls', KN={best:'Bestellung',ab:'Auftragsbestätigung',ls:'Lieferschein',re:'Rechnung',ang:'Angebot',anf:'Anfrage'}, facts=[nr?'Bestellnummer '+nr:'keine Bestellnummer gefunden',od?'bestellt am '+fmtD(od)+(odWas&&odWas!==od&&!CUR_ORDER_NEW?' (vorher '+fmtD(odWas)+')':''):'kein Bestelldatum gefunden',isLs||delDate?'geliefert am '+fmtD(delDate):dl?'Liefertermin '+fmtD(dl)+(dlChg?' (vorher '+fmtD(dlChg)+')':''):'kein Liefertermin gefunden'];
-        res=`<b>Erkannt: ${esc(KN[kind]||'Beleg')} – bitte prüfen und speichern</b>${linked?`<br>${esc('Passt per Nummer zur vorhandenen Bestellung bei '+linked+', keine zweite angelegt.')}`:''}<br>${esc(facts.join(' · '))}${stMsg?'<br>'+esc(stMsg):''}${lsMsg.length?'<br>'+esc(lsMsg.join(' ')):''}${mg.chg.length?`<div>${isLs?'Teillieferung:':'Geändert:'}</div>`+li(mg.chg):''}${mg.add.length&&hadItems?`<div>${isLs?'Geliefert, aber nicht bestellt:':'Neu aus dem Beleg:'}</div>`+li(mg.add.map(i=>i.art)):''}${mg.miss.length?`<div>${isLs?'Noch nicht geliefert:':'Bei uns, aber nicht im Beleg (bleibt stehen):'}</div>`+li(mg.miss.map(i=>i.art)):''}`; }
+        if(autoSave) info='Der Bestellung bei '+linked+' zugeordnet und gespeichert'+(dl?', Liefertermin '+fmtD(dl):'.');
+        res=`<b>Erkannt: ${esc(KN[kind]||'Beleg')} – ${autoSave?'automatisch zugeordnet und gespeichert':'bitte prüfen und speichern'}</b>${linked?`<br>${esc('Gehört zur vorhandenen Bestellung bei '+linked+', keine zweite angelegt.')}`:''}<br>${esc(facts.join(' · '))}${stMsg?'<br>'+esc(stMsg):''}${lsMsg.length?'<br>'+esc(lsMsg.join(' ')):''}${mg.chg.length?`<div>${isLs?'Teillieferung:':'Geändert:'}</div>`+li(mg.chg):''}${mg.add.length&&hadItems?`<div>${isLs?'Geliefert, aber nicht bestellt:':'Neu aus dem Beleg:'}</div>`+li(mg.add.map(i=>i.art)):''}${mg.miss.length?`<div>${isLs?'Noch nicht geliefert:':'Bei uns, aber nicht im Beleg (bleibt stehen):'}</div>`+li(mg.miss.map(i=>i.art)):''}`; }
     }catch(e){ info=SAMPLE_ERR[e&&e.code]||(e&&e.code==='cancelled'?'':'Auslesen fehlgeschlagen. Positionen bitte von Hand eintragen.'); }
   } else info=mail?'Im Mailtext wurden keine Positionen erkannt. Bitte von Hand eintragen.':'Beleg gespeichert. Positionen bitte von Hand eintragen.';
   if(mail&&!found&&!res){ info=(info?info+' ':'')+'Angekommen sind '+String(mail.text||'').length+' Zeichen Mailtext – unten unter „Gelesener Mailtext“ prüfen.'; }
   const wasNew=CUR_ORDER_NEW;
-  if(!wasNew){ /* Beleg und Mail sofort an der gespeicherten Bestellung sichern; Mengen und Daten erst nach dem Prüfen mit „Speichern“ */ const saved=S.orders[o.id]; if(saved){ const so=clone(saved); so.docs=o.docs; if(o.mail) so.mail=o.mail; put('orders',so); } }
+  if(!wasNew){ /* Beleg und Mail sofort an der gespeicherten Bestellung sichern; Mengen und Daten erst nach dem Prüfen mit „Speichern“ */ const saved=S.orders[o.id]; if(saved){ let so=clone(saved); if(autoSave){ so=clone(o); delete so.otype; } so.docs=o.docs; if(o.mail) so.mail=o.mail; put('orders',so); } }
   closeSheet(); ORD_MAIL_RES=res; orderForm(o,null,wasNew);
   toast(info||'Beleg gespeichert.');
 }
@@ -7025,7 +7043,7 @@ async function smartDrop(files,text){
   const curP=gsProj(), cx=gsCtx(); // auf der Projektseite abgelegt → gehört im Zweifel zu diesem Projekt; in To-Dos/Kalender → eher Aufgaben/Termin
   if(cx.type&&!files.length&&!mail) type=cx.type;
   let pid=curP?curP.id:(matchProject(all).pid||''), orderId='', summary='', why='', related=null, event=null;
-  const openOrders=arr('orders').filter(o=>orderState(o).open);
+  const openOrders=arr('orders').filter(o=>orderState(o).open||(ordDraft(o)&&o.appr!=='storno'));
   if(SAMPLE){
     const plist=arr('projects').filter(p=>['laufend','planung','onhold'].includes(catOf(p))).map(p=>`${p.id} | ${p.name} | ${p.nr||''} | ${String(p.place||'').replace(/\n/g,' ')} | ${p.customer||''}`).join('\n');
     const olist=openOrders.slice(0,80).map(o=>`${o.id} | ${o.supplier||''} | ${o.no||''} | ${projName(o.pid)||'-'} | ${(o.items||[]).slice(0,4).map(i=>i.art).join(', ')}`).join('\n')||'-';
@@ -7049,6 +7067,8 @@ Antworte nur mit JSON: {"type":"","projectId":"","orderId":"","summary":"1 Satz,
       if(r&&SMART_TYPES[r.type]) type=r.type; if(r&&r.projectId&&(S.projects[r.projectId]||r.projectId===INTERN)) pid=r.projectId; if(r&&r.orderId&&S.orders[r.orderId]) orderId=r.orderId; summary=r&&r.summary||''; why=r&&r.why||''; related=(r&&Array.isArray(r.related)?r.related:[]).filter(x=>x&&S.tasks[x.id]&&!S.tasks[x.id].done).slice(0,5).map(x=>({id:x.id,relation:x.relation==='erledigt'?'erledigt':'update',update:String(x.update||summary||'').slice(0,300),by:'Claude'}));
       if(r&&r.event&&typeof r.event==='object'){ const ev=r.event, okD=s=>/^\d{4}-\d{2}-\d{2}$/.test(s||'')?s:''; event={title:String(ev.title||summary||'').slice(0,120),date:okD(ev.date),time:/^\d{1,2}:\d{2}$/.test(ev.time||'')?ev.time.padStart(5,'0'):'',end:okD(ev.end),place:String(ev.place||'').slice(0,160)}; } }
     catch(e){ if(e&&e.code&&e.code!=='cancelled') toast(SAMPLE_ERR[e.code]||'Claude nicht erreichbar – einfache Erkennung.'); } }
+  // Bestellung oder Bestellbestätigung erkannt: ohne Rückfrage direkt weiter, Zuordnung zur vorhandenen Bestellung passiert beim Auslesen
+  if(SAMPLE&&['ab','bestellung'].includes(type)&&!SHEET){ ORD_HINT=orderId||''; ordersFromDrop(files,text,pid===INTERN?INTERN:pid); return; }
   if(!orderId&&type==='lieferschein'){ const sup=openOrders.find(o=>o.supplier&&all.toLowerCase().includes(String(o.supplier).toLowerCase().split(' ')[0])&&(!pid||o.pid===pid)); if(sup) orderId=sup.id; }
   if(files.length>1&&!mail) type=type==='lieferschein'?type:'sonst';
   // Ohne Claude: Wortvergleich mit offenen To-Dos (schwache Treffer werden nur angezeigt, nicht vorausgewählt)
