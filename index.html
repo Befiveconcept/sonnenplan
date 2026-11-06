@@ -2217,7 +2217,7 @@ const ICONS = {download:'<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M
 const ic = (n,extra='')=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ${extra}>${ICONS[n]}</svg>`;
 
 /* ========== Datenhaltung (gemeinsame Datenbank, sonst lokal) ========== */
-const COLLS = ['projects','tasks','orders','offers','events','reports','plan','log','files','stock','picks','chat','meetings','hrtime','hrabs','hrstaff','hrdocs','sales','pins','psum'];
+const COLLS = ['projects','tasks','orders','offers','events','reports','plan','log','files','stock','picks','chat','meetings','hrtime','hrabs','hrstaff','hrdocs','sales','pins','psum','pms'];
 const S = {pins:{},projects:{},tasks:{},orders:{},offers:{},events:{},reports:{},plan:{},log:{},hrtime:{},hrabs:{},hrstaff:{},hrdocs:{},kunden:{},lieferanten:{},artikel:{},sales:{},fin:{},anlagen:{},config:{staff:[]}};
 let DB=null, MODE='init', READONLY=false;
 const LS_KEY='sonnenplan-v1';
@@ -2374,6 +2374,10 @@ let USER_EMAIL='', NOMATCH_SHOWN=false;
 function staffByEmail(email){ const e=String(email||'').trim().toLowerCase(); if(!e) return null; const local=e.split('@')[0];
   const s=staff().find(s=>String(s.email||'').trim().toLowerCase()===e)||staff().find(s=>shortWho(s.name).toLowerCase()===local);
   return s?s.name:null; }
+// Konto einer ausgeschiedenen Person? Dann ist die App für dieses Konto zu.
+function staffGoneByEmail(email){ const e=String(email||'').trim().toLowerCase(); if(!e) return null; const local=e.split('@')[0]; if(staffByEmail(e)) return null; return staffAll().find(s=>staffGone(s)&&(String(s.email||'').trim().toLowerCase()===e||shortWho(s.name).toLowerCase()===local))||null; }
+var EXIT_LOCK=false;
+function exitLock(s){ if(EXIT_LOCK) return; EXIT_LOCK=true; ME=''; document.body.innerHTML=`<div style="min-height:100vh;display:grid;place-items:center;background:#0B0B0B;color:#fff;font-family:system-ui,sans-serif;padding:24px;text-align:center"><div style="max-width:420px"><h1 style="font-size:24px;margin:0 0 12px">Zugang beendet</h1><p style="color:#BDBDBD;line-height:1.5;margin:0 0 20px">Dein Zugang zu Sonnenplan ist seit dem Ende deiner Tätigkeit bei nutz die Sonne nicht mehr aktiv. Bei Fragen wende dich bitte an die Geschäftsführung.</p><button id="exitOut" style="background:#F4DB02;color:#111;border:0;border-radius:999px;padding:10px 20px;font-weight:600;cursor:pointer">Abmelden</button></div></div>`; const b=document.getElementById('exitOut'); if(b) b.onclick=()=>{ if(window.SB_LOGOUT) window.SB_LOGOUT(); else location.reload(); }; }
 const locked = ()=>MODE==='cloud'&&!!USER_ID&&(!!USER_EMAIL||!!((S.config||{}).userMap||{})[USER_ID]);
 function askMe(force){
   if((ME_ASKED&&!force)||!staff().length) return; ME_ASKED=true;
@@ -2390,7 +2394,7 @@ function setMe(name){
     if(map[USER_ID]!==name){ map[USER_ID]=name; putConfig({...(S.config||{}),userMap:map}); } }
   ME=name; lsSet('sonnenplan-me',name); toast('Angemeldet als '+shortWho(name)+'.'); scheduleRender(); }
 function applyUserMap(){ if(MODE!=='cloud'||!USER_ID) return;
-  if(USER_EMAIL){ if(!S.config) return; const n=staffByEmail(USER_EMAIL); if(n!==ME){ ME=n; if(n) lsSet('sonnenplan-me',n); scheduleRender(); }
+  if(USER_EMAIL){ if(!S.config) return; { const g=staffGoneByEmail(USER_EMAIL); if(g) return exitLock(g); } const n=staffByEmail(USER_EMAIL); if(n!==ME){ ME=n; if(n) lsSet('sonnenplan-me',n); scheduleRender(); }
     if(!n&&!NOMATCH_SHOWN&&staff().length){ NOMATCH_SHOWN=true; setTimeout(()=>openSheet({title:'Konto keinem Mitarbeiter zugeordnet',html:`<div class="fld full">Die Anmeldung <b>${esc(USER_EMAIL)}</b> passt zu keinem Mitarbeiter: Das Kürzel vor dem @ stimmt mit keinem Kürzel überein.<div class="small muted" style="margin-top:8px">EP oder AvE tragen die E-Mail unter „Team & Einstellungen“ beim Mitarbeiter ein. Bis dahin werden Änderungen ohne Kürzel gespeichert.</div></div>`,saveLabel:'OK',onSave:()=>{}}),600); }
     return; }
   const m=(S.config||{}).userMap||{}; const n=m[USER_ID]||null; if(n!==ME){ ME=n; if(n) lsSet('sonnenplan-me',n); scheduleRender(); } if(!n&&S.config) askMe(); }
@@ -2730,7 +2734,7 @@ function nfSend(to,n,self){ const k=nfK(to); if(!k||!ME||(!self&&k===nfK(meK()))
 const nfTaskPeople=t=>[...new Set([...taskWhos(t).map(shortWho),t.by].filter(Boolean))];
 const nfMentions=txt=>{ const team=nfTeam(), out=[]; String(txt||'').replace(/(^|[\s(])@([A-Za-zÄÖÜäöüß]{2,6})\b/g,(m,a,k)=>{ if(team.has(nfK(k))) out.push(k); return m; }); return out; };
 // Wer ist betroffen? Nur Zuständige und Beteiligte, nie alle.
-function nfWatch(coll,prev,obj){ try{ if(!ME||(obj&&obj.example)||(prev&&prev.example)) return; const me=nfName(meK()), now=new Date().toISOString(), one=(list,n)=>[...new Set(list)].forEach(k=>nfSend(k,n));
+function nfWatch(coll,prev,obj){ try{ if(NF_MUTE||!ME||(obj&&obj.example)||(prev&&prev.example)) return; const me=nfName(meK()), now=new Date().toISOString(), one=(list,n)=>[...new Set(list)].forEach(k=>nfSend(k,n));
     if(coll==='tasks'){ const t=obj, q='„'+String(t.title||'').slice(0,80)+'“', base={c:'tasks',rid:t.id,pid:t.pid}, who=taskWhos(t).map(shortWho), was=prev?taskWhos(prev).map(shortWho):[], neu=who.filter(k=>!was.includes(k)), told=new Set(neu);
       if(neu.length) one(neu,{...base,type:prev?'task_assign':'task_new',prio:t.prio==='dringend'?'urgent':'action',stamp:(t.at||'')+'|'+now.slice(0,16),title:prev?'Aufgabe übertragen':'Neue Aufgabe',text:(prev?me+' hat dir die Aufgabe '+q+' übertragen.':'Dir wurde die neue Aufgabe '+q+' zugewiesen.')+(t.due?' Fällig am '+fmtD(t.due)+'.':'')});
       if(!prev) return; const ppl=nfTaskPeople(t), rest=ppl.filter(k=>!told.has(k)), oldU=new Set((prev.upd2||[]).map(tuKey));
@@ -2882,7 +2886,10 @@ function go(view,pid){ UI.view=view; if(pid!==undefined) UI.pid=pid; saveUI(); r
 const arr = c=>Object.values(S[c]||{});
 const INTERN='intern'; // Bestellungen ohne Kundenprojekt (Lager, Büro, Werkstatt)
 const projName = id=>{ if(id===INTERN) return 'Haus intern'; const p=S.projects[id]; return p? p.name : '' };
-const staff = ()=>(S.config&&S.config.staff)||[];
+// Austritt: s.exit = letzter Arbeitstag. Ab dem Tag danach ist die Person aus allen Auswahllisten raus (staff), bleibt aber für Einstellungen und Personalakte erhalten (staffAll).
+const staffAll = ()=>(S.config&&S.config.staff)||[];
+const staffGone = s=>!!(s&&s.exit&&s.exit<TODAY());
+const staff = ()=>staffAll().filter(s=>!staffGone(s));
 function activeProjects(){ return arr('projects').filter(p=>!isIntern(p)&&['planung','laufend'].includes(catOf(p))); }
 // „Haus intern“: echtes Projekt für Lager, Büro, Werkstatt, Fahrzeuge – ohne Statusablauf, nicht im Radar / in den Kennzahlen
 const isIntern=p=>!!p&&(p.id===INTERN||p.internal);
@@ -3008,7 +3015,7 @@ function banner(){
   if(READONLY) return `<div class="banner">Nur Leserechte: Änderungen werden nicht gespeichert. Bitte beim Eigentümer Bearbeitungsrechte anfragen.</div>`;
   return '';
 }
-function render(){
+function render(){ if(EXIT_LOCK) return;
   renderShell();
   const v = canSee(UI.view)?UI.view:'dash';
   const fn0 = {rights:vRights,dash:vDash,projects:vProjects,project:vProject,todos:vTodos,pool:vPool,meetings:vMeetings,hr:vHR,stamm:vStamm,sales:vSales,fin:vFin,week:vTeamWeek,calendar:vCalendar,activity:vActivity,files:vFiles,stock:vStock,chat:vChat,private:vPrivate,orders:vOrders,offers:vOffers,reports:vReports,templates:vTemplates,settings:vSettings}[v]||vDash;
@@ -3060,7 +3067,7 @@ function vDash(){
     return `<div class="dl-row ${due?'due':''}" data-act="editOrder" data-id="${o.id}"><div class="dl-date"><b>${o.delivery?esc(fmtD(o.delivery).slice(3,9)):'–'}</b><span>${o.delivery?esc(relDay(o.delivery)):'ohne Termin'}</span></div>
       <div style="min-width:0"><div class="tt">${esc(o.supplier||'Lieferant')}</div><div class="small muted">${esc(projName(o.pid)||'ohne Projekt')} · ${(o.items||[]).length} Pos.</div></div>
       ${due?`<button class="btn sun sm" data-act="dlvYes" data-id="${o.id}">Angekommen?</button>`:`<span class="pill ${st.cls}">${esc(st.k)}</span>`}</div>`; };
-  return dashHero(t)+briefDashStrip()+hrDashStrip()+wvDashStrip()+(ordApprover()?ordApprBanner():'')+gsearchBox()+`<div class="dash-pair">${pinboardHtml()}${nfCardHtml()}</div>`+`<div class="dash-grid dash-2">
+  return dashHero(t)+briefDashStrip()+hrDashStrip()+(ordApprover()?ordApprBanner():'')+gsearchBox()+`<div class="dash-pair">${pinboardHtml()}${nfCardHtml()}</div>`+`<div class="dash-grid dash-2">
     <section class="card dash-todo"><div class="card-h"><h2>Meine offenen To-Dos <span class="cnt-b">${my.length}</span></h2>${myLate?`<span class="pill bad">${myLate} überfällig</span>`:''}<button class="btn ghost sm" data-act="myTasks">Alle</button></div>
       ${ME?(my.length?`<div class="td-tiles">${my.slice(0,10).map(tile).join('')}</div>`:'<div class="empty"><b>Alles erledigt</b>Du hast keine offenen Aufgaben.</div>')+(my.length>10?`<button class="btn ghost sm more-b" data-act="myTasks">+ ${my.length-10} weitere anzeigen</button>`:''):'<div class="empty">Unten links „Wer bist du?“ wählen, dann erscheinen hier deine Aufgaben.</div>'}</section>
     <section class="card dash-dl"><div class="card-h"><h2>Offene Lieferungen <span class="cnt-b">${dl.length}</span></h2><button class="btn ghost sm" data-act="nav" data-v="orders">Alle</button></div>
@@ -3125,7 +3132,8 @@ function dtlOn(){ const d={ms:true,term:true}, l=UI.dtlL&&typeof UI.dtlL==='obje
 function dashTimelineHtml(t){ const all=rxProjects().sort((a,b)=>String(a.name).localeCompare(String(b.name),'de',{numeric:true})); if(!all.length) return '';
   const sel=['alle','laufend','planung'].includes(UI.dtlP)||all.some(p=>p.id===UI.dtlP)?UI.dtlP:'alle', on=dtlOn(), lanes=dtlLanes(), z=TL_ZOOM[UI.dtlZ]?UI.dtlZ:'woche', Z=TL_ZOOM[z], CARD=z==='tag'?150:z==='woche'?170:180;
   const ps=all.filter(p=>sel==='alle'||(sel==='laufend'||sel==='planung'?catOf(p)===sel:p.id===sel)), single=ps.length===1&&sel===ps[0].id, lo=addDays(t,-90), hi=addDays(t,270);
-  const items=ps.flatMap(p=>tlItems(p).filter(i=>on(i.lane)&&lanes.some(l=>l[0]===i.lane)&&i.d>=lo&&i.d<=hi).map(i=>({...i,p})));
+  // Meilensteine hier: nur individuelle aus den To-Dos und Notizen des Projekts (KI) plus von Hand angelegte, keine Standardschritte oder Stichwort-Treffer
+  const items=ps.flatMap(p=>{ const base=tlItems(p).filter(i=>i.lane!=='ms'||i.custom), ki=on('ms')?pmsOf(p).map(m=>({d:m.d,t:m.t,lane:'ms',k:'ki',ai:true})):[]; return [...base,...ki].filter(i=>on(i.lane)&&lanes.some(l=>l[0]===i.lane)&&i.d>=lo&&i.d<=hi).map(i=>({...i,p})); });
   const ds=items.map(i=>i.d).sort(); let a=ds[0]&&ds[0]<addDays(t,-14)?ds[0]:addDays(t,-14), b=ds.length&&ds[ds.length-1]>addDays(t,30)?ds[ds.length-1]:addDays(t,30); a=addDays(a,-Math.round(Z.days)); b=addDays(b,Math.round(Z.days*2));
   if(z==='woche') a=mondayOf(a); if(z==='monat') a=a.slice(0,8)+'01';
   const px=d=>Math.round(dDiff(a,d)/Z.days*Z.w), W=px(b)+Z.w; let head='';
@@ -3148,6 +3156,37 @@ document.addEventListener('scroll',e=>{ if(e.target&&e.target.id==='dtlScroll') 
 queueMicrotask(()=>{ Object.assign(A,{ dtlZoom:d=>{ UI.dtlZ=d.v; UI.dtlX=null; saveUI(); render(); }, dtlToday:()=>{ UI.dtlX=null; dtlScrollRestore(); },
     dtlAll:()=>{ const ls=dtlLanes(), on=dtlOn(), every=ls.every(([k])=>on(k)); UI.dtlL=every?{ms:true,term:true}:Object.fromEntries(ls.map(([k])=>[k,true])); saveUI(); render(); } });
   Object.assign(CHG,{ dtlP:(d,el)=>{ UI.dtlP=el.value; UI.dtlX=null; saveUI(); render(); }, dtlLane:(d,el)=>{ const on=dtlOn(), n={}; TL_LANES.forEach(([k])=>{ if(on(k)) n[k]=true; }); if(el.checked) n[d.v]=true; else delete n[d.v]; UI.dtlL=n; saveUI(); render(); } }); });
+/* ---------- Austritt: ab dem Tag nach dem letzten Arbeitstag offene To-Dos und aktive Projektleitungen freigeben ---------- */
+// Läuft bei allen angemeldeten Mitarbeitern im Hintergrund und ist wiederholbar: Was schon frei ist, bleibt unberührt. Ohne Mitteilungen.
+var NF_MUTE=false;
+const whoIsGone=(w,gone)=>{ const k=shortWho(w).toLowerCase(); return gone.some(s=>s.name===w||shortWho(s.name).toLowerCase()===k); };
+function staffExitSweep(){ if(!ME||READONLY||!S.config) return; const gone=staffAll().filter(staffGone); if(!gone.length) return; NF_MUTE=true; try{
+    if(mayWrite('tasks')) arr('tasks').filter(t=>!t.done&&!t.example&&(whoIsGone(t.who||'\u0000',gone)||(t.who2||[]).some(w=>whoIsGone(w,gone)))).forEach(t=>{ const rest=(t.who2||[]).filter(w=>!whoIsGone(w,gone)), keep=t.who&&!whoIsGone(t.who,gone), n=clone(t); n.who=keep?t.who:(rest[0]||''); n.who2=keep?rest:rest.slice(1); put('tasks',n); });
+    if(mayWrite('projects')) arr('projects').filter(p=>p.pl&&!p.example&&['laufend','planung'].includes(catOf(p))&&whoIsGone(p.pl,gone)).forEach(p=>{ const n=clone(p); n.pl=''; put('projects',n); });
+  }finally{ NF_MUTE=false; } }
+// Einmalig: PR und Kamil austragen (Stand 06.11.2026). Nur EP/AvE schreiben das in die Einstellungen; MK (Marc Krebber) ist eine andere Person und bleibt.
+function staffExitMigrate(){ const c=S.config||{}; if(c.exitMig1||!isBaseAdmin()||!staffAll().length) return; const d=addDays(TODAY(),-1), list=clone(staffAll()); let n=0; list.forEach(s=>{ if(!s.exit&&(shortWho(s.name).toLowerCase()==='pr'||s.name.trim().toLowerCase()==='kamil')){ s.exit=d; n++; } }); putConfig({...c,staff:list,exitMig1:true}); if(n) setTimeout(staffExitSweep,500); }
+setTimeout(()=>{ staffExitMigrate(); staffExitSweep(); },9000); setInterval(()=>{ staffExitMigrate(); staffExitSweep(); applyUserMap(); },15*60000);
+/* ---------- Meilensteine für die Gesamt-Timeline: individuell aus To-Dos und Notizen des Projekts, keine Standardschritte ---------- */
+// Eigene Sammlung pms {id,k,ms:[{d,t}]}, k = Prüfsumme der Quellen: Ändert sich etwas Inhaltliches, fasst die KI das Projekt neu zusammen.
+function pmsSources(p){ const notes=['updates','notes'].flatMap(k=>noteBlocks(p[k]).map(b=>{ const np=noteParts(b), d=dIso(np.d); return {d,l:(d||'ohne Datum')+' · Notiz: '+String(np.text||'').replace(/\s+/g,' ').slice(0,300)}; })).sort((a,b)=>b.d.localeCompare(a.d)).slice(0,12).reverse();
+  const ts=arr('tasks').filter(t=>t.pid===p.id), open=ts.filter(t=>!t.done).sort(byDue).slice(0,15).map(t=>({l:(t.due||'ohne Datum')+' · Offenes To-Do: '+t.title})), done=ts.filter(t=>t.done&&t.doneAt).sort((a,b)=>String(b.doneAt).localeCompare(String(a.doneAt))).slice(0,6).map(t=>({l:String(t.doneAt).slice(0,10)+' · Erledigt: '+t.title+(t.doneNote?' – '+String(t.doneNote).slice(0,120):'')}));
+  return [...notes,...done,...open].map(x=>x.l); }
+const PMS_Q=new Set(), PMS_TRIED=new Set(); let PMS_T=0, PMS_RUN=false;
+function pmsOf(p){ const src=pmsSources(p); if(!src.length) return []; const k=strHash(src.join('\n')), o=(S.pms||{})[p.id]; if(o&&o.k===k) return o.ms||[];
+  if(SAMPLE&&!READONLY&&!p.example&&mayWrite('projects')&&!PMS_TRIED.has(p.id+k)){ PMS_Q.add(p.id); clearTimeout(PMS_T); PMS_T=setTimeout(pmsRun,2500+Math.random()*1500); } return o&&o.ms||[]; }
+async function pmsRun(){ if(PMS_RUN||!SAMPLE) return; PMS_RUN=true; const jobs=[]; for(const id of [...PMS_Q]){ if(jobs.length>=6) break; PMS_Q.delete(id); const p=S.projects[id]; if(!p) continue; const src=pmsSources(p), k=strHash(src.join('\n')); if(((S.pms||{})[id]||{}).k===k||PMS_TRIED.has(id+k)||!src.length) continue; PMS_TRIED.add(id+k); jobs.push({p,src,k}); }
+  try{ if(jobs.length){ const r=await SAMPLE.json(`Heute ist ${TODAY()}. Lege für jedes Projekt eines Solar-Installationsbetriebs die echten Meilensteine fest, für eine gemeinsame Zeitachse aller Projekte. Grundlage sind nur die aktuellen Notizen und To-Dos unten.
+Regeln:
+- Je Projekt nur die wichtigen Wegmarken, höchstens 6: Was wurde Entscheidendes erreicht, was steht als Nächstes Entscheidendes an. Keine Kleinigkeiten und keine Routineaufgaben.
+- Individuell: Der Text sagt, worum es in diesem Projekt konkret geht, in 2 bis 5 Wörtern, z. B. „Anschlusszusage Westnetz“ oder „Kran für Modulhub“. Keine Standardschritte wie „Baubeginn“, „Erstkontakt“ oder „Projektstart“, wenn sie nicht ausdrücklich in den Einträgen stehen.
+- Datum als JJJJ-MM-TT nur aus den Einträgen: bei Erreichtem das Datum des Eintrags, bei Kommendem das Fälligkeitsdatum oder ein im Text genanntes Datum. Ohne belegbares Datum den Meilenstein weglassen. Nichts erfinden.
+- Keine Personennamen und keine Kürzel.
+${jobs.map((j,i)=>`### ${i+1}. ${j.p.name}\n${j.src.join('\n')}`).join('\n\n')}
+Antworte nur mit JSON: {"p":[{"i":1,"ms":[{"d":"JJJJ-MM-TT","t":"…"}]}]}`,{modelTier:'default',bg:true});
+      (r&&Array.isArray(r.p)?r.p:[]).forEach(x=>{ const j=jobs[(+x.i||0)-1]; if(!j) return; const ms=(Array.isArray(x.ms)?x.ms:[]).filter(m=>m&&/^\d{4}-\d{2}-\d{2}$/.test(m.d||'')&&String(m.t||'').trim()).slice(0,6).map(m=>({d:m.d,t:String(m.t).trim().slice(0,60)})), o={id:j.p.id,k:j.k,ms,at:new Date().toISOString()}; S.pms=S.pms||{}; S.pms[j.p.id]=o; if(MODE==='cloud'&&DB) DB.collection('pms').doc(j.p.id).set(o).catch(()=>{}); });
+      if(MODE!=='cloud') saveLocal(); scheduleRender(); } }catch(e){ /* beim nächsten Laden neuer Versuch */ }
+  PMS_RUN=false; if(PMS_Q.size) PMS_T=setTimeout(pmsRun,1500); }
 function vDashOld(){
   const t=TODAY(), act=activeProjects();
   const mwp = act.filter(p=>PV.includes(p.type)).reduce((a,p)=>a+(+p.kwp||0),0)/1000;
@@ -3799,7 +3838,7 @@ function vTodos(){  const t=TODAY(), who=UI.todoWho;
   let ts=arr('tasks').filter(x=>!(x.pool&&!x.who)); if(ownTodosOnly()) ts=ts.filter(x=>taskHas(x,ME)); if(who==='-') ts=ts.filter(x=>!x.who); else if(who) ts=ts.filter(x=>taskHas(x,who));
   const open=ts.filter(x=>!x.done), done=ts.filter(x=>x.done); VIS_TASKS=open.map(x=>x.id);
   const groups=[['Überfällig',x=>x.due&&x.due<t],['Heute',x=>x.due===t],['Diese Woche',x=>x.due>t&&x.due<=addDays(t,7)],['Später',x=>x.due>addDays(t,7)],['Ohne Datum',x=>!x.due]];
-  const people=(()=>{ const seen=new Set(); return [...staff().map(s=>s.name),...arr('tasks').map(x=>x.who).filter(Boolean)].map(whoCanon).filter(n=>{ const k=shortWho(n).toLowerCase(); if(seen.has(k)) return false; seen.add(k); return true; }); })();
+  const people=(()=>{ const seen=new Set(); return [...staff().map(s=>s.name),...arr('tasks').filter(x=>!x.done).map(x=>x.who).filter(Boolean)].map(whoCanon).filter(n=>{ const k=shortWho(n).toLowerCase(); if(seen.has(k)) return false; seen.add(k); return true; }); })();
   const byPerson = people.map(n=>[n,arr('tasks').filter(x=>!x.done&&taskHas(x,n)).length]);
   const modeSw=`<div class="seg-mode light">${[['liste','Liste'],['board','Nach Mitarbeiter']].map(([k,l])=>`<button class="${(UI.todoMode||'liste')===k?'on':''}" data-act="todoMode" data-v="${k}">${l}</button>`).join('')}</div><button class="btn ${UI.bulk?'pri':''}" data-act="bulkOn" title="To-Dos markieren und gemeinsam bearbeiten">${UI.bulk?'Mehrfachauswahl beenden':'☑ Mehrere bearbeiten'}</button>`;
   if(UI.todoMode==='board'){
@@ -4072,10 +4111,10 @@ document.addEventListener('drop',e=>{ const z=e.target.closest&&e.target.closest
 
 /* ========== Einstellungen ========== */
 function vSettings(){
-  const st=staff(), ex=COLLS.some(c=>arr(c).some(x=>x.example));
+  const st=staffAll(), ex=COLLS.some(c=>arr(c).some(x=>x.example));
   return head('Team & Einstellungen','')+
   `<div class="card"><div class="card-h"><h3>Mitarbeiter</h3><button class="btn sm" data-act="addStaff">${ic('plus')}Mitarbeiter</button></div>
-   <div class="list">${st.map((s,i)=>`<div class="li"><div class="body"><div class="tt">${esc(s.name)}</div><div class="mt"><span>${esc(ROLES[s.role]||s.role||'')}</span><span>${arr('tasks').filter(t=>!t.done&&t.who===s.name).length} offene To-Dos</span>${USER_EMAIL?`<span class="mono small">Login: ${esc(s.email||shortWho(s.name).toLowerCase()+'@…')}</span>`:''}</div></div><button class="icon-btn" data-act="editStaff" data-i="${i}" aria-label="Bearbeiten">${ic('edit')}</button></div>`).join('')||'<div class="empty">Noch keine Mitarbeiter. Namen erscheinen danach als Auswahl bei To-Dos, Projektleitung und Warenannahme.</div>'}</div></div>
+   <div class="list">${st.map((s,i)=>`<div class="li"><div class="body"><div class="tt">${esc(s.name)}${s.exit?` <span class="pill ${staffGone(s)?'bad':'warn'}">${staffGone(s)?'ausgeschieden':'Austritt'} ${esc(fmtD(s.exit).slice(3))}</span>`:''}</div><div class="mt"><span>${esc(ROLES[s.role]||s.role||'')}</span><span>${arr('tasks').filter(t=>!t.done&&t.who===s.name).length} offene To-Dos</span>${USER_EMAIL?`<span class="mono small">Login: ${esc(s.email||shortWho(s.name).toLowerCase()+'@…')}</span>`:''}</div></div><button class="icon-btn" data-act="editStaff" data-i="${i}" aria-label="Bearbeiten">${ic('edit')}</button></div>`).join('')||'<div class="empty">Noch keine Mitarbeiter. Namen erscheinen danach als Auswahl bei To-Dos, Projektleitung und Warenannahme.</div>'}</div></div>
   ${isAdmin()?`<div class="card"><div class="card-h"><h3>Anmeldungen (Konto ↔ Mitarbeiter)</h3><span class="small muted">Jedes claude.ai-Konto ist fest einer Person zugeordnet. Lösen, wenn jemand falsch verknüpft ist.</span></div>
     <div class="list">${Object.entries((S.config||{}).userMap||{}).map(([id,n])=>`<div class="li"><div class="body"><div class="tt">${esc(n)}</div><div class="mt"><span class="mono small">Konto …${esc(id.slice(-6))}</span>${id===USER_ID?'<span class="pill sun">du</span>':''}</div></div>${id===USER_ID?'':`<button class="btn sm" data-act="unlinkUser" data-id="${esc(id)}">Verknüpfung lösen</button>`}</div>`).join('')||'<div class="empty">Noch keine Konten verknüpft.</div>'}</div></div>`:''}
   <div class="card"><div class="card-h"><h3>Daten</h3></div><div class="card-b" style="display:flex;flex-direction:column;gap:10px">
@@ -4546,9 +4585,9 @@ function printReport(r){
   window.addEventListener('afterprint',done); setTimeout(()=>window.print(),60);
 }
 function staffForm(i){
-  const list=clone(staff()), s=i!=null?list[i]:{name:'',role:'PL'};
-  openSheet({title:i!=null?'Mitarbeiter bearbeiten':'Neuer Mitarbeiter',value:s,fields:[{k:'name',label:'Name',req:1,ph:'z. B. Pascal Rütt (PR) – Kürzel in Klammern'},{k:'role',label:'Rolle',type:'select',options:Object.entries(ROLES)},{k:'email',label:'Login-E-Mail (nur nötig, wenn sie nicht mit dem Kürzel beginnt)',type:'email',full:1,ph:'z. B. pascal.ruett@nutz-die-sonne.de'}],
-    onSave:v=>{ v.email=String(v.email||'').trim().toLowerCase(); if(!v.email) delete v.email; if(i!=null) list[i]=v; else list.push(v); putConfig({...(S.config||{}),staff:list}); },
+  const list=clone(staffAll()), s=i!=null?list[i]:{name:'',role:'PL'}, canExit=isBaseAdmin();
+  openSheet({title:i!=null?'Mitarbeiter bearbeiten':'Neuer Mitarbeiter',value:s,fields:[{k:'name',label:'Name',req:1,ph:'z. B. Pascal Rütt (PR) – Kürzel in Klammern'},{k:'role',label:'Rolle',type:'select',options:Object.entries(ROLES)},{k:'email',label:'Login-E-Mail (nur nötig, wenn sie nicht mit dem Kürzel beginnt)',type:'email',full:1,ph:'z. B. pascal.ruett@nutz-die-sonne.de'},...(canExit&&i!=null?[{k:'exit',label:'Kündigung: letzter Arbeitstag',type:'date'},{k:'exitInfo',label:'',type:'html',full:1,html:'<div class="small muted">Bis einschließlich zu diesem Tag bleibt alles offen. Ab dem Tag danach: Zugang gesperrt, offene To-Dos „nicht zugewiesen“, raus aus allen Auswahllisten. Kürzel an alten Einträgen und die Personalakte bleiben. Datum löschen macht es rückgängig.</div>'}]:[])],
+    onSave:v=>{ delete v.exitInfo; v.email=String(v.email||'').trim().toLowerCase(); if(!v.email) delete v.email; if(canExit&&v.exit&&v.exit<TODAY()&&!confirm(v.name+' wird sofort entfernt: Zugang gesperrt, offene To-Dos werden „nicht zugewiesen“. Fortfahren?')) return false; if(!canExit&&s.exit) v.exit=s.exit; if(!v.exit) delete v.exit; if(i!=null) list[i]=v; else list.push(v); putConfig({...(S.config||{}),staff:list}); setTimeout(staffExitSweep,300); },
     onDelete:i==null?null:()=>{ list.splice(i,1); putConfig({...(S.config||{}),staff:list}); closeSheet(); }});
 }
 function formSheet(pid,k){
@@ -7458,7 +7497,7 @@ function hrTabTeam2(){ if(!isAdmin()) return ''; const t=TODAY(), y=+t.slice(0,4
       <select class="inp" data-chg="hrKind" style="width:auto"><option value="">Art der Beschäftigung</option>${Object.entries(HR_KIND).map(([k,l])=>`<option value="${k}" ${k===fk?'selected':''}>${l}</option>`).join('')}</select>
       <select class="inp" data-chg="hrSt" style="width:auto"><option value="">Status</option>${Object.entries(ST_L).map(([k,[l]])=>`<option value="${k}" ${k===fs?'selected':''}>${l}</option>`).join('')}</select></div>
     <div class="tbl-wrap"><table class="tbl"><thead><tr><th></th><th>Name</th><th>Stundenübersicht (Monat)</th><th>Status</th><th>Urlaub Rest</th><th>Überstunden</th><th>Beschäftigung</th></tr></thead><tbody>${rows||'<tr><td colspan="7"><div class="empty">Keine Treffer.</div></td></tr>'}</tbody></table></div>
-    <div class="small muted" style="padding:8px 16px 14px">Personaldaten sind sensibel (DSGVO): Diese Übersicht und die Mitarbeiterakten sehen nur Admins.</div></section>`; }
+    ${(()=>{ const g=staffAll().filter(staffGone); return g.length?`<div class="card-b"><div class="small muted" style="margin-bottom:6px">Ausgeschieden (Personalakte bleibt erhalten):</div><div class="row" style="gap:6px;flex-wrap:wrap">${g.map(s=>`<button type="button" class="btn ghost sm" data-act="hrPerson" data-n="${esc(s.name)}">${esc(s.name)} · bis ${esc(fmtD(s.exit).slice(3))}</button>`).join('')}</div></div>`:''; })()}<div class="small muted" style="padding:8px 16px 14px">Personaldaten sind sensibel (DSGVO): Diese Übersicht und die Mitarbeiterakten sehen nur Admins.</div></section>`; }
 // ---------- Mitarbeiterakte (eigene Seite mit Reitern) ----------
 const HP_SEC=[
  ['stamm','Stammdaten',[['anrede','Anrede',['','Herr','Frau','Divers']],['first','Vorname'],['last','Nachname'],['email','E-Mail (geschäftlich)'],['dept','Abteilung','list'],['position','Position'],['boss','Vorgesetzte/r','staff'],['persNr','Personalnummer'],['reps','Vertretung (Kürzel, durch Komma getrennt)'],['kind','Art der Beschäftigung',[['','–'],...Object.entries(HR_KIND)]]]],
@@ -7473,10 +7512,10 @@ function hpInput([k,l,ty],st){ const v=st[k]??'', id='hp_'+k;
   if(ty==='staff') return `<div class="hp-f"><label for="${id}">${esc(l)}</label><select class="inp" id="${id}" data-hp="${k}"><option value="">–</option>${staff().map(s=>`<option ${s.name===v?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>`;
   if(ty==='area') return `<div class="hp-f full"><label for="${id}">${esc(l)}</label><textarea class="inp" id="${id}" data-hp="${k}" rows="2">${esc(v)}</textarea></div>`;
   return `<div class="hp-f"><label for="${id}">${esc(l)}</label><input class="inp" id="${id}" data-hp="${k}" ${ty==='date'?'type="date"':ty==='num'?'type="number" step="any"':''} ${ty==='list'?'list="hpDeptList"':''} value="${esc(v)}"></div>`; }
-function hrTabPerson(){ if(!isAdmin()) return ''; const n=UI.hrPerson; if(!n||!staff().some(s=>s.name===n)){ UI.hrTab='team'; return hrTabTeam2(); }
+function hrTabPerson(){ if(!isAdmin()) return ''; const n=UI.hrPerson; if(!n||!staffAll().some(s=>s.name===n)){ UI.hrTab='team'; return hrTabTeam2(); }
   const st=hrStaffOf(n), tab=UI.hpTab||'daten', t=TODAY(), y=+t.slice(0,4), c=kCols()[shortWho(n)];
   const TABS=[['daten','Mitarbeiterdaten'],['plan','Arbeitsplan'],['abw','Abwesenheiten'],['akte','Personalakte']];
-  const head2=`<div class="hp-head"><button class="lnk" data-act="hrGo" data-tab="team">‹ Zurück zur Liste</button><div class="hp-title"><span class="hr-av big" style="${c?`background:${c};color:${inkOn(c)}`:''}">${st.photo?`<img data-blob="${esc(st.photo)}" alt="">`:esc(shortWho(n))}</span><h2>${esc(n.replace(/\s*\([^)]*\)$/,''))}</h2><select class="inp" data-chg="hrPersonSel" aria-label="Mitarbeiter wechseln" style="width:auto">${staff().map(s=>`<option ${s.name===n?'selected':''}>${esc(s.name)}</option>`).join('')}</select><span class="spacer"></span>${tab==='daten'||tab==='plan'?`<button class="btn pri" data-act="hpSave">Speichern</button>`:''}</div>
+  const head2=`<div class="hp-head"><button class="lnk" data-act="hrGo" data-tab="team">‹ Zurück zur Liste</button><div class="hp-title"><span class="hr-av big" style="${c?`background:${c};color:${inkOn(c)}`:''}">${st.photo?`<img data-blob="${esc(st.photo)}" alt="">`:esc(shortWho(n))}</span><h2>${esc(n.replace(/\s*\([^)]*\)$/,''))}</h2><select class="inp" data-chg="hrPersonSel" aria-label="Mitarbeiter wechseln" style="width:auto">${staffAll().filter(s=>!staffGone(s)||s.name===n).map(s=>`<option ${s.name===n?'selected':''}>${esc(s.name)}</option>`).join('')}</select><span class="spacer"></span>${tab==='daten'||tab==='plan'?`<button class="btn pri" data-act="hpSave">Speichern</button>`:''}</div>
     <div class="vk-st">${TABS.map(([k,l])=>`<button class="${tab===k?'on':''}" data-act="hpTab" data-v="${k}">${l}${k==='akte'?` <span class="mono">${arr('hrdocs').filter(x=>x.who===n).length}</span>`:''}</button>`).join('')}</div></div>`;
   if(tab==='plan') return head2+hpPlan(n,st); if(tab==='abw') return head2+hpAbw(n); if(tab==='akte') return head2+hpAkte(n);
   const mp=hrMonthPct(n), ov=hrSaldo(n,hrYearStart(n),addDays(t,-1))+(+st.ovStart||0)*60, vc=hrVac(n,y);
