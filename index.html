@@ -2268,7 +2268,7 @@ const canSeeActivity=()=>canSee('activity');
 const META=['upd','updBy','hist','at','by'];
 const strip=o=>{ const c={}; Object.keys(o||{}).forEach(k=>{ if(!META.includes(k)) c[k]=o[k]; }); return JSON.stringify(c); };
 const recLabel=(coll,o)=>({projects:()=>o.name,tasks:()=>'Aufgabe „'+(o.title||'')+'“',orders:()=>'Bestellung '+(o.supplier||''),offers:()=>'Angebot '+(o.title||''),events:()=>'Termin '+(o.title||''),reports:()=>'Tagesrapport '+fmtD(o.date)+' '+projName(o.pid),plan:()=>'Wochenplanung KW '+kwOf(o.week||String(o.id).slice(2))}[coll]||(()=>coll))();
-const planTxt=e=>`${e.who?shortWho(e.who):'–'} ${fmtD(e.d)}${e.end?'–'+fmtD(e.end):''}: ${e.t||''}`;
+const planTxt=e=>`${e.who?evWhos(e).map(shortWho).join("/"):'–'} ${fmtD(e.d)}${e.end?'–'+fmtD(e.end):''}: ${e.t||''}`;
 function addedText(a,b){ a=a||''; b=b||''; if(b.startsWith(a)) return b.slice(a.length).trim(); return null; }
 function describeChange(coll,prev,o){
   if(!prev) return {projects:'Projekt angelegt',tasks:'Aufgabe angelegt'+(o.who?' für '+shortWho(o.who):'')+(o.due?', fällig '+fmtD(o.due):''),orders:'Bestellung angelegt',offers:'Angebot angelegt',events:'Termin angelegt: '+fmtD(o.date),reports:'Tagesrapport angelegt',plan:'Eintrag: '+(o.entries||[]).map(planTxt).join(' | ')}[coll]||'angelegt';
@@ -2759,8 +2759,8 @@ function nfWatch(coll,prev,obj){ try{ if(NF_MUTE||!ME||(obj&&obj.example)||(prev
       if(!obj) one(w,{...base,type:'ev_del',prio:'action',stamp:now.slice(0,16),title:'Termin abgesagt',text:me+' hat den Termin '+q+' ('+dt(e)+') gelöscht.'});
       else { const old=prev?evWhos(prev).map(shortWho):[], neu=w.filter(k=>!old.includes(k)); one(neu,{...base,type:'ev_new',prio:'action',stamp:e.id+'|'+now.slice(0,16),title:'Neuer Termin für dich',text:me+' hat dich für den Termin '+q+' am '+dt(e)+' eingetragen.'});
         if(prev&&['date','end','time','place','title'].some(f=>(e[f]||'')!==(prev[f]||''))) one(w.filter(k=>!neu.includes(k)),{...base,type:'ev_chg',stamp:dt(e)+'|'+now.slice(0,16),title:'Termin geändert',text:me+' hat den Termin '+q+' geändert: jetzt '+dt(e)+(e.place?', '+e.place:'')+'.'}); } }
-    if(coll==='plan'){ const t0=TODAY(), old={}; ((prev&&prev.entries)||[]).forEach(x=>{ if(x.at) old[x.at]=x; }); (obj.entries||[]).forEach(x=>{ if(!x.at||!x.who||x.kind==='abw'||(x.end||x.d)<t0) return; const o=old[x.at]; if(o&&o.d===x.d&&(o.end||'')===(x.end||'')&&(o.time||'')===(x.time||'')&&o.who===x.who&&o.t===x.t) return; const fresh=!o&&!x.updBy;
-        nfSend(shortWho(x.who),{c:'plan',rid:obj.id,pid:x.pid,type:fresh?'plan_new':'plan_chg',prio:fresh?'action':'info',stamp:x.at+'|'+x.d+'|'+x.who+'|'+now.slice(0,16),title:fresh?'Neuer Einsatz':'Einsatz geändert',text:(fresh?me+' hat dich eingeplant: ':me+' hat deinen Einsatz geändert: ')+String(x.t||'').slice(0,80)+' am '+fmtD(x.d)+(x.time?' '+x.time:'')+'.'}); }); }
+    if(coll==='plan'){ const t0=TODAY(), old={}; ((prev&&prev.entries)||[]).forEach(x=>{ if(x.at) old[x.at]=x; }); (obj.entries||[]).forEach(x=>{ if(!x.at||!x.who||x.kind==='abw'||(x.end||x.d)<t0) return; const o=old[x.at]; evWhos(x).forEach(pw=>{ const had=!!o&&evWhos(o).includes(pw); if(had&&o.d===x.d&&(o.end||'')===(x.end||'')&&(o.time||'')===(x.time||'')&&o.t===x.t) return; const fresh=!had;
+        nfSend(shortWho(pw),{c:'plan',rid:obj.id,pid:x.pid,type:fresh?'plan_new':'plan_chg',prio:fresh?'action':'info',stamp:x.at+'|'+x.d+'|'+pw+'|'+now.slice(0,16),title:fresh?'Neuer Einsatz':'Einsatz geändert',text:(fresh?me+' hat dich eingeplant: ':me+' hat deinen Einsatz geändert: ')+String(x.t||'').slice(0,80)+' am '+fmtD(x.d)+(x.time?' '+x.time:'')+(evWhos(x).length>1?' (mit '+evWhos(x).filter(n=>n!==pw).map(shortWho).join(', ')+')':'')+'.'}); }); }); }
   }catch(e){ console.warn('Mitteilung nicht erzeugt',e); } }
 // Erinnerungen entstehen beim Empfänger: pro Tag und Vorgang höchstens einmal, auch auf mehreren Geräten
 function nfRemind(){ if(!ME||!NF_INIT) return; const t=TODAY(), tm=addDays(t,1), me=meK();
@@ -2930,7 +2930,7 @@ function calItems(from,to){
   activeProjects().forEach(p=>{ if(p.start&&p.start>=from&&p.start<=to) out.push({d:p.start,k:'proj',t:'Baubeginn '+p.name,m:TYPES[p.type],act:'openProject',id:p.id,ref:'pstart:'+p.id,first:true,last:true});
     if(p.end&&p.end>=from&&p.end<=to) out.push({d:p.end,k:'proj',t:'Bau-Fertigstellung '+p.name,m:TYPES[p.type],act:'openProject',id:p.id,ref:'pend:'+p.id,first:true,last:true}); });
   arr('projects').forEach(p=>{ if(catOf(p)==='onhold'&&p.wvl&&p.wvl>=from&&p.wvl<=to) out.push({d:p.wvl,k:'proj',t:'Wiedervorlage (Onhold): '+p.name,m:'Projekt prüfen und ggf. wieder aktivieren',act:'openProject',id:p.id,ref:'wvl:'+p.id,first:true,last:true}); });
-  arr('plan').forEach(w=>(w.entries||[]).forEach((e,i)=>{ if(!e.d||(e.pid&&!projVisId(e.pid))) return; const multi=!!(e.end&&e.end>e.d); eachDay(e.d,e.end,from,to,(d,first,last)=>out.push({d,k:e.kind==='abw'?'abw':'bau',t:e.t,m:[e.who||'Teamplanung',e.km!=null?String(e.km).replace('.',',')+' km':'',multi?'bis '+fmtD(e.end):''].filter(Boolean).join(' · '),act:'editPlan',id:w.id+'|'+i,who:e.who,lbl:e.kind==='abw'?'Abwesend':'Team',ref:'plan:'+w.id+'|'+i,e,first,last,multi,rz:true})); }));
+  arr('plan').forEach(w=>(w.entries||[]).forEach((e,i)=>{ if(!e.d||(e.pid&&!projVisId(e.pid))) return; const multi=!!(e.end&&e.end>e.d), whos=evWhos(e); eachDay(e.d,e.end,from,to,(d,first,last)=>out.push({d,k:e.kind==='abw'?'abw':'bau',t:e.t,whos,m:[whos.join(', ')||'Teamplanung',e.km!=null?String(e.km).replace('.',',')+' km':'',multi?'bis '+fmtD(e.end):''].filter(Boolean).join(' · '),act:'editPlan',id:w.id+'|'+i,who:e.who,lbl:e.kind==='abw'?'Abwesend':'Team',ref:'plan:'+w.id+'|'+i,e,first,last,multi,rz:true})); }));
   arr('hrabs').forEach(a=>{ if(!hrAbsLive(a)||!a.from) return; const see=a.who===ME||isAdmin(); eachDay(a.from,a.to||a.from,from,to,d=>{ if(!hrIsWork(a.who,d)) return; out.push({d,k:'abw',hr:1,t:(see?(HR_ABS[a.type]||['Abwesend'])[0]:'Abwesend')+(a.status==='beantragt'?' (beantragt)':''),m:shortWho(a.who),act:'hrAbsEdit',id:a.id,who:a.who,lbl:'Abwesend',first:true,last:true}); }); });
   return out.sort((a,b)=>a.d.localeCompare(b.d));
 }
@@ -3176,7 +3176,15 @@ function staffExitSweep(){ if(!ME||READONLY||!S.config) return; const gone=staff
   }finally{ NF_MUTE=false; } }
 // Einmalig: PR und Kamil austragen (Stand 06.11.2026). Nur EP/AvE schreiben das in die Einstellungen; MK (Marc Krebber) ist eine andere Person und bleibt.
 function staffExitMigrate(){ const c=S.config||{}; if(c.exitMig1||!isBaseAdmin()||!staffAll().length) return; const d=addDays(TODAY(),-1), list=clone(staffAll()); let n=0; list.forEach(s=>{ if(!s.exit&&(shortWho(s.name).toLowerCase()==='pr'||s.name.trim().toLowerCase()==='kamil')){ s.exit=d; n++; } }); putConfig({...c,staff:list,exitMig1:true}); if(n) setTimeout(staffExitSweep,500); }
-setTimeout(()=>{ staffExitMigrate(); staffExitSweep(); },9000); setInterval(()=>{ staffExitMigrate(); staffExitSweep(); applyUserMap(); },15*60000);
+// Früher bekam bei „Auch einplanen für“ jede Person einen eigenen Eintrag. Gleiche Einträge (Tag, Ende, Uhrzeit, Aufgabe, Projekt, Art, Adresse, Hinweis), die sich nur in der Person unterscheiden, zu EINEM gemeinsamen zusammenführen.
+function planMergeDups(){ if(!ME||READONLY||!mayWrite('plan')) return; NF_MUTE=true; try{
+    arr('plan').forEach(w=>{ const es=w.entries||[], seen=new Map(), keep=[]; let hit=0;
+      es.forEach(e=>{ if(!e||!e.who||e.kind==='abw'){ keep.push(e); return; } const k=[e.d,e.end||'',e.time||'',String(e.t||'').trim().toLowerCase(),e.pid||'',e.kind||'',String(e.place||'').trim(),String(e.note||'').trim(),e.link||''].join('|'), f=seen.get(k);
+        if(!f){ const c=clone(e); seen.set(k,c); keep.push(c); return; }
+        const ws=[...new Set([...evWhos(f),...evWhos(e)])]; f.who=ws[0]; f.who2=ws.slice(1); if(!f.who2.length) delete f.who2; if(!(f.mat||[]).length&&(e.mat||[]).length) f.mat=e.mat; hit++; });
+      if(hit) put('plan',{...clone(w),entries:keep}); });
+  }finally{ NF_MUTE=false; } }
+setTimeout(()=>{ staffExitMigrate(); staffExitSweep(); planMergeDups(); },9000); setInterval(()=>{ staffExitMigrate(); staffExitSweep(); applyUserMap(); },15*60000);
 /* ---------- Meilensteine für die Gesamt-Timeline: individuell aus To-Dos und Notizen des Projekts, keine Standardschritte ---------- */
 // Eigene Sammlung pms {id,k,ms:[{d,t}]}, k = Prüfsumme der Quellen: Ändert sich etwas Inhaltliches, fasst die KI das Projekt neu zusammen.
 function pmsSources(p){ const notes=['updates','notes'].flatMap(k=>noteBlocks(p[k]).map(b=>{ const np=noteParts(b), d=dIso(np.d); return {d,l:(d||'ohne Datum')+' · Notiz: '+String(np.text||'').replace(/\s+/g,' ').slice(0,300)}; })).sort((a,b)=>b.d.localeCompare(a.d)).slice(0,12).reverse();
@@ -3292,7 +3300,7 @@ function tlItems(p){
     (o.receipts||[]).forEach(r=>{ if(r.date) out.push({d:r.date,lane:'mat',t:'Angekommen: '+s,act:'editOrder',id:o.id}); });
     if(o.delivery&&orderState(o).open) out.push({d:o.delivery,lane:'mat',t:'Liefertermin: '+s,act:'receive',id:o.id}); });
   arr('events').filter(e=>e.pid===p.id&&e.date).forEach(e=>out.push({d:e.date,end:e.end,lane:'term',t:e.title,act:'editEvent',id:e.id}));
-  arr('plan').forEach(w=>(w.entries||[]).forEach((e,i)=>{ if(e.pid===p.id&&e.d) out.push({d:e.d,end:e.end,lane:'term',t:'Team: '+e.t+(e.who?' ('+shortWho(e.who)+')':''),act:'editPlan',id:w.id+'|'+i}); }));
+  arr('plan').forEach(w=>(w.entries||[]).forEach((e,i)=>{ if(e.pid===p.id&&e.d) out.push({d:e.d,end:e.end,lane:'term',t:'Team: '+e.t+(e.who?' ('+evWhos(e).map(shortWho).join(', ')+')':''),act:'editPlan',id:w.id+'|'+i}); }));
   arr('tasks').filter(t=>t.pid===p.id).forEach(t=>{ if(t.done&&t.doneAt) out.push({d:String(t.doneAt).slice(0,10),lane:'task',t:'✓ '+t.title,by:t.doneBy,act:'editTask',id:t.id}); else if(!t.done&&t.due) out.push({d:t.due,lane:'task',t:'☐ '+t.title+(t.who?' ('+shortWho(t.who)+')':''),late:t.due<t0,act:'editTask',id:t.id}); });
   if(p.start) out.push({d:p.start,lane:'ms',t:'Baubeginn (geplant)',k:'start'});
   // Von Hand geänderte / ausgeblendete Meilensteine und eigene Meilensteine
@@ -3423,7 +3431,7 @@ const calWords=s=>new Set(String(s||'').toLowerCase().replace(/[^a-zäöüß0-9 
 function taskCalCands(t){ const today=TODAY(), tw=calWords(t.title), sim=s=>{ const w=calWords(s); let n=0; tw.forEach(x=>{ if(w.has(x)) n++; }); return n; }, out=[];
   arr('events').forEach(e=>{ const end=e.end||e.date; if(!end||end<today) return; const linked=t.evId===e.id, s=sim(e.title+' '+(e.notes||''));
     if(linked||(t.pid&&e.pid===t.pid&&s>=1)||s>=2){ const others=arr('tasks').filter(x=>x.evId===e.id&&x.id!==t.id&&!x.done).length; out.push({k:'ev',id:e.id,t:e.title,d:e.date,time:e.time,pre:(linked||s>=2)&&!others,why:linked?'aus diesem Termin entstanden':others?'gehört auch zu '+others+' anderen offenen To-Do(s)':'ähnlicher Titel'+(t.pid&&e.pid===t.pid?', gleiches Projekt':'')}); } });
-  arr('plan').forEach(w=>(w.entries||[]).forEach((e,i)=>{ const end=e.end||e.d; if(!end||end<today) return; const s=sim(e.t+' '+(e.note||'')); if((t.pid&&e.pid===t.pid&&s>=1)||s>=2) out.push({k:'plan',id:w.id,i,t:e.t,d:e.d,who:e.who,pre:s>=2,why:'Wochenplanung'+(e.who?' · '+shortWho(e.who):'')}); }));
+  arr('plan').forEach(w=>(w.entries||[]).forEach((e,i)=>{ const end=e.end||e.d; if(!end||end<today) return; const s=sim(e.t+' '+(e.note||'')); if((t.pid&&e.pid===t.pid&&s>=1)||s>=2) out.push({k:'plan',id:w.id,i,t:e.t,d:e.d,who:e.who,pre:s>=2,why:'Wochenplanung'+(e.who?' · '+evWhos(e).map(shortWho).join(', '):'')}); }));
   return out.slice(0,8); }
 function taskCalOffer(id){ const t=S.tasks[id]; if(!t||!t.done||SHEET) return; const c=taskCalCands(t); if(!c.length) return;
   openSheet({title:'Kalendereintrag auch löschen?',html:`<div class="fld full"><div class="small muted">„${esc(t.title)}“ ist erledigt. Dazu steht noch im Kalender:</div></div>
@@ -3921,11 +3929,12 @@ function planForm(e,onSave,onDelete,also){
   // Adresse und Fahrtstrecke wie beim Termin (gleiche Felder f_link / f_place, gleiche Berechnung)
   EV_KM=e.km!=null&&e.place?{addr:String(e.place).trim(),km:e.km,min:e.min}:null; setTimeout(()=>evAddrWire(e),0);
   e.linkTxt=evLinkLabel(e.link);
-  const save0=onSave; onSave=v=>{ delete v.kmx; v.link=evLinkResolve(v.linkTxt); delete v.linkTxt; if(!v.link) delete v.link; const pl=String(v.place||'').trim(); if(EV_KM&&pl&&EV_KM.addr===pl){ v.km=EV_KM.km; v.min=EV_KM.min; } else { v.km=null; v.min=null; } return save0(v); };
+  // Mehrere Personen = EIN gemeinsamer Eintrag (who = erste Person, who2 = weitere): Verschieben/Ändern gilt für alle
+  const save0=onSave; onSave=v=>{ delete v.kmx; delete v.alsox; const more=[...document.querySelectorAll('.pl-also:checked')].map(x=>x.value).filter(n=>n&&n!==v.who); if(!v.who&&more.length) v.who=more.shift(); v.who2=[...new Set(more)]; v.link=evLinkResolve(v.linkTxt); delete v.linkTxt; if(!v.link) delete v.link; const pl=String(v.place||'').trim(); if(EV_KM&&pl&&EV_KM.addr===pl){ v.km=EV_KM.km; v.min=EV_KM.min; } else { v.km=null; v.min=null; } return save0(v); };
   openSheet({title:e.t?'Einsatz bearbeiten':'Einsatz planen',wide:1,value:e,fields:[
     ...(trail?[{k:'trail',label:'Spur',type:'html',html:trail}]:[]),
     {k:'who',label:'Mitarbeiter',type:'select',options:[['','– niemand –'],...staff().map(s=>[s.name,s.name])]},{k:'kind',label:'Art',type:'select',options:Object.entries(PLAN_KINDS)},
-    ...(also?[{k:'alsox',label:'Auch einplanen für (jede Person bekommt einen eigenen Eintrag)',type:'html',full:1,html:whoPick([],'pl-also')}]:[]),
+    {k:'alsox',label:'Weitere Personen (ein gemeinsamer Eintrag für alle)',type:'html',full:1,html:whoPick((e.who2||[]).filter(n=>n!==e.who),'pl-also')},
     {k:'d',label:'Datum',type:'date',req:1},{k:'end',label:'bis (bei mehreren Tagen)',type:'date'},{k:'time',label:'Uhrzeit',type:'time'},
     {k:'pid',label:'Projekt',type:'select',options:projOpts()},{k:'t',label:'Aufgabe',req:1,ph:'z. B. DC-Montage Feld 7, Zählertermin, Lager aufräumen'},
     {k:'linkTxt',label:'Kunde oder Lieferant',list:'evLinkList',ph:'Namen tippen und auswählen …'},
@@ -5771,16 +5780,18 @@ function vActivity(){
 /* ========== Kalender: Drag & Drop, Verlängern/Verkürzen ========== */
 const daysBetween=(a,b)=>Math.round((new Date(b+'T12:00')-new Date(a+'T12:00'))/864e5);
 function splitRef(ref){ const i=ref.indexOf(':'); return [ref.slice(0,i),ref.slice(i+1)]; }
-function moveRef(ref,date,who){
+// Gemeinsamer Eintrag mehrerer Personen: Ziel-Person schon dabei → nur Datum; sonst ersetzt sie die Person, aus deren Zeile gezogen wurde
+function swapWho(e,from,to){ const ws=evWhos(e); if(ws.includes(to)) return; const i=from?ws.indexOf(from):-1; if(i>=0) ws[i]=to; else ws[0]=to; e.who=ws[0]||''; const r=ws.slice(1).filter(n=>n!==e.who); if(r.length) e.who2=r; else delete e.who2; }
+function moveRef(ref,date,who,fromWho){
   const [t,id]=splitRef(ref); const staffWho = who&&!who.startsWith('__')? who : null;
   if(!date){ // nur Zuständigkeit ändern (To-Do-Board, Personen-Chips)
     if(t!=='task') return; const k=clone(S.tasks[id]); if(!k) return; const nw=staffWho||'';
     if((k.who||'')===nw) return; k.who=nw; put('tasks',k); toast(nw?'Zugewiesen an '+shortWho(nw):'Zuständigkeit entfernt'); return; }
   if(t==='plan'){ const [wid,ix]=id.split('|'), w=S.plan[wid]; if(!w||!w.entries[+ix]) return; const e=clone(w.entries[+ix]);
     const delta=daysBetween(e.d,date); e.d=date; if(e.end) e.end=addDays(e.end,delta);
-    if(who==='__abw'){ e.kind='abw'; e.who=''; } else if(who==='__none'){ e.who=''; } else if(staffWho){ e.who=staffWho; if(e.kind==='abw'&&w.entries[+ix].who==='') e.kind='abw'; }
+    if(who==='__abw'){ e.kind='abw'; e.who=''; delete e.who2; } else if(who==='__none'){ e.who=''; delete e.who2; } else if(staffWho){ swapWho(e,fromWho,staffWho); }
     const ww=clone(w); ww.entries.splice(+ix,1); savePlanEntry(e,ww,true); }
-  else if(t==='event'){ const e=clone(S.events[id]); if(!e) return; const delta=daysBetween(e.date,date); e.date=date; if(e.end) e.end=addDays(e.end,delta); if(staffWho&&!evWhos(e).includes(staffWho)) e.who=staffWho; put('events',e); } // auf eine Person ziehen, die schon dabei ist: nur das Datum ändert sich
+  else if(t==='event'){ const e=clone(S.events[id]); if(!e) return; const delta=daysBetween(e.date,date); e.date=date; if(e.end) e.end=addDays(e.end,delta); if(staffWho) swapWho(e,fromWho,staffWho); put('events',e); } // auf eine Person ziehen, die schon dabei ist: nur das Datum ändert sich
   else if(t==='task'){ const k=clone(S.tasks[id]); if(!k) return; k.due=date; if(staffWho) k.who=staffWho; put('tasks',k); }
   else if(t==='order'){ const o=clone(S.orders[id]); if(!o) return; o.delivery=date; put('orders',o); }
   else if(t==='pstart'||t==='pend'){ const p=clone(S.projects[id]); if(!p) return; const n=t==='pstart'?11:23; p[t==='pstart'?'start':'end']=date; if(/^\d{4}-/.test((p.ms||{})['m'+n]||'')) p.ms={...p.ms,['m'+n]:date}; put('projects',p); }
@@ -5840,7 +5851,8 @@ function endDrag(){ if(!DRAG) return; clearTimeout(DRAG.timer); if(DRAG.ghost) D
 document.addEventListener('pointerdown',e=>{
   if(e.button>0||READONLY) return; if(e.target.closest('select,input,textarea,.td-grip')) return; const it=e.target.closest('[data-drag]'); if(!it||!it.dataset.drag) return;
   const rz=!!e.target.closest('.rz');
-  DRAG={ref:it.dataset.drag,mode:rz?'resize':'move',x:e.clientX,y:e.clientY,el:it,started:false,touch:e.pointerType!=='mouse'};
+  const fw=it.closest('[data-drop-who]');
+  DRAG={ref:it.dataset.drag,fromWho:fw?fw.dataset.dropWho:'',mode:rz?'resize':'move',x:e.clientX,y:e.clientY,el:it,started:false,touch:e.pointerType!=='mouse'};
   if(rz){ e.preventDefault(); startDrag(); }
   else if(DRAG.touch){ DRAG.timer=setTimeout(()=>{ if(DRAG&&!DRAG.started){ startDrag(); if(navigator.vibrate) try{ navigator.vibrate(15); }catch(_){} } },380); }
 });
@@ -5857,7 +5869,7 @@ document.addEventListener('pointerup',e=>{
   if(!t) return; if(t.dataset.dropProj){ projReorder(String(d.ref).slice(5),t.dataset.dropProj); return; }
   if(t.dataset.dropNote){ linkTaskNote(t.dataset.pid,String(d.ref).slice(5),t.dataset.dropNote); return; }
   if(t.dataset.dropTask){ mergeTask(String(d.ref).slice(5),t.dataset.dropTask); return; }
-  if(d.mode==='resize'){ if(t.dataset.dropD) resizeRef(d.ref,t.dataset.dropD); } else moveRef(d.ref,t.dataset.dropD||'',t.dataset.dropWho);
+  if(d.mode==='resize'){ if(t.dataset.dropD) resizeRef(d.ref,t.dataset.dropD); } else moveRef(d.ref,t.dataset.dropD||'',t.dataset.dropWho,d.fromWho);
 });
 document.addEventListener('pointercancel',()=>endDrag());
 /* ---------- ⋮⋮ Reihenfolge der To-Dos per Griff ändern (Maus und Finger). Ziehen an der Zeile selbst bleibt wie bisher: auf ein anderes To-Do = als Update übernehmen, auf Person/Tag = zuweisen. ---------- */
@@ -6032,7 +6044,7 @@ const A = {
  editPlan:d=>{ const [wid,ix]=d.id.split('|'); const w=S.plan[wid]; if(!w||!w.entries[+ix]) return; const e=clone(w.entries[+ix]);
    planForm(e, v=>{ const ww=clone(S.plan[wid]); ww.entries.splice(+ix,1); savePlanEntry({...e,...v},ww); },
      ()=>{ const ww=clone(S.plan[wid]); ww.entries.splice(+ix,1); put('plan',ww); closeSheet(); }); },
- newPlan:d=>planForm({d:d.date||TODAY(),kind:d.kind||'bau',who:d.who||'',mat:[]}, v=>{ const more=[...document.querySelectorAll('.pl-also:checked')].map(x=>x.value).filter(n=>n!==v.who); savePlanEntry(v,null,more.length>0); more.forEach(n=>savePlanEntry({...v,who:n},null,true)); if(more.length) toast('Für '+(more.length+(v.who?1:0))+' Personen eingeplant.'); },null,true),
+ newPlan:d=>planForm({d:d.date||TODAY(),kind:d.kind||'bau',who:d.who||'',mat:[]}, v=>{ const n=evWhos(v).length; savePlanEntry(v,null,n>1); if(n>1) toast('Ein gemeinsamer Eintrag für '+n+' Personen.'); },null,true),
  weekWho:d=>{ UI.weekWho=d.v; render(); },
  matStd:d=>{ const L={dc:MAT_DC,ac:MAT_AC,tool:['Benning PV1-1 (DC-Messung)','Benning IT200 (AC-Messung)','Akkuschrauber + Bits','Leiter','PSA / Absturzsicherung','Crimpzange MC4','Abisolierwerkzeug','Fotodoku: Handy geladen']}[d.v]||[]; addMatRows(L.map(a=>({art:a,unit:'Stk'}))); },
  matFromOrder:()=>{ const pid=($('#f_pid')||{}).value; if(!pid){ toast('Bitte zuerst Kunde / Projekt wählen.'); return; }
@@ -6173,7 +6185,7 @@ function savePlanEntry(v,touched,silent){
   if(touched && touched.id!==wid) put('plan',touched);
   const w = touched && touched.id===wid ? touched : (S.plan[wid]?clone(S.plan[wid]):{id:wid,week:mondayOf(v.d),entries:[]});
   const e={d:v.d,t:v.t,who:v.who||'',kind:v.kind||'bau',by:v.by||meK(),at:v.at||new Date().toISOString()};
-  if(v.by){ e.updBy=meK(); e.updAt=new Date().toISOString(); e.log=(v.log||[]).concat([{at:e.updAt,by:meK()}]).slice(-30); } ['time','pid','note','link','place'].forEach(k=>{ if(v[k]) e[k]=v[k]; }); if(v.km!=null&&v.place){ e.km=v.km; e.min=v.min; } if(v.end&&v.end>v.d) e.end=v.end; if(v.mat&&v.mat.length) e.mat=v.mat.map(m=>({ok:!!m.ok,qty:m.qty??'',unit:m.unit||'',art:m.art||''}));
+  if(v.by){ e.updBy=meK(); e.updAt=new Date().toISOString(); e.log=(v.log||[]).concat([{at:e.updAt,by:meK()}]).slice(-30); } ['time','pid','note','link','place'].forEach(k=>{ if(v[k]) e[k]=v[k]; }); const w2=[...new Set((v.who2||[]).filter(n=>n&&n!==e.who))]; if(w2.length) e.who2=w2; if(v.km!=null&&v.place){ e.km=v.km; e.min=v.min; } if(v.end&&v.end>v.d) e.end=v.end; if(v.mat&&v.mat.length) e.mat=v.mat.map(m=>({ok:!!m.ok,qty:m.qty??'',unit:m.unit||'',art:m.art||''}));
   w.entries.push(e); put('plan',w); if(!silent) toast('Wochenplanung gespeichert.');
 }
 // Statusschritt (setzt/entfernt auch den verknüpften Checklistenpunkt und schließt zugehörige Aufgaben)
@@ -6544,7 +6556,7 @@ function gsearch(q){
   allFiles().forEach(f=>{ if(hit([f.name,f.orig,f.from,f.subject,f.text,projName(f.pid)].join(' '))) out.push({g:'Dateien',t:f.name,m:[FILE_KINDS[f.kind],projName(f.pid),fmtD(f.date)].filter(Boolean).join(' · '),act:f.virtual?f.vact:f.asset?'fileAsset':'fileOpen',id:f.virtual?f.vid:f.asset?f.asset:f.id}); });
   arr('stock').forEach(s=>{ if(hit([s.art,s.artNr,s.loc].join(' '))) out.push({g:'Lager',t:s.art,m:[s.artNr,s.loc,'Bestand '+qn(s.qty)+' '+(s.unit||'')].filter(Boolean).join(' · '),act:'stockHist',id:s.id}); });
   arr('events').forEach(e=>{ if(hit([e.title,e.place,e.notes,projName(e.pid)].join(' '))) out.push({g:'Termine',t:e.title,m:[fmtD(e.date),projName(e.pid)].filter(Boolean).join(' · '),act:'editEvent',id:e.id}); });
-  arr('plan').forEach(w=>(w.entries||[]).forEach((e,i)=>{ if(hit([e.t,e.note,e.who,projName(e.pid)].join(' '))) out.push({g:'Wochenplanung',t:e.t,m:[fmtD(e.d),e.who?shortWho(e.who):'',projName(e.pid)].filter(Boolean).join(' · '),act:'editPlan',id:w.id+'|'+i}); }));
+  arr('plan').forEach(w=>(w.entries||[]).forEach((e,i)=>{ if(hit([e.t,e.note,...evWhos(e),projName(e.pid)].join(' '))) out.push({g:'Wochenplanung',t:e.t,m:[fmtD(e.d),e.who?evWhos(e).map(shortWho).join(', '):'',projName(e.pid)].filter(Boolean).join(' · '),act:'editPlan',id:w.id+'|'+i}); }));
   arr('reports').forEach(r=>{ if(hit([projName(r.pid),r.work,r.plan,r.address].join(' '))) out.push({g:'Tagesrapporte',t:projName(r.pid)||'Rapport',m:fmtD(r.date),act:'editReport',id:r.id}); });
   arr('picks').forEach(k=>{ if(hit([projName(k.pid),k.who,...(k.items||[]).map(i=>i.art)].join(' '))) out.push({g:'Kommissionierung',t:'Liste '+(projName(k.pid)||''),m:[fmtD(k.date),PICK_ST[k.status]].join(' · '),act:'openPick',id:k.id}); });
   return out;
@@ -6768,7 +6780,7 @@ function aiSnapshot(q,hist){
   const dn=arr('tasks').filter(t=>t.done&&String(t.doneAt||'')>=addDays(t0,-30)); if(dn.length) out.push('IN DEN LETZTEN 30 TAGEN ERLEDIGT (Titel | Projekt | wer | erledigt am):\n'+dn.map(t=>[t.title.slice(0,100),projName(t.pid)||'-',t.doneBy||shortWho(t.who||''),String(t.doneAt).slice(0,10)].join(' | ')).join('\n'));
   const ev=arr('events').filter(e=>e.date>=addDays(t0,-7)&&e.date<=addDays(t0,45)).sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||''))); if(ev.length) out.push('TERMINE (id | Datum | Uhrzeit | Titel | Art | wer | Projekt | Ort):\n'+ev.map(e=>[e.id,e.date,e.time||'',e.title||'',EV_KINDS[e.kind]||'',evWhos(e).map(shortWho).join(', '),projName(e.pid)||'',e.place||''].join(' | ')).join('\n'));
   const oo=arr('orders').filter(o=>orderState(o).open); if(oo.length) out.push('OFFENE BESTELLUNGEN (id | Lieferant | Projekt | bestellt | Liefertermin | Status | bestellt über | Positionen):\n'+oo.map(o=>[o.id,o.supplier||'',projName(o.pid)||'-',o.ordered||'',o.delivery||'',orderState(o).k,o.buyer||'',(o.items||[]).slice(0,5).map(i=>(i.qty||'')+' '+(i.unit||'')+' '+i.art).join('; ')].join(' | ')).join('\n'));
-  const wk=arr('plan').flatMap(w=>(w.entries||[]).filter(e=>e.d>=mon&&e.d<=addDays(mon,11)).map(e=>[e.d,e.who?shortWho(e.who):'-',e.t||'',projName(e.pid)||''].join(' | '))); if(wk.length) out.push('WOCHENPLANUNG diese + nächste Woche (Datum | wer | was | Projekt):\n'+wk.join('\n'));
+  const wk=arr('plan').flatMap(w=>(w.entries||[]).filter(e=>e.d>=mon&&e.d<=addDays(mon,11)).map(e=>[e.d,e.who?evWhos(e).map(shortWho).join(', '):'-',e.t||'',projName(e.pid)||''].join(' | '))); if(wk.length) out.push('WOCHENPLANUNG diese + nächste Woche (Datum | wer | was | Projekt):\n'+wk.join('\n'));
   const st=arr('stock').filter(s=>+s.qty>0).slice(0,80); if(st.length) out.push('LAGER (Artikel | Bestand | Lagerort):\n'+st.map(s=>[s.art,qn(s.qty)+' '+(s.unit||''),s.loc||''].join(' | ')).join('\n'));
   cand.forEach(p=>out.push(`DETAILS ${p.name} (${p.id}):\nNotizen je Tag (neueste zuerst):\n${diaryDays(p).slice(0,10).map(x=>'- '+(x.d||'ohne Datum')+': '+x.items.map(e=>(e.by?e.by+': ':'')+dyPlain(e)).join(' | ').slice(0,900)).join('\n')||'- keine'}\nAlle To-Dos inkl. erledigte:\n${arr('tasks').filter(t=>t.pid===p.id).map(t=>'- '+(t.done?'✓ ':'☐ ')+t.title+(t.who?' ('+shortWho(t.who)+')':'')+(t.due?' fällig '+t.due:'')+((t.upd2||[]).length?' · Updates: '+[...t.upd2].sort((a,b)=>updKey(a).localeCompare(updKey(b))).map(u=>u.d+' '+(u.by||'')+': '+u.t).join(' / ').slice(0,500):'')).join('\n')||'- keine'}${p.questions?'\nOffene Fragen: '+p.questions.slice(0,600):''}`));
   return out.join('\n\n').slice(0,45000);
