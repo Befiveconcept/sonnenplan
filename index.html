@@ -710,6 +710,10 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .tabbar button{position:relative}.tb-dot{position:absolute;top:4px;left:calc(50% + 6px);min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:#E5383B;color:#fff;font-size:10.5px;font-weight:700;line-height:17px;text-align:center}
 .menu-row{display:flex;align-items:stretch}.menu-row>button:first-child{flex:1;min-width:0}
 .menu .menu-x{flex:none;width:30px;justify-content:center;padding:0;color:var(--muted);font-size:17px;font-weight:700;opacity:.45}.menu .menu-row:hover .menu-x{opacity:1}.menu .menu-x:hover{color:var(--ink);background:var(--sunken)}
+.lk{position:relative;display:flex;flex-direction:column;gap:6px}.lk-seg{display:inline-flex;align-self:flex-start;border:1px solid var(--line);border-radius:999px;padding:2px;background:var(--sunken)}.lk-t{border:0;background:none;padding:4px 14px;border-radius:999px;font:inherit;font-size:13px;cursor:pointer;color:var(--muted)}.lk-t.on{background:var(--primary);color:#fff;font-weight:600}
+.lk-dd{position:relative}.lk-btn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;cursor:pointer}.lk-btn #lkCur{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lk-ic,.lk-car{color:var(--muted);display:inline-flex}
+.lk-pop{position:absolute;z-index:60;left:0;right:0;top:calc(100% + 4px);background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.18);overflow:hidden}.lk-s{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line);color:var(--muted)}.lk-s input{flex:1;border:0!important;outline:0;box-shadow:none!important;background:none!important;padding:2px 0!important;min-height:0!important;font:inherit;color:var(--ink)}
+.lk-list{max-height:240px;overflow:auto;padding:4px}.lk-o{display:block;width:100%;text-align:left;border:0;background:none;padding:8px 10px;border-radius:6px;font:inherit;cursor:pointer;color:var(--ink)}.lk-o:hover,.lk-o:focus{background:var(--sunken)}.lk-o.on{font-weight:600;background:color-mix(in srgb,var(--sun) 25%,transparent)}.lk-none{color:var(--muted)}
 .who-more-f{display:flex;flex-direction:column;gap:6px;justify-content:flex-end;min-height:100%}.who2-row{display:flex;gap:4px;align-items:center}.who2-row .inp{flex:1}
 .who-plus{align-self:flex-start;border:1px dashed var(--line);background:none;border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;color:var(--muted);cursor:pointer}.who-plus:hover{border-color:var(--ink);color:var(--ink)}
 .who-more{font-family:var(--f-mono);font-size:11px;color:var(--muted);align-self:center;white-space:nowrap;margin-right:4px;background:none;border:0;padding:1px 4px;border-radius:6px;cursor:pointer}button.who-more:hover{background:var(--sunken);color:var(--ink)}
@@ -3928,16 +3932,15 @@ function planForm(e,onSave,onDelete,also){
   const trail=e.by?`<div class="trail">${esc(planTrail(e))}${(e.log||[]).length>1?`<details><summary>Alle Änderungen (${e.log.length})</summary>${e.log.slice().reverse().map(l=>`<div>${esc(stampTxt(l.at))} · ${esc(l.by)}</div>`).join('')}</details>`:''}</div>`:'';
   // Adresse und Fahrtstrecke wie beim Termin (gleiche Felder f_link / f_place, gleiche Berechnung)
   EV_KM=e.km!=null&&e.place?{addr:String(e.place).trim(),km:e.km,min:e.min}:null; setTimeout(()=>evAddrWire(e),0);
-  e.linkTxt=evLinkLabel(e.link);
   // Mehrere Personen = EIN gemeinsamer Eintrag (who = erste Person, who2 = weitere): Verschieben/Ändern gilt für alle
-  const save0=onSave; onSave=v=>{ delete v.kmx; delete v.alsox; const more=[...document.querySelectorAll('.pl-also:checked')].map(x=>x.value).filter(n=>n&&n!==v.who); if(!v.who&&more.length) v.who=more.shift(); v.who2=[...new Set(more)]; v.link=evLinkResolve(v.linkTxt); delete v.linkTxt; if(!v.link) delete v.link; const pl=String(v.place||'').trim(); if(EV_KM&&pl&&EV_KM.addr===pl){ v.km=EV_KM.km; v.min=EV_KM.min; } else { v.km=null; v.min=null; } return save0(v); };
+  const save0=onSave; onSave=v=>{ delete v.kmx; delete v.alsox; const more=[...document.querySelectorAll('.pl-also:checked')].map(x=>x.value).filter(n=>n&&n!==v.who); if(!v.who&&more.length) v.who=more.shift(); v.who2=[...new Set(more)]; delete v.linkx; v.link=evLinkVal(); if(!v.link) delete v.link; const pl=String(v.place||'').trim(); if(EV_KM&&pl&&EV_KM.addr===pl){ v.km=EV_KM.km; v.min=EV_KM.min; } else { v.km=null; v.min=null; } return save0(v); };
   openSheet({title:e.t?'Einsatz bearbeiten':'Einsatz planen',wide:1,value:e,fields:[
     ...(trail?[{k:'trail',label:'Spur',type:'html',html:trail}]:[]),
     {k:'who',label:'Mitarbeiter',type:'select',options:[['','– niemand –'],...staff().map(s=>[s.name,s.name])]},{k:'kind',label:'Art',type:'select',options:Object.entries(PLAN_KINDS)},
     {k:'alsox',label:'Weitere Personen (ein gemeinsamer Eintrag für alle)',type:'html',full:1,html:whoPick((e.who2||[]).filter(n=>n!==e.who),'pl-also')},
     {k:'d',label:'Datum',type:'date',req:1},{k:'end',label:'bis (bei mehreren Tagen)',type:'date'},{k:'time',label:'Uhrzeit',type:'time'},
     {k:'pid',label:'Projekt',type:'select',options:projOpts()},{k:'t',label:'Aufgabe',req:1,ph:'z. B. DC-Montage Feld 7, Zählertermin, Lager aufräumen'},
-    {k:'linkTxt',label:'Kunde oder Lieferant',list:'evLinkList',ph:'Namen tippen und auswählen …'},
+    {k:'linkx',label:'Kunde oder Lieferant',type:'html',html:evLinkHtml(e.link)},
     {k:'place',label:'Adresse',full:1,ph:'Straße Hausnummer, PLZ Ort – kommt automatisch aus Projekt, Kunde oder Lieferant'},
     {k:'kmx',label:'',type:'html',full:1,html:evKmHtml()},
     {k:'note',label:'Hinweise',type:'textarea',ph:'Ansprechpartner, Zugang, Besonderheiten'},
@@ -4421,10 +4424,36 @@ const kmTxt=e=>e&&e.km!=null?`${String(e.km).replace('.',',')} km · ca. ${e.min
 let EV_KM=null; // Ergebnis im offenen Formular {addr,km,min}
 async function evKmCalc(){ const pl=$('#f_place'), out=$('#evKmOut'); if(!pl||!out) return; const addr=pl.value.trim(); if(!addr){ EV_KM=null; out.textContent='Erst eine Adresse eintragen.'; return; } if(EV_KM&&EV_KM.addr===addr) return;
   out.textContent='Strecke wird berechnet …'; try{ const r=await driveKm(addr); if($('#f_place')&&$('#f_place').value.trim()!==addr) return; EV_KM={addr,...r}; out.textContent='🚗 '+kmTxt(r)+' ab Büro'; }catch(err){ EV_KM=null; out.textContent='Strecke nicht berechnet: '+(err&&err.message&&!/geo|Route|fetch/i.test(err.message)?err.message:'Dienst nicht erreichbar oder Adresse unklar')+'.'; } }
-function evAddrWire(e){ const pl=$('#f_place'), pid=$('#f_pid'), ln=$('#f_linkTxt'); if(!pl) return; let auto=pl.value.trim()===evLinkAddr(e.link,e.pid)?pl.value.trim():'';
-  const fill=()=>{ const a=evLinkAddr(ln&&evLinkResolve(ln.value),pid&&pid.value), own=pl.value.trim()&&pl.value.trim()!==auto; if(own) return; // selbst eingetragene Adresse bleibt
+// Kunde oder Lieferant: erst Art wählen, dann Auswahlliste mit Lupe (Suche nur in Kunden bzw. nur in Lieferanten). Gespeichert wird die Verknüpfung im versteckten Feld #f_linkTxt.
+const lkTypeOf=link=>/^l/.test(String(link||''))?'l':'k';
+const lkName=l=>String(l||'').replace(/^(Kunde|Lieferant): /,'');
+const lkLbl=v=>v?lkName(evLinkLabel(v)):'';
+const lkSvg='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>';
+function evLinkHtml(link){ const ty=lkTypeOf(link), lb=lkLbl(link);
+  return `<div class="lk" id="lkBox"><div class="lk-seg" role="radiogroup" aria-label="Art"><button type="button" class="lk-t ${ty==='k'?'on':''}" data-t="k" role="radio" aria-checked="${ty==='k'}">Kunde</button><button type="button" class="lk-t ${ty==='l'?'on':''}" data-t="l" role="radio" aria-checked="${ty==='l'}">Lieferant</button></div>
+    <div class="lk-dd"><button type="button" class="lk-btn inp" id="lkBtn" aria-haspopup="listbox"><span class="lk-ic">${lkSvg}</span><span id="lkCur" class="${lb?'':'muted'}">${esc(lb||(ty==='k'?'Kunden suchen …':'Lieferanten suchen …'))}</span><span class="lk-car">▾</span></button>
+    <div class="lk-pop" id="lkPop" hidden><div class="lk-s">${lkSvg}<input id="lkQ" autocomplete="off" placeholder="${ty==='k'?'Kunden':'Lieferanten'} suchen …"></div><div class="lk-list" id="lkList" role="listbox"></div></div></div>
+    <input type="hidden" id="f_linkTxt" value="${esc(link||'')}"></div>`; }
+const evLinkVal=()=>{ const h=$('#f_linkTxt'); return h?h.value:''; };
+function lkWire(){ const box=$('#lkBox'); if(!box||box.dataset.w) return; box.dataset.w=1; const hid=$('#f_linkTxt'), pop=$('#lkPop'), q=$('#lkQ'), list=$('#lkList'), cur=$('#lkCur');
+  let ty=lkTypeOf(hid.value);
+  const opts=()=>evLinkOpts().slice(1).filter(([v])=>lkTypeOf(v)===ty);
+  const draw=()=>{ const s=q.value.trim().toLowerCase(), os=opts().filter(([,l])=>!s||lkName(l).toLowerCase().includes(s));
+    list.innerHTML=(hid.value?`<button type="button" class="lk-o lk-none" data-v="">– keine Auswahl –</button>`:'')+(os.slice(0,80).map(([v,l])=>`<button type="button" class="lk-o ${v===hid.value?'on':''}" data-v="${esc(v)}" role="option">${esc(lkName(l))}</button>`).join('')||`<div class="small muted" style="padding:8px 10px">${opts().length?'Nichts gefunden.':(ty==='k'?'Noch keine Kunden angelegt.':'Noch keine Lieferanten angelegt.')}</div>`); };
+  const open=()=>{ pop.hidden=false; q.value=''; draw(); setTimeout(()=>q.focus(),0); };
+  const close=()=>{ pop.hidden=true; };
+  const ph=()=>ty==='k'?'Kunden suchen …':'Lieferanten suchen …';
+  const pick=v=>{ hid.value=v; const l=lkLbl(v); cur.textContent=l||ph(); cur.classList.toggle('muted',!l); close(); hid.dispatchEvent(new Event('change',{bubbles:true})); };
+  box.querySelectorAll('.lk-t').forEach(b=>b.addEventListener('click',()=>{ if(b.dataset.t===ty){ open(); return; } ty=b.dataset.t; box.querySelectorAll('.lk-t').forEach(x=>{ x.classList.toggle('on',x===b); x.setAttribute('aria-checked',x===b); }); q.placeholder=ph(); if(hid.value&&lkTypeOf(hid.value)!==ty) pick(''); else { cur.textContent=lkLbl(hid.value)||ph(); cur.classList.toggle('muted',!hid.value); } open(); }));
+  $('#lkBtn').addEventListener('click',()=>pop.hidden?open():close());
+  q.addEventListener('input',draw);
+  q.addEventListener('keydown',ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); const f=list.querySelector('.lk-o:not(.lk-none)'); if(f) pick(f.dataset.v); } else if(ev.key==='Escape'){ ev.preventDefault(); ev.stopPropagation(); close(); } });
+  list.addEventListener('click',ev=>{ const o=ev.target.closest('.lk-o'); if(o) pick(o.dataset.v); });
+  document.addEventListener('pointerdown',ev=>{ if(!pop.hidden&&!box.contains(ev.target)) close(); },true); }
+function evAddrWire(e){ lkWire(); const pl=$('#f_place'), pid=$('#f_pid'), ln=$('#f_linkTxt'); if(!pl) return; let auto=pl.value.trim()===evLinkAddr(e.link,e.pid)?pl.value.trim():'';
+  const fill=()=>{ const a=evLinkAddr(ln&&ln.value,pid&&pid.value), own=pl.value.trim()&&pl.value.trim()!==auto; if(own) return; // selbst eingetragene Adresse bleibt
     pl.value=a; auto=a; if(a) evKmCalc(); else { EV_KM=null; const o=$('#evKmOut'); if(o) o.textContent='Für diese Auswahl ist keine Adresse hinterlegt. Bitte eintragen.'; } };
-  if(pid) pid.addEventListener('change',fill); if(ln){ ln.addEventListener('change',fill); ln.addEventListener('input',()=>{ if(evLinkResolve(ln.value)) fill(); }); }
+  if(pid) pid.addEventListener('change',fill); if(ln){ ln.addEventListener('change',fill); }
   let tm=0; pl.addEventListener('input',()=>{ clearTimeout(tm); tm=setTimeout(evKmCalc,1200); }); pl.addEventListener('change',()=>{ clearTimeout(tm); evKmCalc(); }); }
 queueMicrotask(()=>Object.assign(A,{ evKm:()=>{ EV_KM=null; evKmCalc(); } }));
 // Auswahl: Kunden und Lieferanten aus den Stammdaten, dazu Kunden aus den Projekten und Lieferanten aus den Bestellungen, die (noch) nicht in den Stammdaten stehen
@@ -4438,20 +4467,19 @@ function evLinkOpts(){ const by=(a,b)=>a[1].localeCompare(b[1],'de'), lo=s=>Stri
 const evLinkLabel=link=>((evLinkOpts().find(o=>o[0]===link)||[])[1])||'';
 function evLinkResolve(txt){ const t=String(txt||'').trim().toLowerCase(); if(!t) return ''; const os=evLinkOpts().slice(1), strip=l=>l.toLowerCase().replace(/^(kunde|lieferant): /,'');
   const hit=os.find(([,l])=>l.toLowerCase()===t)||(()=>{ const m=os.filter(([,l])=>strip(l)===t); return m.length===1?m[0]:null; })(); return hit?hit[0]:''; }
-const evKmHtml=()=>`<datalist id="evLinkList">${evLinkOpts().slice(1).map(([,l])=>`<option value="${esc(l)}">`).join('')}</datalist><div class="row" style="gap:8px;align-items:center"><span id="evKmOut" class="small">${EV_KM?'🚗 '+esc(kmTxt(EV_KM))+' ab Büro':'<span class="muted">Fahrtstrecke ab Büro wird nach Eingabe der Adresse berechnet.</span>'}</span><button type="button" class="btn ghost sm" data-act="evKm">Strecke neu berechnen</button></div>`;
+const evKmHtml=()=>`<div class="row" style="gap:8px;align-items:center"><span id="evKmOut" class="small">${EV_KM?'🚗 '+esc(kmTxt(EV_KM))+' ab Büro':'<span class="muted">Fahrtstrecke ab Büro wird nach Eingabe der Adresse berechnet.</span>'}</span><button type="button" class="btn ghost sm" data-act="evKm">Strecke neu berechnen</button></div>`;
 function eventForm(e,pre){
   const isNew=!e; e=e?clone(e):{id:uid(),date:TODAY(),kind:'bau',...(pre||{})};
   EV_KM=e.km!=null&&e.place?{addr:String(e.place).trim(),km:e.km,min:e.min}:null;
-  e.linkTxt=evLinkLabel(e.link);
   setTimeout(()=>evAddrWire(e),0);
   openSheet({title:isNew?'Neuer Termin':'Termin bearbeiten',value:e,fields:[
     {k:'title',label:'Titel',req:1,full:1,ph:'z. B. Zählersetzung Westnetz'},{k:'kind',label:'Art',type:'select',options:Object.entries(EV_KINDS)},{k:'pid',label:'Projekt',type:'select',options:projOpts()},
-    {k:'linkTxt',label:'Kunde oder Lieferant',list:'evLinkList',ph:'Namen tippen und auswählen …'},
+    {k:'linkx',label:'Kunde oder Lieferant',type:'html',html:evLinkHtml(e.link)},
     {k:'date',label:'Datum',type:'date',req:1},{k:'end',label:'bis (bei mehreren Tagen)',type:'date'},{k:'time',label:'Uhrzeit',type:'time'},
     {k:'place',label:'Adresse',full:1,ph:'Straße Hausnummer, PLZ Ort – kommt automatisch aus Projekt, Kunde oder Lieferant'},
     {k:'kmx',label:'',type:'html',full:1,html:evKmHtml()},{k:'whox',label:'Wer (mehrere möglich – nichts angekreuzt = alle / niemand)',type:'html',full:1,html:whoPick(evWhos(e),'ev-who')},{k:'notes',label:'Notiz',type:'textarea'},
     {k:'evtd',label:'To-Dos zu diesem Termin',type:'html',full:1,html:evTodoHtml(e)}],
-    onSave:v=>{ delete v.evtd; delete v.whox; delete v.kmx; v.link=evLinkResolve(v.linkTxt); delete v.linkTxt; delete e.linkTxt; if(!v.link){ delete v.link; delete e.link; } const pl=String(v.place||'').trim(); if(EV_KM&&pl&&EV_KM.addr===pl){ v.km=EV_KM.km; v.min=EV_KM.min; } else { delete e.km; delete e.min; } const sel=[...document.querySelectorAll('.ev-who:checked')].map(x=>x.value), main=sel.includes(e.who)?e.who:(sel[0]||''), rest=sel.filter(n=>n!==main); Object.assign(e,v); e.who=main; if(rest.length) e.who2=rest; else delete e.who2; put('events',e); const n=evTodoSave(e); toast('Termin gespeichert'+(n?' · '+n+' To-Do'+(n>1?'s':'')+' angelegt':'')+'.'); },
+    onSave:v=>{ delete v.evtd; delete v.whox; delete v.kmx; delete v.linkx; v.link=evLinkVal(); if(!v.link){ delete v.link; delete e.link; } const pl=String(v.place||'').trim(); if(EV_KM&&pl&&EV_KM.addr===pl){ v.km=EV_KM.km; v.min=EV_KM.min; } else { delete e.km; delete e.min; } const sel=[...document.querySelectorAll('.ev-who:checked')].map(x=>x.value), main=sel.includes(e.who)?e.who:(sel[0]||''), rest=sel.filter(n=>n!==main); Object.assign(e,v); e.who=main; if(rest.length) e.who2=rest; else delete e.who2; put('events',e); const n=evTodoSave(e); toast('Termin gespeichert'+(n?' · '+n+' To-Do'+(n>1?'s':'')+' angelegt':'')+'.'); },
     onDelete:isNew?null:()=>{ del('events',e.id); closeSheet(); }});
 }
 const ORDER_COLS=[{k:'qty',label:'Menge',type:'number',w:'64px'},{k:'unit',label:'Einh.',w:'58px',options:['Stk','m','kWp','Pal','psch']},{k:'artNr',label:'Art.-Nr.',w:'0.45fr'},{k:'art',label:'Artikel',w:'1fr',options:[...MAT_DC,...MAT_AC,...MAT_KABEL,'PV-Module','Wechselrichter','Unterkonstruktion','Speichersystem','Ladesäule','Zählerschrank','Wandlermessschrank','Trafostation','EZA-Regler']},{k:'price',label:'EP netto €',type:'number',w:'86px'},{k:'extra',label:'Zusatz',type:'check',w:'48px'}];
