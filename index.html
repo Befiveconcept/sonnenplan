@@ -2924,7 +2924,7 @@ function calItems(from,to){
   activeProjects().forEach(p=>{ if(p.start&&p.start>=from&&p.start<=to) out.push({d:p.start,k:'proj',t:'Baubeginn '+p.name,m:TYPES[p.type],act:'openProject',id:p.id,ref:'pstart:'+p.id,first:true,last:true});
     if(p.end&&p.end>=from&&p.end<=to) out.push({d:p.end,k:'proj',t:'Bau-Fertigstellung '+p.name,m:TYPES[p.type],act:'openProject',id:p.id,ref:'pend:'+p.id,first:true,last:true}); });
   arr('projects').forEach(p=>{ if(catOf(p)==='onhold'&&p.wvl&&p.wvl>=from&&p.wvl<=to) out.push({d:p.wvl,k:'proj',t:'Wiedervorlage (Onhold): '+p.name,m:'Projekt prüfen und ggf. wieder aktivieren',act:'openProject',id:p.id,ref:'wvl:'+p.id,first:true,last:true}); });
-  arr('plan').forEach(w=>(w.entries||[]).forEach((e,i)=>{ if(!e.d) return; const multi=!!(e.end&&e.end>e.d); eachDay(e.d,e.end,from,to,(d,first,last)=>out.push({d,k:e.kind==='abw'?'abw':'bau',t:e.t,m:[e.who||'Teamplanung',multi?'bis '+fmtD(e.end):''].filter(Boolean).join(' · '),act:'editPlan',id:w.id+'|'+i,who:e.who,lbl:e.kind==='abw'?'Abwesend':'Team',ref:'plan:'+w.id+'|'+i,e,first,last,multi,rz:true})); }));
+  arr('plan').forEach(w=>(w.entries||[]).forEach((e,i)=>{ if(!e.d) return; const multi=!!(e.end&&e.end>e.d); eachDay(e.d,e.end,from,to,(d,first,last)=>out.push({d,k:e.kind==='abw'?'abw':'bau',t:e.t,m:[e.who||'Teamplanung',e.km!=null?String(e.km).replace('.',',')+' km':'',multi?'bis '+fmtD(e.end):''].filter(Boolean).join(' · '),act:'editPlan',id:w.id+'|'+i,who:e.who,lbl:e.kind==='abw'?'Abwesend':'Team',ref:'plan:'+w.id+'|'+i,e,first,last,multi,rz:true})); }));
   arr('hrabs').forEach(a=>{ if(!hrAbsLive(a)||!a.from) return; const see=a.who===ME||isAdmin(); eachDay(a.from,a.to||a.from,from,to,d=>{ if(!hrIsWork(a.who,d)) return; out.push({d,k:'abw',hr:1,t:(see?(HR_ABS[a.type]||['Abwesend'])[0]:'Abwesend')+(a.status==='beantragt'?' (beantragt)':''),m:shortWho(a.who),act:'hrAbsEdit',id:a.id,who:a.who,lbl:'Abwesend',first:true,last:true}); }); });
   return out.sort((a,b)=>a.d.localeCompare(b.d));
 }
@@ -3906,12 +3906,18 @@ const stampTxt=s=>{ if(!s) return ''; if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return f
 function planTrail(e){ const a=[]; if(e.by) a.push('Eingetragen von '+e.by+(e.at?' am '+stampTxt(e.at):'')); if(e.updBy) a.push('zuletzt geändert von '+e.updBy+' am '+stampTxt(e.updAt)); return a.join(' · '); }
 function planForm(e,onSave,onDelete,also){
   const trail=e.by?`<div class="trail">${esc(planTrail(e))}${(e.log||[]).length>1?`<details><summary>Alle Änderungen (${e.log.length})</summary>${e.log.slice().reverse().map(l=>`<div>${esc(stampTxt(l.at))} · ${esc(l.by)}</div>`).join('')}</details>`:''}</div>`:'';
+  // Adresse und Fahrtstrecke wie beim Termin (gleiche Felder f_link / f_place, gleiche Berechnung)
+  EV_KM=e.km!=null&&e.place?{addr:String(e.place).trim(),km:e.km,min:e.min}:null; setTimeout(()=>evAddrWire(e),0);
+  const save0=onSave; onSave=v=>{ delete v.kmx; if(!v.link) delete v.link; const pl=String(v.place||'').trim(); if(EV_KM&&pl&&EV_KM.addr===pl){ v.km=EV_KM.km; v.min=EV_KM.min; } else { v.km=null; v.min=null; } return save0(v); };
   openSheet({title:e.t?'Einsatz bearbeiten':'Einsatz planen',wide:1,value:e,fields:[
     ...(trail?[{k:'trail',label:'Spur',type:'html',html:trail}]:[]),
     {k:'who',label:'Mitarbeiter',type:'select',options:[['','– niemand –'],...staff().map(s=>[s.name,s.name])]},{k:'kind',label:'Art',type:'select',options:Object.entries(PLAN_KINDS)},
     ...(also?[{k:'alsox',label:'Auch einplanen für (jede Person bekommt einen eigenen Eintrag)',type:'html',full:1,html:whoPick([],'pl-also')}]:[]),
     {k:'d',label:'Datum',type:'date',req:1},{k:'end',label:'bis (bei mehreren Tagen)',type:'date'},{k:'time',label:'Uhrzeit',type:'time'},
     {k:'pid',label:'Kunde / Projekt',type:'select',options:projOpts()},{k:'t',label:'Aufgabe',req:1,ph:'z. B. DC-Montage Feld 7, Zählertermin, Lager aufräumen'},
+    {k:'link',label:'Kunde oder Lieferant',type:'select',options:evLinkOpts()},
+    {k:'place',label:'Adresse',full:1,ph:'Straße Hausnummer, PLZ Ort – kommt automatisch aus Projekt, Kunde oder Lieferant'},
+    {k:'kmx',label:'',type:'html',full:1,html:evKmHtml()},
     {k:'note',label:'Hinweise',type:'textarea',ph:'Ansprechpartner, Zugang, Besonderheiten'},
     {k:'matbtns',label:'Material-Checkliste',type:'html',html:`<div class="row"><button type="button" class="btn sm" data-act="matFromOrder">${ic('box')}Aus Bestellung des Projekts</button><button type="button" class="btn sm" data-act="matStd" data-v="dc">+ DC-Standard</button><button type="button" class="btn sm" data-act="matStd" data-v="ac">+ AC-Standard</button><button type="button" class="btn sm" data-act="matStd" data-v="tool">+ Werkzeug & Messgeräte</button></div>`},
     {k:'mat',label:'Material / Mitnahme',type:'lines',cols:MAT_COLS}],
@@ -4397,17 +4403,19 @@ function evAddrWire(e){ const pl=$('#f_place'), pid=$('#f_pid'), ln=$('#f_link')
   if(pid) pid.addEventListener('change',fill); if(ln) ln.addEventListener('change',fill);
   let tm=0; pl.addEventListener('input',()=>{ clearTimeout(tm); tm=setTimeout(evKmCalc,1200); }); pl.addEventListener('change',()=>{ clearTimeout(tm); evKmCalc(); }); }
 queueMicrotask(()=>Object.assign(A,{ evKm:()=>{ EV_KM=null; evKmCalc(); } }));
+const evLinkOpts=()=>[['','– keine –'],...arr('kunden').filter(x=>x&&x.name).sort((a,b)=>String(a.name).localeCompare(String(b.name),'de')).map(x=>['k:'+x.id,'Kunde: '+x.name]),...arr('lieferanten').filter(x=>x&&x.name).sort((a,b)=>String(a.name).localeCompare(String(b.name),'de')).map(x=>['l:'+x.id,'Lieferant: '+x.name])];
+const evKmHtml=()=>`<div class="row" style="gap:8px;align-items:center"><span id="evKmOut" class="small">${EV_KM?'🚗 '+esc(kmTxt(EV_KM))+' ab Büro':'<span class="muted">Fahrtstrecke ab Büro wird nach Eingabe der Adresse berechnet.</span>'}</span><button type="button" class="btn ghost sm" data-act="evKm">Strecke neu berechnen</button></div>`;
 function eventForm(e,pre){
   const isNew=!e; e=e?clone(e):{id:uid(),date:TODAY(),kind:'bau',...(pre||{})};
   EV_KM=e.km!=null&&e.place?{addr:String(e.place).trim(),km:e.km,min:e.min}:null;
-  const linkOpts=[['','– keine –'],...arr('kunden').filter(x=>x&&x.name).sort((a,b)=>String(a.name).localeCompare(String(b.name),'de')).map(x=>['k:'+x.id,'Kunde: '+x.name]),...arr('lieferanten').filter(x=>x&&x.name).sort((a,b)=>String(a.name).localeCompare(String(b.name),'de')).map(x=>['l:'+x.id,'Lieferant: '+x.name])];
+  const linkOpts=evLinkOpts();
   setTimeout(()=>evAddrWire(e),0);
   openSheet({title:isNew?'Neuer Termin':'Termin bearbeiten',value:e,fields:[
     {k:'title',label:'Titel',req:1,full:1,ph:'z. B. Zählersetzung Westnetz'},{k:'kind',label:'Art',type:'select',options:Object.entries(EV_KINDS)},{k:'pid',label:'Projekt',type:'select',options:projOpts()},
     {k:'link',label:'Kunde oder Lieferant',type:'select',options:linkOpts},
     {k:'date',label:'Datum',type:'date',req:1},{k:'end',label:'bis (bei mehreren Tagen)',type:'date'},{k:'time',label:'Uhrzeit',type:'time'},
     {k:'place',label:'Adresse',full:1,ph:'Straße Hausnummer, PLZ Ort – kommt automatisch aus Projekt, Kunde oder Lieferant'},
-    {k:'kmx',label:'',type:'html',full:1,html:`<div class="row" style="gap:8px;align-items:center"><span id="evKmOut" class="small">${EV_KM?'🚗 '+esc(kmTxt(EV_KM))+' ab Büro':'<span class="muted">Fahrtstrecke ab Büro wird nach Eingabe der Adresse berechnet.</span>'}</span><button type="button" class="btn ghost sm" data-act="evKm">Strecke neu berechnen</button></div>`},{k:'whox',label:'Wer (mehrere möglich – nichts angekreuzt = alle / niemand)',type:'html',full:1,html:whoPick(evWhos(e),'ev-who')},{k:'notes',label:'Notiz',type:'textarea'},
+    {k:'kmx',label:'',type:'html',full:1,html:evKmHtml()},{k:'whox',label:'Wer (mehrere möglich – nichts angekreuzt = alle / niemand)',type:'html',full:1,html:whoPick(evWhos(e),'ev-who')},{k:'notes',label:'Notiz',type:'textarea'},
     {k:'evtd',label:'To-Dos zu diesem Termin',type:'html',full:1,html:evTodoHtml(e)}],
     onSave:v=>{ delete v.evtd; delete v.whox; delete v.kmx; if(!v.link) delete v.link; const pl=String(v.place||'').trim(); if(EV_KM&&pl&&EV_KM.addr===pl){ v.km=EV_KM.km; v.min=EV_KM.min; } else { delete e.km; delete e.min; } const sel=[...document.querySelectorAll('.ev-who:checked')].map(x=>x.value), main=sel.includes(e.who)?e.who:(sel[0]||''), rest=sel.filter(n=>n!==main); Object.assign(e,v); e.who=main; if(rest.length) e.who2=rest; else delete e.who2; put('events',e); const n=evTodoSave(e); toast('Termin gespeichert'+(n?' · '+n+' To-Do'+(n>1?'s':'')+' angelegt':'')+'.'); },
     onDelete:isNew?null:()=>{ del('events',e.id); closeSheet(); }});
@@ -6148,7 +6156,7 @@ function savePlanEntry(v,touched,silent){
   if(touched && touched.id!==wid) put('plan',touched);
   const w = touched && touched.id===wid ? touched : (S.plan[wid]?clone(S.plan[wid]):{id:wid,week:mondayOf(v.d),entries:[]});
   const e={d:v.d,t:v.t,who:v.who||'',kind:v.kind||'bau',by:v.by||meK(),at:v.at||new Date().toISOString()};
-  if(v.by){ e.updBy=meK(); e.updAt=new Date().toISOString(); e.log=(v.log||[]).concat([{at:e.updAt,by:meK()}]).slice(-30); } ['time','pid','note'].forEach(k=>{ if(v[k]) e[k]=v[k]; }); if(v.end&&v.end>v.d) e.end=v.end; if(v.mat&&v.mat.length) e.mat=v.mat.map(m=>({ok:!!m.ok,qty:m.qty??'',unit:m.unit||'',art:m.art||''}));
+  if(v.by){ e.updBy=meK(); e.updAt=new Date().toISOString(); e.log=(v.log||[]).concat([{at:e.updAt,by:meK()}]).slice(-30); } ['time','pid','note','link','place'].forEach(k=>{ if(v[k]) e[k]=v[k]; }); if(v.km!=null&&v.place){ e.km=v.km; e.min=v.min; } if(v.end&&v.end>v.d) e.end=v.end; if(v.mat&&v.mat.length) e.mat=v.mat.map(m=>({ok:!!m.ok,qty:m.qty??'',unit:m.unit||'',art:m.art||''}));
   w.entries.push(e); put('plan',w); if(!silent) toast('Wochenplanung gespeichert.');
 }
 // Statusschritt (setzt/entfernt auch den verknüpften Checklistenpunkt und schließt zugehörige Aufgaben)
