@@ -4387,7 +4387,8 @@ function whoPick(cur,cls){ const l=staffUniq().map(s=>s.name); cur.forEach(n=>{ 
 // Strecke über OpenStreetMap (Adresse → Koordinaten: Nominatim, Route: OSRM). Ergebnisse je Adresse im Browser zwischengespeichert, damit nicht jedes Öffnen neu fragt.
 const OFFICE_ADDR=()=>((S.config||{}).officeAddr)||'Emil-Hoffmann-Straße 53, 50996 Köln';
 const stAddr=x=>x?[x.street,[x.zip,x.city].filter(Boolean).join(' ')].filter(Boolean).join(', '):'';
-function evLinkAddr(link,pid){ const [t,id]=String(link||'').split(':'); const x=t==='k'?(S.kunden||{})[id]:t==='l'?(S.lieferanten||{})[id]:null; if(x&&stAddr(x)) return stAddr(x); const p=S.projects[pid]; return p?String(p.place||'').replace(/\s*\n\s*/g,', ').trim():''; }
+function evLinkAddr(link,pid){ const s=String(link||''), i=s.indexOf(':'), t=s.slice(0,i), id=s.slice(i+1); const x=t==='k'?(S.kunden||{})[id]:t==='l'?(S.lieferanten||{})[id]:null; if(x&&stAddr(x)) return stAddr(x);
+  if(t==='pk'){ const pp=S.projects[id], a=pp&&String(pp.custAddress||'').replace(/\s*\n\s*/g,', ').trim(); if(a) return a; } const p=S.projects[pid]; return p?String(p.place||'').replace(/\s*\n\s*/g,', ').trim():''; }
 let GEO_MEM=null; const geoMem=()=>GEO_MEM||(GEO_MEM=(()=>{ try{ return JSON.parse(lsGet('sonnenplan-geo')||'{}')||{}; }catch(e){ return {}; } })());
 async function geocode(addr){ const k=String(addr||'').trim().toLowerCase(); if(!k) return null; const m=geoMem(); if(m[k]) return m[k];
   const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=de,at,ch,nl,be,lu,fr,pl,cz,dk&q='+encodeURIComponent(addr),{headers:{'Accept-Language':'de'}}); if(!r.ok) throw new Error('geo'); const j=await r.json(); if(!j||!j[0]) return null;
@@ -4400,11 +4401,18 @@ let EV_KM=null; // Ergebnis im offenen Formular {addr,km,min}
 async function evKmCalc(){ const pl=$('#f_place'), out=$('#evKmOut'); if(!pl||!out) return; const addr=pl.value.trim(); if(!addr){ EV_KM=null; out.textContent='Erst eine Adresse eintragen.'; return; } if(EV_KM&&EV_KM.addr===addr) return;
   out.textContent='Strecke wird berechnet …'; try{ const r=await driveKm(addr); if($('#f_place')&&$('#f_place').value.trim()!==addr) return; EV_KM={addr,...r}; out.textContent='🚗 '+kmTxt(r)+' ab Büro'; }catch(err){ EV_KM=null; out.textContent='Strecke nicht berechnet: '+(err&&err.message&&!/geo|Route|fetch/i.test(err.message)?err.message:'Dienst nicht erreichbar oder Adresse unklar')+'.'; } }
 function evAddrWire(e){ const pl=$('#f_place'), pid=$('#f_pid'), ln=$('#f_linkTxt'); if(!pl) return; let auto=pl.value.trim()===evLinkAddr(e.link,e.pid)?pl.value.trim():'';
-  const fill=()=>{ const a=evLinkAddr(ln&&evLinkResolve(ln.value),pid&&pid.value); if(a&&(!pl.value.trim()||pl.value.trim()===auto)){ pl.value=a; auto=a; evKmCalc(); } };
+  const fill=()=>{ const a=evLinkAddr(ln&&evLinkResolve(ln.value),pid&&pid.value), own=pl.value.trim()&&pl.value.trim()!==auto; if(own) return; // selbst eingetragene Adresse bleibt
+    pl.value=a; auto=a; if(a) evKmCalc(); else { EV_KM=null; const o=$('#evKmOut'); if(o) o.textContent='Für diese Auswahl ist keine Adresse hinterlegt. Bitte eintragen.'; } };
   if(pid) pid.addEventListener('change',fill); if(ln){ ln.addEventListener('change',fill); ln.addEventListener('input',()=>{ if(evLinkResolve(ln.value)) fill(); }); }
   let tm=0; pl.addEventListener('input',()=>{ clearTimeout(tm); tm=setTimeout(evKmCalc,1200); }); pl.addEventListener('change',()=>{ clearTimeout(tm); evKmCalc(); }); }
 queueMicrotask(()=>Object.assign(A,{ evKm:()=>{ EV_KM=null; evKmCalc(); } }));
-const evLinkOpts=()=>[['','– keine –'],...arr('kunden').filter(x=>x&&x.name).sort((a,b)=>String(a.name).localeCompare(String(b.name),'de')).map(x=>['k:'+x.id,'Kunde: '+x.name]),...arr('lieferanten').filter(x=>x&&x.name).sort((a,b)=>String(a.name).localeCompare(String(b.name),'de')).map(x=>['l:'+x.id,'Lieferant: '+x.name])];
+// Auswahl: Kunden und Lieferanten aus den Stammdaten, dazu Kunden aus den Projekten und Lieferanten aus den Bestellungen, die (noch) nicht in den Stammdaten stehen
+function evLinkOpts(){ const by=(a,b)=>a[1].localeCompare(b[1],'de'), lo=s=>String(s||'').trim().toLowerCase();
+  const kd=arr('kunden').filter(x=>x&&x.name).map(x=>['k:'+x.id,'Kunde: '+x.name]), kn=new Set(arr('kunden').map(x=>lo(x.name))), pk=[];
+  arr('projects').filter(p=>p&&p.customer&&!p.example).forEach(p=>{ const n=lo(p.customer); if(!kn.has(n)){ kn.add(n); pk.push(['pk:'+p.id,'Kunde: '+String(p.customer).trim()]); } });
+  const lf=arr('lieferanten').filter(x=>x&&x.name).map(x=>['l:'+x.id,'Lieferant: '+x.name]), ln=new Set(arr('lieferanten').map(x=>lo(x.name))), ls=[];
+  arr('orders').filter(o=>o&&o.supplier&&!o.example).forEach(o=>{ const n=lo(o.supplier); if(!ln.has(n)){ ln.add(n); ls.push(['ls:'+String(o.supplier).trim(),'Lieferant: '+String(o.supplier).trim()]); } });
+  return [['','– keine –'],...kd.concat(pk).sort(by),...lf.concat(ls).sort(by)]; }
 // Kunde oder Lieferant: Textfeld mit Suche (Vorschlagsliste), gespeichert wird die Verknüpfung k:id / l:id
 const evLinkLabel=link=>((evLinkOpts().find(o=>o[0]===link)||[])[1])||'';
 function evLinkResolve(txt){ const t=String(txt||'').trim().toLowerCase(); if(!t) return ''; const os=evLinkOpts().slice(1), strip=l=>l.toLowerCase().replace(/^(kunde|lieferant): /,'');
