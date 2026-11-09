@@ -726,6 +726,7 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .nf-ic{font-size:18px;line-height:1.3}.nf-b{min-width:0;display:flex;flex-direction:column;gap:1px}.nf-t{font-size:14px;font-weight:500;display:flex;flex-wrap:wrap;align-items:center;gap:6px}.nf-row.un .nf-t{font-weight:700}
 .nf-pr{font-size:10.5px;font-weight:700;border-radius:999px;padding:1px 7px;background:var(--sun);color:#111}.p-urgent .nf-pr{background:var(--bad);color:#fff}
 .nf-x{font-size:13px;line-height:1.4;overflow-wrap:anywhere}.nf-x.mini{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}.nf-w{font-size:12px;color:var(--muted)}
+.nf-del{flex:none;align-self:center;width:28px;height:28px;margin-right:8px;background:var(--sunken);border:1px solid var(--line);cursor:pointer;color:var(--ink);font-size:13px;font-weight:700;line-height:1;border-radius:50%}.nf-del:hover{color:#fff;background:#C0392B;border-color:#C0392B}
 .nf-rd{flex:none;width:40px;background:none;border:0;cursor:pointer;display:grid;place-items:center}.nf-rd i{width:10px;height:10px;border-radius:50%;border:2px solid var(--line)}.nf-row.un .nf-rd i{background:#111;border-color:#111}.nf-rd:hover i{border-color:var(--ink)}
 .nf-top{margin-bottom:8px;align-items:center}
 .tc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px}.tc-p{display:flex;align-items:center;gap:8px;text-align:left;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font:inherit;cursor:pointer;color:inherit}.tc-p:hover{border-color:var(--sun);background:var(--sun-soft)}
@@ -2776,12 +2777,14 @@ function nfApply(o){ const first=!NF_INIT, fresh=first?[]:Object.values(o).filte
 function nfClean(){ const old=addDays(TODAY(),-90), l=Object.values(NF).sort((a,b)=>String(b.at).localeCompare(String(a.at))); l.forEach((n,i)=>{ if(i>=300||(n.read&&String(n.at).slice(0,10)<old)) nfDrop(n.id); }); }
 function nfDrop(id){ delete NF[id]; if(MODE==='cloud'&&DB) try{ DB.collection(nfColl(NF_KEY)).doc(id).delete().catch(()=>{}); }catch(e){} else { const a=nfLocalAll(); if(a[nfColl(NF_KEY)]) delete a[nfColl(NF_KEY)][id]; lsSet('sonnenplan-nf',JSON.stringify(a)); } }
 // Sichtbar nur, was zum eigenen Konto gehört und wofür die aktuellen Rechte reichen (auch wenn sie sich inzwischen geändert haben)
-const nfVisible=n=>!!n&&n.to===NF_KEY&&!!NF_CAT[n.c]&&canSee(NF_CAT[n.c][1]);
+const nfVisible=n=>!!n&&!n.hidden&&n.to===NF_KEY&&!!NF_CAT[n.c]&&canSee(NF_CAT[n.c][1]);
 const nfList=()=>Object.values(NF).filter(nfVisible).sort((a,b)=>String(b.at).localeCompare(String(a.at)));
 const nfUnread=()=>nfList().filter(n=>!n.read).length;
 function nfWhen(at){ const d=new Date(at), m=Math.round((Date.now()-d)/60000), hm=d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}); if(m<1) return 'gerade eben'; if(m<60) return 'vor '+m+' Minute'+(m>1?'n':''); const dd=isoLocal(at).slice(0,10), t=TODAY(); if(dd===t) return 'heute, '+hm; if(dd===addDays(t,-1)) return 'gestern, '+hm; return fmtD(dd)+', '+hm; }
-function nfMark(id,read){ const n=NF[id]; if(!n||!!n.read===read) return; const c={...n,read,readAt:read?new Date().toISOString():''}; NF[id]=c; if(MODE==='cloud'&&DB) try{ DB.collection(nfColl(NF_KEY)).doc(id).set(c).catch(()=>{}); }catch(e){} else { const a=nfLocalAll(), k=nfColl(NF_KEY); a[k]=a[k]||{}; a[k][id]=c; lsSet('sonnenplan-nf',JSON.stringify(a)); } }
-function nfRow(n,mini){ const ic0=NF_CAT[n.c][0]; return `<div class="nf-row ${n.read?'':'un'} p-${esc(n.prio)}"><button type="button" class="nf-main" data-act="nfGo" data-id="${esc(n.id)}" title="${esc(NF_CAT[n.c][2])}"><span class="nf-ic" aria-hidden="true">${ic0}</span><span class="nf-b"><span class="nf-t">${esc(n.title)}${NF_PRIO[n.prio]?`<span class="nf-pr">${NF_PRIO[n.prio]}</span>`:''}</span><span class="nf-x ${mini?'mini':''}">${esc(n.text)}</span><span class="nf-w">${esc(nfWhen(n.at))}</span></span></button><button type="button" class="nf-rd" data-act="nfRead" data-id="${esc(n.id)}" data-v="${n.read?0:1}" title="${n.read?'Als ungelesen markieren':'Als gelesen markieren'}" aria-label="${n.read?'Als ungelesen markieren':'Als gelesen markieren'}"><i></i></button></div>`; }
+// Weg mit X: nicht löschen, sondern ausblenden. Erinnerungen haben eine feste Kennung und würden nach dem Löschen beim nächsten Durchlauf wieder angelegt.
+function nfHide(id){ const n=NF[id]; if(!n||n.hidden) return; nfMark(id,true,{hidden:true}); }
+function nfMark(id,read,extra){ const n=NF[id]; if(!n||(!!n.read===read&&!extra)) return; const c={...n,read,readAt:read?(n.readAt||new Date().toISOString()):'',...(extra||{})}; NF[id]=c; if(MODE==='cloud'&&DB) try{ DB.collection(nfColl(NF_KEY)).doc(id).set(c).catch(()=>{}); }catch(e){} else { const a=nfLocalAll(), k=nfColl(NF_KEY); a[k]=a[k]||{}; a[k][id]=c; lsSet('sonnenplan-nf',JSON.stringify(a)); } }
+function nfRow(n,mini){ const ic0=NF_CAT[n.c][0]; return `<div class="nf-row ${n.read?'':'un'} p-${esc(n.prio)}"><button type="button" class="nf-main" data-act="nfGo" data-id="${esc(n.id)}" title="${esc(NF_CAT[n.c][2])}"><span class="nf-ic" aria-hidden="true">${ic0}</span><span class="nf-b"><span class="nf-t">${esc(n.title)}${NF_PRIO[n.prio]?`<span class="nf-pr">${NF_PRIO[n.prio]}</span>`:''}</span><span class="nf-x ${mini?'mini':''}">${esc(n.text)}</span><span class="nf-w">${esc(nfWhen(n.at))}</span></span></button><button type="button" class="nf-rd" data-act="nfRead" data-id="${esc(n.id)}" data-v="${n.read?0:1}" title="${n.read?'Als ungelesen markieren':'Als gelesen markieren'}" aria-label="${n.read?'Als ungelesen markieren':'Als gelesen markieren'}"><i></i></button><button type="button" class="nf-del" data-act="nfHide" data-id="${esc(n.id)}" title="Mitteilung entfernen" aria-label="Mitteilung entfernen: ${esc(n.title)}">✕</button></div>`; }
 function nfBellHtml(){ if(!ME||!NF_INIT) return ''; const c=nfUnread(); return `<button type="button" class="nf-bell ${c?'has':''} ${Date.now()-NF_PULSE<8000?'pulse':''}" data-act="nfOpen" aria-label="Mitteilungen${c?': '+c+' ungelesen':''}" title="Mitteilungen">🔔${c?`<span class="nf-c">${c>99?'99+':c}</span>`:''}</button>`; }
 function nfPaint(){ const s=$('#nfStrip'); if(s) s.innerHTML=nfBellHtml(); }
 function nfCardHtml(){ if(!ME||!NF_INIT) return ''; const l=nfList(), c=l.filter(n=>!n.read).length;
@@ -2796,6 +2799,7 @@ queueMicrotask(()=>Object.assign(A,{
   nfOpen:()=>{ NF_FLT='alle'; openSheet({title:'🔔 Mitteilungen',wide:1,html:`<div class="fld full" id="nfBox">${nfListHtml()}</div>`,saveLabel:'Schließen',onSave:()=>{}}); },
   nfFlt:d=>{ NF_FLT=d.v; nfListPaint(); },
   nfRead:d=>{ nfMark(d.id,d.v==='1'); scheduleRender(); nfListPaint(); },
+  nfHide:d=>{ nfHide(d.id); scheduleRender(); nfListPaint(); nfPaint(); },
   nfAll:()=>{ nfList().filter(n=>!n.read).forEach(n=>nfMark(n.id,true)); scheduleRender(); nfListPaint(); },
   // Beim Öffnen gelten die aktuellen Rechte, und der Vorgang muss noch existieren
   nfGo:d=>{ const n=NF[d.id]; if(!n) return; nfMark(n.id,true); scheduleRender(); nfListPaint(); if(!nfVisible(n)) return toast('Dafür hast du keinen Zugriff mehr.'); if(!S[n.c]||!S[n.c][n.rid]) return toast('Dieser Vorgang ist nicht mehr vorhanden.'); closeSheet(); A.openRec({c:n.c,id:n.rid}); }
@@ -2914,7 +2918,7 @@ const itemHas=(x,n)=>!!n&&(x.who===n||(x.whos||[]).includes(n));
 const calSplit=x=>x.whos&&x.whos.length>1?x.whos.map(w=>({...x,who:w})):[x];
 function calItems(from,to){
   const out=[];
-  arr('events').forEach(e=>{ if(!e.date) return; const multi=!!(e.end&&e.end>e.date), whos=evWhos(e); eachDay(e.date,e.end,from,to,(d,first,last)=>out.push({d,k:e.kind||'intern',t:e.title,m:[e.time,projName(e.pid),whos.join(', '),multi?'bis '+fmtD(e.end):''].filter(Boolean).join(' · '),act:'editEvent',id:e.id,who:e.who,whos,ref:'event:'+e.id,first,last,multi,rz:true})); });
+  arr('events').forEach(e=>{ if(!e.date) return; const multi=!!(e.end&&e.end>e.date), whos=evWhos(e); eachDay(e.date,e.end,from,to,(d,first,last)=>out.push({d,k:e.kind||'intern',t:e.title,m:[e.time,projName(e.pid),whos.join(', '),e.km!=null?String(e.km).replace('.',',')+' km':'',multi?'bis '+fmtD(e.end):''].filter(Boolean).join(' · '),act:'editEvent',id:e.id,who:e.who,whos,ref:'event:'+e.id,first,last,multi,rz:true})); });
   arr('orders').forEach(o=>{ const st=orderState(o); if(o.delivery&&o.delivery>=from&&o.delivery<=to&&st.open) out.push({d:o.delivery,k:'lief',t:'Lieferung: '+(o.supplier||'Lieferant'),m:[projName(o.pid),(o.items||[]).length+' Pos.'].filter(Boolean).join(' · '),act:'receive',id:o.id,ref:'order:'+o.id,first:true,last:true}); });
   arr('tasks').forEach(t=>{ if(!t.done&&t.due&&t.due>=from&&t.due<=to) out.push({d:t.due,k:'todo',t:t.title,m:[t.who,projName(t.pid)].filter(Boolean).join(' · '),act:'editTask',id:t.id,who:t.who,ref:'task:'+t.id,first:true,last:true}); });
   activeProjects().forEach(p=>{ if(p.start&&p.start>=from&&p.start<=to) out.push({d:p.start,k:'proj',t:'Baubeginn '+p.name,m:TYPES[p.type],act:'openProject',id:p.id,ref:'pstart:'+p.id,first:true,last:true});
@@ -4372,13 +4376,40 @@ queueMicrotask(()=>Object.assign(A,{ /* A wird weiter unten angelegt */
   evTodoDel:(d,el)=>{ const r=el.closest('.ev-td'); if(r) r.remove(); } }));
 // Personen ankreuzen (Termin und neuer Einsatz teilen sich dieselbe Auswahl)
 function whoPick(cur,cls){ const l=staffUniq().map(s=>s.name); cur.forEach(n=>{ if(n&&!l.includes(n)) l.push(n); }); return `<div class="tw-grid">${l.map(n=>`<label class="tw-opt"><input type="checkbox" class="ck ${cls}" value="${esc(n)}" ${cur.includes(n)?'checked':''}><span class="who-chip">${esc(shortWho(n))}</span><span class="small">${esc(n.replace(/\s*\([^)]*\)$/,''))}</span></label>`).join('')||'<span class="small muted">Noch keine Mitarbeiter angelegt.</span>'}</div>`; }
+/* ---------- Termin-Adresse: aus Projekt, Kunde oder Lieferant übernehmen, Fahrtstrecke ab dem Büro ---------- */
+// Strecke über OpenStreetMap (Adresse → Koordinaten: Nominatim, Route: OSRM). Ergebnisse je Adresse im Browser zwischengespeichert, damit nicht jedes Öffnen neu fragt.
+const OFFICE_ADDR=()=>((S.config||{}).officeAddr)||'Emil-Hoffmann-Straße 53, 50996 Köln';
+const stAddr=x=>x?[x.street,[x.zip,x.city].filter(Boolean).join(' ')].filter(Boolean).join(', '):'';
+function evLinkAddr(link,pid){ const [t,id]=String(link||'').split(':'); const x=t==='k'?(S.kunden||{})[id]:t==='l'?(S.lieferanten||{})[id]:null; if(x&&stAddr(x)) return stAddr(x); const p=S.projects[pid]; return p?String(p.place||'').replace(/\s*\n\s*/g,', ').trim():''; }
+let GEO_MEM=null; const geoMem=()=>GEO_MEM||(GEO_MEM=(()=>{ try{ return JSON.parse(lsGet('sonnenplan-geo')||'{}')||{}; }catch(e){ return {}; } })());
+async function geocode(addr){ const k=String(addr||'').trim().toLowerCase(); if(!k) return null; const m=geoMem(); if(m[k]) return m[k];
+  const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=de,at,ch,nl,be,lu,fr,pl,cz,dk&q='+encodeURIComponent(addr),{headers:{'Accept-Language':'de'}}); if(!r.ok) throw new Error('geo'); const j=await r.json(); if(!j||!j[0]) return null;
+  const g={lat:+j[0].lat,lon:+j[0].lon}; m[k]=g; try{ lsSet('sonnenplan-geo',JSON.stringify(m)); }catch(e){} return g; }
+async function driveKm(addr){ const a=await geocode(OFFICE_ADDR()), b=await geocode(addr); if(!a) throw new Error('Büroadresse nicht gefunden'); if(!b) throw new Error('Adresse nicht gefunden');
+  const r=await fetch(`https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=false`); if(!r.ok) throw new Error('Route'); const j=await r.json(); const rt=j&&j.routes&&j.routes[0]; if(!rt) throw new Error('Keine Route gefunden');
+  return {km:Math.round(rt.distance/100)/10,min:Math.round(rt.duration/60)}; }
+const kmTxt=e=>e&&e.km!=null?`${String(e.km).replace('.',',')} km · ca. ${e.min>=60?Math.floor(e.min/60)+' h '+String(e.min%60).padStart(2,'0'):e.min} Min. (einfache Strecke)`:'';
+let EV_KM=null; // Ergebnis im offenen Formular {addr,km,min}
+async function evKmCalc(){ const pl=$('#f_place'), out=$('#evKmOut'); if(!pl||!out) return; const addr=pl.value.trim(); if(!addr){ EV_KM=null; out.textContent='Erst eine Adresse eintragen.'; return; } if(EV_KM&&EV_KM.addr===addr) return;
+  out.textContent='Strecke wird berechnet …'; try{ const r=await driveKm(addr); if($('#f_place')&&$('#f_place').value.trim()!==addr) return; EV_KM={addr,...r}; out.textContent='🚗 '+kmTxt(r)+' ab Büro'; }catch(err){ EV_KM=null; out.textContent='Strecke nicht berechnet: '+(err&&err.message&&!/geo|Route|fetch/i.test(err.message)?err.message:'Dienst nicht erreichbar oder Adresse unklar')+'.'; } }
+function evAddrWire(e){ const pl=$('#f_place'), pid=$('#f_pid'), ln=$('#f_link'); if(!pl) return; let auto=pl.value.trim()===evLinkAddr(e.link,e.pid)?pl.value.trim():'';
+  const fill=()=>{ const a=evLinkAddr(ln&&ln.value,pid&&pid.value); if(a&&(!pl.value.trim()||pl.value.trim()===auto)){ pl.value=a; auto=a; evKmCalc(); } };
+  if(pid) pid.addEventListener('change',fill); if(ln) ln.addEventListener('change',fill);
+  let tm=0; pl.addEventListener('input',()=>{ clearTimeout(tm); tm=setTimeout(evKmCalc,1200); }); pl.addEventListener('change',()=>{ clearTimeout(tm); evKmCalc(); }); }
+queueMicrotask(()=>Object.assign(A,{ evKm:()=>{ EV_KM=null; evKmCalc(); } }));
 function eventForm(e,pre){
   const isNew=!e; e=e?clone(e):{id:uid(),date:TODAY(),kind:'bau',...(pre||{})};
+  EV_KM=e.km!=null&&e.place?{addr:String(e.place).trim(),km:e.km,min:e.min}:null;
+  const linkOpts=[['','– keine –'],...arr('kunden').filter(x=>x&&x.name).sort((a,b)=>String(a.name).localeCompare(String(b.name),'de')).map(x=>['k:'+x.id,'Kunde: '+x.name]),...arr('lieferanten').filter(x=>x&&x.name).sort((a,b)=>String(a.name).localeCompare(String(b.name),'de')).map(x=>['l:'+x.id,'Lieferant: '+x.name])];
+  setTimeout(()=>evAddrWire(e),0);
   openSheet({title:isNew?'Neuer Termin':'Termin bearbeiten',value:e,fields:[
     {k:'title',label:'Titel',req:1,full:1,ph:'z. B. Zählersetzung Westnetz'},{k:'kind',label:'Art',type:'select',options:Object.entries(EV_KINDS)},{k:'pid',label:'Projekt',type:'select',options:projOpts()},
-    {k:'date',label:'Datum',type:'date',req:1},{k:'end',label:'bis (bei mehreren Tagen)',type:'date'},{k:'time',label:'Uhrzeit',type:'time'},{k:'place',label:'Ort'},{k:'whox',label:'Wer (mehrere möglich – nichts angekreuzt = alle / niemand)',type:'html',full:1,html:whoPick(evWhos(e),'ev-who')},{k:'notes',label:'Notiz',type:'textarea'},
+    {k:'link',label:'Kunde oder Lieferant',type:'select',options:linkOpts},
+    {k:'date',label:'Datum',type:'date',req:1},{k:'end',label:'bis (bei mehreren Tagen)',type:'date'},{k:'time',label:'Uhrzeit',type:'time'},
+    {k:'place',label:'Adresse',full:1,ph:'Straße Hausnummer, PLZ Ort – kommt automatisch aus Projekt, Kunde oder Lieferant'},
+    {k:'kmx',label:'',type:'html',full:1,html:`<div class="row" style="gap:8px;align-items:center"><span id="evKmOut" class="small">${EV_KM?'🚗 '+esc(kmTxt(EV_KM))+' ab Büro':'<span class="muted">Fahrtstrecke ab Büro wird nach Eingabe der Adresse berechnet.</span>'}</span><button type="button" class="btn ghost sm" data-act="evKm">Strecke neu berechnen</button></div>`},{k:'whox',label:'Wer (mehrere möglich – nichts angekreuzt = alle / niemand)',type:'html',full:1,html:whoPick(evWhos(e),'ev-who')},{k:'notes',label:'Notiz',type:'textarea'},
     {k:'evtd',label:'To-Dos zu diesem Termin',type:'html',full:1,html:evTodoHtml(e)}],
-    onSave:v=>{ delete v.evtd; delete v.whox; const sel=[...document.querySelectorAll('.ev-who:checked')].map(x=>x.value), main=sel.includes(e.who)?e.who:(sel[0]||''), rest=sel.filter(n=>n!==main); Object.assign(e,v); e.who=main; if(rest.length) e.who2=rest; else delete e.who2; put('events',e); const n=evTodoSave(e); toast('Termin gespeichert'+(n?' · '+n+' To-Do'+(n>1?'s':'')+' angelegt':'')+'.'); },
+    onSave:v=>{ delete v.evtd; delete v.whox; delete v.kmx; if(!v.link) delete v.link; const pl=String(v.place||'').trim(); if(EV_KM&&pl&&EV_KM.addr===pl){ v.km=EV_KM.km; v.min=EV_KM.min; } else { delete e.km; delete e.min; } const sel=[...document.querySelectorAll('.ev-who:checked')].map(x=>x.value), main=sel.includes(e.who)?e.who:(sel[0]||''), rest=sel.filter(n=>n!==main); Object.assign(e,v); e.who=main; if(rest.length) e.who2=rest; else delete e.who2; put('events',e); const n=evTodoSave(e); toast('Termin gespeichert'+(n?' · '+n+' To-Do'+(n>1?'s':'')+' angelegt':'')+'.'); },
     onDelete:isNew?null:()=>{ del('events',e.id); closeSheet(); }});
 }
 const ORDER_COLS=[{k:'qty',label:'Menge',type:'number',w:'64px'},{k:'unit',label:'Einh.',w:'58px',options:['Stk','m','kWp','Pal','psch']},{k:'artNr',label:'Art.-Nr.',w:'0.45fr'},{k:'art',label:'Artikel',w:'1fr',options:[...MAT_DC,...MAT_AC,...MAT_KABEL,'PV-Module','Wechselrichter','Unterkonstruktion','Speichersystem','Ladesäule','Zählerschrank','Wandlermessschrank','Trafostation','EZA-Regler']},{k:'price',label:'EP netto €',type:'number',w:'86px'},{k:'extra',label:'Zusatz',type:'check',w:'48px'}];
