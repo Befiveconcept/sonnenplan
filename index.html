@@ -254,7 +254,7 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .pcard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;cursor:pointer;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s,border-color .15s}
 .pcard::before{content:"";position:absolute;left:0;top:0;right:0;height:4px;background:var(--cc,var(--line))}
 .pcard:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(0,0,0,.10);border-color:var(--cc,var(--muted))}
-.c-laufend{--cc:var(--sun)} .c-planung{--cc:#1A1A1A} .c-onhold{--cc:var(--warn)} .c-erledigt{--cc:var(--ok)} .c-abgesagt{--cc:var(--bad)} .c-internp{--cc:#7E57C2}
+.c-laufend{--cc:var(--sun)} .c-planung{--cc:#1A1A1A} .c-onhold{--cc:var(--warn)} .c-erledigt{--cc:var(--ok)} .c-abgesagt{--cc:var(--bad)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .c-planung{--cc:#BDBDBD}}
 :root[data-theme="dark"] .c-planung{--cc:#BDBDBD}
 .done-by{font-size:11.5px;color:var(--ok);background:var(--ok-soft);border-radius:999px;padding:0 8px}
@@ -1538,7 +1538,7 @@ button.link-ms:hover{color:var(--ink)}
 .ag-it .bar{align-self:stretch;border-radius:2px;background:var(--kc,var(--muted))}
 .ag-it .tt{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ag-it .mt{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* Terminfarben: Rot = abwesend (Krankheit, Urlaub, Lehrgang), Grau = Kundentermin und Baustelle, Gelb = alles andere */ .k-abw,.k-urlaub,.k-krank,.k-lehrgang{--kc:#D32F2F} .k-kunde,.k-bau,.k-proj{--kc:#8A8F98} .k-evu,.k-lief,.k-ausw,.k-teams,.k-intern,.k-sonst,.k-todo{--kc:#F4DB02}
+/* Terminfarben: Rot = abwesend (Krankheit, Urlaub, Lehrgang), Grau = Kundentermin und Baustelle, Gelb = alles andere */ .k-abw,.k-urlaub,.k-krank,.k-lehrgang{--kc:#D32F2F} .k-kunde,.k-bau,.k-proj{--kc:#8A8F98} .k-evu,.k-lief,.k-ausw,.k-teams,.k-intern,.k-sonst,.k-todo{--kc:#F4DB02} .k-ho{--kc:#E91E8C}
 /* Termine farbig hinterlegt (nach Art), damit man Urlaub, Krankheit, Teams usw. auf einen Blick unterscheidet */
 .cal .ev[class*="k-"],.team .en[class*="k-"],.day-it .en[class*="k-"],.dev[class*="k-"]{background:color-mix(in srgb,var(--kc) 17%,var(--surface))}
 .dev[class*="k-"]{background:color-mix(in srgb,var(--kc,transparent) 11%,var(--surface))}
@@ -1962,8 +1962,8 @@ const DOKU_GR = ['01 Inhaltsverzeichnis','05 Datenblatt / Bedienungsanleitung WR
 
 const TYPES = {ffa:'Freifläche',dach:'Dachanlage',bess:'Batteriespeicher',lade:'Ladepark',sonst:'Service / Sonstiges'};
 // Projektkategorien und Statusschritte wie in der „Status-Liste“ (Spalten L–AQ)
-const CATS = {planung:'In Planung',laufend:'Laufend',onhold:'Onhold',erledigt:'Erledigt',abgesagt:'Abgesagt',internp:'Interne Projekte'};
-const CAT_CLS = {planung:'pri',laufend:'sun',onhold:'warn',erledigt:'ok',abgesagt:'bad',internp:''};
+const CATS = {planung:'In Planung',laufend:'Laufend',onhold:'Onhold',erledigt:'Erledigt',abgesagt:'Abgesagt'};
+const CAT_CLS = {planung:'pri',laufend:'sun',onhold:'warn',erledigt:'ok',abgesagt:'bad'};
 const PIPE = ['Wann Erstkontakt','Besichtigung / Besprechung','Angebot versendet','PV Sol Planung','Offene Kundenfragen klären','Angebot aktualisiert','Beauftragt','Anschlussanfrage gestellt','Anzahlungsrechnung gestellt','Anzahlung erhalten','Baubeginn Datum','Warenbestand geprüft & Bestellung vorbereitet','Material bestellt','Sondergeräte & Subunternehmen bestellt','Gerüst bestellt','Material geliefert & geprüft','Team eingewiesen & Baumappe ausgehändigt','Bauphase DC','Bauphase AC','DC & AC Fotodokumentation erhalten','Zählerantrag gestellt','Abschlagsrechnungen versendet','Bau-Fertigstellung','Schlussrechnung versendet','Schlussrechnung bezahlt','Dokumentation fertig','Zähler eingebaut','Nacharbeiten','Wartungsvertrag abgeschlossen','Erledigt','Onhold','Abgesagt'];
 // Next Step als Handlung formuliert (Status = erledigt, Next Step = was zu tun ist)
 const PIPE_DO = ['Erstkontakt herstellen','Besichtigung / Besprechung durchführen','Angebot versenden','PV-Sol-Planung erstellen','Offene Kundenfragen klären','Angebot aktualisieren','Auftrag einholen','Anschlussanfrage stellen','Anzahlungsrechnung stellen','Zahlungseingang Anzahlung prüfen','Baubeginn terminieren','Warenbestand prüfen & Bestellung vorbereiten','Material bestellen','Sondergeräte & Subunternehmen bestellen','Gerüst bestellen','Materiallieferung prüfen','Team einweisen & Baumappe aushändigen','DC-Montage durchführen','AC-Montage durchführen','DC- & AC-Fotodokumentation einholen','Zählerantrag stellen','Abschlagsrechnungen versenden','Bau fertigstellen','Schlussrechnung versenden','Zahlungseingang Schlussrechnung prüfen','Dokumentation fertigstellen','Zählersetzung veranlassen','Nacharbeiten erledigen','Wartungsvertrag abschließen','Projekt abschließen','',''];
@@ -2175,7 +2175,7 @@ const MAT_AC = ['Hauptschalter','eHz-Adapter','eHz-Kassette','Ü-Schutz','Einspe
 const MAT_KABEL = ['1,5mm²','2,5mm²','4mm²','6mm²','10mm²','16mm²','5x4mm²','5x6mm²','5x10mm²','5x16mm²','Kanal 40x40','Kanal 40x60','Kanal 100x60 Metall','KuPa25','KuPa32','KuPa40','Schellen','AluRohr 25','AluRohr 32','AluRohr 40','Alu-Schellen'];
 const MAT_DC = ['PV-Kabel 6mm² rot','PV-Kabel 6mm² schwarz','Erdung 16mm² starr','Erdung 16mm² flexibel','Dachhaken','Schienen Alu 3m','Schienen Alu 6m','Schienenverbinder','Kreuzverbinder','Endklemmen','Mittelklemmen','Stockschrauben'];
 const CREW_ROLES = ['Meister','Vorarbeiter','Facharbeiter','Hilfsarbeiter','Auszubildender'];
-const EV_KINDS = {bau:'Baustelle',kunde:'Kundentermin',evu:'EVU / Zählersetzung',lief:'Lieferung',ausw:'Auswärtstermin',teams:'Teams-Meeting',urlaub:'Urlaub',krank:'Krankheit',lehrgang:'Lehrgang',intern:'Intern',sonst:'Sonstiges'};
+const EV_KINDS = {bau:'Baustelle',kunde:'Kundentermin',evu:'EVU / Zählersetzung',lief:'Lieferung',ausw:'Auswärtstermin',teams:'Teams-Meeting',urlaub:'Urlaub',krank:'Krankheit',lehrgang:'Lehrgang',ho:'Homeoffice',intern:'Intern',sonst:'Sonstiges'};
 const ORDER_ST = {entwurf:'Entwurf (noch nicht bestellt)',freigegeben:'freigegeben – noch bestellen',angefragt:'angefragt',bestellt:'bestellt',bestaetigt:'bestätigt',storniert:'storniert'};
 const ordDraft=o=>o.status==='entwurf'||o.status==='freigegeben';
 // Wartet die Bestellung auf Freigabe? Nicht, wenn EP, HH oder AvE sie angelegt bzw. bestellt haben
@@ -2891,13 +2891,15 @@ let rq=false; function scheduleRender(){ if(rq) return; rq=true; requestAnimatio
 function go(view,pid){ UI.view=view; if(pid!==undefined) UI.pid=pid; saveUI(); render(); window.scrollTo(0,0); }
 
 /* ========== Abgeleitete Daten ========== */
-// Interne Projekte (Kategorie internp): sichtbar nur für die Person, die es intern gemacht hat (privBy, sonst Ersteller) und für freigegebene Mitarbeiter (share).
+// Eingeschränkte Projekte: sichtbar nur für die Person, die die Sichtbarkeit eingeschränkt hat (privBy, sonst Ersteller) und – bei „ausgewählte“ – für freigegebene Mitarbeiter (share). Altes internp wird beim Laden umgestellt.
 // Alles, was an so einem Projekt hängt (To-Dos, Bestellungen, Termine …), verschwindet für alle anderen mit. Hinweis: Schutz in der App, nicht auf dem Server.
 const projOwner=p=>String(p.privBy||p.by||'');
-function projVis(p){ if(!p||p.cat!=='internp') return true; if(!ME) return false; const k=meK().toLowerCase(); return projOwner(p).toLowerCase()===k||(p.share||[]).some(n=>shortWho(n).toLowerCase()===k); }
+// Sichtbarkeit (p.vis): leer/all = alle, me = niemand außer der Person, die es eingeschränkt hat, sel = zusätzlich die angehakten Mitarbeiter (share). Unabhängig von der Kategorie.
+const projRestr=p=>!!p&&(p.vis==='me'||p.vis==='sel'||p.cat==='internp');
+function projVis(p){ if(!projRestr(p)) return true; if(!ME) return false; const k=meK().toLowerCase(); return projOwner(p).toLowerCase()===k||(p.vis!=='me'&&(p.share||[]).some(n=>shortWho(n).toLowerCase()===k)); }
 const projVisId=id=>{ const p=id&&S.projects[id]; return !p||projVis(p); };
 const PID_COLLS=new Set(['tasks','orders','events','offers','reports','sales','files','meetings','psum','pms']);
-const arr = c=>{ const v=Object.values(S[c]||{}); if(c==='projects') return v.filter(projVis); if(PID_COLLS.has(c)&&S.projects&&Object.values(S.projects).some(p=>p&&p.cat==='internp')) return v.filter(x=>!x||!x.pid||projVisId(x.pid)); return v; };
+const arr = c=>{ const v=Object.values(S[c]||{}); if(c==='projects') return v.filter(projVis); if(PID_COLLS.has(c)&&S.projects&&Object.values(S.projects).some(projRestr)) return v.filter(x=>!x||!x.pid||projVisId(x.pid)); return v; };
 const INTERN='intern'; // Bestellungen ohne Kundenprojekt (Lager, Büro, Werkstatt)
 const projName = id=>{ if(id===INTERN) return 'Haus intern'; const p=S.projects[id]; return p&&projVis(p)? p.name : '' };
 // Austritt: s.exit = letzter Arbeitstag. Ab dem Tag danach ist die Person aus allen Auswahllisten raus (staff), bleibt aber für Einstellungen und Personalakte erhalten (staffAll).
@@ -2934,7 +2936,7 @@ function calItems(from,to){
   activeProjects().forEach(p=>{ if(p.start&&p.start>=from&&p.start<=to) out.push({d:p.start,k:'proj',t:'Baubeginn '+p.name,m:TYPES[p.type],act:'openProject',id:p.id,ref:'pstart:'+p.id,first:true,last:true});
     if(p.end&&p.end>=from&&p.end<=to) out.push({d:p.end,k:'proj',t:'Bau-Fertigstellung '+p.name,m:TYPES[p.type],act:'openProject',id:p.id,ref:'pend:'+p.id,first:true,last:true}); });
   arr('projects').forEach(p=>{ if(catOf(p)==='onhold'&&p.wvl&&p.wvl>=from&&p.wvl<=to) out.push({d:p.wvl,k:'proj',t:'Wiedervorlage (Onhold): '+p.name,m:'Projekt prüfen und ggf. wieder aktivieren',act:'openProject',id:p.id,ref:'wvl:'+p.id,first:true,last:true}); });
-  arr('plan').forEach(w=>(w.entries||[]).forEach((e,i)=>{ if(!e.d||(e.pid&&!projVisId(e.pid))) return; const multi=!!(e.end&&e.end>e.d), whos=evWhos(e); eachDay(e.d,e.end,from,to,(d,first,last)=>out.push({d,k:e.kind==='abw'?'abw':'bau',t:e.t,whos,m:[whos.join(', ')||'Teamplanung',e.km!=null?String(e.km).replace('.',',')+' km':'',multi?'bis '+fmtD(e.end):''].filter(Boolean).join(' · '),act:'editPlan',id:w.id+'|'+i,who:e.who,lbl:e.kind==='abw'?'Abwesend':'Team',ref:'plan:'+w.id+'|'+i,e,first,last,multi,rz:true})); }));
+  arr('plan').forEach(w=>(w.entries||[]).forEach((e,i)=>{ if(!e.d||(e.pid&&!projVisId(e.pid))) return; const multi=!!(e.end&&e.end>e.d), whos=evWhos(e); eachDay(e.d,e.end,from,to,(d,first,last)=>out.push({d,k:e.kind==='abw'?'abw':e.kind==='ho'?'ho':'bau',t:e.t,whos,m:[whos.join(', ')||'Teamplanung',e.km!=null?String(e.km).replace('.',',')+' km':'',multi?'bis '+fmtD(e.end):''].filter(Boolean).join(' · '),act:'editPlan',id:w.id+'|'+i,who:e.who,lbl:e.kind==='abw'?'Abwesend':e.kind==='ho'?'Homeoffice':'Team',ref:'plan:'+w.id+'|'+i,e,first,last,multi,rz:true})); }));
   arr('hrabs').forEach(a=>{ if(!hrAbsLive(a)||!a.from) return; const see=a.who===ME||isAdmin(); eachDay(a.from,a.to||a.from,from,to,d=>{ if(!hrIsWork(a.who,d)) return; out.push({d,k:'abw',hr:1,t:(see?(HR_ABS[a.type]||['Abwesend'])[0]:'Abwesend')+(a.status==='beantragt'?' (beantragt)':''),m:shortWho(a.who),act:'hrAbsEdit',id:a.id,who:a.who,lbl:'Abwesend',first:true,last:true}); }); });
   return out.sort((a,b)=>a.d.localeCompare(b.d));
 }
@@ -3782,10 +3784,31 @@ function projForms(p){
     return `<div class="li clickable" data-act="openForm" data-pid="${p.id}" data-k="${k}">${ic('form','style="width:20px;height:20px;color:var(--muted);flex:none"')}<div class="body"><div class="tt">${f.n}</div><div class="mt"><span>Vorlage: ${esc(TPL[f.tpl].n)}</span></div></div><span class="pill ${d===tot?'ok':d?'sun':''}">${d}/${tot}</span><button class="icon-btn" title="Drucken / als PDF speichern" aria-label="${esc(f.n)} drucken" data-act="formPrint" data-pid="${p.id}" data-k="${k}">${ic('report')}</button></div>`; }).join('')}</div></div>`;
 }
 // Freigabe eines internen Projekts: Nur die Person, der es gehört, ändert die Liste; Freigegebene sehen, wer noch Zugriff hat.
-function projShareHtml(p){ const own=projOwner(p), mine=own.toLowerCase()===meK().toLowerCase(), sh=p.share||[], ownName=(staffAll().find(s=>shortWho(s.name).toLowerCase()===own.toLowerCase())||{}).name||own;
-  if(!mine) return `<div class="small">${esc(ownName)} (gehört)${sh.length?' · freigegeben für '+esc(sh.map(shortWho).join(', ')):''}</div>`;
-  return `<div class="small muted" style="margin-bottom:4px">Nur du siehst dieses Projekt. Hake an, wer es zusätzlich sehen soll:</div><div class="row" style="gap:6px 12px;flex-wrap:wrap">${staff().filter(s=>shortWho(s.name).toLowerCase()!==own.toLowerCase()).map(s=>`<label class="small" style="display:inline-flex;gap:5px;align-items:center"><input type="checkbox" data-chg="projShare" data-pid="${esc(p.id)}" value="${esc(s.name)}" ${sh.includes(s.name)?'checked':''}>${esc(shortWho(s.name))}</label>`).join('')}</div>`; }
-queueMicrotask(()=>Object.assign(CHG,{ projShare:(d,el)=>{ const p=clone(S.projects[d.pid]); if(!p||projOwner(p).toLowerCase()!==meK().toLowerCase()) return; const s=new Set(p.share||[]); if(el.checked) s.add(el.value); else s.delete(el.value); p.share=[...s]; put('projects',p); toast(el.checked?shortWho(el.value)+' sieht das Projekt jetzt.':shortWho(el.value)+' sieht das Projekt nicht mehr.'); } }));
+// Sichtbarkeit: Alle / Niemand (nur ich) / Nur ausgewählte Mitarbeiter. Ändern darf bei eingeschränkten Projekten nur, wem es gehört.
+const VIS_OPTS=[['all','Alle'],['me','Niemand außer mir'],['sel','Nur ausgewählte Mitarbeiter']];
+const projVisOf=p=>!projRestr(p)?'all':(p.vis==='sel'||(p.cat==='internp'&&(p.share||[]).length))?'sel':'me';
+const projMine=p=>projOwner(p).toLowerCase()===meK().toLowerCase();
+const visOwnName=p=>{ const o=projOwner(p); return (staffAll().find(s=>shortWho(s.name).toLowerCase()===o.toLowerCase())||{}).name||o; };
+function visShareBoxes(p,attr){ const own=projOwner(p).toLowerCase(), sh=p.share||[]; return `<div class="row vis-sh" style="gap:6px 12px;flex-wrap:wrap;margin-top:6px">${staff().filter(s=>!projRestr(p)||shortWho(s.name).toLowerCase()!==own).filter(s=>shortWho(s.name).toLowerCase()!==meK().toLowerCase()).map(s=>`<label class="small" style="display:inline-flex;gap:5px;align-items:center"><input type="checkbox" ${attr} value="${esc(s.name)}" ${sh.includes(s.name)?'checked':''}>${esc(shortWho(s.name))}</label>`).join('')}</div>`; }
+function projVisHtml(p){ const v=projVisOf(p), sh=p.share||[];
+  if(v!=='all'&&!projMine(p)) return `<div class="small">${v==='me'?'Nur':'Eingeschränkt · gehört'} ${esc(visOwnName(p))}${v==='sel'&&sh.length?' · freigegeben für '+esc(sh.map(shortWho).join(', ')):''}</div>`;
+  return `<select class="inp" data-chg="projVis" data-pid="${esc(p.id)}">${VIS_OPTS.map(([k,l])=>`<option value="${k}" ${k===v?'selected':''}>${esc(l)}</option>`).join('')}</select>${v==='sel'?visShareBoxes(p,`data-chg="projShare" data-pid="${esc(p.id)}"`):''}`; }
+function projVisFormHtml(p){ const v=projVisOf(p);
+  if(v!=='all'&&projOwner(p)&&!projMine(p)) return `<div class="small">${v==='me'?'Nur':'Eingeschränkt · gehört'} ${esc(visOwnName(p))} – ändern kann es nur diese Person.</div><input type="hidden" id="pv_sel" value="${v}" data-lock="1">`;
+  setTimeout(()=>{ const s=$('#pv_sel'), b=$('#pv_box'); if(s&&b) s.addEventListener('change',()=>{ b.hidden=s.value!=='sel'; }); },0);
+  return `<select class="inp" id="pv_sel">${VIS_OPTS.map(([k,l])=>`<option value="${k}" ${k===v?'selected':''}>${esc(l)}</option>`).join('')}</select><div id="pv_box" ${v==='sel'?'':'hidden'}><div class="small muted" style="margin-top:6px">Wer soll das Projekt außer dir sehen?</div>${visShareBoxes(p,'class="pv-sh"')}</div>`; }
+// Beim Speichern des Projektformulars: Sichtbarkeit übernehmen. Wer von „Alle“ auf eingeschränkt stellt, dem gehört das Projekt.
+function projVisSave(p,before){ delete p.visx; const s=$('#pv_sel'); if(!s||s.dataset.lock) return; const v=s.value; if(p.cat==='internp') p.cat='laufend';
+  if(v==='all'){ delete p.vis; delete p.privBy; return; }
+  if(before.vis==='all'||!before.vis||!projOwner(p)) p.privBy=meK();
+  p.vis=v; if(v==='sel') p.share=[...document.querySelectorAll('.pv-sh:checked')].map(x=>x.value); }
+// Früher: Kategorie „Interne Projekte“. Umstellen auf Kategorie Laufend + Sichtbarkeit (nur eigene/gemeinsam).
+function projVisMigrate(){ if(!ME||READONLY||!mayWrite('projects')) return; Object.values(S.projects||{}).filter(p=>p&&p.cat==='internp'&&projVis(p)).forEach(p=>{ const n=clone(p); n.vis=(p.share||[]).length?'sel':'me'; n.cat='laufend'; put('projects',n); }); }
+setTimeout(projVisMigrate,9500);
+queueMicrotask(()=>Object.assign(CHG,{ projVis:(d,el)=>{ const p=clone(S.projects[d.pid]); if(!p) return; if(projRestr(p)&&!projMine(p)) return; const v=el.value;
+    if(v==='all'){ delete p.vis; delete p.privBy; } else { if(!projRestr(p)) p.privBy=meK(); p.vis=v; if(p.cat==='internp') p.cat='laufend'; }
+    put('projects',p); render(); toast(v==='all'?'Alle sehen das Projekt.':v==='me'?'Nur du siehst das Projekt.':'Nur du und die angehakten Mitarbeiter sehen das Projekt.'); },
+  projShare:(d,el)=>{ const p=clone(S.projects[d.pid]); if(!p||projOwner(p).toLowerCase()!==meK().toLowerCase()) return; const s=new Set(p.share||[]); if(el.checked) s.add(el.value); else s.delete(el.value); p.share=[...s]; put('projects',p); toast(el.checked?shortWho(el.value)+' sieht das Projekt jetzt.':shortWho(el.value)+' sieht das Projekt nicht mehr.'); } }));
 function projInfos(p){
   const hints=[];
   if(PV.includes(p.type)){ const k=+p.kwp||0;
@@ -3804,7 +3827,7 @@ function projInfos(p){
     ['Projektnummer',inp('nr','text',p.nr)],
     ['Projekttyp',sel('type',Object.entries(TYPES),p.type)],
     ['Kategorie',sel('cat',Object.entries(CATS),catOf(p))],
-    ...(catOf(p)==='internp'?[['Sichtbar für',projShareHtml(p)]]:[]),
+    ['Sichtbarkeit',projVisHtml(p)],
     ['Projektleitung',sel('pl',[['','– noch nicht festgelegt –'],...staff().map(s=>[s.name,s.name])],p.pl)],
     ['Adresse / Standort der Anlage',inp('place','text',p.place)],
     ['Netzbetreiber (VNB)',inp('vnb','text',p.vnb)]]],
@@ -3886,7 +3909,7 @@ function vTodos(){  const t=TODAY(), who=UI.todoWho;
 /* ========== Kalender ========== */
 function calModeChips(){ return ''; } // Umschalter sitzt jetzt oben (cal-sw)
 const kwOf = ws=>{ const d=new Date(ws+'T12:00'); d.setDate(d.getDate()+3); const j=new Date(d.getFullYear(),0,4); return 1+Math.round(((d-j)/864e5-3+((j.getDay()+6)%7))/7); };
-const PLAN_KINDS = {bau:'Baustelle / Kunde',haus:'Im Haus',abw:'Abwesend'};
+const PLAN_KINDS = {bau:'Baustelle / Kunde',haus:'Im Haus',ho:'Homeoffice',abw:'Abwesend'};
 // Wochenplanung: Einträge aus „plan“ (Teamplanung) + Termine/Lieferungen/Fristen der Woche
 const GEN='Allgemein (Termine, Lieferungen)';
 // Karte für einen Kalendereintrag: ziehbar (data-drag), am letzten Tag mit Griff zum Verlängern/Verkürzen
@@ -3962,7 +3985,7 @@ function vCalendar(){
     cells+=`<div class="dc ${dd.getMonth()!==m-1?'out':''} ${d===t?'today':''} ${d===UI.calSel?'sel':''}" data-act="calSel" data-d="${d}" data-drop-d="${d}"><span class="dn">${dd.getDate()}</span>${its.slice(0,3).map(x=>`<div class="ev k-${x.k} ${x.multi&&!x.first?'cont':''}" data-act="${x.act}" data-id="${x.id}" data-drag="${x.ref||''}" title="${esc(x.t+(x.m?' · '+x.m:''))}">${x.multi&&!x.first?'↳ ':''}${x.who&&staff().some(s=>s.name===x.who)?`<b>${esc(shortWho(x.who))}</b> `:''}${esc(x.t)}${x.rz&&x.last?'<span class="rz" aria-hidden="true"></span>':''}</div>`).join('')}${its.length>3?`<div class="small muted">+${its.length-3}</div>`:''}<div class="dots">${its.slice(0,5).map(x=>`<i class="k-${x.k}"></i>`).join('')}</div></div>`; }
   const sel=calItems(UI.calSel,UI.calSel), up=calItems(t,addDays(t,21));
   return head(MON[m-1]+' '+y,'Kalender',`<button class="icon-btn" data-act="calNav" data-v="-1" aria-label="Vormonat">${ic('left')}</button><button class="btn sm" data-act="calNav" data-v="0">Heute</button><button class="icon-btn" data-act="calNav" data-v="1" aria-label="Folgemonat">${ic('right')}</button>`)+
-  calModeChips()+`<div class="legend"><span class="k-krank">Krankheit / Urlaub / Lehrgang</span><span class="k-kunde">Kundentermin / Baustelle</span><span class="k-sonst">Sonstiges</span></div>
+  calModeChips()+`<div class="legend"><span class="k-krank">Krankheit / Urlaub / Lehrgang</span><span class="k-kunde">Kundentermin / Baustelle</span><span class="k-ho">Homeoffice</span><span class="k-sonst">Sonstiges</span></div>
   <div class="small muted">Einträge auf einen anderen Tag ziehen; am rechten Rand ziehen zum Verlängern oder Verkürzen.</div>
   <div class="card" style="overflow:hidden"><div class="cal">${['Mo','Di','Mi','Do','Fr','Sa','So'].map(d=>`<div class="dh">${d}</div>`).join('')}${cells}</div></div>
   <div class="grid2"><div class="card"><div class="card-h"><h3>${fmtDL(UI.calSel)}</h3><button class="btn sm" data-act="newEvent" data-date="${UI.calSel}">${ic('plus')}Termin</button></div><div class="card-b">${agenda(sel)||'<div class="empty">Nichts geplant.</div>'}</div></div>
@@ -4252,7 +4275,7 @@ const F_PROJECT=[
  {k:'kwp',label:'PV-Leistung (kWp)',type:'number',step:'any'},{k:'kwh',label:'Speicher (kWh)',type:'number',step:'any'},{k:'lp',label:'Ladepunkte',type:'number'},
  {k:'value',label:'Auftragswert netto (€)',type:'number',step:'any'},
  {k:'start',label:'Baubeginn',type:'date'},{k:'end',label:'Bauende',type:'date'},{k:'target',label:'⚑ Geplanter Fertigstellungstermin',type:'date'},
- {k:'cat',label:'Kategorie',type:'select',options:Object.entries(CATS)},
+ {k:'cat',label:'Kategorie',type:'select',options:Object.entries(CATS)},{k:'visx',label:'Sichtbarkeit',type:'html',full:1,html:''},
  {k:'lastContact',label:'Letzter Kundenkontakt',ph:'JJJJ-MM-TT oder Text'},
  {k:'wartungSel',label:'Wartungsvertrag',type:'select',options:[['nein','nein'],['ja','ja']]},
  {k:'scope',label:'Auftrag Inhalt',type:'textarea'},
@@ -4297,9 +4320,9 @@ function projectForm(p,pre,after){
   const NOTE_F=['scope','questions','notes','updates'], lock=!isNew&&!isAdmin();
   // Neues Projekt: kein Feld „Updates“ (Updates kommen später in Notizen und To-Dos); Fragen werden automatisch To-Dos
   PF_COVER=null; const fields=[{k:'coverx',label:'Titelbild (optional)',type:'html',full:1,html:projCoverHtml(p)},...F_PROJECT].filter(f=>!(isNew&&f.k==='updates')).map(f=>f.k==='questions'?{...f,label:'Zu klärende Fragen (eine pro Zeile – wird automatisch zu To-Dos)'}:f).map(f=>NOTE_F.includes(f.k)&&lock?{...f,ro:1,label:f.label+' (nur Admin)'}:f);
-  const before={cat:isNew?'':p.cat}; NOTE_F.forEach(k=>before[k]=p[k]||'');
+  const before={cat:isNew?'':p.cat,vis:isNew?'':projRestr(p)?(p.vis==='sel'||(p.cat==='internp'&&(p.share||[]).length)?'sel':'me'):'all',isNew}; fields.forEach(f=>{ if(f.k==='visx') f.html=projVisFormHtml(p); }); NOTE_F.forEach(k=>before[k]=p[k]||'');
   openSheet({title:isNew?'Neues Projekt':'Projekt bearbeiten',wide:1,fields,value:p,
-    onSave:v=>{ delete v.coverx; if(lock) NOTE_F.forEach(k=>{ v[k]=before[k]; }); if(PF_COVER==='del') delete p.cover; Object.assign(p,v); if(PF_COVER&&PF_COVER!=='del') projCoverUpload(p.id,PF_COVER); p.wartung=v.wartungSel==='ja'; delete p.wartungSel; p.status={erledigt:'abgeschlossen',abgesagt:'abgeschlossen',onhold:'pausiert'}[p.cat]||'aktiv'; if(p.cat==='internp'&&before.cat!=='internp') p.privBy=meK(); put('projects',p); if(after) after(p);
+    onSave:v=>{ delete v.coverx; if(lock) NOTE_F.forEach(k=>{ v[k]=before[k]; }); if(PF_COVER==='del') delete p.cover; Object.assign(p,v); if(PF_COVER&&PF_COVER!=='del') projCoverUpload(p.id,PF_COVER); p.wartung=v.wartungSel==='ja'; delete p.wartungSel; p.status={erledigt:'abgeschlossen',abgesagt:'abgeschlossen',onhold:'pausiert'}[p.cat]||'aktiv'; projVisSave(p,before); put('projects',p); if(after) after(p);
       if(!isNew&&!lock){ const added=['updates','notes'].map(k=>addedText(before[k],p[k]||'')).filter(Boolean).join('\n'); if(added) suggestTodos(p.id,added); }
       if(!lock&&qLines(p.questions).length&&(p.questions||'')!==before.questions) setTimeout(()=>qToTasks(p.id,true),300);
       if(isNew){ UI.ptab='status'; go('project',p.id); toast('Projekt angelegt. Standardablauf mit '+progress(p).tot+' Schritten erstellt.'); } },
@@ -6294,7 +6317,6 @@ const CHG = {
    if(k==='wartung') v=v==='ja';
    if(JSON.stringify(p[k]??'')===JSON.stringify(v)) return;
    if(v===''||v==null) delete p[k]; else p[k]=v;
-   if(k==='cat'&&v==='internp'&&p.cat!==S.projects[d.pid].cat){ p.privBy=meK(); toast('Internes Projekt: Ab jetzt siehst nur du es. Unter „Sichtbar für“ kannst du es freigeben.'); }
    if(k==='cat') p.status={erledigt:'abgeschlossen',abgesagt:'abgeschlossen',onhold:'pausiert'}[v]||'aktiv';
    put('projects',p); toast('Gespeichert.'); },
  taskWho:(d,el)=>{ const k=clone(S.tasks[d.id]); if(!k) return;
