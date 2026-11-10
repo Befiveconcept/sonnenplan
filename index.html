@@ -711,6 +711,8 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .menu-row{display:flex;align-items:stretch}.menu-row>button:first-child{flex:1;min-width:0}
 .menu .menu-x{flex:none;width:30px;justify-content:center;padding:0;color:var(--muted);font-size:17px;font-weight:700;opacity:.45}.menu .menu-row:hover .menu-x{opacity:1}.menu .menu-x:hover{color:var(--ink);background:var(--sunken)}
 .p-lock{display:inline-flex;vertical-align:middle;margin-left:.35em;color:var(--muted);line-height:0}.p-lock svg{width:.8em;height:.8em;min-width:12px;min-height:12px}h1 .p-lock{color:var(--ink)}
+.fx-bar{margin-bottom:8px}.fx-doc{max-height:72vh;overflow:auto;border-radius:8px;background:#8d8d8d}.fx-doc .docx-wrapper{padding:16px!important;background:#8d8d8d!important}.fx-doc section.docx{margin-bottom:16px!important}
+.fx-ed .fx-p{outline:none;border-radius:2px;min-height:1em;cursor:text}.fx-ed .fx-p:hover{background:rgba(244,219,2,.18)}.fx-ed .fx-p:focus{background:rgba(244,219,2,.32);box-shadow:0 0 0 1px #F4DB02}.fx-ed td:has(> .fx-p:empty){background:rgba(244,219,2,.06)}.fx-ed .fx-ck{cursor:pointer;user-select:none;border-radius:2px}.fx-ed .fx-ck:hover{background:#F4DB02}
 .fe-sec{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;background:var(--surface)}.fe-sh{display:flex;gap:4px;align-items:center;margin-bottom:8px}.fe-sh .fe-st{flex:1;min-width:0;font-weight:600}.fe-row{display:flex;gap:4px;align-items:center;margin-bottom:4px}.fe-row .fe-it{flex:1;min-width:0}.fe-n{width:22px;flex:none;text-align:right;font-size:12px;color:var(--muted)}.fe-chip{display:inline-flex;gap:5px;align-items:center;cursor:pointer}.fe-chip:hover{border-color:var(--ink);background:var(--sun)}
 .lg-bar{flex-wrap:wrap;gap:8px}.lg-row.hi>.lg-main{background:color-mix(in srgb,var(--sun) 35%,transparent)}.lg-ab{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px 3px 6px;font:inherit;font-size:12px;cursor:pointer;color:var(--ink);white-space:nowrap}.lg-ab:hover{background:var(--sun);border-color:var(--sun)}.lg-ab svg{width:14px;height:14px}.icon-btn.on-off{color:var(--bad)}
 .lg-empty{display:flex;flex-direction:column;gap:10px;align-items:flex-start;padding:22px 18px}.lg-prev{padding:10px 12px;border-radius:8px;background:var(--sunken);font-size:14px}.lg-prev .bad{color:var(--bad);font-weight:600}.lg-prev .ok{color:var(--ok);font-weight:600}
@@ -3807,7 +3809,7 @@ function projForms(p){
   const fs=p.forms||{};
   return `<div class="card"><div class="card-h"><h3>Digitale Formulare</h3><span class="small muted">Vor Ort auf dem Handy ausfüllen, Unterschriften weiterhin auf dem Papier-/PDF-Original</span></div><div class="list">${formKeys().filter(k=>PV.includes(p.type)||!['aufmass','dcbest','dcpr'].includes(k)).map(k=>{ const f=formDef(k), its=formItems(f);
     const tot=its.length, d=fs[k]?its.filter(it=>fs[k][it.id]&&fs[k][it.id].c).length:0;
-    return `<div class="li clickable" data-act="openForm" data-pid="${p.id}" data-k="${k}">${ic('form','style="width:20px;height:20px;color:var(--muted);flex:none"')}<div class="body"><div class="tt">${esc(f.n)}</div><div class="mt"><span>${f.tpl&&TPL[f.tpl]?'Vorlage: '+esc(TPL[f.tpl].n):'Eigenes Formular'}</span></div></div><span class="pill ${d===tot?'ok':d?'sun':''}">${d}/${tot}</span><button class="icon-btn" title="Drucken / als PDF speichern" aria-label="${esc(f.n)} drucken" data-act="formPrint" data-pid="${p.id}" data-k="${k}">${ic('report')}</button></div>`; }).join('')}</div></div>`;
+    return `<div class="li clickable" data-act="openForm" data-pid="${p.id}" data-k="${k}">${ic('form','style="width:20px;height:20px;color:var(--muted);flex:none"')}<div class="body"><div class="tt">${esc(f.n)}</div><div class="mt"><span>${f.tpl&&TPL[f.tpl]?'Vorlage: '+esc(TPL[f.tpl].n):'Eigenes Formular'}</span></div></div>${fs[k]&&fs[k]._doc&&Object.keys(fs[k]._doc.p||{}).length?`<span class="pill sun" title="Im Original-Formular ausgefüllt">ausgefüllt ${esc(fmtD(fs[k]._d||'').slice(0,6))}</span>`:`<span class="pill ${d===tot?'ok':d?'sun':''}">${d}/${tot}</span>`}<button class="icon-btn" title="Drucken / als PDF speichern" aria-label="${esc(f.n)} drucken" data-act="formPrint" data-pid="${p.id}" data-k="${k}">${ic('report')}</button></div>`; }).join('')}</div></div>`;
 }
 // Freigabe eines internen Projekts: Nur die Person, der es gehört, ändert die Liste; Freigegebene sehen, wer noch Zugriff hat.
 // Sichtbarkeit: Alle / Niemand (nur ich) / Nur ausgewählte Mitarbeiter. Ändern darf bei eingeschränkten Projekten nur, wem es gehört.
@@ -4794,6 +4796,73 @@ queueMicrotask(()=>Object.assign(A,{
  feSecDown:d=>{ formEdSync(); const i=+d.si; if(i<FE.secs.length-1) [FE.secs[i+1],FE.secs[i]]=[FE.secs[i],FE.secs[i+1]]; formEdRender(); },
  feReset:()=>{ if(!FE||!tplOk()) return; const k=FE.k; confirmSheet('„'+FE.n+'“ auf den Standard zurücksetzen? Eigene Änderungen an diesem Formular gehen verloren (ausgefüllte Projekte bleiben).',()=>{ const all={...((S.config||{}).forms||{})}; delete all[k]; saveTpl({forms:all}); FE=null; toast('Auf Standard zurückgesetzt.'); }); },
  feDel:()=>{ if(!FE||!tplOk()) return; const k=FE.k, n=FE.n; confirmSheet('Formular „'+n+'“ löschen? Es verschwindet aus allen Projekten (bereits ausgefüllte Angaben bleiben gespeichert).',()=>{ const all={...((S.config||{}).forms||{})}; all[k]={del:true}; saveTpl({forms:all}); FE=null; toast('Formular gelöscht.'); }); } }));
+/* ---------- Formulare im Original-Word-Layout: Vorlage anzeigen, direkt hineinschreiben, Kästchen ankreuzen, je Projekt speichern, drucken ---------- */
+// Die Word-Datei wird im Browser so dargestellt wie in Word (docx-preview). Jeder Absatz und jede Tabellenzelle ist beschreibbar, ☐ wird per Klick zu ☒.
+// Gespeichert wird je Projekt nur, was sich gegenüber der Vorlage geändert hat: forms[k]._doc = {v: Vorlagen-Kennung, p: {Absatz-Nr: Inhalt}}.
+// Vorlagen: Standard liegen neben der App unter vorlagen/<k>.docx; eine neue Word-Version oder eigene Word-Formulare liegen in der Ablage (S.config.formDocs[k]).
+const FORM_DOC_STD={aufmass:1,dcbest:1,acbest:1,dcpr:1,acpr:1,wartung:1};
+const formDocInfo=k=>((S.config||{}).formDocs||{})[k]||null;
+const formDocUrl=k=>{ const c=formDocInfo(k); if(c&&c.blob) return '/_blob/'+c.blob; return FORM_DOC_STD[k]?'vorlagen/'+k+'.docx':''; };
+const formDocVer=k=>{ const c=formDocInfo(k); return c&&c.blob?c.blob:'std1'; };
+const FX_CK=/[☐☒☑]/;
+async function docxLibs(){ if(!window.JSZip) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'); if(!window.docx||!window.docx.renderAsync) await loadScript('https://cdn.jsdelivr.net/npm/docx-preview@0.3.5/dist/docx-preview.min.js'); }
+// Gespeicherte Absätze nur mit harmlosen Elementen wieder einsetzen (kein Skript, keine Ereignisse, keine Links)
+function fxClean(html){ const d=new DOMParser().parseFromString('<div>'+String(html||'')+'</div>','text/html'), root=d.body.firstChild, ok=new Set(['SPAN','B','I','U','STRONG','EM','BR','SUB','SUP']);
+  const walk=n=>{ [...n.childNodes].forEach(c=>{ if(c.nodeType===1){ if(!ok.has(c.tagName)){ c.replaceWith(d.createTextNode(c.textContent)); return; } [...c.attributes].forEach(a=>{ if(!['class','style'].includes(a.name)||/url\s*\(|expression/i.test(a.value)) c.removeAttribute(a.name); }); walk(c); } else if(c.nodeType!==3) c.remove(); }); };
+  walk(root); return root.innerHTML; }
+async function fxRender(k,box){ const url=formDocUrl(k); if(!url) throw new Error('keine Word-Vorlage');
+  await docxLibs(); const res=await fetch(url); if(!res.ok) throw new Error('Vorlage nicht gefunden ('+res.status+')'); const blob=await res.blob();
+  box.innerHTML=''; await window.docx.renderAsync(blob,box,box,{inWrapper:true,breakPages:true,ignoreLastRenderedPageBreak:true,useBase64URL:true,experimental:false});
+  // Kästchen klickbar machen
+  const tw=document.createTreeWalker(box,NodeFilter.SHOW_TEXT), tn=[]; while(tw.nextNode()) if(FX_CK.test(tw.currentNode.nodeValue)) tn.push(tw.currentNode);
+  tn.forEach(t=>{ const parts=t.nodeValue.split(/([☐☒☑])/), fr=document.createDocumentFragment(); parts.forEach(s=>{ if(!s) return; if(FX_CK.test(s)&&s.length===1){ const sp=document.createElement('span'); sp.className='fx-ck'; sp.contentEditable='false'; sp.textContent=s; fr.appendChild(sp); } else fr.appendChild(document.createTextNode(s)); }); t.replaceWith(fr); });
+  const ps=[...box.querySelectorAll('section.docx p')]; const orig=ps.map(p=>p.textContent); return {ps,orig}; }
+// Gespeichert werden je geändertem Absatz nur die Texte (in Reihenfolge der Textstücke) – Bilder, Formatierung und Layout kommen immer aus der Vorlage
+const fxTexts=p=>{ const w=document.createTreeWalker(p,NodeFilter.SHOW_TEXT), o=[]; while(w.nextNode()) o.push(w.currentNode); return o; };
+function fxApply(ps,saved,edit){ ps.forEach((p,i)=>{ const sv=saved&&saved[i];
+    if(Array.isArray(sv)){ const nodes=fxTexts(p); if(!nodes.length){ p.appendChild(document.createTextNode(sv.join(''))); } else { nodes.forEach((t,j)=>{ t.nodeValue=j<sv.length?String(sv[j]):''; }); if(sv.length>nodes.length) nodes[nodes.length-1].nodeValue+=sv.slice(nodes.length).join(''); } }
+    else if(typeof sv==='string') p.innerHTML=fxClean(sv);
+    if(edit){ p.contentEditable='true'; p.spellcheck=false; p.classList.add('fx-p'); p.querySelectorAll('img,svg,canvas').forEach(x=>x.setAttribute('contenteditable','false')); } }); }
+document.addEventListener('click',e=>{ const c=e.target.closest&&e.target.closest('.fx-ed .fx-ck'); if(!c) return; e.preventDefault(); c.textContent=c.textContent==='☐'?'☒':'☐'; });
+async function formDocSheet(pid,k){ const p=S.projects[pid], f=formDef(k); if(!p||!f) return; closeSheet(); const data=(p.forms&&p.forms[k])||{}, dd=data._doc||{}, w=mayWrite('projects');
+  openSheet({title:f.n+' · '+p.name,wide:1,saveLabel:w?'Speichern':'Schließen',html:`<div class="fld full"><div class="fx-bar small muted">${w?'Direkt in die Vorlage schreiben – Kästchen ☐ anklicken zum Ankreuzen.':'Nur ansehen.'}${dd.v&&dd.v!==formDocVer(k)?' <span class="pill warn">Vorlage wurde seit dem Ausfüllen geändert – bitte Einträge prüfen</span>':''}${data._d?' · zuletzt gespeichert '+esc(fmtD(data._d))+(data._by?' von '+esc(data._by):''):''}</div><div class="fx-doc ${w?'fx-ed':''}" id="fxBox"><div class="empty">Vorlage wird geladen …</div></div></div>`,
+    extraBtn:`<button type="button" class="btn" data-act="formPrint" data-pid="${pid}" data-k="${k}">${ic('report')}Drucken / PDF</button><button type="button" class="btn ghost" data-act="formList" data-pid="${pid}" data-k="${k}">Als Checkliste</button>`,
+    onSave:()=>{ if(!w||!FX_CUR||FX_CUR.k!==k) return; const pp=clone(S.projects[pid]), cur=(pp.forms&&pp.forms[k])||{}, out={};
+      FX_CUR.ps.forEach((el,i)=>{ if(el.textContent!==FX_CUR.orig[i]) out[i]=fxTexts(el).map(t=>t.nodeValue); }); // nur Absätze, deren Text sich gegenüber der Vorlage geändert hat
+      pp.forms={...(pp.forms||{}),[k]:{...cur,_doc:{v:formDocVer(k),p:out},_d:TODAY(),_by:meK()}}; put('projects',pp); FX_CUR=null; toast('Formular gespeichert.'); }});
+  const box=$('#fxBox'); try{ const r=await fxRender(k,box); fxApply(r.ps,dd.p,w); FX_CUR={k,pid,ps:r.ps,orig:r.orig}; }
+  catch(e){ if(box) box.innerHTML=`<div class="empty">Die Word-Vorlage konnte nicht geladen werden (${esc(e.message)}). ${FORM_DOC_STD[k]&&!formDocInfo(k)?'Der Ordner „vorlagen“ muss einmal neben die App hochgeladen werden – oder unter Vorlagen → Dateivorlagen die Word-Datei hinterlegen.':''} <button type="button" class="btn sm" data-act="formList" data-pid="${pid}" data-k="${k}">Als Checkliste ausfüllen</button></div>`; } }
+var FX_CUR=null;
+async function formDocPrint(pid,k){ const p=S.projects[pid], f=formDef(k); if(!p||!f) return; const box=document.createElement('div'); box.style.cssText='position:fixed;left:-10000px;top:0;width:900px'; document.body.appendChild(box);
+  try{ const r=await fxRender(k,box); const dd=((p.forms||{})[k]||{})._doc||{}; fxApply(r.ps,dd.p,false);
+    const fr=document.createElement('iframe'); fr.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0'; document.body.appendChild(fr); const d=fr.contentDocument;
+    d.open(); d.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${esc(f.n+' – '+p.name)}</title><style>@page{margin:0}body{margin:0}.docx-wrapper{background:none!important;padding:0!important}.docx-wrapper>section.docx{box-shadow:none!important;margin:0!important;break-after:page}.fx-ck{cursor:default}</style></head><body>${box.innerHTML}</body></html>`); d.close();
+    setTimeout(()=>{ try{ fr.contentWindow.focus(); fr.contentWindow.print(); }catch(e){} setTimeout(()=>fr.remove(),120000); },500); }
+  catch(e){ toast('Drucken nicht möglich: '+e.message); } finally{ box.remove(); } }
+// Vorlage ansehen (Vorlagen → Digitale Formulare): Original anzeigen, herunterladen, neue Word-Version hinterlegen, Kurz-Checkliste bearbeiten
+async function formTplView(k){ const f=formDef(k); if(!f) return; if(!formDocUrl(k)) return formEditor(k); closeSheet(); const info=formDocInfo(k), ed=tplOk();
+  openSheet({title:'Vorlage: '+f.n,wide:1,saveLabel:'Schließen',onSave:()=>{},html:`<div class="fld full"><div class="fx-bar small muted">${info&&info.blob?'Eigene Word-Version: '+esc(info.name||'')+' · '+esc(info.by||'')+' '+esc(fmtD(String(info.at||'').slice(0,10))):'Standard-Vorlage (Original-Word)'}. Ausgefüllt wird sie im Projekt unter „Formulare“.</div><div class="fx-doc" id="fxBox"><div class="empty">Vorlage wird geladen …</div></div></div>`,
+    extraBtn:`<a class="btn" href="${esc(formDocUrl(k))}" download="${esc((info&&info.name)||f.n+'.docx')}">Word herunterladen</a>${ed?`<button type="button" class="btn" data-act="formDocUp" data-k="${esc(k)}">Neue Word-Version hochladen</button>${info&&info.blob&&FORM_DOC_STD[k]?`<button type="button" class="btn ghost" data-act="formDocStd" data-k="${esc(k)}">Standard wiederherstellen</button>`:''}`:''}<button type="button" class="btn ghost" data-act="formTplEdit2" data-k="${esc(k)}">Kurz-Checkliste ${ed?'bearbeiten':'ansehen'}</button>`});
+  const box=$('#fxBox'); try{ await fxRender(k,box); }catch(e){ if(box) box.innerHTML=`<div class="empty">Die Word-Vorlage konnte nicht geladen werden (${esc(e.message)}).${FORM_DOC_STD[k]?' Bitte den Ordner „vorlagen“ einmal neben die App (index.html) hochladen – oder hier „Neue Word-Version hochladen“.':''}</div>`; } }
+// Word-Datei hochladen: als neue Version eines Formulars (k) oder als neues Formular (ohne k)
+function formDocPick(k){ if(!tplOk()) return; if(!ASSETS) return toast('Hochladen geht nur in der veröffentlichten App mit Bearbeitungsrechten.'); const inp=document.createElement('input'); inp.type='file'; inp.accept='.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  inp.onchange=async()=>{ const file=inp.files&&inp.files[0]; if(!file) return; if(!/\.docx$/i.test(file.name)) return toast('Bitte eine Word-Datei im Format .docx wählen (ältere .doc bitte in Word als .docx speichern).');
+    try{ busy(1,'fdoc'); const up=await ASSETS.upload(file,{type:file.type||'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}); const key=k||'w'+uid(), docs={...((S.config||{}).formDocs||{})}; docs[key]={blob:up.id,name:file.name,size:file.size,at:new Date().toISOString(),by:meK()};
+      const patch={formDocs:docs}; if(!k){ const forms={...((S.config||{}).forms||{})}; forms[key]={n:file.name.replace(/\.docx$/i,'').replace(/[_]+/g,' ').trim(),secs:[['Checkliste',[{id:'x'+uid(),t:'Formular ausgefüllt'}]]]}; patch.forms=forms; }
+      saveTpl(patch); toast(k?'Neue Word-Version hinterlegt. Gilt ab sofort für alle Projekte.':'Neues Formular „'+file.name+'“ angelegt.'); setTimeout(()=>formTplView(key),300); }
+    catch(e){ toast('Hochladen fehlgeschlagen: '+(e.message||e)); } finally{ busy(0,'fdoc'); } };
+  inp.click(); }
+queueMicrotask(()=>Object.assign(A,{
+ openForm:d=>formDocUrl(d.k)?formDocSheet(d.pid,d.k):formSheet(d.pid,d.k),
+ formList:d=>{ closeSheet(); FX_CUR=null; formSheet(d.pid,d.k); },
+ formPrint:(d,el,e)=>{ e&&e.stopPropagation&&e.stopPropagation(); if(formDocUrl(d.k)) formDocPrint(d.pid,d.k); else printForm(d.pid,d.k); },
+ formTplEdit:d=>formTplView(d.k),
+ formTplEdit2:d=>formEditor(d.k),
+ formDocUp:d=>formDocPick(d.k),
+ formDocStd:d=>{ if(!tplOk()) return; const docs={...((S.config||{}).formDocs||{})}; delete docs[d.k]; saveTpl({formDocs:docs}); toast('Standard-Vorlage wiederhergestellt.'); formTplView(d.k); },
+ formTplNew:()=>{ if(!tplOk()) return; closeSheet(); openSheet({title:'Neues Formular',saveLabel:'Schließen',onSave:()=>{},html:`<div class="fld full"><div class="row" style="gap:10px;flex-wrap:wrap"><button type="button" class="btn sun" data-act="formNewWord">${ic('plus')}Aus Word-Vorlage (.docx)</button><button type="button" class="btn" data-act="formNewList">${ic('plus')}Als Checkliste</button></div><div class="small muted" style="margin-top:10px">Aus Word: Das Formular sieht im Projekt genauso aus wie die Word-Datei und wird direkt darin ausgefüllt.</div></div>`}); },
+ formNewWord:()=>{ closeSheet(); formDocPick(null); },
+ formNewList:()=>{ closeSheet(); formEditor(null); } }));
 function confirmSheet(msg,fn){
   const prev=SHEET; closeSheet();
   openSheet({title:'Bitte bestätigen',html:`<div class="fld full">${esc(msg)}</div>`,saveLabel:'Ja, löschen',onSave:()=>{ fn(); }});
@@ -7475,7 +7544,7 @@ Object.assign(A,{
  fileAsset:d=>{ window.open('/_blob/'+d.id,'_blank','noopener'); },
  stockHist:d=>stockHist(d.id),
  ckPrint:d=>printChecklist(d.pid,d.ph||''),
- formPrint:(d,el,e)=>{ e&&e.stopPropagation(); printForm(d.pid,d.k); },
+ formPrint:(d,el,e)=>{ e&&e.stopPropagation&&e.stopPropagation(); if(formDocUrl(d.k)) formDocPrint(d.pid,d.k); else printForm(d.pid,d.k); },
  needAdd:d=>openSheet({title:'Noch zu bestellen',fields:[{k:'qty',label:'Menge',type:'number'},{k:'unit',label:'Einheit',list:'unitList',ph:'Stk'},{k:'art',label:'Artikel',req:1,full:1,list:'stockArtList'},{k:'note',label:'Bemerkung',full:1}],value:{unit:'Stk'},
    onSave:v=>{ const p=clone(S.projects[d.pid]); p.need=[...(p.need||[]),{id:uid(),art:v.art.trim(),qty:+v.qty||0,unit:v.unit||'Stk',note:v.note||'',by:meK(),d:TODAY()}]; put('projects',p); toast('Auf die Bestellliste gesetzt.'); }}),
  needDone:d=>{ const p=clone(S.projects[d.pid]); p.need=(p.need||[]).map(n=>n.id===d.id?{...n,done:true}:n); put('projects',p); },
