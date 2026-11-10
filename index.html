@@ -711,6 +711,7 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .menu-row{display:flex;align-items:stretch}.menu-row>button:first-child{flex:1;min-width:0}
 .menu .menu-x{flex:none;width:30px;justify-content:center;padding:0;color:var(--muted);font-size:17px;font-weight:700;opacity:.45}.menu .menu-row:hover .menu-x{opacity:1}.menu .menu-x:hover{color:var(--ink);background:var(--sunken)}
 .p-lock{display:inline-flex;vertical-align:middle;margin-left:.35em;color:var(--muted);line-height:0}.p-lock svg{width:.8em;height:.8em;min-width:12px;min-height:12px}h1 .p-lock{color:var(--ink)}
+.fe-sec{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;background:var(--surface)}.fe-sh{display:flex;gap:4px;align-items:center;margin-bottom:8px}.fe-sh .fe-st{flex:1;min-width:0;font-weight:600}.fe-row{display:flex;gap:4px;align-items:center;margin-bottom:4px}.fe-row .fe-it{flex:1;min-width:0}.fe-n{width:22px;flex:none;text-align:right;font-size:12px;color:var(--muted)}.fe-chip{display:inline-flex;gap:5px;align-items:center;cursor:pointer}.fe-chip:hover{border-color:var(--ink);background:var(--sun)}
 .lg-bar{flex-wrap:wrap;gap:8px}.lg-row.hi>.lg-main{background:color-mix(in srgb,var(--sun) 35%,transparent)}.lg-ab{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px 3px 6px;font:inherit;font-size:12px;cursor:pointer;color:var(--ink);white-space:nowrap}.lg-ab:hover{background:var(--sun);border-color:var(--sun)}.lg-ab svg{width:14px;height:14px}.icon-btn.on-off{color:var(--bad)}
 .lg-empty{display:flex;flex-direction:column;gap:10px;align-items:flex-start;padding:22px 18px}.lg-prev{padding:10px 12px;border-radius:8px;background:var(--sunken);font-size:14px}.lg-prev .bad{color:var(--bad);font-weight:600}.lg-prev .ok{color:var(--ok);font-weight:600}
 .lbl-c{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;padding:14px 16px 6px}.lbl-f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}.lbl-f .inp{width:100%}.lbl-t{gap:14px;padding:4px 16px 8px;flex-wrap:wrap}.lbl-a{gap:8px;padding:8px 16px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:center}
@@ -3804,9 +3805,9 @@ function projAblauf(p,pr){
 function taskFor(pid,iid){ const t=arr('tasks').find(t=>t.pid===pid&&t.item===iid&&!t.done); return t?`<span class="pill pri">To-Do: ${esc(t.who||'offen')}${t.due?' · '+fmtD(t.due):''}</span>`:''; }
 function projForms(p){
   const fs=p.forms||{};
-  return `<div class="card"><div class="card-h"><h3>Digitale Formulare</h3><span class="small muted">Vor Ort auf dem Handy ausfüllen, Unterschriften weiterhin auf dem Papier-/PDF-Original</span></div><div class="list">${Object.entries(FORMS).filter(([k])=>PV.includes(p.type)||!['aufmass','dcbest','dcpr'].includes(k)).map(([k,f])=>{
-    const tot=f.secs.reduce((a,s)=>a+s[1].length,0), d=fs[k]?Object.values(fs[k]).filter(v=>v&&v.c).length:0;
-    return `<div class="li clickable" data-act="openForm" data-pid="${p.id}" data-k="${k}">${ic('form','style="width:20px;height:20px;color:var(--muted);flex:none"')}<div class="body"><div class="tt">${f.n}</div><div class="mt"><span>Vorlage: ${esc(TPL[f.tpl].n)}</span></div></div><span class="pill ${d===tot?'ok':d?'sun':''}">${d}/${tot}</span><button class="icon-btn" title="Drucken / als PDF speichern" aria-label="${esc(f.n)} drucken" data-act="formPrint" data-pid="${p.id}" data-k="${k}">${ic('report')}</button></div>`; }).join('')}</div></div>`;
+  return `<div class="card"><div class="card-h"><h3>Digitale Formulare</h3><span class="small muted">Vor Ort auf dem Handy ausfüllen, Unterschriften weiterhin auf dem Papier-/PDF-Original</span></div><div class="list">${formKeys().filter(k=>PV.includes(p.type)||!['aufmass','dcbest','dcpr'].includes(k)).map(k=>{ const f=formDef(k), its=formItems(f);
+    const tot=its.length, d=fs[k]?its.filter(it=>fs[k][it.id]&&fs[k][it.id].c).length:0;
+    return `<div class="li clickable" data-act="openForm" data-pid="${p.id}" data-k="${k}">${ic('form','style="width:20px;height:20px;color:var(--muted);flex:none"')}<div class="body"><div class="tt">${esc(f.n)}</div><div class="mt"><span>${f.tpl&&TPL[f.tpl]?'Vorlage: '+esc(TPL[f.tpl].n):'Eigenes Formular'}</span></div></div><span class="pill ${d===tot?'ok':d?'sun':''}">${d}/${tot}</span><button class="icon-btn" title="Drucken / als PDF speichern" aria-label="${esc(f.n)} drucken" data-act="formPrint" data-pid="${p.id}" data-k="${k}">${ic('report')}</button></div>`; }).join('')}</div></div>`;
 }
 // Freigabe eines internen Projekts: Nur die Person, der es gehört, ändert die Liste; Freigegebene sehen, wer noch Zugriff hat.
 // Sichtbarkeit: Alle / Niemand (nur ich) / Nur ausgewählte Mitarbeiter. Ändern darf bei eingeschränkten Projekten nur, wem es gehört.
@@ -4145,7 +4146,7 @@ function vTemplates(){
   return head('Vorlagen','Aus dem Ordner „Vorlagen“ · Pfad kopieren und im Explorer öffnen')+sw+
   `<div class="card"><div class="card-h"><h3>Standard-Projektordner</h3><span class="small muted">Für jedes Projekt gleich anlegen</span></div><div class="card-b"><div class="folders">${FOLDERS.map(([n,l])=>`<div class="folder"><b>${n}</b>${l}</div>`).join('')}</div>
    <div class="eyebrow" style="margin:14px 0 6px">Anlagendoku größer als EFH (Ordner 08)</div><div class="folders">${DOKU_GR.map(d=>`<div class="folder">${esc(d)}</div>`).join('')}</div></div></div>
-  <div class="card"><div class="card-h"><h3>Digitale Formulare</h3><span class="small muted">In jedem Projekt unter „Formulare“ ausfüllbar</span></div><div class="card-b"><div class="chips">${Object.values(FORMS).map(f=>`<span class="chip">${f.n}</span>`).join('')}</div></div></div>
+  <div class="card"><div class="card-h"><h3>Digitale Formulare</h3><span class="small muted">In jedem Projekt unter „Formulare“ ausfüllbar</span></div><div class="card-b"><div class="chips">${formKeys().map(k=>{ const f=formDef(k); return `<button type="button" class="chip fe-chip" data-act="formTplEdit" data-k="${esc(k)}" title="${tplOk()?'Öffnen und bearbeiten':'Ansehen'}">${tplOk()?ic('edit','style="width:13px;height:13px"'):''}${esc(f.n)} <span class="mono small">${formItems(f).length}</span>${f.changed&&!f.custom?' <span class="small muted">(angepasst)</span>':''}</button>`; }).join('')}${tplOk()?`<button type="button" class="chip" data-act="formTplNew">${ic('plus','style="width:13px;height:13px"')}Neues Formular</button>`:''}</div></div></div>
   ${Object.entries(groups).map(([g,list])=>`<div><div class="eyebrow" style="margin:4px 0 8px">${g}</div><div class="tpl-grid">${list.map(([k,t])=>{ const ext=(t.f.match(/\.(\w+)$/)||[,'Ordner'])[1].toLowerCase();
     return `<div class="tcard"><span class="ext ${ext}">${ext}</span><div style="min-width:0;flex:1"><div class="nm">${esc(t.n)}</div><div class="pt">${esc(t.f)}</div></div><button class="icon-btn" title="Pfad kopieren" data-act="copyPath" data-k="${k}">${ic('copy')}</button></div>`; }).join('')}</div></div>`).join('')}`;
 }
@@ -4742,15 +4743,57 @@ function staffForm(i){
     onSave:v=>{ delete v.exitInfo; v.email=String(v.email||'').trim().toLowerCase(); if(!v.email) delete v.email; if(canExit&&v.exit&&v.exit<TODAY()&&!confirm(v.name+' wird sofort entfernt: Zugang gesperrt, offene To-Dos werden „nicht zugewiesen“. Fortfahren?')) return false; if(!canExit&&s.exit) v.exit=s.exit; if(!v.exit) delete v.exit; if(i!=null) list[i]=v; else list.push(v); putConfig({...(S.config||{}),staff:list}); setTimeout(staffExitSweep,300); },
     onDelete:i==null?null:()=>{ list.splice(i,1); putConfig({...(S.config||{}),staff:list}); closeSheet(); }});
 }
+/* ---------- Formular-Vorlagen: Standard aus FORMS, Änderungen in S.config.forms[k] = {n, secs:[[Abschnitt,[{id,t}]]]} ---------- */
+// Jeder Punkt hat eine feste ID, damit bereits ausgefüllte Projekte nach dem Bearbeiten weiter passen. Standardpunkte heißen wie bisher i0, i1, … (nach Position).
+const formStd=k=>{ const f=FORMS[k]; if(!f) return null; let n=0; return {n:f.n,tpl:f.tpl,secs:f.secs.map(([t,its])=>[t,its.map(x=>({id:'i'+(n++),t:x}))])}; };
+const formDef=k=>{ const c=((S.config||{}).forms||{})[k], s=formStd(k); if(!c) return s; if(c.del) return null; return {n:c.n||(s&&s.n)||'Formular',tpl:s&&s.tpl,custom:!s,changed:true,secs:c.secs||(s?s.secs:[])}; };
+const formKeys=()=>[...Object.keys(FORMS),...Object.keys((S.config||{}).forms||{}).filter(k=>!FORMS[k])].filter(k=>formDef(k));
+const formItems=f=>f.secs.flatMap(s=>s[1]);
 function formSheet(pid,k){
-  const p=S.projects[pid], f=FORMS[k], data=(p.forms&&p.forms[k])||{};
-  let html='<div class="fld full">'; let n=0;
-  f.secs.forEach(([st,items])=>{ html+=`<div class="sec-t">${esc(st)}</div>`; items.forEach(it=>{ const key='i'+(n++), d=data[key]||{};
-    html+=`<div class="form-ck"><input type="checkbox" class="ck" id="fc_${key}" ${d.c?'checked':''}><div class="tx"><label for="fc_${key}">${esc(it)}</label><input class="note" id="fn_${key}" value="${esc(d.n||'')}" placeholder="Wert / Notiz"></div></div>`; }); });
-  html+=`<div class="small muted" style="margin-top:10px">Original-Vorlage: <button type="button" class="tpl" data-act="showTpl" data-k="${f.tpl}">${esc(TPL[f.tpl].n)}</button></div></div>`;
-  openSheet({title:f.n+' · '+p.name,wide:1,html,onSave:()=>{ const pp=clone(S.projects[pid]); const out={}; for(let i=0;i<n;i++){ const c=$('#fc_i'+i).checked, nn=$('#fn_i'+i).value.trim(); if(c||nn) out['i'+i]={c,n:nn}; }
+  const p=S.projects[pid], f=formDef(k); if(!p||!f) return toast('Formular nicht gefunden.'); const data=(p.forms&&p.forms[k])||{}, items=formItems(f);
+  let html='<div class="fld full">';
+  f.secs.forEach(([st,its])=>{ html+=`<div class="sec-t">${esc(st)}</div>`; its.forEach(it=>{ const d=data[it.id]||{};
+    html+=`<div class="form-ck"><input type="checkbox" class="ck" id="fc_${it.id}" ${d.c?'checked':''}><div class="tx"><label for="fc_${it.id}">${esc(it.t)}</label><input class="note" id="fn_${it.id}" value="${esc(d.n||'')}" placeholder="Wert / Notiz"></div></div>`; }); });
+  html+=f.tpl&&TPL[f.tpl]?`<div class="small muted" style="margin-top:10px">Original-Vorlage: <button type="button" class="tpl" data-act="showTpl" data-k="${f.tpl}">${esc(TPL[f.tpl].n)}</button></div></div>`:'</div>';
+  openSheet({title:f.n+' · '+p.name,wide:1,html,onSave:()=>{ const pp=clone(S.projects[pid]), old=(pp.forms&&pp.forms[k])||{}, out={};
+    Object.entries(old).forEach(([key,v])=>{ if(key!=='_d'&&!items.some(it=>it.id===key)) out[key]=v; }); // Antworten zu inzwischen entfernten Punkten bleiben gespeichert
+    items.forEach(it=>{ const c=$('#fc_'+it.id).checked, nn=$('#fn_'+it.id).value.trim(); if(c||nn) out[it.id]={c,n:nn}; });
     pp.forms={...(pp.forms||{}),[k]:{...out,_d:TODAY()}}; put('projects',pp); toast('Formular gespeichert.'); }});
 }
+// Formular-Vorlage bearbeiten (Vorlagen → Dateivorlagen → Digitale Formulare). Wer nicht darf, sieht sie nur.
+var FE=null;
+function formEditor(k){ const f=k?formDef(k):null; if(k&&!f) return toast('Formular nicht gefunden.');
+  FE={k:k||'f'+uid(),n:f?f.n:'Neues Formular',secs:f?JSON.parse(JSON.stringify(f.secs)):[['Abschnitt 1',[{id:'x'+uid(),t:''}]]],std:!!(k&&FORMS[k]),isNew:!k,changed:!!(f&&f.changed)}; formEdRender(); }
+function formEdSync(){ if(!FE) return; const n=$('#fe_n'); if(n) FE.n=n.value; document.querySelectorAll('.fe-sec').forEach((el,si)=>{ const s=FE.secs[si]; if(!s) return; s[0]=el.querySelector('.fe-st').value; el.querySelectorAll('.fe-it').forEach((inp,ii)=>{ if(s[1][ii]) s[1][ii].t=inp.value; }); }); }
+function formEdRender(focus){ if(!FE) return; const ro=!tplOk(), dis=ro?'disabled':''; closeSheet();
+  const b=(act,si,ii,lbl,tt)=>ro?'':`<button type="button" class="icon-btn sm" data-act="${act}" data-si="${si}"${ii!=null?` data-ii="${ii}"`:''} title="${tt}" aria-label="${tt}">${lbl}</button>`;
+  const html=`<div class="fld full"><label for="fe_n">Name des Formulars</label><input class="inp" id="fe_n" value="${esc(FE.n)}" ${dis}></div>
+    ${ro?'<div class="fld full"><div class="banner">Ansehen ist für alle möglich. Ändern dürfen Admins und alle mit dem Recht „Vorlagen bearbeiten“.</div></div>':`<div class="fld full"><div class="small muted">Punkte umbenennen, verschieben (↑ ↓), löschen (✕) oder mit „+ Punkt“ ergänzen. Enter in einem Punkt legt direkt den nächsten an. Bereits ausgefüllte Formulare in Projekten bleiben erhalten.</div></div>`}
+    <div class="fld full fe">${FE.secs.map(([t,its],si)=>`<div class="fe-sec" data-si="${si}"><div class="fe-sh"><input class="inp fe-st" value="${esc(t)}" placeholder="Abschnitt" aria-label="Abschnitt" ${dis}>${b('feSecUp',si,null,'↑','Abschnitt nach oben')}${b('feSecDown',si,null,'↓','Abschnitt nach unten')}${b('feSecDel',si,null,'✕','Abschnitt löschen')}</div>
+      ${its.map((it,ii)=>`<div class="fe-row"><span class="fe-n">${ii+1}</span><input class="inp fe-it" data-si="${si}" data-ii="${ii}" value="${esc(it.t)}" placeholder="Prüfpunkt / Frage" aria-label="Punkt ${ii+1}" ${dis}>${b('feItUp',si,ii,'↑','nach oben')}${b('feItDown',si,ii,'↓','nach unten')}${b('feItDel',si,ii,'✕','Punkt löschen')}</div>`).join('')}
+      ${ro?'':`<button type="button" class="btn ghost sm" data-act="feItAdd" data-si="${si}">${ic('plus')}Punkt</button>`}</div>`).join('')}
+      ${ro?'':`<button type="button" class="btn sm" data-act="feSecAdd">${ic('plus')}Abschnitt</button>`}</div>`;
+  openSheet({title:ro?'Formular: '+FE.n:FE.isNew?'Neues Formular':'Formular bearbeiten',wide:1,html,saveLabel:ro?'Schließen':'Speichern',
+    extraBtn:ro?'':(FE.std&&FE.changed?`<button type="button" class="btn ghost" data-act="feReset">Auf Standard zurücksetzen</button>`:'')+(!FE.std&&!FE.isNew?`<button type="button" class="btn ghost" data-act="feDel">Formular löschen</button>`:''),
+    onSave:()=>{ if(ro){ FE=null; return; } formEdSync(); const name=FE.n.trim(); if(!name){ toast('Bitte einen Namen eintragen.'); return false; }
+      const secs=FE.secs.map(([t,its])=>[String(t).trim(),its.map(it=>({id:it.id,t:String(it.t).trim()})).filter(it=>it.t)]).filter(([t,its])=>t||its.length).map(([t,its])=>[t||'Abschnitt',its]);
+      if(!formItems({secs}).length){ toast('Bitte mindestens einen Punkt eintragen.'); return false; }
+      const all={...((S.config||{}).forms||{})}; all[FE.k]={n:name,secs}; saveTpl({forms:all}); toast('Formular „'+name+'“ gespeichert. Gilt ab sofort in allen Projekten.'); FE=null; }});
+  if(focus) setTimeout(()=>{ const e=document.querySelector(focus); if(e){ e.focus(); e.scrollIntoView({block:'center'}); } },40); }
+document.addEventListener('keydown',e=>{ const t=e.target; if(e.key!=='Enter'||!FE||!t.classList||!t.classList.contains('fe-it')) return; e.preventDefault(); e.stopPropagation(); formEdSync(); const si=+t.dataset.si, ii=+t.dataset.ii; FE.secs[si][1].splice(ii+1,0,{id:'x'+uid(),t:''}); formEdRender(`.fe-it[data-si="${si}"][data-ii="${ii+1}"]`); },true);
+queueMicrotask(()=>Object.assign(A,{
+ formTplEdit:d=>formEditor(d.k),
+ formTplNew:()=>{ if(!tplOk()) return; formEditor(null); },
+ feItAdd:d=>{ formEdSync(); const s=FE.secs[+d.si]; s[1].push({id:'x'+uid(),t:''}); formEdRender(`.fe-it[data-si="${d.si}"][data-ii="${s[1].length-1}"]`); },
+ feItDel:d=>{ formEdSync(); FE.secs[+d.si][1].splice(+d.ii,1); formEdRender(); },
+ feItUp:d=>{ formEdSync(); const a=FE.secs[+d.si][1], i=+d.ii; if(i>0){ [a[i-1],a[i]]=[a[i],a[i-1]]; } else if(+d.si>0){ FE.secs[+d.si-1][1].push(a.splice(i,1)[0]); } formEdRender(); },
+ feItDown:d=>{ formEdSync(); const a=FE.secs[+d.si][1], i=+d.ii; if(i<a.length-1){ [a[i+1],a[i]]=[a[i],a[i+1]]; } else if(+d.si<FE.secs.length-1){ FE.secs[+d.si+1][1].unshift(a.splice(i,1)[0]); } formEdRender(); },
+ feSecAdd:()=>{ formEdSync(); FE.secs.push(['Neuer Abschnitt',[{id:'x'+uid(),t:''}]]); formEdRender(`.fe-sec[data-si="${FE.secs.length-1}"] .fe-st`); },
+ feSecDel:d=>{ formEdSync(); FE.secs.splice(+d.si,1); formEdRender(); toast('Abschnitt entfernt – mit „Abbrechen“ verwerfen, falls versehentlich.'); },
+ feSecUp:d=>{ formEdSync(); const i=+d.si; if(i>0) [FE.secs[i-1],FE.secs[i]]=[FE.secs[i],FE.secs[i-1]]; formEdRender(); },
+ feSecDown:d=>{ formEdSync(); const i=+d.si; if(i<FE.secs.length-1) [FE.secs[i+1],FE.secs[i]]=[FE.secs[i],FE.secs[i+1]]; formEdRender(); },
+ feReset:()=>{ if(!FE||!tplOk()) return; const k=FE.k; confirmSheet('„'+FE.n+'“ auf den Standard zurücksetzen? Eigene Änderungen an diesem Formular gehen verloren (ausgefüllte Projekte bleiben).',()=>{ const all={...((S.config||{}).forms||{})}; delete all[k]; saveTpl({forms:all}); FE=null; toast('Auf Standard zurückgesetzt.'); }); },
+ feDel:()=>{ if(!FE||!tplOk()) return; const k=FE.k, n=FE.n; confirmSheet('Formular „'+n+'“ löschen? Es verschwindet aus allen Projekten (bereits ausgefüllte Angaben bleiben gespeichert).',()=>{ const all={...((S.config||{}).forms||{})}; all[k]={del:true}; saveTpl({forms:all}); FE=null; toast('Formular gelöscht.'); }); } }));
 function confirmSheet(msg,fn){
   const prev=SHEET; closeSheet();
   openSheet({title:'Bitte bestätigen',html:`<div class="fld full">${esc(msg)}</div>`,saveLabel:'Ja, löschen',onSave:()=>{ fn(); }});
@@ -7370,9 +7413,9 @@ function printChecklist(pid,phId){
   printDoc(phId?'Checkliste · '+(phs[0]||{}).n:'Checklisten',p.name,body);
 }
 function printForm(pid,k){
-  const p=S.projects[pid], f=FORMS[k]; if(!p||!f) return; const data=(p.forms&&p.forms[k])||{}; let n=0;
+  const p=S.projects[pid], f=formDef(k); if(!p||!f) return; const data=(p.forms&&p.forms[k])||{};
   const body=`<table class="pr-meta"><tr><th>Projekt</th><td>${esc(p.name)}${p.nr?' · Nr. '+esc(p.nr):''}</td><th>Stand</th><td>${data._d?esc(fmtD(data._d)):''}</td></tr><tr><th>Adresse</th><td colspan="3">${esc(p.place||'')}</td></tr></table>`+
-    f.secs.map(([st,items])=>`<h3>${esc(st)}</h3><table class="pr-tbl"><tr><th style="width:5%">✓</th><th>Punkt</th><th style="width:35%">Wert / Notiz</th></tr>${items.map(it=>{ const d=data['i'+(n++)]||{}; return `<tr><td class="ck-c">${d.c?'☑':'☐'}</td><td>${esc(it)}</td><td>${esc(d.n||'')}</td></tr>`; }).join('')}</table>`).join('')+
+    f.secs.map(([st,items])=>`<h3>${esc(st)}</h3><table class="pr-tbl"><tr><th style="width:5%">✓</th><th>Punkt</th><th style="width:35%">Wert / Notiz</th></tr>${items.map(it=>{ const d=data[it.id]||{}; return `<tr><td class="ck-c">${d.c?'☑':'☐'}</td><td>${esc(it.t)}</td><td>${esc(d.n||'')}</td></tr>`; }).join('')}</table>`).join('')+
     `<div class="pr-sign"><div><div class="pr-line"></div>Datum, Unterschrift Monteur</div><div><div class="pr-line"></div>Datum, Unterschrift Kunde / Bauleitung</div></div>`;
   printDoc(f.n,p.name,body);
 }
