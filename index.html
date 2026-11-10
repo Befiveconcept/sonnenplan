@@ -710,6 +710,22 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .tabbar button{position:relative}.tb-dot{position:absolute;top:4px;left:calc(50% + 6px);min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:#E5383B;color:#fff;font-size:10.5px;font-weight:700;line-height:17px;text-align:center}
 .menu-row{display:flex;align-items:stretch}.menu-row>button:first-child{flex:1;min-width:0}
 .menu .menu-x{flex:none;width:30px;justify-content:center;padding:0;color:var(--muted);font-size:17px;font-weight:700;opacity:.45}.menu .menu-row:hover .menu-x{opacity:1}.menu .menu-x:hover{color:var(--ink);background:var(--sunken)}
+.st-sw{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin}.st-sw button{white-space:nowrap}
+.bp{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.bp>select{flex:2 1 220px;min-width:0}.bp .bp-code{flex:1 1 150px;min-width:0}.bp .btn svg,.btn>svg{width:16px;height:16px}
+.lg-tree{padding:2px 8px 10px}.lg-row{display:flex;align-items:center;gap:2px;padding-left:calc(var(--dep)*18px)}.lg-main{flex:1;min-width:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:9px 6px;font:inherit;color:var(--ink);cursor:pointer;border-radius:6px}.lg-main:hover{background:var(--sunken)}
+.lg-kind{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);min-width:58px}.lg-standort>.lg-main{background:var(--sunken);font-size:15px}.lg-standort .lg-kind{color:var(--ink)}.lg-platz .lg-kind{color:#8a6d00}.lg-row.off{opacity:.55}.lg-tw{display:inline-block;width:12px;color:var(--muted)}.lg-acts{display:flex;gap:2px}
+.lg-cell{max-width:340px}.lg-chip{display:inline-flex;gap:4px;align-items:center;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font:inherit;font-size:12px;margin:1px 4px 1px 0;white-space:nowrap;cursor:pointer;color:var(--ink)}.lg-chip:hover{border-color:var(--ink)}.lg-chip.un{background:color-mix(in srgb,var(--warn) 18%,transparent);border-color:transparent;cursor:default}
+.lg-cam{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:16px}.lg-cam-in{width:min(520px,100%);display:flex;flex-direction:column;gap:12px;color:#fff;text-align:center}.lg-cam-v{position:relative}.lg-cam video{width:100%;border-radius:12px;background:#000;max-height:70vh;object-fit:cover;display:block}.lg-cam-f{position:absolute;left:20%;right:20%;top:50%;transform:translateY(-50%);aspect-ratio:1;border:3px solid var(--sun);border-radius:14px;pointer-events:none;box-shadow:0 0 0 999px rgba(0,0,0,.25)}
+.mv-t{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--sunken);white-space:nowrap}.mv-t.entnahme{background:color-mix(in srgb,var(--bad) 16%,transparent)}.mv-t.zugang,.mv-t.wareneingang,.mv-t.anfang{background:color-mix(in srgb,var(--ok) 18%,transparent)}.mv-t.umlagerung,.mv-t.uebernahme{background:color-mix(in srgb,var(--sun) 40%,transparent)}.mv-t.inventur,.mv-t.korrektur{background:color-mix(in srgb,var(--warn) 25%,transparent)}
+.mv-tbl td.neg b{color:var(--bad)}.mv-tbl td.pos b{color:var(--ok)}.tk-calc{display:flex;flex-wrap:wrap;gap:6px 16px;padding:8px 12px;border-radius:8px;background:var(--sunken);font-size:13px}.tk-calc .bad{color:var(--bad)}
+.inv-g{border:1px solid var(--line);border-radius:10px;margin-bottom:10px;overflow:hidden;scroll-margin-top:12px}.inv-g h4{margin:0;padding:8px 12px;background:var(--sunken);font-size:14px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.inv-g.hl{outline:3px solid var(--sun)}
+.inv-l{display:grid;grid-template-columns:1fr 80px 110px 40px;gap:8px;align-items:center;padding:6px 12px;border-top:1px solid var(--line)}.inv-l .num{width:100%}.inv-addr{grid-template-columns:1fr}.inv-d.neg{color:var(--bad);font-weight:600}.inv-d.pos{color:var(--ok);font-weight:600}tr.inv-x td{background:color-mix(in srgb,var(--warn) 10%,transparent)}
+.mig-r{display:grid;grid-template-columns:1fr minmax(200px,320px);gap:10px;align-items:center;padding:8px 16px;border-top:1px solid var(--line)}
+.lbl-c{flex-wrap:wrap;gap:8px}.lbl-c select{flex:1 1 200px;min-width:0}.lbl-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:2px 12px;padding:0 16px;max-height:52vh;overflow:auto}.lbl-it{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);min-width:0}.lbl-it .small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rt-bl{display:flex;flex-direction:column;gap:4px;margin-top:6px}.rt-bline{display:flex;gap:6px;align-items:center}.rt-bline .rt-b{flex:1;min-width:0}.rt-bline .rt-q{width:90px}.pk-loc{display:block;font-size:12px;color:#8a6d00;margin-top:1px}
+.pfs-r .pfs-b{display:block;margin-top:4px;max-width:100%}
+@media(max-width:640px){.inv-l{grid-template-columns:1fr 64px 84px 30px;padding:6px 8px}.mig-r{grid-template-columns:1fr}.lg-kind{min-width:0}.lg-row{padding-left:calc(var(--dep)*10px)}}.st-ck{width:34px;text-align:center;cursor:pointer}.st-ck .ck{pointer-events:none}.st-tbl tr.st-on td{background:color-mix(in srgb,var(--sun) 18%,transparent)}
+.st-selbar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 14px;margin:0 0 10px;border-radius:10px;background:var(--primary);color:#fff}.st-selbar .btn:not(.danger){background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25)}
 .lk{position:relative;display:flex;flex-direction:column;gap:6px}.lk-seg{display:inline-flex;align-self:flex-start;border:1px solid var(--line);border-radius:999px;padding:2px;background:var(--sunken)}.lk-t{border:0;background:none;padding:4px 14px;border-radius:999px;font:inherit;font-size:13px;cursor:pointer;color:var(--muted)}.lk-t.on{background:var(--primary);color:#fff;font-weight:600}
 .lk-dd{position:relative}.lk-btn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;cursor:pointer}.lk-btn #lkCur{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lk-ic,.lk-car{color:var(--muted);display:inline-flex}
 .lk-pop{position:absolute;z-index:60;left:0;right:0;top:calc(100% + 4px);background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.18);overflow:hidden}.lk-s{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line);color:var(--muted)}.lk-s input{flex:1;border:0!important;outline:0;box-shadow:none!important;background:none!important;padding:2px 0!important;min-height:0!important;font:inherit;color:var(--ink)}
@@ -2222,8 +2238,8 @@ const ICONS = {download:'<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M
 const ic = (n,extra='')=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ${extra}>${ICONS[n]}</svg>`;
 
 /* ========== Datenhaltung (gemeinsame Datenbank, sonst lokal) ========== */
-const COLLS = ['projects','tasks','orders','offers','events','reports','plan','log','files','stock','picks','chat','meetings','hrtime','hrabs','hrstaff','hrdocs','sales','pins','psum','pms'];
-const S = {pins:{},projects:{},tasks:{},orders:{},offers:{},events:{},reports:{},plan:{},log:{},hrtime:{},hrabs:{},hrstaff:{},hrdocs:{},kunden:{},lieferanten:{},artikel:{},sales:{},fin:{},anlagen:{},config:{staff:[]}};
+const COLLS = ['projects','tasks','orders','offers','events','reports','plan','log','files','stock','picks','lager','inv','chat','meetings','hrtime','hrabs','hrstaff','hrdocs','sales','pins','psum','pms'];
+const S = {lager:{},inv:{},stock:{},picks:{},pins:{},projects:{},tasks:{},orders:{},offers:{},events:{},reports:{},plan:{},log:{},hrtime:{},hrabs:{},hrstaff:{},hrdocs:{},kunden:{},lieferanten:{},artikel:{},sales:{},fin:{},anlagen:{},config:{staff:[]}};
 let DB=null, MODE='init', READONLY=false;
 const LS_KEY='sonnenplan-v1';
 function lsGet(k){ try{ return localStorage.getItem(k) }catch(e){ return null } }
@@ -2320,7 +2336,7 @@ function describeChange(coll,prev,o){
   return out.join(' · ');
 }
 // Schreibrecht je Rubrik (Admin-Bereich „Rechte“): ohne Häkchen „bearbeiten“ wird nichts gespeichert
-const COLL_AREA={projects:'projects',tasks:'todos',orders:'orders',offers:'offers',events:'week',plan:'week',reports:'reports',files:'files',stock:'stock',picks:'stock',chat:'chat',meetings:'meetings',hrtime:'hr',hrabs:'hr',hrstaff:'hr',hrdocs:'hr',kunden:'stamm',lieferanten:'stamm',artikel:'stamm',sales:'sales',fin:'fin',anlagen:'fin'};
+const COLL_AREA={projects:'projects',tasks:'todos',orders:'orders',offers:'offers',events:'week',plan:'week',reports:'reports',files:'files',stock:'stock',picks:'stock',lager:'stock',inv:'stock',chat:'chat',meetings:'meetings',hrtime:'hr',hrabs:'hr',hrstaff:'hr',hrdocs:'hr',kunden:'stamm',lieferanten:'stamm',artikel:'stamm',sales:'sales',fin:'fin',anlagen:'fin'};
 function mayWrite(coll){ const a=COLL_AREA[coll]; if(a==='fin'&&ME) return finOk()&&(isAdmin()||editsOf(ME).includes('fin')); if(!a||!ME||isAdmin()) return true; if(a==='hr') return !['hrstaff','hrdocs'].includes(coll); return canEdit(a); }
 /* ---------- Doppelt-Sperre (greift bei JEDEM Speichern: Formular, KI, Meeting, Smart-Drop, Sprache, Belege, Handy) ---------- */
 const dupNorm=s=>String(s||'').toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').replace(/^\s*(bitte|todo|to-do|aufgabe)\s*:?\s+/,'').replace(/[^a-z0-9]+/g,' ').trim();
@@ -3956,7 +3972,7 @@ function planForm(e,onSave,onDelete,also){
   // Adresse und Fahrtstrecke wie beim Termin (gleiche Felder f_link / f_place, gleiche Berechnung)
   EV_KM=e.km!=null&&e.place?{addr:String(e.place).trim(),km:e.km,min:e.min}:null; setTimeout(()=>evAddrWire(e),0);
   // Mehrere Personen = EIN gemeinsamer Eintrag (who = erste Person, who2 = weitere): Verschieben/Ändern gilt für alle
-  const save0=onSave; onSave=v=>{ delete v.kmx; delete v.alsox; const more=[...document.querySelectorAll('.pl-also:checked')].map(x=>x.value).filter(n=>n&&n!==v.who); if(!v.who&&more.length) v.who=more.shift(); v.who2=[...new Set(more)]; delete v.linkx; v.link=evLinkVal(); if(!v.link) delete v.link; const pl=String(v.place||'').trim(); if(EV_KM&&pl&&EV_KM.addr===pl){ v.km=EV_KM.km; v.min=EV_KM.min; } else { v.km=null; v.min=null; } return save0(v); };
+  const save0=onSave; onSave=v=>{ if(v.kind==='ho'){ if(!v.t) v.t='Homeoffice'; if(!v.d) v.d=e.d||TODAY(); } delete v.kmx; delete v.alsox; const more=[...document.querySelectorAll('.pl-also:checked')].map(x=>x.value).filter(n=>n&&n!==v.who); if(!v.who&&more.length) v.who=more.shift(); v.who2=[...new Set(more)]; delete v.linkx; v.link=evLinkVal(); if(!v.link) delete v.link; const pl=String(v.place||'').trim(); if(EV_KM&&pl&&EV_KM.addr===pl){ v.km=EV_KM.km; v.min=EV_KM.min; } else { v.km=null; v.min=null; } return save0(v); };
   openSheet({title:e.t?'Einsatz bearbeiten':'Einsatz planen',wide:1,value:e,fields:[
     ...(trail?[{k:'trail',label:'Spur',type:'html',html:trail}]:[]),
     {k:'who',label:'Mitarbeiter',type:'select',options:[['','– niemand –'],...staff().map(s=>[s.name,s.name])]},{k:'kind',label:'Art',type:'select',options:Object.entries(PLAN_KINDS)},
@@ -3969,7 +3985,7 @@ function planForm(e,onSave,onDelete,also){
     {k:'note',label:'Hinweise',type:'textarea',ph:'Ansprechpartner, Zugang, Besonderheiten'},
     {k:'matbtns',label:'Material-Checkliste',type:'html',html:`<div class="row"><button type="button" class="btn sm" data-act="matFromOrder">${ic('box')}Aus Bestellung des Projekts</button><button type="button" class="btn sm" data-act="matStd" data-v="dc">+ DC-Standard</button><button type="button" class="btn sm" data-act="matStd" data-v="ac">+ AC-Standard</button><button type="button" class="btn sm" data-act="matStd" data-v="tool">+ Werkzeug & Messgeräte</button></div>`},
     {k:'mat',label:'Material / Mitnahme',type:'lines',cols:MAT_COLS}],
-    onSave, onDelete});
+    noReq:v=>v.kind==='ho', onSave, onDelete});
 }
 function addMatRows(rows){
   const box=$('#f_mat'); if(!box) return; const tp=box.querySelector('template'); const anchor=box.querySelector('[data-act=lineAdd]').parentElement;
@@ -4254,7 +4270,7 @@ function readSheet(){
 function submitSheet(){
   if(!SHEET) return;
   const v=SHEET.fields? readSheet() : {};
-  const miss=(SHEET.fields||[]).find(f=>f.req&&!v[f.k]);
+  const miss=SHEET.noReq&&SHEET.noReq(v)?null:(SHEET.fields||[]).find(f=>f.req&&!v[f.k]); // noReq: Pflichtfelder entfallen (z. B. Termin-Art Homeoffice)
   if(miss){ toast('Bitte „'+miss.label+'“ ausfüllen.'); $('#f_'+miss.k)?.focus(); return; }
   const r=SHEET.onSave(v); if(r!==false) closeSheet();
 }
@@ -4502,7 +4518,8 @@ function eventForm(e,pre){
     {k:'place',label:'Adresse',full:1,ph:'Straße Hausnummer, PLZ Ort – kommt automatisch aus Projekt, Kunde oder Lieferant'},
     {k:'kmx',label:'',type:'html',full:1,html:evKmHtml()},{k:'whox',label:'Wer (mehrere möglich – nichts angekreuzt = alle / niemand)',type:'html',full:1,html:whoPick(evWhos(e),'ev-who')},{k:'notes',label:'Notiz',type:'textarea'},
     {k:'evtd',label:'To-Dos zu diesem Termin',type:'html',full:1,html:evTodoHtml(e)}],
-    onSave:v=>{ delete v.evtd; delete v.whox; delete v.kmx; delete v.linkx; v.link=evLinkVal(); if(!v.link){ delete v.link; delete e.link; } const pl=String(v.place||'').trim(); if(EV_KM&&pl&&EV_KM.addr===pl){ v.km=EV_KM.km; v.min=EV_KM.min; } else { delete e.km; delete e.min; } const sel=[...document.querySelectorAll('.ev-who:checked')].map(x=>x.value), main=sel.includes(e.who)?e.who:(sel[0]||''), rest=sel.filter(n=>n!==main); Object.assign(e,v); e.who=main; if(rest.length) e.who2=rest; else delete e.who2; put('events',e); const n=evTodoSave(e); toast('Termin gespeichert'+(n?' · '+n+' To-Do'+(n>1?'s':'')+' angelegt':'')+'.'); },
+    noReq:v=>v.kind==='ho',
+    onSave:v=>{ if(v.kind==='ho'){ if(!v.title) v.title='Homeoffice'; if(!v.date) v.date=e.date||TODAY(); } delete v.evtd; delete v.whox; delete v.kmx; delete v.linkx; v.link=evLinkVal(); if(!v.link){ delete v.link; delete e.link; } const pl=String(v.place||'').trim(); if(EV_KM&&pl&&EV_KM.addr===pl){ v.km=EV_KM.km; v.min=EV_KM.min; } else { delete e.km; delete e.min; } const sel=[...document.querySelectorAll('.ev-who:checked')].map(x=>x.value), main=sel.includes(e.who)?e.who:(sel[0]||''), rest=sel.filter(n=>n!==main); Object.assign(e,v); e.who=main; if(rest.length) e.who2=rest; else delete e.who2; put('events',e); const n=evTodoSave(e); toast('Termin gespeichert'+(n?' · '+n+' To-Do'+(n>1?'s':'')+' angelegt':'')+'.'); },
     onDelete:isNew?null:()=>{ del('events',e.id); closeSheet(); }});
 }
 const ORDER_COLS=[{k:'qty',label:'Menge',type:'number',w:'64px'},{k:'unit',label:'Einh.',w:'58px',options:['Stk','m','kWp','Pal','psch']},{k:'artNr',label:'Art.-Nr.',w:'0.45fr'},{k:'art',label:'Artikel',w:'1fr',options:[...MAT_DC,...MAT_AC,...MAT_KABEL,'PV-Module','Wechselrichter','Unterkonstruktion','Speichersystem','Ladesäule','Zählerschrank','Wandlermessschrank','Trafostation','EZA-Regler']},{k:'price',label:'EP netto €',type:'number',w:'86px'},{k:'extra',label:'Zusatz',type:'check',w:'48px'}];
@@ -5110,13 +5127,27 @@ const firmShort=f=>String(f||'').replace(/\s*(GmbH|&|-Verwaltungs).*$/,'').trim(
 const firmFromBuyer=b=>{ const x=String(b||'').toLowerCase(); return FIRMS().find(f=>x&&(x.includes(firmShort(f).toLowerCase())||firmShort(f).toLowerCase().includes(x.split(' ')[0])))||FIRMS()[0]; };
 const firmOpts=cur=>FIRMS().map(f=>`<option value="${esc(f)}" ${f===cur?'selected':''}>${esc(f)}</option>`).join('');
 function stockFind(art,artNr,firm){ const nr=normNr(artNr), a=String(art||'').trim().toLowerCase(); return arr('stock').filter(s=>!firm||firmOf(s)===firm).find(s=>(nr&&normNr(s.artNr)===nr)||(!nr&&String(s.art||'').trim().toLowerCase()===a)||(String(s.art||'').trim().toLowerCase()===a&&(!s.artNr||!nr))); }
-function stockMove(s,d,note,pid,oid){ s.qty=Math.round(((+s.qty||0)+d)*1000)/1000; s.moves=(s.moves||[]).concat([{at:new Date().toISOString(),by:meK(),d,note:note||'',pid:pid||'',oid:oid||''}]).slice(-300); }
-function stockAdd(it,n,loc,note,oid,firm){ firm=firm||FIRMS()[0]; const ex=stockFind(it.art,it.artNr,firm); const s=ex?clone(ex):{id:uid(),art:it.art,artNr:it.artNr||'',unit:it.unit||'Stk',qty:0,loc:loc||'Lager',min:0,firm};
-  if(loc&&!ex) s.loc=loc; stockMove(s,+n,note,'',oid); put('stock',s); return s; }
+// Buchung am Lagerartikel. s.qty = Gesamtbestand, s.bins = Menge je Lagerplatz, Rest = „nicht zugeordnet“.
+// o.bin: Platz, auf/von dem gebucht wird. Ohne Platz wird bei Abgängen zuerst „nicht zugeordnet“ genommen, der Rest von den Plätzen (größter zuerst) – das steht dann in der Bewegung (auto).
+// Jede Bewegung wird angehängt, nie verändert (Art t, Menge, Von/Nach, Person, Zeit, Projekt, Bestellung).
+function stockMove(s,d,note,pid,oid,o){ o=o||{}; d=r3(d); const bins={...(s.bins||{})}, auto=[];
+  if(o.bin){ bins[o.bin]=r3((+bins[o.bin]||0)+d); if(bins[o.bin]<=0) delete bins[o.bin]; }
+  else if(d<0){ let need=r3(-d-Math.max(0,unassigned(s))); if(need>0) Object.entries(bins).sort((a,b)=>b[1]-a[1]).forEach(([b,q])=>{ if(need<=0) return; const t=Math.min(need,+q); bins[b]=r3(q-t); if(bins[b]<=0) delete bins[b]; need=r3(need-t); auto.push({bin:b,n:t}); }); }
+  s.bins=bins; s.qty=r3((+s.qty||0)+d);
+  const m={at:new Date().toISOString(),by:meK(),d,note:note||'',pid:pid||'',oid:oid||'',t:o.t||(d<0?'entnahme':'zugang'),u:s.unit||''}; if(o.bin) m[d<0?'from':'to']=o.bin; if(auto.length) m.auto=auto; if(o.ref) m.ref=o.ref;
+  s.moves=(s.moves||[]).concat([m]).slice(-1000); }
+// Umlagerung innerhalb desselben Lagerartikels (gleiche Firma): Gesamtbestand bleibt gleich, eine Buchung = ein Speichervorgang
+function stockShift(s,from,to,n,note,t){ n=r3(n); const bins={...(s.bins||{})}; if(from){ bins[from]=r3((+bins[from]||0)-n); if(bins[from]<=0) delete bins[from]; } if(to) bins[to]=r3((+bins[to]||0)+n); s.bins=bins;
+  s.moves=(s.moves||[]).concat([{at:new Date().toISOString(),by:meK(),d:0,n,from:from||'',to:to||'',t:t||'umlagerung',note:note||'',u:s.unit||''}]).slice(-1000); }
+// Entnahme buchen und zurückgeben, von welchen Plätzen die Ware kam (für die Kommissionierliste)
+function stockTakeDo(ss,n,b,note,pid){ stockMove(ss,-n,note,pid,'',{t:'entnahme',bin:b}); if(b) return [{bin:b,n}]; const m=ss.moves[ss.moves.length-1], a=(m.auto||[]).map(x=>({bin:x.bin,n:x.n})), rest=r3(n-a.reduce((s,x)=>s+x.n,0)); if(rest>0) a.unshift({bin:'',n:rest}); return a; }
+// bin: Lagerplatz-ID; ohne Lagerplätze (alter Weg) ist es ein Lagerort-Text
+function stockAdd(it,n,bin,note,oid,firm){ firm=firm||FIRMS()[0]; const ex=stockFind(it.art,it.artNr,firm), isBin=!!(bin&&lgNode(bin)); const s=ex?clone(ex):{id:uid(),art:it.art,artNr:it.artNr||'',unit:it.unit||'Stk',qty:0,loc:isBin?'':(bin||'Lager'),min:0,firm};
+  stockMove(s,+n,note,'',oid,{t:oid?'wareneingang':'zugang',bin:isBin?bin:''}); put('stock',s); return s; }
 // Offene Kommissionierliste je Projekt sammeln, neue Positionen gleicher Art zusammenfassen
 function addToPick(pid,items,meta){ let pk=arr('picks').find(x=>x.pid===pid&&x.status==='offen'); pk=pk?clone(pk):{id:uid(),pid,status:'offen',date:meta&&meta.date||TODAY(),who:meta&&meta.who||'',items:[],title:'Material für '+projName(pid)};
   if(meta&&meta.who&&!pk.who) pk.who=meta.who; if(meta&&meta.date) pk.date=meta.date;
-  items.forEach(it=>{ const same=pk.items.find(x=>!x.ok&&(normNr(x.artNr)&&normNr(x.artNr)===normNr(it.artNr)||x.art===it.art)&&x.src===it.src); if(same) same.qty=(+same.qty||0)+(+it.qty||0); else pk.items.push({art:it.art,artNr:it.artNr||'',unit:it.unit||'Stk',qty:+it.qty||0,ok:false,src:it.src||'',note:it.note||''}); });
+  items.forEach(it=>{ const same=pk.items.find(x=>!x.ok&&(normNr(x.artNr)&&normNr(x.artNr)===normNr(it.artNr)||x.art===it.art)&&x.src===it.src); if(same){ same.qty=(+same.qty||0)+(+it.qty||0); if(it.from) same.from=(same.from||[]).concat(it.from); } else pk.items.push({art:it.art,artNr:it.artNr||'',unit:it.unit||'Stk',qty:+it.qty||0,ok:false,src:it.src||'',note:it.note||'',...(it.from?{from:it.from}:{})}); });
   put('picks',pk); return pk; }
 function projSelOpts(cur,withIntern){ return `<option value="">– Projekt wählen –</option>${withIntern?`<option value="${INTERN}" ${cur===INTERN?'selected':''}>Haus intern</option>`:''}`+arr('projects').filter(p=>!isIntern(p)).filter(p=>catOf(p)==='laufend'||p.id===cur).sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${p.id}" ${p.id===cur?'selected':''}>${esc(p.name)}</option>`).join(''); }
 function staffOpts(cur){ return `<option value="">– offen –</option>`+staff().map(s=>`<option value="${esc(s.name)}" ${s.name===cur?'selected':''}>${esc(s.name)}</option>`).join(''); }
@@ -5124,56 +5155,389 @@ function staffOpts(cur){ return `<option value="">– offen –</option>`+staff(
 function unrouted(o){ return (o.items||[]).map((it,i)=>({i,art:it.art,artNr:it.artNr||'',unit:it.unit||'Stk',qty:Math.round(((+it.recv||0)-(+it.routed||0))*1000)/1000,extra:it.extra})).filter(g=>!g.extra&&g.qty>0&&String(g.art||'').trim()); }
 // Nach dem Wareneingang: je Position Baustelle (Kommissionierliste) oder Lager
 function routeSheet(oid,got){
-  const o=S.orders[oid]; if(!o) return; const toSite=o.pid&&o.pid!==INTERN;
+  const o=S.orders[oid]; if(!o) return; const toSite=o.pid&&o.pid!==INTERN, LGON=lgAll().some(lgIsBin);
+  // Mit Lagerplätzen: je Position Platz wählen (Standard = Feld unten), bei Bedarf auf weitere Plätze aufteilen
+  const binRow=i=>LGON?`<div class="rt-bl" data-i="${i}"><div class="rt-bline"><select class="inp rt-b" aria-label="Lagerplatz"><option value="">Lagerplatz wie unten (Standard)</option>${binOpts('',{})}</select><span class="small muted rt-rest">Rest</span></div></div><button type="button" class="btn ghost sm" data-act="rtSplit" data-i="${i}">+ auf weiteren Platz verteilen</button>`:'';
   const rows=got.map((g,i)=>`<div class="rt"><div class="rt-a"><b>${esc(g.art)}</b><span class="small muted">${qn(g.qty)} ${esc(g.unit)}${g.artNr?' · '+esc(g.artNr):''}</span></div>
-    <div class="seg" role="radiogroup" aria-label="Ziel für ${esc(g.art)}"><label><input type="radio" name="rt_${i}" value="site" ${toSite?'checked':''}><span>Baustelle kommissionieren</span></label><label><input type="radio" name="rt_${i}" value="lager" ${toSite?'':'checked'}><span>Ins Lager</span></label></div></div>`).join('');
+    <div class="seg" role="radiogroup" aria-label="Ziel für ${esc(g.art)}"><label><input type="radio" name="rt_${i}" value="site" ${toSite?'checked':''}><span>Baustelle kommissionieren</span></label><label><input type="radio" name="rt_${i}" value="lager" ${toSite?'':'checked'}><span>Ins Lager</span></label></div>${binRow(i)}</div>`).join('');
   openSheet({title:'Wohin mit der Ware?',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">${esc(o.supplier||'')} · eingegangen: ${got.length} Position${got.length===1?'':'en'}. Für die Baustelle wird eine Kommissionierliste für die Monteure angelegt, alles andere kommt in den Lagerbestand.</div>
     <div class="rt-all"><button type="button" class="btn sm" data-act="rtAll" data-v="site">Alles Baustelle</button><button type="button" class="btn sm" data-act="rtAll" data-v="lager">Alles ins Lager</button></div><div class="rt-list">${rows}</div></div>
     <div class="fld"><label for="rt_pid">Baustelle / Projekt (oder Haus intern)</label><select id="rt_pid">${projSelOpts(o.pid||'',true)}</select></div>
     <div class="fld"><label for="rt_who">Für Monteur</label><select id="rt_who">${staffOpts('')}</select></div>
     <div class="fld"><label for="rt_date">Benötigt am</label><input id="rt_date" type="date" value="${TODAY()}"></div>
-    <div class="fld"><label for="rt_loc">Lagerort (fürs Lager)</label><input id="rt_loc" value="Lager" list="locList"></div>
+    ${LGON?`<div class="fld full"><label for="rt_bin">Lagerplatz (Standard fürs Lager) – scannen oder wählen</label>${binPick('rt_bin','',{allowNone:true,noneLabel:'– ohne Platz (nicht zugeordnet) –'})}</div>`:`<div class="fld"><label for="rt_loc">Lagerort (fürs Lager)</label><input id="rt_loc" value="Lager" list="locList"></div>`}
     <div class="fld"><label for="rt_firm">Ware gehört (fürs Lager)</label><select id="rt_firm">${firmOpts(firmFromBuyer(o.buyer))}</select></div>`,saveLabel:'Übernehmen',
     onSave:()=>{ const site=[], lager=[]; got.forEach((g,i)=>{ const v=(document.querySelector(`input[name="rt_${i}"]:checked`)||{}).value; (v==='site'?site:lager).push(g); });
       const pid=$('#rt_pid').value; if(site.length&&!pid){ toast('Bitte die Baustelle wählen.'); return false; }
-      lager.forEach(g=>stockAdd(g,g.qty,$('#rt_loc').value.trim()||'Lager','Wareneingang '+(o.supplier||''),oid,$('#rt_firm').value));
+      // Verteilung je Lager-Position prüfen, bevor irgendetwas gebucht wird (keine halben Buchungen)
+      const plan=[]; let bad='';
+      lager.forEach(g=>{ const i=got.indexOf(g); if(!LGON){ plan.push({g,bin:$('#rt_loc').value.trim()||'Lager',q:g.qty}); return; }
+        const def=$('#rt_bin').value, ls=[...document.querySelectorAll(`.rt-bl[data-i="${i}"] .rt-bline`)].map((ln,k)=>({bin:ln.querySelector('.rt-b').value||def,q:k?r3((ln.querySelector('.rt-q')||{}).value):null}));
+        const extra=r3(ls.slice(1).reduce((a,x)=>a+(x.q||0),0)); if(extra>g.qty){ bad=g.art+': aufgeteilt '+qn(extra)+', geliefert nur '+qn(g.qty)+'.'; return; }
+        ls[0].q=r3(g.qty-extra); ls.forEach(x=>{ if(x.q>0){ if(x.bin&&!lgUsable(lgNode(x.bin))) bad=lgLabel(x.bin)+' ist gesperrt oder stillgelegt.'; plan.push({g,bin:x.bin,q:x.q}); } }); });
+      if(bad){ toast(bad); return false; }
+      plan.forEach(x=>stockAdd(x.g,x.q,x.bin,'Wareneingang '+(o.supplier||''),oid,$('#rt_firm').value));
       // verteilte Mengen an der Bestellung merken, damit nichts doppelt verteilt wird
       const oo=clone(S.orders[oid]); got.forEach(g=>{ const it=oo.items&&oo.items[g.i]; if(it) it.routed=(+it.routed||0)+g.qty; }); put('orders',oo);
       if(site.length) addToPick(pid,site.map(g=>({...g,src:'Wareneingang '+(o.supplier||'')})),{who:$('#rt_who').value,date:$('#rt_date').value});
       toast([site.length?site.length+' Position(en) auf die Kommissionierliste '+projName(pid):'',lager.length?lager.length+' ins Lager':''].filter(Boolean).join(' · ')+'.'); }});
 }
-function stockTakeSheet(id,pre){
-  const s=S.stock[id]; if(!s) return;
-  openSheet({title:'Aus dem Lager entnehmen',html:`<div class="fld full"><b>${esc(s.art)}</b><div class="small muted">Bestand ${qn(s.qty)} ${esc(s.unit||'')} · ${esc(s.loc||'')}</div></div>
-    <div class="fld"><label for="tk_n">Menge</label><input id="tk_n" type="number" step="any" inputmode="decimal" value="${esc(pre&&pre.n||'')}" required></div>
-    <div class="fld"><label for="tk_pid">Für Projekt</label><select id="tk_pid">${projSelOpts(pre&&pre.pid||'',true)}</select></div>
+/* ========== Lagerplätze: Struktur, Bestand je Platz, Etiketten (QR / Code 128), Scannen, Inventur, Bewegungen ========== */
+// Struktur: Sammlung „lager“, ein Dokument je Knoten {id,parent,kind,name,seg,ltype,off,blocked,cap,maxKg,notes}. kind = standort | bereich | regal | ebene | platz.
+// Nicht jeder Bereich braucht alle Ebenen: Plätze dürfen direkt unter Standort, Bereich, Regal oder Ebene hängen.
+// Bestand je Platz steht am Lagerartikel (s.bins). s.qty bleibt der Gesamtbestand für alle bisherigen Funktionen. Rest ohne Platz = „nicht zugeordnet“.
+// Physischer Ort (Platz) und Eigentümer (Firma am Lagerartikel) sind getrennt: Umlagern ändert nie die Firma.
+// Etikett/Scan: „LP“ + interne ID (nur Buchstaben/Ziffern). Bleibt beim Umbenennen gleich, enthält keine Zugangsdaten. Rechte prüft die App bei jedem Öffnen/Buchen.
+const LG_KINDS={standort:'Lagerstandort',bereich:'Bereich / Raum',regal:'Regal / Schrank / Zone',ebene:'Ebene / Schublade',platz:'Lagerplatz / Fach / Stellplatz'};
+const LG_SHORT={standort:'Standort',bereich:'Bereich',regal:'Regal',ebene:'Ebene',platz:'Platz'};
+const LG_NEXT={standort:['bereich','regal','platz'],bereich:['regal','platz'],regal:['ebene','platz'],ebene:['platz'],platz:[]};
+const LG_TYPES={fach:'Fachboden',palette:'Palettenstellplatz',klein:'Kleinteilefach',boden:'Bodenlager'};
+const MV_T={zugang:'Zugang',wareneingang:'Wareneingang',entnahme:'Entnahme',umlagerung:'Umlagerung',uebernahme:'Übernahme',inventur:'Inventur',korrektur:'Korrektur',anfang:'Anfangsbestand'};
+const LG_SCAN_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10"/></svg>';
+const r3=x=>Math.round((+x||0)*1000)/1000;
+const lgAll=()=>arr('lager');
+const lgNode=id=>id?(S.lager||{})[id]||null:null;
+function lgPathIn(M,id){ const out=[]; let n=id?M[id]:null, g=0; while(n&&g++<10){ out.unshift(n); n=n.parent?M[n.parent]:null; } return out; }
+const lgPath=id=>lgPathIn(S.lager||{},id);
+const lgCodeIn=(M,id)=>{ const p=lgPathIn(M,id); return p.map(n=>n.seg).filter(Boolean).join('-')||(p.length?p[p.length-1].name||'':''); };
+const lgCode=id=>lgCodeIn(S.lager||{},id);
+const lgKids=id=>lgAll().filter(n=>(n.parent||'')===(id||'')).sort((a,b)=>String(a.seg||a.name).localeCompare(String(b.seg||b.name),'de',{numeric:true}));
+const lgSub=id=>{ const out=[]; const walk=p=>lgKids(p).forEach(n=>{ out.push(n); walk(n.id); }); walk(id); return out; };
+const lgIsBin=n=>!!n&&n.kind==='platz';
+const lgOff=n=>!!n&&lgPath(n.id).some(x=>x.off);
+const lgBlocked=n=>!!n&&lgPath(n.id).some(x=>x.blocked);
+const lgUsable=n=>lgIsBin(n)&&!lgOff(n)&&!lgBlocked(n);
+const lgFullName=id=>lgPath(id).map(x=>x.kind==='standort'?x.name:(x.seg||x.name)).join(' / ');
+const lgLabel=id=>{ if(!id) return 'nicht zugeordnet'; const p=lgPath(id); return p.length?p[0].name+' / '+lgCode(id):'unbekannter Platz'; };
+const lgPayload=id=>'LP'+String(id).toUpperCase();
+function lgResolve(code){ const c=String(code||'').trim(); if(!c) return null; const m=c.match(/^(?:NDS-?)?LP[:\-]?([0-9a-z]+)$/i); if(m){ const n=lgNode(m[1].toLowerCase()); if(n) return n; }
+  const lc=c.toLowerCase(); return lgAll().find(n=>lgIsBin(n)&&lgCode(n.id).toLowerCase()===lc)||lgAll().find(n=>n.seg&&lgCode(n.id).toLowerCase()===lc)||lgNode(c)||null; }
+// Lagerorte verwalten: Admins und freigegebene Personen. Buchen: wer das Lager bearbeiten darf. Lesen: wer es sehen darf.
+const lgMgr=()=>!!ME&&mayWrite('lager')&&(isAdmin()||((S.config||{}).lagerMgr||[]).map(x=>String(x).toLowerCase()).includes(meK().toLowerCase()));
+const LGON=()=>lgAll().some(lgIsBin);
+const binsOf=s=>Object.entries((s&&s.bins)||{}).filter(([,q])=>+q>0);
+const unassigned=s=>r3((+s.qty||0)-binsOf(s).reduce((a,[,q])=>a+(+q),0));
+const binQty=(s,b)=>b?r3(((s.bins||{})[b])||0):Math.max(0,unassigned(s));
+const binStock=b=>arr('stock').filter(s=>+((s.bins||{})[b])>0);
+const bestTake=s=>{ const b=binsOf(s).sort((x,y)=>y[1]-x[1])[0]; return b?b[0]:''; };
+const stockBinsTxt=s=>{ const p=binsOf(s).map(([b,q])=>lgLabel(b)+' '+qn(+q)); const u=unassigned(s); if(u>0) p.push((LGON()?'nicht zugeordnet ':'')+qn(u)+(s.loc?' ('+s.loc+')':'')); return p.join(' · '); };
+const stockBinsShort=s=>{ const p=binsOf(s).sort((x,y)=>y[1]-x[1]).map(([b,q])=>lgCode(b)+' '+qn(+q)); const u=unassigned(s); if(u>0) p.push(LGON()?'⚠ '+qn(u)+' ohne Platz':(s.loc||'')); return p.filter(Boolean).join(', '); };
+// Auswahlliste der Plätze. take: nur Plätze, auf denen der Artikel liegt (mit Menge), sonst alle nutzbaren Plätze nach Standort gruppiert.
+function binOpts(cur,o){ o=o||{}; const s=o.stock; let h=o.allowNone?`<option value="">${esc(o.noneLabel||'– Platz wählen –')}</option>`:'';
+  if(s&&o.take){ const u=Math.max(0,unassigned(s)); if(u>0||!binsOf(s).length) h+=`<option value="" ${!cur?'selected':''}>${LGON()?'⚠ Nicht zugeordnet':'Lager'} – ${qn(u)} ${esc(s.unit||'')}</option>`;
+    binsOf(s).sort((a,b)=>b[1]-a[1]).forEach(([b,q])=>{ h+=`<option value="${esc(b)}" ${b===cur?'selected':''}>${esc(lgLabel(b))} – ${qn(+q)} ${esc(s.unit||'')}${lgBlocked(lgNode(b))?' (gesperrt)':''}</option>`; }); return h; }
+  lgKids('').filter(n=>!n.off).forEach(st=>{ const bins=[...(lgIsBin(st)?[st]:[]),...lgSub(st.id)].filter(lgUsable); if(!bins.length) return;
+    h+=`<optgroup label="${esc(st.name||st.seg)}">${bins.map(b=>{ const q=s?binQty(s,b.id):0; return `<option value="${b.id}" ${b.id===cur?'selected':''}>${esc(lgCode(b.id))}${b.name?' · '+esc(b.name):''}${q?' (hier '+qn(q)+')':''}</option>`; }).join('')}</optgroup>`; });
+  return h; }
+// Platzwahl mit Scan: Auswahlliste + Feld für Handscanner/Code (Enter) + Kamera
+function binPick(id,cur,o){ return `<div class="bp"><select class="inp" id="${id}">${binOpts(cur,o)}</select><input class="inp bp-code" data-bp="${id}" placeholder="Code scannen / eintippen" aria-label="Lagerplatz-Code" autocomplete="off" autocapitalize="characters"><button type="button" class="btn sm bp-cam" data-act="lgCam" data-for="${id}" title="Mit der Kamera scannen" aria-label="Mit der Kamera scannen">${LG_SCAN_IC}</button></div>`; }
+function bpSet(id,code){ const sel=$('#'+id); if(!sel) return; const n=lgResolve(code); if(!n){ toast('Unbekannter Code: '+String(code).slice(0,40)); return; }
+  if(![...sel.options].some(o=>o.value===n.id)){ toast(lgIsBin(n)?lgLabel(n.id)+(lgUsable(n)?' ist hier nicht wählbar (dort liegt nichts davon).':' ist gesperrt oder stillgelegt.'):LG_KINDS[n.kind]+' „'+lgFullName(n.id)+'“ ist hier nicht wählbar.'); return; }
+  sel.value=n.id; sel.dispatchEvent(new Event('change',{bubbles:true})); toast('Erkannt: '+(lgIsBin(n)?lgLabel(n.id):lgFullName(n.id))); }
+document.addEventListener('keydown',e=>{ const t=e.target; if(e.key!=='Enter'||!t||!t.classList) return;
+  if(t.classList.contains('bp-code')){ e.preventDefault(); e.stopPropagation(); bpSet(t.dataset.bp,t.value); t.value=''; }
+  else if(t.classList.contains('inv-scan')){ e.preventDefault(); e.stopPropagation(); invJump(t.value); t.value=''; } },true);
+// Handscanner (USB/Bluetooth = Tastatur) auf der Lagerseite ohne Eingabefeld: schnelle Zeichenfolge + Enter öffnet den Platz
+var KB_BUF='', KB_T=0;
+document.addEventListener('keydown',e=>{ if(UI.view!=='stock'||SHEET||LG_CAM) return; const t=e.target; if(t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return; const now=Date.now(); if(now-KB_T>90) KB_BUF=''; KB_T=now;
+  if(e.key==='Enter'){ if(KB_BUF.length>=4){ e.preventDefault(); lgScanResult(KB_BUF); } KB_BUF=''; return; } if(e.key.length===1) KB_BUF+=e.key; });
+// Kamera: eingebauter Barcode-Erkenner des Browsers (QR + Code 128), sonst QR über jsQR. Keine zusätzliche App nötig; braucht HTTPS und die Kamera-Freigabe.
+var LG_CAM=null;
+async function lgCamOpen(onCode){ lgCamClose(); const box=document.createElement('div'); box.id='lgCam'; box.className='lg-cam'; box.innerHTML=`<div class="lg-cam-in"><div class="lg-cam-v"><video playsinline muted></video><div class="lg-cam-f"></div></div><div class="lg-cam-t" id="lgCamT">Kamera wird gestartet …</div><button type="button" class="btn" id="lgCamX">Schließen</button></div>`; document.body.appendChild(box);
+  box.querySelector('#lgCamX').onclick=lgCamClose; const t=box.querySelector('#lgCamT'), v=box.querySelector('video');
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ t.textContent='Dieser Browser erlaubt hier keinen Kamerazugriff. Bitte den Code eintippen oder einen Handscanner benutzen.'; return; }
+  let stream; try{ stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false}); }catch(e){ t.textContent=e&&e.name==='NotAllowedError'?'Kamera nicht freigegeben. Bitte in den Browser-Einstellungen erlauben oder den Code eintippen.':'Keine Kamera verfügbar. Bitte den Code eintippen.'; return; }
+  if(!$('#lgCam')){ stream.getTracks().forEach(x=>x.stop()); return; }
+  const cam={stream}; LG_CAM=cam; v.srcObject=stream; try{ await v.play(); }catch(e){}
+  let det=null; if('BarcodeDetector' in window){ try{ const f=await BarcodeDetector.getSupportedFormats(); const use=['qr_code','code_128'].filter(x=>f.includes(x)); if(use.length) det=new BarcodeDetector({formats:use}); }catch(e){ det=null; } }
+  if(!det&&!window.jsQR){ try{ await loadScript('https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js'); }catch(e){} }
+  if(!det&&!window.jsQR){ t.textContent='Der Scanner konnte nicht geladen werden. Bitte den Code eintippen.'; return; }
+  t.textContent=det?'QR-Code oder Barcode in den Rahmen halten …':'QR-Code in den Rahmen halten …';
+  const cv=document.createElement('canvas'), cx=cv.getContext('2d',{willReadFrequently:true});
+  const tick=async()=>{ if(LG_CAM!==cam) return; let code='';
+    try{ if(v.readyState>=2){ if(det){ const r=await det.detect(v); if(r&&r[0]) code=r[0].rawValue; }
+      else { const w=v.videoWidth, h=v.videoHeight, sc=Math.min(1,720/(w||1)); cv.width=Math.round(w*sc); cv.height=Math.round(h*sc); cx.drawImage(v,0,0,cv.width,cv.height); const r=window.jsQR(cx.getImageData(0,0,cv.width,cv.height).data,cv.width,cv.height,{inversionAttempts:'dontInvert'}); if(r) code=r.data; } } }catch(e){}
+    if(code){ if(navigator.vibrate) try{ navigator.vibrate(40); }catch(_){} lgCamClose(); onCode(code); return; }
+    setTimeout(tick,150); };
+  tick(); }
+function lgCamClose(){ if(LG_CAM){ try{ LG_CAM.stream.getTracks().forEach(x=>x.stop()); }catch(e){} } LG_CAM=null; const b=$('#lgCam'); if(b) b.remove(); }
+// Scan-Ergebnis außerhalb eines Formulars: Platz öffnen, sonst Artikel (Art.-Nr.) suchen. Rechte werden dabei geprüft.
+function lgScanResult(code){ if(!canSee('stock')) return toast('Keine Berechtigung für das Lager.'); const n=lgResolve(code);
+  if(n){ if(lgIsBin(n)) return lgBinSheet(n.id); closeSheet(); UI.stockTab='plaetze'; UI.lgq=''; const c={...(UI.lgCol||{})}; lgPath(n.id).forEach(p=>c[p.id]=false); UI.lgCol=c; go('stock'); toast(LG_KINDS[n.kind]+': '+lgFullName(n.id)); return; }
+  const nr=normNr(code), s=nr&&arr('stock').find(x=>normNr(x.artNr)===nr); if(s) return stockHist(s.id); toast('Kein Lagerplatz und kein Artikel mit dem Code „'+String(code).slice(0,40)+'“.'); }
+function lgScanSheet(){ closeSheet(); openSheet({title:'Scannen',html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">QR-Code eines Lagerplatzes scannen (Kamera oder Handscanner) – oder den Platzcode / die Art.-Nr. eintippen und Enter drücken.</div><div class="bp"><input class="inp" id="sc_in" placeholder="z. B. R01-E02-P03" autocomplete="off" autocapitalize="characters" style="flex:1"><button type="button" class="btn sun" data-act="lgCamGo">${LG_SCAN_IC}Kamera</button></div></div>`,saveLabel:'Öffnen',onSave:()=>{ const v=$('#sc_in').value.trim(); if(!v){ toast('Bitte einen Code eingeben.'); return false; } setTimeout(()=>lgScanResult(v),30); }});
+  setTimeout(()=>{ const i=$('#sc_in'); if(i) i.focus(); },60); }
+
+/* ---------- Lagerplatz ansehen und buchen ---------- */
+function lgBinSheet(id){ const n=lgNode(id); if(!n) return toast('Lagerplatz nicht gefunden.'); if(!canSee('stock')) return toast('Keine Berechtigung für das Lager.'); closeSheet();
+  const st=binStock(id).sort((a,b)=>String(a.art).localeCompare(String(b.art),'de')), w=mayWrite('stock'), use=lgUsable(n);
+  openSheet({title:'Lagerplatz '+lgCode(id),wide:1,saveLabel:'Fertig',onSave:()=>{},
+    html:`<div class="fld full"><div class="small muted">${esc(lgFullName(id))}${n.name?' · '+esc(n.name):''}</div><div class="row" style="gap:6px;margin-top:6px">${n.ltype?`<span class="pill">${esc(LG_TYPES[n.ltype]||n.ltype)}</span>`:''}${lgOff(n)?'<span class="pill">stillgelegt</span>':''}${lgBlocked(n)?'<span class="pill bad">gesperrt</span>':''}${n.cap?`<span class="pill">Kapazität ${esc(n.cap)}</span>`:''}${n.maxKg?`<span class="pill">max. ${esc(n.maxKg)} kg</span>`:''}</div>${n.notes?`<div class="small" style="margin-top:6px">${esc(n.notes)}</div>`:''}</div>
+      <div class="fld full">${st.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Artikel</th><th>Firma</th><th style="text-align:right">Menge</th><th></th></tr></thead><tbody>${st.map(s=>`<tr><td><button type="button" class="linkish" data-act="stockHist" data-id="${s.id}">${esc(s.art)}</button>${s.artNr?`<div class="small muted mono">${esc(s.artNr)}</div>`:''}</td><td><span class="pill firm-pill" title="${esc(firmOf(s))}">${esc(firmShort(firmOf(s)))}</span></td><td style="text-align:right;white-space:nowrap"><b>${qn(s.bins[id])}</b> ${esc(s.unit||'')}</td><td class="row" style="justify-content:flex-end;flex-wrap:nowrap">${w?`<button type="button" class="btn sun sm" data-act="stockTake" data-id="${s.id}" data-bin="${id}">Entnehmen</button><button type="button" class="btn sm" data-act="stockShift" data-id="${s.id}" data-from="${id}">Umlagern</button>`:''}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Dieser Platz ist leer.</div>'}</div>`,
+    extraBtn:`${w&&use?`<button type="button" class="btn sun" data-act="lgBinIn" data-id="${id}">${ic('plus')}Einlagern</button>`:''}${w?`<button type="button" class="btn" data-act="invNew" data-id="${id}">Inventur</button>`:''}<button type="button" class="btn" data-act="lgPrintOne" data-id="${id}">Etikett</button>`}); }
+function lgBinInSheet(bin){ if(!mayWrite('stock')) return toast('Keine Berechtigung für Lagerbuchungen.'); if(!lgUsable(lgNode(bin))) return toast('Dieser Platz ist gesperrt oder stillgelegt.'); closeSheet();
+  const st=arr('stock').sort((a,b)=>String(a.art).localeCompare(String(b.art),'de'));
+  openSheet({title:'Einlagern auf '+lgCode(bin),html:`<div class="fld full"><label for="bi_s">Artikel</label><select id="bi_s" class="inp"><option value="">– Artikel wählen –</option>${st.map(s=>`<option value="${s.id}">${esc(s.art)}${s.artNr?' · '+esc(s.artNr):''} · ${esc(firmShort(firmOf(s)))}${unassigned(s)>0&&LGON()?' · '+qn(unassigned(s))+' ohne Platz':''}</option>`).join('')}<option value="__new">+ Neuer Lagerartikel …</option></select></div>
+    <div class="fld"><label for="bi_n">Menge</label><input id="bi_n" type="number" step="any" min="0" inputmode="decimal"></div>
+    <div class="fld"><label for="bi_from">Woher</label><select id="bi_from" class="inp"><option value="zugang">Neue Ware (Zugang)</option><option value="un">Bisher ohne Platz („nicht zugeordnet“)</option></select></div>
+    <div class="fld full"><label for="bi_note">Bemerkung</label><input id="bi_note"></div>`,saveLabel:'Einlagern',
+    onSave:()=>{ const sid=$('#bi_s').value; if(sid==='__new'){ setTimeout(()=>stockForm(null,{bin}),60); return; } if(!sid){ toast('Bitte einen Artikel wählen.'); return false; }
+      const n=r3($('#bi_n').value), s=S.stock[sid]; if(n<=0){ toast('Bitte eine Menge eintragen.'); return false; } const note=$('#bi_note').value.trim(), ss=clone(s);
+      if($('#bi_from').value==='un'){ const u=Math.max(0,unassigned(s)); if(n>u){ toast('Ohne Platz sind nur '+qn(u)+' '+(s.unit||'')+' gebucht.'); return false; } stockShift(ss,'',bin,n,note||'Einlagerung'); }
+      else stockMove(ss,n,note||'Zugang','','',{t:'zugang',bin});
+      put('stock',ss); toast(qn(n)+' '+(s.unit||'')+' '+s.art+' auf '+lgCode(bin)+' eingelagert.'); setTimeout(()=>lgBinSheet(bin),80); }}); }
+function stockInSheet(sid,bin){ const s=S.stock[sid]; if(!s) return; if(!mayWrite('stock')) return toast('Keine Berechtigung für Lagerbuchungen.'); closeSheet(); const on=LGON();
+  openSheet({title:'Zugang: '+s.art,html:`<div class="fld full"><div class="small muted">${esc(firmShort(firmOf(s)))} · Gesamtbestand ${qn(s.qty)} ${esc(s.unit||'')}</div></div>
+    <div class="fld"><label for="in_n">Menge (${esc(s.unit||'Stk')})</label><input id="in_n" type="number" step="any" min="0" inputmode="decimal"></div>
+    ${on?`<div class="fld full"><label for="in_bin">Lagerplatz – scannen oder wählen</label>${binPick('in_bin',bin||bestTake(s),{allowNone:true,noneLabel:'– ohne Platz (nicht zugeordnet) –',stock:s})}</div>`:''}
+    <div class="fld full"><label for="in_note">Bemerkung</label><input id="in_note" placeholder="z. B. Rückläufer Baustelle XY"></div>`,saveLabel:'Einbuchen',
+    onSave:()=>{ const n=r3($('#in_n').value), b=$('#in_bin')?$('#in_bin').value:''; if(n<=0){ toast('Bitte eine Menge eintragen.'); return false; } if(b&&!lgUsable(lgNode(b))){ toast('Dieser Lagerplatz ist gesperrt oder stillgelegt.'); return false; }
+      const ss=clone(S.stock[sid]); stockMove(ss,n,$('#in_note').value.trim()||'Zugang','','',{t:'zugang',bin:b}); put('stock',ss); toast(qn(n)+' '+(s.unit||'')+' eingebucht'+(b?' auf '+lgLabel(b):'')+'.'); }});
+  setTimeout(()=>{ const i=$('#in_n'); if(i) i.focus(); },60); }
+function stockTakeSheet(id,pre){ pre=pre||{}; const s=S.stock[id]; if(!s) return; if(!mayWrite('stock')) return toast('Keine Berechtigung für Lagerbuchungen.'); closeSheet();
+  const hasB=binsOf(s).length>0, def=pre.bin!=null?pre.bin:bestTake(s);
+  openSheet({title:'Aus dem Lager entnehmen',html:`<div class="fld full"><b>${esc(s.art)}</b><div class="small muted">${esc(firmShort(firmOf(s)))} · Gesamtbestand ${qn(s.qty)} ${esc(s.unit||'')}${!hasB&&s.loc?' · '+esc(s.loc):''}</div></div>
+    ${hasB?`<div class="fld full"><label for="tk_bin">Von Lagerplatz – scannen oder wählen</label>${binPick('tk_bin',def,{take:true,stock:s})}</div>`:''}
+    <div class="fld"><label for="tk_n">Menge (${esc(s.unit||'Stk')})</label><input id="tk_n" type="number" step="any" min="0" inputmode="decimal" value="${esc(pre.n||'')}"></div>
+    <div class="fld"><label for="tk_pid">Für Projekt</label><select id="tk_pid">${projSelOpts(pre.pid||'',true)}</select></div>
+    <div class="fld full"><div class="tk-calc" id="tk_av"></div></div>
     <div class="fld full"><label class="tog-sw"><input type="checkbox" id="tk_pick" checked> Auf die Kommissionierliste des Projekts setzen</label></div>
-    <div class="fld full"><label for="tk_note">Bemerkung</label><input id="tk_note"></div>`,saveLabel:'Entnehmen',
-    onSave:()=>{ const n=+$('#tk_n').value||0, pid=$('#tk_pid').value; if(n<=0){ toast('Bitte eine Menge eintragen.'); return false; } if(!pid){ toast('Bitte das Projekt wählen.'); return false; }
-      if(n>(+S.stock[id].qty||0)){ toast('Nur '+qn(S.stock[id].qty)+' '+(s.unit||'')+' im Lager.'); return false; }
-      const ss=clone(S.stock[id]); stockMove(ss,-n,'Entnahme für '+projName(pid)+($('#tk_note').value.trim()?' – '+$('#tk_note').value.trim():''),pid); put('stock',ss);
-      if($('#tk_pick').checked) addToPick(pid,[{art:s.art,artNr:s.artNr,unit:s.unit,qty:n,src:'Lager'}]);
-      toast(qn(n)+' '+(s.unit||'')+' '+s.art+' entnommen für '+projName(pid)+'.'+(ss.min&&ss.qty<=ss.min?' Mindestbestand erreicht!':'')); }});
-}
-function stockForm(s){
-  const isNew=!s; s=s?clone(s):{id:uid(),unit:'Stk',qty:0,loc:'Lager',min:0,firm:UI.sfirm||FIRMS()[0]}; if(!s.firm) s.firm=FIRMS()[0];
-  openSheet({title:isNew?'Lagerartikel anlegen':'Lagerartikel bearbeiten',value:s,fields:[{k:'art',label:'Artikel',req:1,full:1},{k:'firm',label:'Ware gehört',type:'select',options:FIRMS().map(f=>[f,f])},{k:'artNr',label:'Art.-Nr.'},{k:'unit',label:'Einheit',type:'select',options:UNITS.map(u=>[u,u])},
-    ...(isNew?[{k:'qty',label:'Anfangsbestand',type:'number',step:'any'}]:isAdmin()?[{k:'qty',label:'Bestand (Korrektur, nur EP/AvE)',type:'number',step:'any'}]:[]),{k:'loc',label:'Lagerort',list:'locList'},{k:'min',label:'Mindestbestand (Warnung)',type:'number',step:'any'},{k:'notes',label:'Notiz',type:'textarea'}],
-    onSave:v=>{ const q=v.qty===''||v.qty==null?null:+v.qty, old=+s.qty||0; delete v.qty; Object.assign(s,v);
-      if(isNew){ s.qty=0; s.moves=[]; if(q) stockMove(s,q,'Anfangsbestand'); } else if(q!=null&&q!==old&&isAdmin()) stockMove(s,q-old,'Bestandskorrektur');
-      s.min=+s.min||0; put('stock',s); toast('Lagerartikel gespeichert.'); },
+    <div class="fld full"><label for="tk_note">Entnahmegrund / Bemerkung (nötig ohne Projekt)</label><input id="tk_note" placeholder="z. B. Werkstatt, Muster, Bruch"></div>`,saveLabel:'Entnehmen',
+    onSave:()=>{ const cur=S.stock[id]; if(!cur){ toast('Artikel nicht mehr vorhanden.'); return false; } const n=r3($('#tk_n').value), pid=$('#tk_pid').value, note=$('#tk_note').value.trim(), b=$('#tk_bin')?$('#tk_bin').value:'';
+      if(n<=0){ toast('Bitte eine Menge eintragen.'); return false; } if(!pid&&!note){ toast('Bitte ein Projekt wählen oder einen Entnahmegrund eintragen.'); return false; }
+      const av=binQty(cur,b); if(n>av){ toast((b?'Auf '+lgLabel(b):hasB?'Ohne Platz':'Im Lager')+' sind nur '+qn(av)+' '+(s.unit||'')+'.'); return false; }
+      const ss=clone(cur), from=stockTakeDo(ss,n,b,(pid?'Entnahme für '+projName(pid):'Entnahme')+(note?' – '+note:''),pid); put('stock',ss);
+      if(pid&&$('#tk_pick').checked) addToPick(pid,[{art:s.art,artNr:s.artNr,unit:s.unit,qty:n,src:'Lager',from}]);
+      toast(qn(n)+' '+(s.unit||'')+' '+s.art+' entnommen'+(b?' von '+lgCode(b):'')+(pid?' für '+projName(pid):'')+'.'+(ss.min&&ss.qty<=ss.min?' Mindestbestand erreicht!':'')); }});
+  const calc=()=>{ const o=$('#tk_av'); if(!o) return; const cur=S.stock[id]||s, b=$('#tk_bin')?$('#tk_bin').value:'', av=binQty(cur,b), n=r3(($('#tk_n')||{}).value); o.innerHTML=`<span>${esc(b?lgLabel(b):hasB?'Ohne Platz':'Lager')}</span><span>Bestand <b>${qn(av)}</b></span><span>Entnahme <b>${qn(n)}</b></span><span class="${n>av?'bad':''}">Neuer Bestand <b>${qn(r3(av-n))}</b> ${esc(s.unit||'')}</span>`; };
+  setTimeout(()=>{ calc(); ['tk_n','tk_bin'].forEach(x=>{ const el=$('#'+x); if(el){ el.addEventListener('input',calc); el.addEventListener('change',calc); } }); const i=$('#tk_n'); if(i) i.focus(); },60); }
+function stockShiftSheet(sid,pre){ pre=pre||{}; const s=S.stock[sid]; if(!s) return; if(!mayWrite('stock')) return toast('Keine Berechtigung für Lagerbuchungen.'); if(!LGON()) return toast('Bitte zuerst unter „Lagerorte & Plätze“ Lagerplätze anlegen.'); closeSheet();
+  openSheet({title:'Umlagern: '+s.art,html:`<div class="fld full"><div class="small muted">${esc(firmShort(firmOf(s)))} · Gesamtbestand ${qn(s.qty)} ${esc(s.unit||'')} – bleibt gleich. Die Ware bleibt bei derselben Firma; ein Firmenwechsel ist keine Umlagerung, sondern Entnahme und Zugang mit Beleg.</div></div>
+    <div class="fld full"><label for="sh_from">Von</label>${binPick('sh_from',pre.from!=null?pre.from:bestTake(s),{take:true,stock:s})}</div>
+    <div class="fld"><label for="sh_n">Menge (${esc(s.unit||'Stk')})</label><input id="sh_n" type="number" step="any" min="0" inputmode="decimal"></div>
+    <div class="fld full"><label for="sh_to">Nach – scannen oder wählen</label>${binPick('sh_to',pre.to||'',{allowNone:true,stock:s})}</div>
+    <div class="fld full"><label for="sh_note">Bemerkung</label><input id="sh_note"></div>`,saveLabel:'Umlagern',
+    onSave:()=>{ const cur=S.stock[sid]; if(!cur){ toast('Artikel nicht mehr vorhanden.'); return false; } const f=$('#sh_from').value, t=$('#sh_to').value, n=r3($('#sh_n').value);
+      if(n<=0){ toast('Bitte eine Menge eintragen.'); return false; } if(!t){ toast('Bitte den Zielplatz wählen oder scannen.'); return false; } if(t===f){ toast('Quelle und Ziel sind gleich.'); return false; }
+      if(!lgUsable(lgNode(t))){ toast('Der Zielplatz ist gesperrt oder stillgelegt.'); return false; } const av=binQty(cur,f); if(n>av){ toast((f?'Auf '+lgLabel(f):'Ohne Platz')+' sind nur '+qn(av)+' '+(s.unit||'')+'.'); return false; }
+      const ss=clone(cur); stockShift(ss,f,t,n,$('#sh_note').value.trim()); put('stock',ss); toast(qn(n)+' '+(s.unit||'')+' umgelagert: '+(f?lgCode(f):'ohne Platz')+' → '+lgCode(t)+'.'); }});
+  setTimeout(()=>{ const i=$('#sh_n'); if(i) i.focus(); },60); }
+
+/* ---------- Lagerorte & Lagerplätze verwalten ---------- */
+const lgInc=(seg,i,cnt)=>{ if(cnt<=1) return seg; const m=String(seg||'').match(/^(.*?)(\d+)$/); if(!m) return (seg||'')+String(i+1).padStart(2,'0'); return m[1]+String(+m[2]+i).padStart(m[2].length,'0'); };
+function lgNodeForm(n,parentId){ if(!lgMgr()) return toast('Lagerorte verwalten dürfen nur Admins und freigegebene Personen.'); closeSheet();
+  const isNew=!n, par=isNew?lgNode(parentId):lgNode(n.parent), kinds=isNew?(par?LG_NEXT[par.kind]:['standort']):[n.kind]; if(!kinds.length) return toast('Unter einem Lagerplatz kann nichts mehr angelegt werden.');
+  const v=isNew?{kind:kinds.includes('platz')&&par&&par.kind==='ebene'?'platz':kinds[0],ltype:'fach',count:1,status:'aktiv'}:{...n,status:n.off?'still':n.blocked?'gesperrt':'aktiv'};
+  openSheet({title:isNew?(par?'Neu unter '+lgFullName(par.id):'Neuer Lagerstandort'):LG_KINDS[n.kind]+' bearbeiten',value:v,saveLabel:isNew?'Anlegen':'Speichern',
+    fields:[{k:'kind',label:'Art',type:'select',options:kinds.map(k=>[k,LG_KINDS[k]])},{k:'name',label:'Bezeichnung',ph:'z. B. Hauptlager, Elektro-Kleinteile, Kabelregal'},{k:'seg',label:'Kürzel für den Platzcode',ph:'z. B. R01, E02, P03, EK, PAL'},
+      {k:'ltype',label:'Lagertyp (bei Plätzen)',type:'select',options:Object.entries(LG_TYPES)},{k:'status',label:'Status',type:'select',options:[['aktiv','aktiv'],['gesperrt','gesperrt – keine Einlagerung'],['still','stillgelegt']]},
+      {k:'cap',label:'Max. Kapazität (optional)',ph:'z. B. 1 Palette, 20 Kartons'},{k:'maxKg',label:'Max. Gewicht in kg (optional)',type:'number'},
+      ...(isNew?[{k:'count',label:'Anzahl (fortlaufend nummeriert)',type:'number'},{k:'ebN',label:'Ebenen / Schubladen darunter (bei Regal)',type:'number'},{k:'plN',label:'Plätze / Fächer je Ebene',type:'number'}]:[]),
+      {k:'notes',label:'Beschreibung / Hinweise',type:'textarea'},
+      {k:'hint',label:'',type:'html',full:1,html:`<div class="small muted">Platzcode = Kürzel aller Stufen, z. B. <b>R01-E02-P03</b> oder <b>EK-S01-S03-F05</b>. Der Standort braucht kein Kürzel.${isNew?' Beispiel Regal: Kürzel R01, Anzahl 3, Ebenen 4, Plätze 5 → R01–R03 mit je 4 Ebenen und 5 Plätzen.':''} Der QR-Code enthält eine feste interne Kennung und bleibt auch nach dem Umbenennen gültig.${!isNew?'<br>Aktueller Code: <b>'+esc(lgCode(n.id))+'</b>':''}</div>`}],
+    extraBtn:!isNew&&!lgIsBin(n)?`<button type="button" class="btn" data-act="lgPrintNode" data-id="${n.id}">Etiketten aller Plätze darunter</button>`:!isNew?`<button type="button" class="btn" data-act="lgPrintOne" data-id="${n.id}">Etikett</button>`:'',
+    onDelete:isNew?null:()=>lgNodeDel(n.id), deleteLabel:'Löschen',
+    onSave:v=>lgNodeSave(n,par,v)}); }
+function lgNodeSave(n,par,v){ const kind=v.kind, name=String(v.name||'').trim(), seg=String(v.seg||'').trim().replace(/\s+/g,''), st=v.status, now=new Date().toISOString();
+  if(kind==='standort'&&!name){ toast('Bitte eine Bezeichnung für den Standort eintragen.'); return false; }
+  if(kind==='platz'&&!seg){ toast('Bitte ein Kürzel für den Platz eintragen (z. B. P01).'); return false; }
+  if(kind!=='standort'&&!seg&&!name){ toast('Bitte ein Kürzel oder eine Bezeichnung eintragen.'); return false; }
+  if(seg&&!/^[0-9A-Za-zÄÖÜäöü]+$/.test(seg)){ toast('Das Kürzel bitte nur aus Buchstaben und Ziffern (ohne Bindestrich und Leerzeichen).'); return false; }
+  const M={...(S.lager||{})}, out=[]; const mx=v.maxKg===''||v.maxKg==null?'':+v.maxKg;
+  if(n){ const x={...clone(n),name,seg,ltype:v.ltype,cap:v.cap||'',maxKg:mx,notes:v.notes||'',blocked:st==='gesperrt',off:st==='still',updBy:meK(),updAt:now};
+    if(x.off&&!n.off){ const full=[n,...lgSub(n.id)].filter(lgIsBin).filter(b=>binStock(b.id).length); if(full.length){ toast('Stilllegen geht erst ohne Bestand: auf '+full.length+' Platz/Plätzen liegt noch Ware. Bitte vorher umlagern.'); return false; } }
+    M[x.id]=x; out.push(x); }
+  else { const cnt=Math.max(1,Math.min(100,Math.round(+v.count||1))), eb=Math.max(0,Math.min(40,Math.round(+v.ebN||0))), pl=Math.max(0,Math.min(80,Math.round(+v.plN||0))), pad=i=>String(i).padStart(2,'0');
+    const mk=(k,parent,nm,sg,extra)=>{ const x={id:uid()+out.length.toString(36),parent:parent||'',kind:k,name:nm||'',seg:sg||'',blocked:st==='gesperrt',off:st==='still',by:meK(),at:now,...(k==='platz'?{ltype:v.ltype||'fach'}:{}),...(extra||{})}; M[x.id]=x; out.push(x); return x; };
+    for(let i=0;i<cnt;i++){ const x=mk(kind,par?par.id:'',cnt>1&&name?name+' '+(i+1):name,lgInc(seg,i,cnt),{cap:v.cap||'',maxKg:mx,notes:v.notes||''});
+      if(kind==='regal'&&eb>0){ for(let e=1;e<=eb;e++){ const E=mk('ebene',x.id,'Ebene '+e,'E'+pad(e)); for(let p=1;p<=pl;p++) mk('platz',E.id,'','P'+pad(p)); } }
+      else if(kind!=='platz'&&pl>0){ for(let p=1;p<=pl;p++) mk('platz',x.id,'','P'+pad(p)); } }
+    if(out.length>1500){ toast('Bitte höchstens 1.500 Einträge auf einmal anlegen.'); return false; } }
+  const seen={}; let dup=''; Object.values(M).filter(x=>x.kind==='platz').forEach(x=>{ const c=lgCodeIn(M,x.id).toLowerCase(); if(seen[c]&&!dup) dup=lgCodeIn(M,x.id); seen[c]=1; });
+  if(dup){ toast('Den Platzcode „'+dup+'“ gäbe es dann doppelt. Bitte ein anderes Kürzel wählen.'); return false; }
+  out.forEach(x=>put('lager',x)); if(par){ const c={...(UI.lgCol||{})}; c[par.id]=false; UI.lgCol=c; }
+  toast(n?'Gespeichert.':out.length===1?'Angelegt: '+(out[0].kind==='platz'?lgCodeIn(M,out[0].id):out[0].name||out[0].seg):out.length+' Einträge angelegt, davon '+out.filter(x=>x.kind==='platz').length+' Lagerplätze.'); }
+function lgNodeDel(id){ const n=lgNode(id); if(!n||!lgMgr()) return; if(lgKids(id).length) return toast('Bitte zuerst die Einträge darunter löschen oder stilllegen.');
+  if(lgIsBin(n)&&binStock(id).length) return toast('Auf diesem Platz liegt noch Ware. Bitte zuerst umlagern.');
+  if(arr('inv').some(x=>['offen','pruefen'].includes(x.status)&&(x.bins||[]).includes(id))) return toast('Dieser Platz ist Teil einer laufenden Inventur.');
+  const used=arr('stock').some(s=>(s.moves||[]).some(m=>m.from===id||m.to===id||(m.auto||[]).some(a=>a.bin===id)));
+  confirmSheet((used?'Auf diesem Platz gab es früher Buchungen. Zum Erhalt des Verlaufs besser „stillgelegt“ wählen. ':'')+LG_KINDS[n.kind]+' „'+lgFullName(id)+'“ wirklich löschen?',()=>{ del('lager',id); closeSheet(); toast('Gelöscht.'); }); }
+function vLgPlaces(sw){ const q=(UI.lgq||'').toLowerCase().trim(), mgr=lgMgr(), all=lgAll(), col=UI.lgCol||{};
+  const hit=n=>[n.name,n.seg,lgCode(n.id),n.notes,LG_TYPES[n.ltype]].join(' ').toLowerCase().includes(q);
+  const keep=new Set(); if(q) all.filter(hit).forEach(n=>{ lgPath(n.id).forEach(p=>keep.add(p.id)); lgSub(n.id).forEach(c=>keep.add(c.id)); });
+  const isCol=n=>!q&&(col[n.id]!=null?col[n.id]:n.kind==='regal');
+  const row=(n,dep)=>{ if(q&&!keep.has(n.id)) return ''; const kids=lgKids(n.id), bin=lgIsBin(n), inside=bin?binStock(n.id).length:lgSub(n.id).filter(lgIsBin).length, c=isCol(n)&&kids.length;
+    const flags=(n.off?'<span class="pill">stillgelegt</span>':'')+(n.blocked?'<span class="pill bad">gesperrt</span>':'');
+    return `<div class="lg-row lg-${n.kind}${lgOff(n)?' off':''}" style="--dep:${dep}"><button type="button" class="lg-main" data-act="${bin?'lgBin':'lgToggle'}" data-id="${n.id}"><span class="lg-tw">${bin?'':kids.length?(c?'▸':'▾'):''}</span><span class="lg-kind">${esc(LG_SHORT[n.kind])}</span><b>${esc(bin?lgCode(n.id):[n.seg,n.name].filter(Boolean).join(' · '))}</b>${bin&&n.name?`<span class="small muted">${esc(n.name)}</span>`:''}${bin&&n.ltype?`<span class="small muted">${esc(LG_TYPES[n.ltype]||'')}</span>`:''}${flags}<span class="spacer"></span><span class="small muted">${bin?(inside?inside+' Artikel':'leer'):inside+' Plätze'}</span></button>${mgr?`<span class="lg-acts">${LG_NEXT[n.kind].length?`<button type="button" class="icon-btn" title="Darunter anlegen" aria-label="Darunter anlegen" data-act="lgNew" data-parent="${n.id}">${ic('plus')}</button>`:''}<button type="button" class="icon-btn" title="Bearbeiten" aria-label="Bearbeiten" data-act="lgNodeEdit" data-id="${n.id}">${ic('edit')}</button></span>`:''}</div>${c?'':kids.map(k=>row(k,dep+1)).join('')}`; };
+  const roots=lgKids(''), unN=arr('stock').filter(s=>unassigned(s)>0).length;
+  return head('Lagerverwaltung',roots.length+' Standort'+(roots.length===1?'':'e')+' · '+all.filter(lgIsBin).length+' Lagerplätze'+(unN&&LGON()?' · '+unN+' Artikel mit Bestand ohne Platz':''),lgHeadBtns()+(mgr?`<button class="btn sun" data-act="lgNew" data-parent="">${ic('plus')}Lagerstandort</button>`:''))+sw+
+    `<div class="card"><div class="card-h"><input class="inp" type="search" style="flex:1" placeholder="Platzcode, Regal, Bereich oder Standort suchen" value="${esc(UI.lgq||'')}" data-chg="lgQ" aria-label="Lagerorte suchen"></div>
+      <div class="lg-tree">${roots.map(r=>row(r,0)).join('')||`<div class="empty">Noch keine Lagerorte. ${mgr?'Lege mit „+ Lagerstandort“ z. B. „Hauptlager“ an, darunter Bereiche, Regale, Ebenen und Plätze. Beim Regal kannst du Ebenen und Plätze gleich mit anlegen lassen.':'Lagerorte legt die Lagerverwaltung an.'}</div>`}</div></div>`+(mgr?lgMigHtml():'')+lgMgrBox(); }
+const lgMgrBox=()=>isAdmin()?`<div class="card"><div class="card-h"><div><h3>Wer darf Lagerorte verwalten?</h3><div class="small muted">Admins immer. Buchen (Zugang, Entnahme, Umlagern, Zählen) darf, wer das Lager bearbeiten darf – nur ansehen, wer es nur sehen darf. Beides unter „Admin: Rechte“.</div></div></div><div class="row" style="gap:6px 14px;flex-wrap:wrap;padding:0 16px 14px">${staff().map(s=>{ const k=shortWho(s.name), on=((S.config||{}).lagerMgr||[]).map(x=>String(x).toLowerCase()).includes(k.toLowerCase()); return `<label class="small" style="display:inline-flex;gap:5px;align-items:center"><input type="checkbox" data-chg="lgMgrSet" value="${esc(k)}" ${on?'checked':''}>${esc(k)}</label>`; }).join('')}</div></div>`:'';
+// Übernahme alter Bestände: nichts automatisch. Je alter Lagerort-Text ein Platz wählen → Vorschau → Übernehmen (als Bewegung „Übernahme“ protokolliert).
+var LG_MIG=[];
+function lgMigHtml(){ const st=arr('stock').filter(s=>unassigned(s)>0); if(!st.length) return ''; if(!LGON()) return `<div class="card"><div class="empty">${st.length} Artikel haben Bestand ohne Lagerplatz. Sobald Lagerplätze angelegt sind, kannst du sie hier übernehmen.</div></div>`;
+  const by={}; st.forEach(s=>{ const k=String(s.loc||'').trim()||'(ohne Lagerort-Angabe)'; (by[k]=by[k]||[]).push(s); }); const keys=Object.keys(by).sort((a,b)=>a.localeCompare(b,'de')); LG_MIG=keys.map(k=>({k,ids:by[k].map(s=>s.id)}));
+  return `<div class="card"><div class="card-h"><div><h3>Übernahme bestehender Bestände</h3><div class="small muted">${st.length} Artikel haben Bestand ohne Lagerplatz („nicht zugeordnet“). Die alten Lagerort-Texte werden <b>nicht</b> automatisch zu Lagerplätzen. Wähle je Text einen Platz oder lass „nicht übernehmen“ – die Ware bleibt dann sichtbar als „nicht zugeordnet“. Einzelne Artikel kannst du auch per „Umlagern“ verteilen.</div></div></div>
+    <div class="mig">${keys.map((k,i)=>`<div class="mig-r"><div style="min-width:0"><b>„${esc(k)}“</b><div class="small muted">${by[k].length} Artikel: ${esc(by[k].slice(0,4).map(s=>s.art+' ('+qn(unassigned(s))+' '+(s.unit||'')+')').join(', '))}${by[k].length>4?' …':''}</div></div><select class="inp" id="mig_${i}" aria-label="Lagerplatz für ${esc(k)}"><option value="">– nicht übernehmen –</option>${binOpts('',{})}</select></div>`).join('')}</div>
+    <div class="row" style="padding:4px 16px 14px"><button class="btn pri" data-act="lgMigPreview">Vorschau der Übernahme</button></div></div>`; }
+function lgMigPreview(){ if(!lgMgr()) return; const plan=[]; LG_MIG.forEach((g,i)=>{ const b=($('#mig_'+i)||{}).value; if(!b) return; g.ids.forEach(id=>{ const s=S.stock[id]; if(s&&unassigned(s)>0) plan.push({id,k:g.k,bin:b}); }); });
+  if(!plan.length) return toast('Bitte bei mindestens einem alten Lagerort einen Platz wählen.');
+  openSheet({title:'Übernahme prüfen',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">${plan.length} Artikel werden von „nicht zugeordnet“ auf den gewählten Platz umgebucht. Der Gesamtbestand ändert sich nicht. Jede Umbuchung steht danach unter „Bewegungen“ (Art „Übernahme“).</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Artikel</th><th>Firma</th><th style="text-align:right">Menge</th><th>Alter Lagerort</th><th>Neuer Platz</th></tr></thead><tbody>${plan.map(x=>{ const s=S.stock[x.id]; return `<tr><td>${esc(s.art)}</td><td>${esc(firmShort(firmOf(s)))}</td><td style="text-align:right">${qn(unassigned(s))} ${esc(s.unit||'')}</td><td>${esc(x.k)}</td><td><b>${esc(lgLabel(x.bin))}</b></td></tr>`; }).join('')}</tbody></table></div></div>`,saveLabel:'Jetzt übernehmen',
+    onSave:()=>{ let n=0; plan.forEach(x=>{ const s=S.stock[x.id]; if(!s||!lgUsable(lgNode(x.bin))) return; const u=Math.max(0,unassigned(s)); if(u<=0) return; const ss=clone(s); stockShift(ss,'',x.bin,u,'Übernahme aus altem Lagerort „'+x.k+'“','uebernahme'); put('stock',ss); n++; }); toast(n+' Artikel übernommen.'); }}); }
+
+/* ---------- Etiketten: QR-Code und/oder Code 128 mit Klartext ---------- */
+const LBL_SIZES={r_50x30:{l:'Etikettendrucker 50 × 30 mm',w:50,h:30},r_62x29:{l:'Etikettendrucker 62 × 29 mm',w:62,h:29},r_100x50:{l:'Etikettendrucker 100 × 50 mm',w:100,h:50},a4_70x37:{l:'A4-Bogen 3 × 8 (70 × 37 mm)',w:70,h:37,cols:3,rows:8},a4_105x48:{l:'A4-Bogen 2 × 6 (105 × 48 mm)',w:105,h:48,cols:2,rows:6}};
+const LBL_MODES={qr:'QR-Code',bar:'Barcode (Code 128)',both:'QR-Code und Barcode'};
+async function lgPrint(ids){ ids=(ids||[]).filter(id=>lgIsBin(lgNode(id))); if(!ids.length) return toast('Bitte mindestens einen Lagerplatz auswählen.');
+  const sz=LBL_SIZES[UI.lblSize]||LBL_SIZES.r_50x30, mode=LBL_MODES[UI.lblMode]?UI.lblMode:'qr';
+  try{ if(mode!=='bar'&&!window.qrcode) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'); if(mode!=='qr'&&!window.JsBarcode) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js'); }
+  catch(e){ return toast('Der Etiketten-Baustein konnte nicht geladen werden. Bitte die Internetverbindung prüfen.'); }
+  const qrSvg=t=>{ let q; try{ q=qrcode(0,'M'); q.addData(t,'Alphanumeric'); q.make(); }catch(e){ q=qrcode(0,'M'); q.addData(t); q.make(); } return q.createSvgTag({cellSize:4,margin:0,scalable:true}); };
+  const barSvg=t=>{ const s=document.createElementNS('http://www.w3.org/2000/svg','svg'); JsBarcode(s,t,{format:'CODE128',displayValue:false,margin:0,height:50,width:2}); const w=parseFloat(s.getAttribute('width'))||200, h=parseFloat(s.getAttribute('height'))||50; s.setAttribute('viewBox','0 0 '+w+' '+h); s.setAttribute('preserveAspectRatio','none'); s.removeAttribute('width'); s.removeAttribute('height'); s.removeAttribute('style'); return s.outerHTML; };
+  const H=sz.h, W=sz.w, pad=Math.max(1.5,H*0.07);
+  const one=id=>{ const n=lgNode(id), code=lgCode(id), pay=lgPayload(id), sub=lgPath(id).slice(0,-1).map(x=>x.kind==='standort'?x.name:(x.seg||x.name)).join(' / '), textW=mode==='bar'?W-2*pad:W-H-pad, fs=Math.max(2.6,Math.min(H*(mode==='both'?0.2:0.26),textW/Math.max(4,code.length)*1.75));
+    return `<div class="l"><div class="in" style="padding:${pad}mm">${mode!=='bar'?`<div class="q" style="width:${H-2*pad}mm;height:${H-2*pad}mm">${qrSvg(pay)}</div>`:''}<div class="t"><div class="c" style="font-size:${fs.toFixed(2)}mm">${esc(code)}</div>${sub?`<div class="s">${esc(sub)}</div>`:''}${n.name?`<div class="s">${esc(n.name)}</div>`:''}${mode!=='qr'?`<div class="b" style="height:${(H*(mode==='both'?0.26:0.36)).toFixed(1)}mm">${barSvg(pay)}</div>`:''}<div class="id">${esc(pay)}</div></div></div></div>`; };
+  const css=`*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,Helvetica,sans-serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .l{width:${W}mm;height:${H}mm;overflow:hidden;break-inside:avoid}.in{display:flex;gap:${pad}mm;height:100%;align-items:center}.q{flex:none}.q svg,.q img{width:100%;height:100%;display:block}
+    .t{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:.6mm;height:100%}.c{font-weight:700;line-height:1;white-space:nowrap;overflow:hidden}.s{font-size:${Math.max(2,Math.min(3.2,H*0.09)).toFixed(2)}mm;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .b svg{width:100%;height:100%;display:block}.id{font-size:${Math.max(1.6,Math.min(2.2,H*0.06)).toFixed(2)}mm;color:#444;letter-spacing:.02em}
+    ${sz.cols?`@page{size:A4;margin:0}.pg{width:210mm;height:297mm;padding:${((297-sz.rows*H)/2).toFixed(2)}mm ${((210-sz.cols*W)/2).toFixed(2)}mm;display:grid;grid-template-columns:repeat(${sz.cols},${W}mm);grid-auto-rows:${H}mm;align-content:start;break-after:page}`:`@page{size:${W}mm ${H}mm;margin:0}.l{break-after:page}`}`;
+  let body=''; if(sz.cols){ const per=sz.cols*sz.rows; for(let i=0;i<ids.length;i+=per) body+=`<div class="pg">${ids.slice(i,i+per).map(one).join('')}</div>`; } else body=ids.map(one).join('');
+  const f=document.createElement('iframe'); f.setAttribute('aria-hidden','true'); f.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0'; document.body.appendChild(f);
+  const d=f.contentDocument; d.open(); d.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Lagerplatz-Etiketten</title><style>${css}</style></head><body>${body}</body></html>`); d.close();
+  setTimeout(()=>{ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){ toast('Drucken nicht möglich.'); } setTimeout(()=>f.remove(),120000); },350);
+  toast(ids.length+' Etikett'+(ids.length===1?'':'en')+' zum Drucken vorbereitet.'); }
+function vLgLabels(sw){ const site=UI.lblSite||'', sel=new Set(UI.lblSel||[]), nodes=lgAll().filter(n=>!lgIsBin(n)&&!lgOff(n)).sort((a,b)=>lgFullName(a.id).localeCompare(lgFullName(b.id),'de',{numeric:true}));
+  const bins=lgAll().filter(lgIsBin).filter(b=>!lgOff(b)).filter(b=>!site||lgPath(b.id).some(p=>p.id===site)).sort((a,b)=>lgFullName(a.id).localeCompare(lgFullName(b.id),'de',{numeric:true})), n=bins.filter(b=>sel.has(b.id)).length;
+  UI.lblShown=bins.map(b=>b.id);
+  return head('Lagerverwaltung','Etiketten für Lagerplätze drucken',lgHeadBtns())+sw+
+    `<div class="card"><div class="card-h lbl-c"><select class="inp" data-chg="lblSite" aria-label="Bereich"><option value="">Alle Lagerorte</option>${nodes.map(x=>`<option value="${x.id}" ${x.id===site?'selected':''}>${esc(lgFullName(x.id))}</option>`).join('')}</select>
+      <select class="inp" data-chg="lblSize" aria-label="Etikettengröße">${Object.entries(LBL_SIZES).map(([k,v])=>`<option value="${k}" ${k===(UI.lblSize||'r_50x30')?'selected':''}>${esc(v.l)}</option>`).join('')}</select>
+      <select class="inp" data-chg="lblMode" aria-label="Code-Art">${Object.entries(LBL_MODES).map(([k,v])=>`<option value="${k}" ${k===(UI.lblMode||'qr')?'selected':''}>${esc(v)}</option>`).join('')}</select></div>
+      <div class="row" style="padding:0 16px 10px;gap:6px"><button class="btn sm" data-act="lblAll">Alle ${bins.length} wählen</button><button class="btn sm" data-act="lblNone">Keine</button><span class="spacer"></span><button class="btn sun" data-act="lblPrint" ${n?'':'disabled'}>Drucken (${n})</button></div>
+      <div class="lbl-list">${bins.map(b=>`<label class="lbl-it"><input type="checkbox" class="ck" data-chg="lblPick" value="${b.id}" ${sel.has(b.id)?'checked':''}><b class="mono">${esc(lgCode(b.id))}</b><span class="small muted">${esc(lgFullName(b.id))}${b.name?' · '+esc(b.name):''}</span></label>`).join('')||'<div class="empty">Noch keine Lagerplätze angelegt.</div>'}</div>
+      <div class="small muted" style="padding:10px 16px 14px">Der Code auf dem Etikett ist eine feste Kennung des Platzes (z. B. LP…). Er bleibt gültig, auch wenn der Platz umbenannt wird – Etiketten können jederzeit nachgedruckt werden. Beim Drucken im Dialog „Seitenränder: keine“ und Maßstab 100 % wählen.</div></div>`; }
+
+/* ---------- Bewegungen: alle Zu- und Abgänge, Umlagerungen, Korrekturen ---------- */
+const mvType=m=>m.t||(m.d<0?'entnahme':'zugang');
+const mvFrom=m=>'from' in m?(m.from?lgLabel(m.from):'nicht zugeordnet'):m.auto?[...m.auto.map(a=>lgLabel(a.bin)+' ('+qn(a.n)+')')].join(', '):m.t&&m.d<0?'nicht zugeordnet':'';
+const mvTo=m=>'to' in m?(m.to?lgLabel(m.to):'nicht zugeordnet'):m.t&&m.d>0?'nicht zugeordnet':'';
+const mvQty=m=>['umlagerung','uebernahme'].includes(mvType(m))?qn(m.n):(m.d>0?'+':'')+qn(m.d);
+const mvRef=m=>[m.pid?projName(m.pid):'',m.oid&&S.orders[m.oid]?'Bestellung '+(S.orders[m.oid].supplier||'')+(S.orders[m.oid].no?' '+S.orders[m.oid].no:''):'',m.ref&&String(m.ref).startsWith('inv:')?'Inventur':''].filter(Boolean).join(' · ');
+const mvRow=(m,s)=>`<tr><td class="mono small" style="white-space:nowrap">${esc(stampTxt(m.at))}</td><td><span class="mv-t ${mvType(m)}">${esc(MV_T[mvType(m)]||mvType(m))}</span></td>${s?`<td><button type="button" class="linkish" data-act="stockHist" data-id="${s.id}">${esc(s.art)}</button> <span class="small muted">${esc(firmShort(firmOf(s)))}</span></td>`:''}<td style="text-align:right;white-space:nowrap" class="${m.d<0?'neg':m.d>0?'pos':''}"><b>${mvQty(m)}</b> ${esc(m.u||(s&&s.unit)||'')}</td><td class="small">${esc(mvFrom(m)||'–')}</td><td class="small">${esc(mvTo(m)||'–')}</td><td class="small">${esc(mvRef(m))}</td><td><span class="who-chip">${esc(m.by||'?')}</span></td><td class="small">${esc(m.note||'')}</td></tr>`;
+function vLgMoves(sw){ const tf=UI.mvT||'', q=(UI.mvq||'').toLowerCase().trim(), lim=UI.mvN||200;
+  let all=arr('stock').flatMap(s=>(s.moves||[]).map(m=>({m,s}))); const cnt={}; all.forEach(x=>{ const t=mvType(x.m); cnt[t]=(cnt[t]||0)+1; });
+  if(tf) all=all.filter(x=>mvType(x.m)===tf);
+  if(q) all=all.filter(x=>[x.s.art,x.s.artNr,x.m.note,x.m.by,mvFrom(x.m),mvTo(x.m),mvRef(x.m),firmOf(x.s)].join(' ').toLowerCase().includes(q));
+  all.sort((a,b)=>String(b.m.at).localeCompare(String(a.m.at)));
+  return head('Lagerverwaltung','Alle Lagerbewegungen mit Person und Zeit',lgHeadBtns())+sw+
+    `<div class="card"><div class="card-h"><input class="inp" type="search" style="flex:1" placeholder="Artikel, Platz, Projekt, Person oder Bemerkung suchen" value="${esc(UI.mvq||'')}" data-chg="mvQ" aria-label="Bewegungen suchen"></div>
+      <div class="chips" style="padding:0 16px 10px"><button class="chip ${!tf?'on':''}" data-act="mvT" data-v="">Alle</button>${Object.entries(MV_T).filter(([k])=>cnt[k]).map(([k,l])=>`<button class="chip ${tf===k?'on':''}" data-act="mvT" data-v="${k}">${esc(l)} <span class="mono small">${cnt[k]}</span></button>`).join('')}</div>
+      ${all.length?`<div class="tbl-wrap"><table class="tbl mv-tbl"><thead><tr><th>Zeit</th><th>Art</th><th>Artikel</th><th style="text-align:right">Menge</th><th>Von</th><th>Nach</th><th>Projekt / Beleg</th><th>Wer</th><th>Bemerkung</th></tr></thead><tbody>${all.slice(0,lim).map(x=>mvRow(x.m,x.s)).join('')}</tbody></table></div>${all.length>lim?`<div style="padding:10px 16px"><button class="btn sm" data-act="mvMore">+ weitere ${Math.min(300,all.length-lim)} von ${all.length-lim}</button></div>`:''}`:'<div class="empty">Keine Bewegungen gefunden.</div>'}</div>`; }
+
+/* ---------- Inventur je Platz, Bereich oder Standort ---------- */
+// Ablauf: starten (Soll-Mengen werden festgehalten) → zählen (je Platz, per Scan springen) → abschließen → berechtigte Person prüft und gibt Differenzen frei → erst dann wird gebucht.
+const INV_ST={offen:['Zählung läuft','warn'],pruefen:['Zur Prüfung','pri'],gebucht:['Gebucht','ok'],verworfen:['Verworfen','']};
+function vLgInv(sw){ const list=arr('inv').sort((a,b)=>String(b.at).localeCompare(String(a.at))), mgr=lgMgr();
+  return head('Lagerverwaltung','Inventur je Lagerplatz, Bereich oder Standort',lgHeadBtns()+(mayWrite('stock')?`<button class="btn sun" data-act="invNew">${ic('plus')}Inventur starten</button>`:''))+sw+
+    `<div class="card">${list.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Bereich</th><th>Gestartet</th><th>Status</th><th style="text-align:right">Gezählt</th><th style="text-align:right">Abweichungen</th><th></th></tr></thead><tbody>${list.map(x=>{ const L=x.lines||[], done=L.filter(l=>l.cnt!=null).length, diff=L.filter(l=>l.cnt!=null&&r3(l.cnt-l.exp)!==0).length, s=INV_ST[x.status]||[x.status,''];
+      return `<tr><td><b>${esc(x.title||'')}</b><div class="small muted">${(x.bins||[]).length} Plätze</div></td><td class="small">${esc(stampTxt(x.at))} · ${esc(x.by||'')}</td><td><span class="pill ${s[1]}">${esc(s[0])}</span>${x.bookedBy?` <span class="small muted">${esc(x.bookedBy)} ${esc(stampTxt(x.bookedAt))}</span>`:''}</td><td style="text-align:right">${done}/${L.length}</td><td style="text-align:right">${diff}</td>
+        <td class="row" style="justify-content:flex-end;flex-wrap:nowrap">${x.status==='offen'&&mayWrite('stock')?`<button class="btn sun sm" data-act="invCount" data-id="${x.id}">Zählen</button>`:''}${x.status==='pruefen'&&mgr?`<button class="btn pri sm" data-act="invReview" data-id="${x.id}">Prüfen & buchen</button>`:`<button class="btn sm" data-act="invReview" data-id="${x.id}">Ansehen</button>`}</td></tr>`; }).join('')}</tbody></table></div>`
+      :'<div class="empty">Noch keine Inventur. „Inventur starten“ wählt einen Lagerplatz, Bereich oder Standort. Die App zeigt dann je Platz die erwarteten Artikel und Mengen zum Zählen. Gebucht wird erst nach Prüfung.</div>'}</div>`; }
+function invNew(pre){ if(!mayWrite('stock')) return toast('Keine Berechtigung für Lagerbuchungen.'); if(!LGON()) return toast('Bitte zuerst Lagerplätze anlegen.'); closeSheet();
+  const nodes=lgAll().filter(n=>!lgOff(n)).sort((a,b)=>lgFullName(a.id).localeCompare(lgFullName(b.id),'de',{numeric:true}));
+  openSheet({title:'Inventur starten',html:`<div class="fld full"><label for="iv_n">Was wird gezählt? – Platz scannen oder Bereich wählen</label><div class="bp"><select class="inp" id="iv_n">${nodes.map(n=>`<option value="${n.id}" ${n.id===pre?'selected':''}>${esc(LG_SHORT[n.kind])}: ${esc(lgFullName(n.id))}</option>`).join('')}</select><input class="inp bp-code" data-bp="iv_n" placeholder="Code scannen / eintippen" autocomplete="off"><button type="button" class="btn sm" data-act="lgCam" data-for="iv_n" aria-label="Mit der Kamera scannen">${LG_SCAN_IC}</button></div><div class="small muted" style="margin-top:6px">Die aktuellen Bestände werden als Soll festgehalten. Bis zur Buchung ändert die Inventur keinen Bestand.</div></div>`,saveLabel:'Starten',
+    onSave:()=>{ const id=$('#iv_n').value, node=lgNode(id); if(!node) return false; const bins=(lgIsBin(node)?[node]:lgSub(id).filter(lgIsBin)).filter(b=>!lgOff(b)); if(!bins.length){ toast('Darunter gibt es keine Lagerplätze.'); return false; }
+      const ids=new Set(bins.map(b=>b.id)), busy=arr('inv').find(x=>['offen','pruefen'].includes(x.status)&&(x.bins||[]).some(b=>ids.has(b))); if(busy){ toast('Für diese Plätze läuft schon eine Inventur: '+busy.title); return false; }
+      const lines=[]; arr('stock').forEach(s=>binsOf(s).forEach(([b,q])=>{ if(ids.has(b)) lines.push({sid:s.id,bin:b,art:s.art,unit:s.unit||'',firm:firmOf(s),exp:r3(q),cnt:null}); }));
+      const x={id:uid(),scope:id,title:lgFullName(id),bins:bins.map(b=>b.id),status:'offen',at:new Date().toISOString(),by:meK(),lines}; put('inv',x); UI.stockTab='inventur'; setTimeout(()=>invCount(x.id),80); }}); }
+function invCollect(x){ document.querySelectorAll('.inv-c').forEach(i=>{ const l=x.lines[+i.dataset.i]; if(l) l.cnt=i.value===''?null:Math.max(0,r3(i.value)); }); return x; }
+function invCount(id){ const x=S.inv[id]; if(!x||x.status!=='offen') return; if(!mayWrite('stock')) return toast('Keine Berechtigung.'); closeSheet();
+  const L=(x.lines||[]).map((l,i)=>({...l,i})), st=arr('stock').sort((a,b)=>String(a.art).localeCompare(String(b.art),'de'));
+  openSheet({title:'Inventur: '+x.title,wide:1,saveLabel:'Zwischenstand speichern',
+    html:`<div class="fld full"><div class="bp"><input class="inp inv-scan" placeholder="Platz scannen – springt zum Platz" autocomplete="off" style="flex:1"><button type="button" class="btn sm" data-act="lgCamInv" aria-label="Mit der Kamera scannen">${LG_SCAN_IC}</button></div><div class="small muted" style="margin-top:6px">Gezählte Menge eintragen. Leer = noch nicht gezählt, 0 = nichts da. Gefundene Artikel, die nicht erwartet waren, über „+ weiteren Artikel“ ergänzen.</div></div>
+      <div class="fld full">${(x.bins||[]).map(b=>{ const ls=L.filter(l=>l.bin===b); return `<div class="inv-g" id="ig_${b}"><h4><span class="mono">${esc(lgCode(b))}</span><span class="small muted">${esc(lgFullName(b))}</span></h4>${ls.map(l=>`<div class="inv-l"><span>${esc(l.art)} <span class="small muted">${esc(firmShort(l.firm))}</span></span><span class="small muted">Soll ${qn(l.exp)}</span><input class="inp num inv-c" type="number" step="any" min="0" inputmode="decimal" data-i="${l.i}" value="${l.cnt==null?'':l.cnt}" placeholder="gezählt" aria-label="Gezählt ${esc(l.art)}"><span class="small">${esc(l.unit)}</span></div>`).join('')||'<div class="inv-l"><span class="small muted">Laut Bestand leer.</span></div>'}
+        <div class="inv-l inv-addr"><select class="inp inv-add" data-b="${b}" data-id="${x.id}" aria-label="Weiteren Artikel ergänzen"><option value="">+ weiteren Artikel auf diesem Platz gefunden …</option>${st.filter(s=>!ls.some(l=>l.sid===s.id)).map(s=>`<option value="${s.id}">${esc(s.art)} · ${esc(firmShort(firmOf(s)))}</option>`).join('')}</select></div></div>`; }).join('')}</div>`,
+    extraBtn:`<button type="button" class="btn sun" data-act="invFinish" data-id="${x.id}">Zählung abschließen</button>`,
+    onSave:()=>{ const c=invCollect(clone(S.inv[id])); put('inv',c); toast('Zwischenstand gespeichert.'); }}); }
+function invJump(code){ const n=lgResolve(code), g=n&&$('#ig_'+n.id); if(!g){ toast(n?lgLabel(n.id)+' gehört nicht zu dieser Inventur.':'Unbekannter Code.'); return; } document.querySelectorAll('.inv-g.hl').forEach(x=>x.classList.remove('hl')); g.classList.add('hl'); g.scrollIntoView({block:'start',behavior:'smooth'}); const i=g.querySelector('.inv-c'); if(i) setTimeout(()=>i.focus(),250); }
+document.addEventListener('change',e=>{ const t=e.target; if(!t.classList||!t.classList.contains('inv-add')||!t.value) return; const x=S.inv[t.dataset.id]; if(!x||x.status!=='offen') return; const c=invCollect(clone(x)), s=S.stock[t.value]; if(!s) return;
+  c.lines.push({sid:s.id,bin:t.dataset.b,art:s.art,unit:s.unit||'',firm:firmOf(s),exp:binQty(s,t.dataset.b),cnt:null,added:true}); put('inv',c); const y=window.scrollY; setTimeout(()=>{ invCount(c.id); setTimeout(()=>invJump(lgPayload(t.dataset.b)),120); },30); });
+function invReview(id){ const x=S.inv[id]; if(!x) return; closeSheet(); const can=x.status==='pruefen'&&lgMgr(), L=x.lines||[];
+  const rows=L.map((l,i)=>{ const d=l.cnt==null?null:r3(l.cnt-l.exp), s=S.stock[l.sid], now=s?binQty(s,l.bin):0, moved=x.status==='pruefen'&&s&&r3(now-l.exp)!==0;
+    return {i,l,d,html:`<tr class="${d?'inv-x':''}"><td class="mono">${esc(lgCode(l.bin))}</td><td>${esc(l.art)} <span class="small muted">${esc(firmShort(l.firm))}</span>${moved?`<div class="small" style="color:var(--warn)">Seit Zählbeginn bewegt: jetzt ${qn(now)}</div>`:''}</td><td style="text-align:right">${qn(l.exp)}</td><td style="text-align:right">${l.cnt==null?'<span class="muted">–</span>':qn(l.cnt)}</td><td style="text-align:right" class="inv-d ${d<0?'neg':d>0?'pos':''}">${d==null?'':(d>0?'+':'')+qn(d)} ${esc(l.unit)}</td><td>${can&&d?`<label class="small" style="display:inline-flex;gap:4px;align-items:center"><input type="checkbox" class="ck inv-ok" data-i="${i}" checked>buchen</label>`:l.ok===true?'<span class="pill ok">gebucht</span>':l.ok===false?'<span class="pill">abgelehnt</span>':''}</td></tr>`}; });
+  const nd=rows.filter(r=>r.d).length, open=rows.filter(r=>r.l.cnt==null).length;
+  openSheet({title:'Inventur: '+x.title,wide:1,saveLabel:can?'Freigegebene Differenzen buchen':'Schließen',
+    html:`<div class="fld full"><div class="small muted">${esc((INV_ST[x.status]||[x.status])[0])} · gestartet ${esc(stampTxt(x.at))} von ${esc(x.by||'')}${x.doneBy?' · gezählt von '+esc(x.doneBy):''} · ${nd} Abweichung${nd===1?'':'en'}${open?' · '+open+' ungezählt (werden nicht gebucht)':''}</div></div>
+      <div class="fld full"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Platz</th><th>Artikel</th><th style="text-align:right">Soll</th><th style="text-align:right">Gezählt</th><th style="text-align:right">Differenz</th><th></th></tr></thead><tbody>${rows.sort((a,b)=>(!!b.d)-(!!a.d)).map(r=>r.html).join('')||'<tr><td colspan="6"><div class="empty">Keine Positionen.</div></td></tr>'}</tbody></table></div></div>`,
+    extraBtn:can||(x.status==='offen'&&lgMgr())?`<button type="button" class="btn" data-act="invDrop" data-id="${x.id}">Inventur verwerfen</button>`:'',
+    onSave:()=>{ if(!can) return; const x2=clone(S.inv[id]); if(!x2||x2.status!=='pruefen') return; const by={};
+      x2.lines.forEach((l,i)=>{ const d=l.cnt==null?0:r3(l.cnt-l.exp); if(!d) return; const ok=!!(document.querySelector(`.inv-ok[data-i="${i}"]`)||{}).checked; l.ok=ok; if(ok) (by[l.sid]=by[l.sid]||[]).push({l,d}); });
+      let n=0; Object.entries(by).forEach(([sid,ls])=>{ const s=S.stock[sid]; if(!s) return; const ss=clone(s); ls.forEach(({l,d})=>{ let dd=d; const cur=binQty(ss,l.bin); if(cur+dd<0) dd=-cur; if(dd){ stockMove(ss,dd,'Inventur '+x2.title,'','',{t:'inventur',bin:l.bin,ref:'inv:'+id}); n++; } }); put('stock',ss); });
+      x2.status='gebucht'; x2.bookedBy=meK(); x2.bookedAt=new Date().toISOString(); put('inv',x2); toast(n?n+' Differenz'+(n===1?'':'en')+' gebucht.':'Inventur abgeschlossen, nichts zu buchen.'); }}); }
+
+/* ---------- Kopf, Tabs, Aktionen ---------- */
+const lgHeadBtns=()=>`<button class="btn" data-act="lgScan">${LG_SCAN_IC}Scannen</button>`;
+const pickLocTxt=it=>{ if(it.from&&it.from.length) return 'entnommen von '+it.from.map(f=>(f.bin?lgCode(f.bin):'ohne Platz')+' '+qn(f.n)).join(', ');
+  if(it.ok||it.src==='Lager') return ''; const s=stockFind(it.art,it.artNr); if(!s) return ''; const b=binsOf(s).sort((x,y)=>y[1]-x[1]); return b.length?'📍 liegt auf '+b.slice(0,3).map(([x,q])=>lgCode(x)+' ('+qn(+q)+')').join(', ')+(b.length>3?' …':''):''; };
+queueMicrotask(()=>{ Object.assign(A,{
+  lgScan:()=>lgScanSheet(),
+  lgCamGo:()=>{ closeSheet(); lgCamOpen(code=>lgScanResult(code)); },
+  lgCam:d=>lgCamOpen(code=>bpSet(d.for,code)),
+  lgCamInv:()=>lgCamOpen(code=>invJump(code)),
+  lgBin:d=>lgBinSheet(d.id),
+  lgBinIn:d=>lgBinInSheet(d.id),
+  lgNew:d=>lgNodeForm(null,d.parent||''),
+  lgNodeEdit:d=>lgNodeForm(lgNode(d.id)),
+  lgToggle:d=>{ const n=lgNode(d.id); if(!n) return; const c={...(UI.lgCol||{})}, cur=c[d.id]!=null?c[d.id]:n.kind==='regal'; c[d.id]=!cur; UI.lgCol=c; render(); },
+  lgPrintOne:d=>lgPrint([d.id]),
+  lgPrintNode:d=>lgPrint(lgSub(d.id).filter(lgIsBin).filter(b=>!lgOff(b)).map(b=>b.id)),
+  lgMigPreview:()=>lgMigPreview(),
+  stockShift:d=>stockShiftSheet(d.id,{from:d.from}),
+  invNew:d=>invNew(d.id),
+  invCount:d=>invCount(d.id),
+  invReview:d=>invReview(d.id),
+  invFinish:d=>{ const x=S.inv[d.id]; if(!x) return; const c=invCollect(clone(x)), open=c.lines.filter(l=>l.cnt==null).length; if(open){ put('inv',c); toast(open+' Position'+(open===1?'':'en')+' noch ohne Zahl. Bitte zählen – oder 0 eintragen, wenn nichts da ist.'); return; } c.status='pruefen'; c.doneBy=meK(); c.doneAt=new Date().toISOString(); put('inv',c); closeSheet(); toast('Zählung abgeschlossen – wartet auf Prüfung und Freigabe.'); },
+  invDrop:d=>{ if(!lgMgr()) return; const x=S.inv[d.id]; if(!x) return; confirmSheet('Inventur „'+x.title+'“ verwerfen? Es wird nichts gebucht.',()=>{ put('inv',{...clone(x),status:'verworfen',bookedBy:meK(),bookedAt:new Date().toISOString()}); closeSheet(); }); },
+  mvT:d=>{ UI.mvT=d.v||''; UI.mvN=200; render(); },
+  mvMore:()=>{ UI.mvN=(UI.mvN||200)+300; render(); },
+  lblAll:()=>{ UI.lblSel=[...new Set([...(UI.lblSel||[]),...(UI.lblShown||[])])]; render(); },
+  lblNone:()=>{ UI.lblSel=[]; render(); },
+  lblPrint:()=>lgPrint((UI.lblSel||[]).filter(id=>(UI.lblShown||[]).includes(id))),
+  rtSplit:d=>{ const box=document.querySelector(`.rt-bl[data-i="${d.i}"]`); if(!box) return; box.insertAdjacentHTML('beforeend',`<div class="rt-bline"><select class="inp rt-b" aria-label="Weiterer Lagerplatz">${binOpts('',{})}</select><input class="inp num rt-q" type="number" step="any" min="0" inputmode="decimal" placeholder="Menge" aria-label="Menge"></div>`); const q=box.querySelectorAll('.rt-q'); q[q.length-1].focus(); },
+  stockIn:d=>stockInSheet(d.id,d.bin) });
+  Object.assign(CHG,{
+  lgQ:(d,el)=>{ UI.lgq=el.value; render(); },
+  mvQ:(d,el)=>{ UI.mvq=el.value; UI.mvN=200; render(); },
+  lblSite:(d,el)=>{ UI.lblSite=el.value; render(); },
+  lblSize:(d,el)=>{ UI.lblSize=el.value; render(); },
+  lblMode:(d,el)=>{ UI.lblMode=el.value; render(); },
+  lblPick:(d,el)=>{ const s=new Set(UI.lblSel||[]); if(el.checked) s.add(el.value); else s.delete(el.value); UI.lblSel=[...s]; render(); },
+  lgMgrSet:(d,el)=>{ if(!isAdmin()) return; const l=new Set(((S.config||{}).lagerMgr||[])); if(el.checked) l.add(el.value); else l.delete(el.value); putConfig({...(S.config||{}),lagerMgr:[...l]}); toast(el.value+(el.checked?' darf jetzt Lagerorte verwalten.':' darf keine Lagerorte mehr verwalten.')); } }); });
+
+function stockForm(s,pre){ pre=pre||{};
+  const isNew=!s; s=s?clone(s):{id:uid(),unit:'Stk',qty:0,loc:'',min:0,firm:UI.sfirm||FIRMS()[0]}; if(!s.firm) s.firm=FIRMS()[0]; const on=LGON();
+  openSheet({title:isNew?'Lagerartikel anlegen':'Lagerartikel bearbeiten',value:s,fields:[{k:'art',label:'Artikel',req:1,full:1},{k:'firm',label:'Ware gehört',type:'select',options:FIRMS().map(f=>[f,f])},{k:'artNr',label:'Art.-Nr. / EAN'},{k:'unit',label:'Einheit',type:'select',options:UNITS.map(u=>[u,u])},
+    ...(isNew?[{k:'qty',label:'Anfangsbestand',type:'number',step:'any'},...(on?[{k:'binx',label:'Lagerplatz für den Anfangsbestand',type:'html',full:1,html:binPick('nb_bin',pre.bin||'',{allowNone:true,noneLabel:'– ohne Platz (nicht zugeordnet) –'})}]:[])]:isAdmin()?[{k:'qty',label:'Gesamtbestand (Korrektur, nur EP/AvE – besser über Inventur)',type:'number',step:'any'}]:[]),
+    {k:'loc',label:on?'Alter Lagerort (Freitext, nur zur Info)':'Lagerort',list:'locList'},{k:'min',label:'Mindestbestand (Warnung)',type:'number',step:'any'},{k:'notes',label:'Notiz',type:'textarea'}],
+    onSave:v=>{ const q=v.qty===''||v.qty==null?null:+v.qty, old=+s.qty||0, b=$('#nb_bin')?$('#nb_bin').value:''; delete v.qty; delete v.binx; if(b&&!lgUsable(lgNode(b))){ toast('Dieser Lagerplatz ist gesperrt oder stillgelegt.'); return false; } Object.assign(s,v);
+      if(isNew){ s.qty=0; s.moves=[]; s.bins={}; if(q) stockMove(s,q,'Anfangsbestand','','',{t:'anfang',bin:b}); } else if(q!=null&&q!==old&&isAdmin()) stockMove(s,q-old,'Bestandskorrektur','','',{t:'korrektur'});
+      s.min=+s.min||0; put('stock',s); toast('Lagerartikel gespeichert.'); if(pre.bin) setTimeout(()=>lgBinSheet(pre.bin),80); },
     onDelete:isNew||!isAdmin()?null:()=>{ del('stock',s.id); closeSheet(); }});
 }
-function stockHist(id){ const s=S.stock[id]; if(!s) return;
-  openSheet({title:s.art,wide:1,html:`<div class="fld full"><div class="small muted">${esc([s.artNr,s.loc,'Bestand '+qn(s.qty)+' '+(s.unit||'')].filter(Boolean).join(' · '))}</div>
-    <div class="mv-list">${(s.moves||[]).slice().reverse().map(m=>`<div class="mv"><span class="mono small">${esc(stampTxt(m.at))}</span><span class="who-chip">${esc(m.by||'?')}</span><b class="${m.d<0?'neg':'pos'}">${m.d>0?'+':''}${qn(m.d)}</b><span>${esc(m.note||'')}</span></div>`).join('')||'<div class="empty">Noch keine Bewegungen.</div>'}</div></div>`,
-    saveLabel:'Bearbeiten',onSave:()=>{ setTimeout(()=>stockForm(S.stock[id]),60); }});
+function stockHist(id){ const s=S.stock[id]; if(!s) return; closeSheet(); const u=unassigned(s), b=binsOf(s).sort((x,y)=>y[1]-x[1]), w=mayWrite('stock'), on=LGON();
+  openSheet({title:s.art,wide:1,html:`<div class="fld full"><div class="small muted">${esc([firmOf(s),s.artNr].filter(Boolean).join(' · '))}</div></div>
+    <div class="fld full"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Lagerplatz</th><th style="text-align:right">Bestand</th></tr></thead><tbody>${b.map(([x,q])=>`<tr><td><button type="button" class="linkish" data-act="lgBin" data-id="${x}">${esc(lgLabel(x))}</button>${lgBlocked(lgNode(x))?' <span class="pill bad">gesperrt</span>':''}</td><td style="text-align:right">${qn(+q)} ${esc(s.unit||'')}</td></tr>`).join('')}${u>0||!b.length?`<tr class="${on&&u>0?'low':''}"><td>${on?'⚠ Nicht zugeordnet':'Lager'}${s.loc?' <span class="small muted">('+esc(s.loc)+')</span>':''}</td><td style="text-align:right">${qn(Math.max(0,u))} ${esc(s.unit||'')}</td></tr>`:''}${u<0?`<tr class="low"><td colspan="2">Achtung: Auf den Plätzen liegt rechnerisch mehr (${qn(-u)}) als der Gesamtbestand – bitte per Inventur prüfen.</td></tr>`:''}<tr><td><b>Gesamtbestand</b></td><td style="text-align:right"><b>${qn(s.qty)}</b> ${esc(s.unit||'')}</td></tr></tbody></table></div></div>
+    <div class="fld full"><h4 style="margin:6px 0">Bewegungen</h4><div class="tbl-wrap"><table class="tbl mv-tbl"><thead><tr><th>Zeit</th><th>Art</th><th style="text-align:right">Menge</th><th>Von</th><th>Nach</th><th>Projekt / Beleg</th><th>Wer</th><th>Bemerkung</th></tr></thead><tbody>${(s.moves||[]).slice().reverse().map(m=>mvRow(m,null)).join('')||'<tr><td colspan="8"><div class="empty">Noch keine Bewegungen.</div></td></tr>'}</tbody></table></div></div>`,
+    extraBtn:w?`<button type="button" class="btn" data-act="stockIn" data-id="${s.id}">+ Zugang</button><button type="button" class="btn sun" data-act="stockTake" data-id="${s.id}" ${(+s.qty||0)>0?'':'disabled'}>Entnehmen</button>${on?`<button type="button" class="btn" data-act="stockShift" data-id="${s.id}">Umlagern</button>`:''}`:'',
+    saveLabel:isAdmin()?'Bearbeiten':'Schließen',onSave:()=>{ if(isAdmin()) setTimeout(()=>stockForm(S.stock[id]),60); }});
 }
 function pickCard(pk,inProject){
   const done=(pk.items||[]).filter(i=>i.ok).length, tot=(pk.items||[]).length;
   return `<div class="card pick ${pk.status}" data-pickdrop="${pk.id}"><div class="card-h"><div style="min-width:0"><h3>${inProject?'Kommissionierliste':esc(projName(pk.pid)||'ohne Projekt')}</h3><div class="small muted">${esc([fmtD(pk.date),pk.who?'für '+pk.who:'Monteur offen',done+'/'+tot+' gepackt'].join(' · '))}</div></div>
     <span class="pill ${pk.status==='uebergeben'?'ok':pk.status==='gepackt'?'pri':'warn'}">${esc(PICK_ST[pk.status]||pk.status)}</span></div>
-    <div class="pick-items">${(pk.items||[]).map((it,i)=>`<label class="pk ${it.ok?'ok':''}"><input type="checkbox" class="ck" data-chg="pickItem" data-id="${pk.id}" data-i="${i}" ${it.ok?'checked':''}>${isAdmin()?`<span class="pk-q"><input class="inp pk-in" type="number" step="any" value="${esc(it.qty)}" data-chg="pickQty" data-id="${pk.id}" data-i="${i}" aria-label="Menge ${esc(it.art)}"> ${esc(it.unit||'')}</span>`:`<span class="pk-q">${qn(it.qty)} ${esc(it.unit||'')}</span>`}<span class="pk-a">${esc(it.art)}<span class="pk-m">${esc([it.artNr,it.src,it.note].filter(Boolean).join(' · '))}</span></span>${isAdmin()?`<button type="button" class="icon-btn" title="Position entfernen" data-act="pickLineDel" data-id="${pk.id}" data-i="${i}">${ic('x')}</button>`:''}</label>`).join('')||'<div class="empty">Noch keine Artikel.</div>'}</div>
+    <div class="pick-items">${(pk.items||[]).map((it,i)=>`<label class="pk ${it.ok?'ok':''}"><input type="checkbox" class="ck" data-chg="pickItem" data-id="${pk.id}" data-i="${i}" ${it.ok?'checked':''}>${isAdmin()?`<span class="pk-q"><input class="inp pk-in" type="number" step="any" value="${esc(it.qty)}" data-chg="pickQty" data-id="${pk.id}" data-i="${i}" aria-label="Menge ${esc(it.art)}"> ${esc(it.unit||'')}</span>`:`<span class="pk-q">${qn(it.qty)} ${esc(it.unit||'')}</span>`}<span class="pk-a">${esc(it.art)}<span class="pk-m">${esc([it.artNr,it.src,it.note].filter(Boolean).join(' · '))}</span>${pickLocTxt(it)?`<span class="pk-loc">${esc(pickLocTxt(it))}</span>`:''}</span>${isAdmin()?`<button type="button" class="icon-btn" title="Position entfernen" data-act="pickLineDel" data-id="${pk.id}" data-i="${i}">${ic('x')}</button>`:''}</label>`).join('')||'<div class="empty">Noch keine Artikel.</div>'}</div>
     <div class="row pick-a"><button class="btn sm" data-act="pickAddLine" data-id="${pk.id}">${ic('plus')}Artikel</button><button class="btn sm" data-act="pickFromStock" data-id="${pk.id}">${ic('box')}Aus dem Lager</button><span class="spacer"></span>
       <select class="inp sm-sel" data-chg="pickWho" data-id="${pk.id}" aria-label="Monteur">${staffOpts(pk.who)}</select>
       ${pk.status==='offen'?`<button class="btn sm pri" data-act="pickStatus" data-id="${pk.id}" data-v="gepackt">Gepackt</button>`:''}${pk.status!=='uebergeben'?`<button class="btn sun sm" data-act="pickStatus" data-id="${pk.id}" data-v="uebergeben">An Baustelle übergeben</button>`:`<button class="btn ghost sm" data-act="pickStatus" data-id="${pk.id}" data-v="offen">Wieder öffnen</button>`}
@@ -5183,29 +5547,34 @@ function vStock(){
   const tab=UI.stockTab||'bestand', q=(UI.sq||'').toLowerCase();
   const st=arr('stock').sort((a,b)=>String(a.art).localeCompare(String(b.art))), low=st.filter(s=>s.min&&(+s.qty||0)<=s.min).length;
   const picks=arr('picks').sort((a,b)=>(a.status==='uebergeben')-(b.status==='uebergeben')||String(a.date||'').localeCompare(String(b.date||'')));
-  const openP=picks.filter(p=>p.status!=='uebergeben');
-  const sw=`<div class="cal-sw" role="tablist"><button role="tab" class="${tab==='bestand'?'on':''}" data-act="stockTab" data-v="bestand">${ic('box')}Lagerbestand ${st.length}</button><button role="tab" class="${tab==='listen'?'on':''}" data-act="stockTab" data-v="listen">${ic('truck')}Kommissionierlisten ${openP.length}</button></div>`;
-  if(tab==='listen') return head('Lagerverwaltung',openP.length+' offene Kommissionierlisten',`<button class="btn" data-act="pickNew">${ic('plus')}Kommissionierliste</button>`)+sw+
+  const openP=picks.filter(p=>p.status!=='uebergeben'), invOpen=arr('inv').filter(x=>x.status==='offen'||x.status==='pruefen').length;
+  const T=[['bestand','box','Lagerbestand',st.length],['plaetze','stock','Lagerorte & Plätze',lgAll().filter(lgIsBin).length],['listen','truck','Kommissionierlisten',openP.length],['bewegungen','form','Bewegungen',''],['inventur','report','Inventur',invOpen||''],['etiketten','tpl','Etiketten','']];
+  const sw=`<div class="cal-sw st-sw" role="tablist">${T.map(([k,i,l,n])=>`<button role="tab" class="${tab===k?'on':''}" data-act="stockTab" data-v="${k}">${ic(i)}${l}${n!==''?' '+n:''}</button>`).join('')}</div>`;
+  if(tab==='listen') return head('Lagerverwaltung',openP.length+' offene Kommissionierlisten',lgHeadBtns()+`<button class="btn" data-act="pickNew">${ic('plus')}Kommissionierliste</button>`)+sw+
     `<label class="tog-sw"><input type="checkbox" data-chg="pickShowAll" ${UI.pickAll?'checked':''}> Übergebene Listen einblenden</label>`+
     `<div class="pick-layout">${stockSide()}<div class="pick-grid">${(UI.pickAll?picks:openP).map(p=>pickCard(p,false)).join('')||'<div class="card"><div class="empty">Keine offenen Kommissionierlisten. Sie entstehen beim Wareneingang („Baustelle kommissionieren“), bei der Entnahme aus dem Lager oder über „+ Kommissionierliste“.</div></div>'}</div></div>`;
+  if(tab==='plaetze') return vLgPlaces(sw); if(tab==='bewegungen') return vLgMoves(sw); if(tab==='inventur') return vLgInv(sw); if(tab==='etiketten') return vLgLabels(sw);
   return vStockList(st,q,low,sw);
 }
 // Lagerartikel zum Ziehen auf eine Kommissionierliste (Menge wird beim Ablegen abgefragt)
 function stockSide(){
   const st=arr('stock').filter(s=>(+s.qty||0)>0).sort((a,b)=>String(a.art).localeCompare(String(b.art))), q=(UI.ssq||'').toLowerCase();
-  const list=q?st.filter(s=>[s.art,s.artNr,s.loc].join(' ').toLowerCase().includes(q)):st;
+  const list=q?st.filter(s=>[s.art,s.artNr,s.loc,stockBinsShort(s)].join(' ').toLowerCase().includes(q)):st;
   return `<aside class="card stock-side"><div class="card-h"><h3>Lager</h3><span class="small muted">auf eine Liste ziehen</span></div>
     <div style="padding:0 12px 8px"><input class="inp" type="search" placeholder="Artikel suchen" value="${esc(UI.ssq||'')}" data-chg="stockSideQ" aria-label="Lagerartikel suchen" style="width:100%"></div>
-    <div class="ss-list">${list.map(s=>`<div class="ss-it" draggable="true" data-sdrag="${s.id}" title="Auf eine Kommissionierliste ziehen"><span class="ss-grip" aria-hidden="true">⋮⋮</span><span class="ss-a">${esc(s.art)}<span class="pk-m">${esc([firmShort(firmOf(s)),s.loc,qn(s.qty)+' '+(s.unit||'')].join(' · '))}</span></span></div>`).join('')||'<div class="empty">Nichts auf Lager.</div>'}</div></aside>`;
+    <div class="ss-list">${list.map(s=>`<div class="ss-it" draggable="true" data-sdrag="${s.id}" title="Auf eine Kommissionierliste ziehen"><span class="ss-grip" aria-hidden="true">⋮⋮</span><span class="ss-a">${esc(s.art)}<span class="pk-m">${esc([firmShort(firmOf(s)),qn(s.qty)+' '+(s.unit||''),stockBinsShort(s)].filter(Boolean).join(' · '))}</span></span></div>`).join('')||'<div class="empty">Nichts auf Lager.</div>'}</div></aside>`;
 }
 function vStockList(st,q,low,sw){
-  const fr=UI.sfirm||''; let list=q?st.filter(s=>[s.art,s.artNr,s.loc,firmOf(s)].join(' ').toLowerCase().includes(q)):st; if(fr) list=list.filter(s=>firmOf(s)===fr);
+  const fr=UI.sfirm||'', on=LGON(); let list=q?st.filter(s=>[s.art,s.artNr,s.loc,firmOf(s),stockBinsTxt(s)].join(' ').toLowerCase().includes(q)):st; if(fr) list=list.filter(s=>firmOf(s)===fr);
   const chips=`<div class="chips" style="padding:0 16px 10px"><button class="chip ${!fr?'on':''}" data-act="stockFirm" data-v="">Alle Firmen <span class="mono small">${st.length}</span></button>${FIRMS().map(f=>`<button class="chip ${fr===f?'on':''}" data-act="stockFirm" data-v="${esc(f)}">${esc(firmShort(f))} <span class="mono small">${st.filter(s=>firmOf(s)===f).length}</span></button>`).join('')}</div>`;
-  return head('Lagerverwaltung',st.length+' Artikel'+(low?' · '+low+' unter Mindestbestand':''),`<button class="btn" data-act="stockNew">${ic('plus')}Lagerartikel</button>`)+sw+
-   `<div class="card"><div class="card-h"><input class="inp" type="search" style="flex:1" placeholder="Artikel, Art.-Nr., Lagerort oder Firma suchen" value="${esc(UI.sq||'')}" data-chg="stockQ" aria-label="Suchen"></div>${chips}
-    ${list.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Artikel</th><th>Firma</th><th>Art.-Nr.</th><th style="text-align:right">Bestand</th><th>Lagerort</th><th></th></tr></thead><tbody>${list.map(s=>{ const lw=s.min&&(+s.qty||0)<=s.min;
-      return `<tr class="${lw?'low':''}"><td><button class="linkish" data-act="stockHist" data-id="${s.id}">${esc(s.art)}</button></td><td><span class="pill firm-pill" title="${esc(firmOf(s))}">${esc(firmShort(firmOf(s)))}</span></td><td class="mono small">${esc(s.artNr||'')}</td><td style="text-align:right"><b>${qn(s.qty)}</b> ${esc(s.unit||'')}${lw?' <span class="pill bad">min. '+qn(s.min)+'</span>':''}</td><td>${esc(s.loc||'')}</td>
-       <td class="row" style="justify-content:flex-end;flex-wrap:nowrap"><button class="btn sm" data-act="stockIn" data-id="${s.id}">+ Zugang</button><button class="btn sun sm" data-act="stockTake" data-id="${s.id}" ${(+s.qty||0)>0?'':'disabled'}>Entnehmen</button>${isAdmin()?`<button class="icon-btn" title="Bearbeiten" data-act="stockEdit" data-id="${s.id}">${ic('edit')}</button><button class="icon-btn" title="Löschen" data-act="stockDel" data-id="${s.id}">${ic('x')}</button>`:''}</td></tr>`; }).join('')}</tbody></table></div>`
+  const binCell=s=>{ if(!on) return esc(s.loc||''); const b=binsOf(s).sort((x,y)=>y[1]-x[1]), u=unassigned(s);
+    return b.slice(0,3).map(([x,qq])=>`<button type="button" class="lg-chip" data-act="lgBin" data-id="${x}" title="${esc(lgLabel(x))}">${esc(lgCode(x))} <b>${qn(+qq)}</b></button>`).join('')+(b.length>3?`<button type="button" class="lg-chip" data-act="stockHist" data-id="${s.id}">+${b.length-3}</button>`:'')+(u>0?`<span class="lg-chip un" title="Noch keinem Lagerplatz zugeordnet">⚠ ${qn(u)} ohne Platz${s.loc?' · '+esc(s.loc):''}</span>`:'')+(u<0?'<span class="pill bad">prüfen</span>':''); };
+  const w=mayWrite('stock');
+  return head('Lagerverwaltung',st.length+' Artikel'+(low?' · '+low+' unter Mindestbestand':''),lgHeadBtns()+(w?`<button class="btn" data-act="stockNew">${ic('plus')}Lagerartikel</button>`:''))+sw+
+   `<div class="card"><div class="card-h"><input class="inp" type="search" style="flex:1" placeholder="Artikel, Art.-Nr., Lagerplatz oder Firma suchen" value="${esc(UI.sq||'')}" data-chg="stockQ" aria-label="Suchen"></div>${chips}
+    ${list.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Artikel</th><th>Firma</th><th>Art.-Nr.</th><th style="text-align:right">Gesamt</th><th>${on?'Lagerplätze':'Lagerort'}</th><th></th></tr></thead><tbody>${list.map(s=>{ const lw=s.min&&(+s.qty||0)<=s.min;
+      return `<tr class="${lw?'low':''}"><td><button class="linkish" data-act="stockHist" data-id="${s.id}">${esc(s.art)}</button></td><td><span class="pill firm-pill" title="${esc(firmOf(s))}">${esc(firmShort(firmOf(s)))}</span></td><td class="mono small">${esc(s.artNr||'')}</td><td style="text-align:right;white-space:nowrap"><b>${qn(s.qty)}</b> ${esc(s.unit||'')}${lw?' <span class="pill bad">min. '+qn(s.min)+'</span>':''}</td><td class="lg-cell">${binCell(s)}</td>
+       <td class="row" style="justify-content:flex-end;flex-wrap:nowrap">${w?`<button class="btn sm" data-act="stockIn" data-id="${s.id}">+ Zugang</button><button class="btn sun sm" data-act="stockTake" data-id="${s.id}" ${(+s.qty||0)>0?'':'disabled'}>Entnehmen</button>${on?`<button class="btn sm" data-act="stockShift" data-id="${s.id}" ${(+s.qty||0)>0?'':'disabled'}>Umlagern</button>`:''}`:''}${isAdmin()?`<button class="icon-btn" title="Bearbeiten" data-act="stockEdit" data-id="${s.id}">${ic('edit')}</button><button class="icon-btn" title="Löschen" data-act="stockDel" data-id="${s.id}">${ic('x')}</button>`:''}</td></tr>`; }).join('')}</tbody></table></div>`
     :'<div class="empty">Noch nichts im Lager. Ware kommt beim Wareneingang über „Ins Lager“ hinein oder über „Lagerartikel“.</div>'}</div>`;
 }
 
@@ -5388,12 +5757,14 @@ function renderShellBadges(){ const n=chatUnreadAll(); document.querySelectorAll
 
 function dropStockOnPick(sid,pkid){
   const s=S.stock[sid], pk=S.picks[pkid]; if(!s||!pk) return;
-  openSheet({title:'Auf die Kommissionierliste',html:`<div class="fld full"><b>${esc(s.art)}</b> → ${esc(projName(pk.pid))}<div class="small muted">Bestand ${qn(s.qty)} ${esc(s.unit||'')} · ${esc(s.loc||'')}</div></div>
+  if(!mayWrite('stock')) return toast('Keine Berechtigung für Lagerbuchungen.'); const hasB=binsOf(s).length>0;
+  openSheet({title:'Auf die Kommissionierliste',html:`<div class="fld full"><b>${esc(s.art)}</b> → ${esc(projName(pk.pid))}<div class="small muted">Gesamtbestand ${qn(s.qty)} ${esc(s.unit||'')}${!hasB&&s.loc?' · '+esc(s.loc):''}</div></div>
+    ${hasB?`<div class="fld full"><label for="dq_bin">Von Lagerplatz</label>${binPick('dq_bin',bestTake(s),{take:true,stock:s})}</div>`:''}
     <div class="fld"><label for="dq_n">Menge (${esc(s.unit||'Stk')})</label><input id="dq_n" type="number" step="any" min="0" max="${+s.qty}" value="1" inputmode="decimal"></div>`,saveLabel:'Hinzufügen',
-    onSave:()=>{ const n=+$('#dq_n').value||0; if(n<=0){ toast('Bitte eine Menge eintragen.'); return false; } if(n>(+S.stock[sid].qty||0)){ toast('Nur '+qn(S.stock[sid].qty)+' '+(s.unit||'')+' im Lager.'); return false; }
-      const ss=clone(S.stock[sid]); stockMove(ss,-n,'Entnahme für '+projName(pk.pid),pk.pid); put('stock',ss);
+    onSave:()=>{ const n=r3($('#dq_n').value), b=$('#dq_bin')?$('#dq_bin').value:'', cur=S.stock[sid]; if(n<=0){ toast('Bitte eine Menge eintragen.'); return false; } const av=binQty(cur,b); if(n>av){ toast((b?'Auf '+lgLabel(b):'Im Lager')+' sind nur '+qn(av)+' '+(s.unit||'')+'.'); return false; }
+      const ss=clone(cur), from=stockTakeDo(ss,n,b,'Entnahme für '+projName(pk.pid),pk.pid); put('stock',ss);
       const p=clone(S.picks[pkid]); const same=p.items.find(x=>!x.ok&&x.src==='Lager'&&(normNr(x.artNr)&&normNr(x.artNr)===normNr(s.artNr)||x.art===s.art));
-      if(same) same.qty=(+same.qty||0)+n; else p.items.push({art:s.art,artNr:s.artNr||'',unit:s.unit||'Stk',qty:n,ok:false,src:'Lager'}); if(p.status!=='offen') p.status='offen'; put('picks',p);
+      if(same){ same.qty=(+same.qty||0)+n; same.from=(same.from||[]).concat(from); } else p.items.push({art:s.art,artNr:s.artNr||'',unit:s.unit||'Stk',qty:n,ok:false,src:'Lager',from}); if(p.status!=='offen') p.status='offen'; put('picks',p);
       toast(qn(n)+' '+(s.unit||'')+' '+s.art+' auf der Liste '+projName(pk.pid)+'.'); }});
   setTimeout(()=>{ const i=$('#dq_n'); if(i){ i.focus(); i.select(); } },50);
 }
@@ -6178,7 +6549,7 @@ const A = {
  stockTab:d=>{ UI.stockTab=d.v; render(); },
  stockNew:()=>stockForm(null),
  stockHist:d=>stockHist(d.id),
- stockTake:d=>stockTakeSheet(d.id),
+ stockTake:d=>stockTakeSheet(d.id,{bin:d.bin}),
  stockIn:d=>{ const s=S.stock[d.id]; if(!s) return; openSheet({title:'Zugang: '+s.art,fields:[{k:'n',label:'Menge ('+(s.unit||'Stk')+')',type:'number',step:'any',req:1},{k:'note',label:'Bemerkung',ph:'z. B. Rückläufer Baustelle XY'}],saveLabel:'Einbuchen',
    onSave:v=>{ const n=+v.n||0; if(n<=0){ toast('Bitte eine Menge eintragen.'); return false; } const ss=clone(S.stock[d.id]); stockMove(ss,n,v.note||'Zugang'); put('stock',ss); toast(qn(n)+' '+(s.unit||'')+' eingebucht.'); }}); },
  rtAll:d=>{ document.querySelectorAll(`.rt input[type=radio][value=${d.v}]`).forEach(r=>r.checked=true); },
@@ -6188,11 +6559,11 @@ const A = {
    onSave:v=>{ const p=clone(S.picks[d.id]); p.items=(p.items||[]).concat([{art:v.art,artNr:'',unit:v.unit,qty:+v.qty||0,ok:false,src:'manuell',note:v.note||''}]); put('picks',p); }}); },
  pickFromStock:d=>{ const pk=S.picks[d.id]; if(!pk) return; const st=arr('stock').filter(s=>(+s.qty||0)>0).sort((a,b)=>String(a.art).localeCompare(String(b.art)));
    if(!st.length) return toast('Im Lager ist nichts vorrätig.');
-   openSheet({title:'Aus dem Lager für '+projName(pk.pid),wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Menge eintragen – wird aus dem Lager ausgebucht und auf die Liste gesetzt.</div><div class="pfs">${st.map(s=>`<label class="pfs-r"><span><b>${esc(s.art)}</b> <span class="small muted">${esc(s.loc||'')} · Bestand ${qn(s.qty)} ${esc(s.unit||'')}</span></span><input class="inp num" type="number" step="any" min="0" max="${+s.qty}" data-sid="${s.id}" placeholder="0" aria-label="Menge ${esc(s.art)}"></label>`).join('')}</div></div>`,saveLabel:'Entnehmen',
-     onSave:()=>{ const take=[...document.querySelectorAll('.pfs input[data-sid]')].map(i=>({s:S.stock[i.dataset.sid],n:+i.value||0})).filter(x=>x.n>0); if(!take.length){ toast('Bitte bei mindestens einem Artikel eine Menge eintragen.'); return false; }
-       const over=take.find(x=>x.n>(+x.s.qty||0)); if(over){ toast('Nur '+qn(over.s.qty)+' '+(over.s.unit||'')+' '+over.s.art+' im Lager.'); return false; }
-       take.forEach(x=>{ const ss=clone(x.s); stockMove(ss,-x.n,'Entnahme für '+projName(pk.pid),pk.pid); put('stock',ss); });
-       addToPick(pk.pid,take.map(x=>({art:x.s.art,artNr:x.s.artNr,unit:x.s.unit,qty:x.n,src:'Lager'})));
+   openSheet({title:'Aus dem Lager für '+projName(pk.pid),wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Menge eintragen – wird aus dem Lager ausgebucht und auf die Liste gesetzt.</div><div class="pfs">${st.map(s=>`<label class="pfs-r"><span><b>${esc(s.art)}</b> <span class="small muted">${esc(firmShort(firmOf(s)))} · Bestand ${qn(s.qty)} ${esc(s.unit||'')}${binsOf(s).length?'':s.loc?' · '+esc(s.loc):''}</span>${binsOf(s).length?`<select class="inp pfs-b" data-sid="${s.id}" aria-label="Lagerplatz ${esc(s.art)}">${binOpts(bestTake(s),{take:true,stock:s})}</select>`:''}</span><input class="inp num" type="number" step="any" min="0" max="${+s.qty}" data-sid="${s.id}" placeholder="0" aria-label="Menge ${esc(s.art)}"></label>`).join('')}</div></div>`,saveLabel:'Entnehmen',
+     onSave:()=>{ const take=[...document.querySelectorAll('.pfs input[data-sid]')].map(i=>({s:S.stock[i.dataset.sid],n:r3(i.value),b:(document.querySelector(`.pfs-b[data-sid="${i.dataset.sid}"]`)||{}).value||''})).filter(x=>x.n>0); if(!take.length){ toast('Bitte bei mindestens einem Artikel eine Menge eintragen.'); return false; }
+       const over=take.find(x=>x.n>binQty(x.s,x.b)); if(over){ toast((over.b?'Auf '+lgLabel(over.b):'Im Lager')+' sind nur '+qn(binQty(over.s,over.b))+' '+(over.s.unit||'')+' '+over.s.art+'.'); return false; }
+       take.forEach(x=>{ const ss=clone(S.stock[x.s.id]); x.from=stockTakeDo(ss,x.n,x.b,'Entnahme für '+projName(pk.pid),pk.pid); put('stock',ss); });
+       addToPick(pk.pid,take.map(x=>({art:x.s.art,artNr:x.s.artNr,unit:x.s.unit,qty:x.n,src:'Lager',from:x.from})));
        toast(take.length+' Artikel aus dem Lager entnommen.'); }}); },
  pickStatus:d=>{ const p=clone(S.picks[d.id]); if(!p) return; p.status=d.v; if(d.v==='uebergeben'){ p.doneAt=new Date().toISOString(); p.doneBy=meK(); p.items=(p.items||[]).map(i=>({...i,ok:true})); } put('picks',p); toast(d.v==='uebergeben'?'An Baustelle übergeben.':d.v==='gepackt'?'Als gepackt markiert.':'Liste wieder geöffnet.'); },
  pickDel:d=>{ if(!isAdmin()) return; const p=S.picks[d.id]; if(!p) return; openSheet({title:'Kommissionierliste löschen?',html:`<div class="fld full"><b>${esc(projName(p.pid))}</b> · ${(p.items||[]).length} Artikel<div class="small muted" style="margin-top:6px">Aus dem Lager entnommene Mengen werden dabei nicht zurückgebucht.</div></div>`,saveLabel:'Ja, löschen',onSave:()=>{ del('picks',d.id); }}); },
@@ -6518,7 +6889,7 @@ setTimeout(()=>checkWeekPrint(),15000);
 
 /* ========== Persönlicher Wochenplan für Monteure (Druck, eine Seite je Person) ========== */
 // Woher kommt das Material? Lagerartikel → Lagerort (+ Firma), sonst Herkunft der Kommissionierliste
-function matSource(it){ const s=stockFind(it.art,it.artNr); if(s) return [s.loc||'Lager',firmOf(s)!==FIRMS()[0]?firmShort(firmOf(s)):''].filter(Boolean).join(' · ');
+function matSource(it){ const s=stockFind(it.art,it.artNr); if(s) return [stockBinsShort(s)||s.loc||'Lager',firmOf(s)!==FIRMS()[0]?firmShort(firmOf(s)):''].filter(Boolean).join(' · ');
   return it.src||''; }
 function monteurPage(name,ws){
   const days=[0,1,2,3,4,5].map(i=>addDays(ws,i)), end=days[5], all=calItems(ws,end).filter(x=>itemHas(x,name)&&x.k!=='todo');
@@ -6604,7 +6975,7 @@ function gsearch(q){
   Object.values(S.priv||{}).forEach(t=>{ if(hit([t.title,t.firm,t.notes].join(' '))) out.push({g:'Private To-Dos',t:t.title,m:t.firm||'',act:'nav',v:'private'}); });
   arr('orders').forEach(o=>{ const s=[o.supplier,o.no,o.buyer,projName(o.pid),...(o.items||[]).map(i=>[i.art,i.artNr].join(' '))].join(' '); if(hit(s)) out.push({g:'Bestellungen',t:(o.supplier||'Bestellung')+(o.no?' · '+o.no:''),m:[projName(o.pid),fmtD(o.ordered),orderState(o).k].filter(Boolean).join(' · '),act:'editOrder',id:o.id}); });
   allFiles().forEach(f=>{ if(hit([f.name,f.orig,f.from,f.subject,f.text,projName(f.pid)].join(' '))) out.push({g:'Dateien',t:f.name,m:[FILE_KINDS[f.kind],projName(f.pid),fmtD(f.date)].filter(Boolean).join(' · '),act:f.virtual?f.vact:f.asset?'fileAsset':'fileOpen',id:f.virtual?f.vid:f.asset?f.asset:f.id}); });
-  arr('stock').forEach(s=>{ if(hit([s.art,s.artNr,s.loc].join(' '))) out.push({g:'Lager',t:s.art,m:[s.artNr,s.loc,'Bestand '+qn(s.qty)+' '+(s.unit||'')].filter(Boolean).join(' · '),act:'stockHist',id:s.id}); });
+  arr('stock').forEach(s=>{ if(hit([s.art,s.artNr,s.loc,stockBinsShort(s)].join(' '))) out.push({g:'Lager',t:s.art,m:[s.artNr,stockBinsShort(s)||s.loc,'Bestand '+qn(s.qty)+' '+(s.unit||'')].filter(Boolean).join(' · '),act:'stockHist',id:s.id}); });
   arr('events').forEach(e=>{ if(hit([e.title,e.place,e.notes,projName(e.pid)].join(' '))) out.push({g:'Termine',t:e.title,m:[fmtD(e.date),projName(e.pid)].filter(Boolean).join(' · '),act:'editEvent',id:e.id}); });
   arr('plan').forEach(w=>(w.entries||[]).forEach((e,i)=>{ if(hit([e.t,e.note,...evWhos(e),projName(e.pid)].join(' '))) out.push({g:'Wochenplanung',t:e.t,m:[fmtD(e.d),e.who?evWhos(e).map(shortWho).join(', '):'',projName(e.pid)].filter(Boolean).join(' · '),act:'editPlan',id:w.id+'|'+i}); }));
   arr('reports').forEach(r=>{ if(hit([projName(r.pid),r.work,r.plan,r.address].join(' '))) out.push({g:'Tagesrapporte',t:projName(r.pid)||'Rapport',m:fmtD(r.date),act:'editReport',id:r.id}); });
@@ -6831,7 +7202,7 @@ function aiSnapshot(q,hist){
   const ev=arr('events').filter(e=>e.date>=addDays(t0,-7)&&e.date<=addDays(t0,45)).sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||''))); if(ev.length) out.push('TERMINE (id | Datum | Uhrzeit | Titel | Art | wer | Projekt | Ort):\n'+ev.map(e=>[e.id,e.date,e.time||'',e.title||'',EV_KINDS[e.kind]||'',evWhos(e).map(shortWho).join(', '),projName(e.pid)||'',e.place||''].join(' | ')).join('\n'));
   const oo=arr('orders').filter(o=>orderState(o).open); if(oo.length) out.push('OFFENE BESTELLUNGEN (id | Lieferant | Projekt | bestellt | Liefertermin | Status | bestellt über | Positionen):\n'+oo.map(o=>[o.id,o.supplier||'',projName(o.pid)||'-',o.ordered||'',o.delivery||'',orderState(o).k,o.buyer||'',(o.items||[]).slice(0,5).map(i=>(i.qty||'')+' '+(i.unit||'')+' '+i.art).join('; ')].join(' | ')).join('\n'));
   const wk=arr('plan').flatMap(w=>(w.entries||[]).filter(e=>e.d>=mon&&e.d<=addDays(mon,11)).map(e=>[e.d,e.who?evWhos(e).map(shortWho).join(', '):'-',e.t||'',projName(e.pid)||''].join(' | '))); if(wk.length) out.push('WOCHENPLANUNG diese + nächste Woche (Datum | wer | was | Projekt):\n'+wk.join('\n'));
-  const st=arr('stock').filter(s=>+s.qty>0).slice(0,80); if(st.length) out.push('LAGER (Artikel | Bestand | Lagerort):\n'+st.map(s=>[s.art,qn(s.qty)+' '+(s.unit||''),s.loc||''].join(' | ')).join('\n'));
+  const st=arr('stock').filter(s=>+s.qty>0).slice(0,80); if(st.length) out.push('LAGER (Artikel | Bestand | Lagerplätze):\n'+st.map(s=>[s.art,qn(s.qty)+' '+(s.unit||''),stockBinsShort(s)||s.loc||''].join(' | ')).join('\n'));
   cand.forEach(p=>out.push(`DETAILS ${p.name} (${p.id}):\nNotizen je Tag (neueste zuerst):\n${diaryDays(p).slice(0,10).map(x=>'- '+(x.d||'ohne Datum')+': '+x.items.map(e=>(e.by?e.by+': ':'')+dyPlain(e)).join(' | ').slice(0,900)).join('\n')||'- keine'}\nAlle To-Dos inkl. erledigte:\n${arr('tasks').filter(t=>t.pid===p.id).map(t=>'- '+(t.done?'✓ ':'☐ ')+t.title+(t.who?' ('+shortWho(t.who)+')':'')+(t.due?' fällig '+t.due:'')+((t.upd2||[]).length?' · Updates: '+[...t.upd2].sort((a,b)=>updKey(a).localeCompare(updKey(b))).map(u=>u.d+' '+(u.by||'')+': '+u.t).join(' / ').slice(0,500):'')).join('\n')||'- keine'}${p.questions?'\nOffene Fragen: '+p.questions.slice(0,600):''}`));
   return out.join('\n\n').slice(0,45000);
 }
@@ -7792,9 +8163,11 @@ function vStamm(){
   const cats=[...new Set(all.map(x=>x.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'de')), lim=UI.stLim||100;
   const cities=k==='artikel'?[]:Object.entries(all.reduce((m,x)=>{ const c=String(x.city||'').split(',')[0].trim(); if(c) m[c]=(m[c]||0)+1; return m; },{})).sort((a,b)=>b[1]-a[1]).slice(0,40);
   const lnkTxt=n=>!n?'':k==='kunden'?n+' Projekt'+(n>1?'e':''):k==='lieferanten'?n+' Bestellung'+(n>1?'en':''):'im Lager';
-  const row=x=>{ const n=links(x), d=dup.byId[x.id]!=null; return `<tr class="clickable ${d?'st-dup':''}" data-act="stEdit" data-k="${k}" data-id="${esc(x.id)}">${D.cols.map(([c])=>`<td class="${c==='nr'||c==='price'?'mono':''}">${c==='name'?`<b>${esc(x.name||'')}</b>${d?' <span class="pill warn" title="möglicherweise doppelt">doppelt?</span>':''}`:c==='price'&&x.price!=null&&x.price!==''?esc(nf(+x.price,2)):c[0]==='_'?artCell(x,c):esc(x[c]||'')}</td>`).join('')}<td class="small muted">${lnkTxt(n)}</td></tr>`; };
+  const adm=isAdmin(), sel=new Set(((UI.stSel||{})[k]||[]).filter(id=>(S[k]||{})[id])), shown=list.slice(0,lim); ST_SHOWN={k,page:shown.map(x=>x.id),all:list.map(x=>x.id)};
+  const row=x=>{ const n=links(x), d=dup.byId[x.id]!=null; return `<tr class="clickable ${d?'st-dup':''}${sel.has(x.id)?' st-on':''}" data-act="stEdit" data-k="${k}" data-id="${esc(x.id)}">${adm?`<td class="st-ck" data-act="stSel" data-k="${k}" data-id="${esc(x.id)}"><input type="checkbox" class="ck" ${sel.has(x.id)?'checked':''} aria-label="${esc(x.name||'')} auswählen"></td>`:''}${D.cols.map(([c])=>`<td class="${c==='nr'||c==='price'?'mono':''}">${c==='name'?`<b>${esc(x.name||'')}</b>${d?' <span class="pill warn" title="möglicherweise doppelt">doppelt?</span>':''}`:c==='price'&&x.price!=null&&x.price!==''?esc(nf(+x.price,2)):c[0]==='_'?artCell(x,c):esc(x[c]||'')}</td>`).join('')}<td class="small muted">${lnkTxt(n)}</td></tr>`; };
   const filterBar=`<div class="chips st-f">${ST_FILTERS[k].map(([f,l])=>`<button class="chip ${ff===f?'on':''}" data-act="stF" data-f="${f}">${l}${f==='dup'?` <span class="mono small">${dup.groups.reduce((a,g)=>a+g.items.length,0)}</span>`:''}</button>`).join('')}${ff||cf||city||q?`<button class="chip" data-act="stF" data-f="" title="Alle Filter zurücksetzen">✕ zurücksetzen</button>`:''}</div>`;
-  const body=ff==='dup'?stDupView(k,dup,q):`<div class="card"><div class="tbl-wrap"><table class="tbl st-tbl"><thead><tr>${D.cols.map(([,l])=>`<th>${l}</th>`).join('')}<th></th></tr></thead><tbody>${list.slice(0,lim).map(row).join('')||`<tr><td colspan="${D.cols.length+1}"><div class="empty">${all.length?'Keine Treffer.':'Noch keine '+D.l+'.'}</div></td></tr>`}</tbody></table></div>
+  const selBar=adm&&sel.size&&ff!=='dup'?`<div class="st-selbar"><b>${sel.size.toLocaleString('de-DE')} ausgewählt</b>${list.length>sel.size?`<button class="btn sm" data-act="stSelAll" data-k="${k}" data-all="1">Alle ${list.length.toLocaleString('de-DE')} Treffer auswählen</button>`:''}<button class="btn sm" data-act="stSelNone" data-k="${k}">Auswahl aufheben</button><span class="spacer"></span><button class="btn sm danger" data-act="stSelDel" data-k="${k}">${ic('x')}Ausgewählte löschen</button></div>`:'';
+  const body=ff==='dup'?stDupView(k,dup,q):selBar+`<div class="card"><div class="tbl-wrap"><table class="tbl st-tbl"><thead><tr>${adm?`<th class="st-ck" data-act="stSelAll" data-k="${k}"><input type="checkbox" class="ck" ${shown.length&&shown.every(x=>sel.has(x.id))?'checked':''} aria-label="Alle auf dieser Seite auswählen"></th>`:''}${D.cols.map(([,l])=>`<th>${l}</th>`).join('')}<th></th></tr></thead><tbody>${shown.map(row).join('')||`<tr><td colspan="${D.cols.length+(adm?2:1)}"><div class="empty">${all.length?'Keine Treffer.':'Noch keine '+D.l+'.'}</div></td></tr>`}</tbody></table></div>
     ${list.length>lim?`<div style="padding:10px 16px"><button class="btn sm" data-act="stMore">+ weitere ${Math.min(200,list.length-lim)} von ${list.length-lim} anzeigen</button></div>`:''}</div>`;
   return head('Stammdaten · '+D.l,all.length.toLocaleString('de-DE')+' '+D.l+(ff||cf||city||q?' · '+list.length.toLocaleString('de-DE')+' gefiltert':'')+(MODE==='cloud'&&!all.length?' · wird geladen …':''),`<button class="btn pri" data-act="stEdit" data-k="${k}">${ic('plus')}${D.one} anlegen</button>`)+
     `<div class="chips">${Object.entries(ST_DEF).map(([kk,dd])=>`<button class="chip ${kk===k?'on':''}" data-act="nav" data-v="st:${kk}">${dd.l} <span class="mono small">${Object.keys(S[kk]||{}).length}</span></button>`).join('')}</div>
@@ -7804,6 +8177,16 @@ function vStamm(){
       <select class="catsel" data-chg="stSort" aria-label="Sortieren"><option value="name" ${sk==='name'?'selected':''}>Name A–Z</option><option value="nr" ${sk==='nr'?'selected':''}>Nummer (neueste zuerst)</option><option value="links" ${sk==='links'?'selected':''}>${k==='kunden'?'meiste Projekte':k==='lieferanten'?'meiste Bestellungen':'im Lager zuerst'}</option></select></div>
     ${filterBar}${body}`;
 }
+// Mehrfachauswahl (nur Admins, wie das einzelne Löschen): Häkchen je Zeile, „Alle auf dieser Seite“ / „Alle Treffer“, dann gemeinsam löschen
+var ST_SHOWN={k:'',page:[],all:[]};
+queueMicrotask(()=>Object.assign(A,{
+ stSel:d=>{ if(!isAdmin()) return; const m={...(UI.stSel||{})}, s=new Set(m[d.k]||[]); if(s.has(d.id)) s.delete(d.id); else s.add(d.id); m[d.k]=[...s]; UI.stSel=m; render(); },
+ stSelAll:d=>{ if(!isAdmin()||ST_SHOWN.k!==d.k) return; const m={...(UI.stSel||{})}, s=new Set(m[d.k]||[]), ids=d.all?ST_SHOWN.all:ST_SHOWN.page;
+   if(!d.all&&ids.length&&ids.every(id=>s.has(id))) ids.forEach(id=>s.delete(id)); else ids.forEach(id=>s.add(id)); m[d.k]=[...s]; UI.stSel=m; render(); },
+ stSelNone:d=>{ const m={...(UI.stSel||{})}; m[d.k]=[]; UI.stSel=m; render(); },
+ stSelDel:d=>{ if(!isAdmin()) return; const k=d.k, D=ST_DEF[k], ids=((UI.stSel||{})[k]||[]).filter(id=>(S[k]||{})[id]); if(!ids.length) return; const links=stLinks(k), linked=ids.filter(id=>links(S[k][id])>0).length;
+   openSheet({title:ids.length.toLocaleString('de-DE')+' '+D.l+' löschen?',html:`<div class="fld full"><div>${esc(ids.slice(0,8).map(id=>S[k][id].name||'(ohne Name)').join(', '))}${ids.length>8?' … und '+(ids.length-8).toLocaleString('de-DE')+' weitere':''}</div>${linked?`<div class="banner" style="margin-top:10px">${linked} davon ${k==='kunden'?'hängen an Projekten':k==='lieferanten'?'hängen an Bestellungen':'sind im Lager'}. Projekte, Bestellungen und Lagerbestand bleiben erhalten – nur der Stammdaten-Eintrag verschwindet.</div>`:''}<div class="small muted" style="margin-top:10px">Das lässt sich nicht rückgängig machen. Die Löschung steht im Verlauf.</div></div>`,saveLabel:'Ja, '+ids.length.toLocaleString('de-DE')+' löschen',
+     onSave:()=>{ ids.forEach(id=>del(k,id)); ST_DUP_CACHE={}; stListsDirty=true; const m={...(UI.stSel||{})}; m[k]=[]; UI.stSel=m; toast(ids.length.toLocaleString('de-DE')+' '+D.l+' gelöscht.'); }}); } }));
 // Dopplungen: Gruppen mit Grund; „Zusammenführen“ (leere Felder ergänzen, andere löschen) oder „kein Duplikat“
 function stDupView(k,dup,q){ let gs=dup.groups; if(q) gs=gs.filter(g=>g.items.some(x=>Object.values(x).join(' ').toLowerCase().includes(q)));
   if(!gs.length) return '<div class="card"><div class="empty"><b>Keine möglichen Dopplungen gefunden</b>Geprüft werden Name, E-Mail, Telefon'+(k==='artikel'?' und Lieferanten-Artikelnummer':' und Adresse')+'.</div></div>';
