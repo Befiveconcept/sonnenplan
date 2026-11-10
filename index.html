@@ -5451,7 +5451,8 @@ function stockShiftSheet(sid,pre){ pre=pre||{}; const s=S.stock[sid]; if(!s) ret
 /* ---------- Lagerorte & Lagerplätze verwalten ---------- */
 const lgInc=(seg,i,cnt)=>{ if(cnt<=1) return seg; const m=String(seg||'').match(/^(.*?)(\d+)$/); if(!m) return (seg||'')+String(i+1).padStart(2,'0'); return m[1]+String(+m[2]+i).padStart(m[2].length,'0'); };
 // Klartext je Stufe: Standort/Bereich mit Namen, sonst „Regal R01“, „Ebene E02“, „Platz P03“ oder eigener Name + Kürzel („Schrank S01“, „Fach 05“)
-const lgPart=n=>{ if(!n) return ''; if(n.kind==='standort'||n.kind==='bereich') return n.name||n.seg||''; const nm=String(n.name||'').trim(), sg=String(n.seg||''); if(nm&&sg&&nm.toLowerCase().includes(sg.toLowerCase())) return nm; return (nm||LG_SHORT[n.kind])+(sg?' '+sg:''); };
+// Klartext je Ebene: eigener Name, wenn vergeben (der Code steht ja schon daneben) – sonst „Regal R01“ usw.
+const lgPart=n=>{ if(!n) return ''; if(n.kind==='standort'||n.kind==='bereich') return n.name||n.seg||''; const nm=String(n.name||'').trim(), sg=String(n.seg||''); if(nm) return nm; return LG_SHORT[n.kind]+(sg?' '+sg:''); };
 const lgPlainIn=(M,id)=>lgPathIn(M,id).map(lgPart).filter(Boolean).join(' / ');
 const lgPlain=id=>lgPlainIn(S.lager||{},id);
 // Kürzel-Vorschlag: Standort/Bereich aus dem Namen (Bornheim → BO, Elektro-Kleinteile → EK), sonst nächste freie Nummer (R03, E02, P05)
@@ -5561,12 +5562,18 @@ async function lgLabelDoc(ids,screen){ const sz=LBL_SIZES[UI.lblSize]||LBL_SIZES
   const qrSvg=t=>{ let q; try{ q=qrcode(0,'M'); q.addData(t,'Alphanumeric'); q.make(); }catch(e){ q=qrcode(0,'M'); q.addData(t); q.make(); } return q.createSvgTag({cellSize:4,margin:0,scalable:true}); };
   const barSvg=t=>{ const s=document.createElementNS('http://www.w3.org/2000/svg','svg'); JsBarcode(s,t,{format:'CODE128',displayValue:false,margin:0,height:50,width:2}); const w=parseFloat(s.getAttribute('width'))||200, h=parseFloat(s.getAttribute('height'))||50; s.setAttribute('viewBox','0 0 '+w+' '+h); s.setAttribute('preserveAspectRatio','none'); s.removeAttribute('width'); s.removeAttribute('height'); s.removeAttribute('style'); return s.outerHTML; };
   const H=sz.h, W=sz.w, pad=Math.max(1.5,H*0.07);
-  const one=id=>{ const code=lgCode(id), pay=lgPayload(id), plain=lgPlain(id), textW=mode==='bar'?W-2*pad:W-H-pad, fs=Math.max(2.4,Math.min(H*(mode==='both'?0.17:0.2),textW/Math.max(4,code.length)*1.72));
-    return `<div class="l"><div class="in" style="padding:${pad}mm">${mode!=='bar'?`<div class="q" style="width:${(H-2*pad).toFixed(2)}mm;height:${(H-2*pad).toFixed(2)}mm">${qrSvg(pay)}</div>`:''}<div class="t"><div class="c" style="font-size:${fs.toFixed(2)}mm">${esc(code)}</div><div class="s">${esc(plain)}</div>${mode!=='qr'?`<div class="b" style="height:${(H*(mode==='both'?0.24:0.32)).toFixed(1)}mm">${barSvg(pay)}</div>`:''}<div class="id">${esc(pay)}</div></div></div></div>`; };
+  // Code und Klartext immer vollständig: QR höchstens 40 % der Breite, Schriftgrößen werden an den freien Platz angepasst (nichts abgeschnitten)
+  const qs=Math.min(H-2*pad,W*0.4), idFs=Math.max(1.5,Math.min(2.1,H*0.055));
+  const fitFs=(txt,w,h,max,min)=>{ const L=String(txt||'').length||1; for(let f=max;f>min;f-=0.05){ const lines=Math.ceil(L*0.56*f/w*1.12); if(lines*f*1.15<=h) return f; } return min; };
+  const one=id=>{ const code=lgCode(id), pay=lgPayload(id), plain=lgPath(id).map(lgPart).filter(Boolean).join(' - '), textW=mode==='bar'?W-2*pad:W-qs-3*pad;
+    const fs=Math.max(1.8,Math.min(H*(mode==='both'?0.17:0.2),textW/(Math.max(4,code.length)*0.7)));
+    const barH=mode==='qr'?0:H*(mode==='both'?0.24:0.32), restH=H-2*pad-fs*1.1-idFs*1.3-barH-1.5;
+    const sFs=fitFs(plain,textW,Math.max(2,restH),Math.min(H*0.13,4.2),1.4);
+    return `<div class="l"><div class="in" style="padding:${pad}mm">${mode!=='bar'?`<div class="q" style="width:${qs.toFixed(2)}mm;height:${qs.toFixed(2)}mm">${qrSvg(pay)}</div>`:''}<div class="t"><div class="c" style="font-size:${fs.toFixed(2)}mm">${esc(code)}</div><div class="s" style="font-size:${sFs.toFixed(2)}mm">${esc(plain)}</div>${mode!=='qr'?`<div class="b" style="height:${barH.toFixed(1)}mm">${barSvg(pay)}</div>`:''}<div class="id">${esc(pay)}</div></div></div></div>`; };
   const css=`*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,Helvetica,sans-serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .l{width:${W}mm;height:${H}mm;overflow:hidden;break-inside:avoid;background:#fff}.in{display:flex;gap:${pad.toFixed(2)}mm;height:100%;align-items:center}.q{flex:none}.q svg,.q img{width:100%;height:100%;display:block}
     .t{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:.5mm;height:100%;overflow:hidden}.c{font-weight:700;line-height:1;white-space:nowrap;overflow:hidden}
-    .s{font-size:${Math.max(1.9,Math.min(3,H*0.085)).toFixed(2)}mm;line-height:1.15;overflow:hidden;display:-webkit-box;-webkit-line-clamp:${H>=45?3:2};-webkit-box-orient:vertical}
+    .s{line-height:1.15;overflow-wrap:anywhere;hyphens:auto}
     .b svg{width:100%;height:100%;display:block}.id{font-size:${Math.max(1.5,Math.min(2.1,H*0.055)).toFixed(2)}mm;color:#444;letter-spacing:.02em}
     ${sz.cols?`@page{size:A4;margin:0}.pg{width:210mm;height:297mm;padding:${((297-sz.rows*H)/2).toFixed(2)}mm ${((210-sz.cols*W)/2).toFixed(2)}mm;display:grid;grid-template-columns:repeat(${sz.cols},${W}mm);grid-auto-rows:${H}mm;align-content:start;break-after:page;background:#fff}`:`@page{size:${W}mm ${H}mm;margin:0}@media print{.l{break-after:page}}`}
     @media screen{body{background:#e4e4e4;padding:12px}.l{display:inline-block;vertical-align:top;margin:0 10px 10px 0;box-shadow:0 0 0 1px #bbb}.pg{margin:0 auto 14px;box-shadow:0 1px 6px rgba(0,0,0,.25)}.pg .l{margin:0;box-shadow:inset 0 0 0 .5px #ccc}}`;
