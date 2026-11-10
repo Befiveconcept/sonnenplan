@@ -710,6 +710,7 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .tabbar button{position:relative}.tb-dot{position:absolute;top:4px;left:calc(50% + 6px);min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:#E5383B;color:#fff;font-size:10.5px;font-weight:700;line-height:17px;text-align:center}
 .menu-row{display:flex;align-items:stretch}.menu-row>button:first-child{flex:1;min-width:0}
 .menu .menu-x{flex:none;width:30px;justify-content:center;padding:0;color:var(--muted);font-size:17px;font-weight:700;opacity:.45}.menu .menu-row:hover .menu-x{opacity:1}.menu .menu-x:hover{color:var(--ink);background:var(--sunken)}
+.p-lock{display:inline-flex;vertical-align:middle;margin-left:.35em;color:var(--muted);line-height:0}.p-lock svg{width:.8em;height:.8em;min-width:12px;min-height:12px}h1 .p-lock{color:var(--ink)}
 .st-sw{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin}.st-sw button{white-space:nowrap}
 .bp{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.bp>select{flex:2 1 220px;min-width:0}.bp .bp-code{flex:1 1 150px;min-width:0}.bp .btn svg,.btn>svg{width:16px;height:16px}
 .lg-tree{padding:2px 8px 10px}.lg-row{display:flex;align-items:center;gap:2px;padding-left:calc(var(--dep)*18px)}.lg-main{flex:1;min-width:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:9px 6px;font:inherit;color:var(--ink);cursor:pointer;border-radius:6px}.lg-main:hover{background:var(--sunken)}
@@ -2913,6 +2914,8 @@ const projOwner=p=>String(p.privBy||p.by||'');
 // Sichtbarkeit (p.vis): leer/all = alle, me = niemand außer der Person, die es eingeschränkt hat, sel = zusätzlich die angehakten Mitarbeiter (share). Unabhängig von der Kategorie.
 const projRestr=p=>!!p&&(p.vis==='me'||p.vis==='sel'||p.cat==='internp');
 function projVis(p){ if(!projRestr(p)) return true; if(!ME) return false; const k=meK().toLowerCase(); return projOwner(p).toLowerCase()===k||(p.vis!=='me'&&(p.share||[]).some(n=>shortWho(n).toLowerCase()===k)); }
+// Kleines Schloss neben dem Titel eingeschränkter (interner) Projekte; Tooltip sagt, wer es sieht
+const projLock=p=>{ if(!projRestr(p)) return ''; const o=projOwner(p), sh=p.vis==='me'?[]:(p.share||[]).map(shortWho); return `<span class="p-lock" title="${esc('Internes Projekt – sichtbar nur für '+[o,...sh].filter(Boolean).join(', '))}" aria-label="Internes Projekt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>`; };
 const projVisId=id=>{ const p=id&&S.projects[id]; return !p||projVis(p); };
 const PID_COLLS=new Set(['tasks','orders','events','offers','reports','sales','files','meetings','psum','pms']);
 const arr = c=>{ const v=Object.values(S[c]||{}); if(c==='projects') return v.filter(projVis); if(PID_COLLS.has(c)&&S.projects&&Object.values(S.projects).some(projRestr)) return v.filter(x=>!x||!x.pid||projVisId(x.pid)); return v; };
@@ -3433,7 +3436,7 @@ function whoChips(pid){
 function projRow(p){
   const pp=pipe(p), cat=catOf(p), nw=nowOf(p), active=['planung','laufend'].includes(cat);
   return `<div class="prow" data-act="openProject" data-id="${p.id}">
-    <div style="min-width:0"><div class="nm">${esc(p.name)}</div><div class="sub"><span class="type t-${p.type}">${TYPES[p.type]||''}</span> · ${esc([p.nr,p.pl,p.place,sizeLbl(p)].filter(Boolean).join(' · '))}</div></div>
+    <div style="min-width:0"><div class="nm">${esc(p.name)}${projLock(p)}</div><div class="sub"><span class="type t-${p.type}">${TYPES[p.type]||''}</span> · ${esc([p.nr,p.pl,p.place,sizeLbl(p)].filter(Boolean).join(' · '))}</div></div>
     <div class="c-strip">${mstrip(p)}<div class="phase-lbl">${pp.last?esc(pp.label)+(pp.val?' · '+esc(msVal(pp.val)):''):'noch kein Status'}</div></div>
     <div class="next">${nw?`<span class="stand">${nw.d?`<b>${esc(fmtD(nw.d).slice(3))}</b> `:''}${esc(nw.t)}</span>`:'<span class="muted small">Noch kein Stand notiert</span>'}${active?`<span class="tasks-line">${whoChips(p.id)}</span>`:''}</div>
     <div class="pct"><span class="pill ${CAT_CLS[cat]}">${CATS[cat]}</span>${(()=>{ const ot=openTasks(p.id); return ot.length?`<div class="nx-lbl" title="Aktuelle Aufgabe">→ ${esc(ot[0].title)} · ${esc(ot[0].ext||(ot[0].who?shortWho(ot[0].who):'offen'))}${ot.length>1?' (+'+(ot.length-1)+')':''}</div>`:active&&pp.next?`<div class="nx-lbl muted" title="Keine offene Aufgabe – Standard-Next-Step">→ ${esc(pp.nextLabel)}</div>`:''; })()}${p.wartung?'<div class="small muted" style="margin-top:3px">Wartung</div>':''}</div></div>`;
@@ -3535,6 +3538,7 @@ function filterProjects(cat){
     const c=catOf(p);
     if(cat==='wartung'){ if(!p.wartung) return false; }
     else if(cat==='aktiv'){ if(!['planung','laufend'].includes(c)) return false; }
+    else if(cat==='intern'){ if(!projRestr(p)) return false; }
     else if(cat&&CATS[cat]&&c!==cat) return false;
     if(cat==='alle'||cat==='aktiv'||!cat){ if(UI.hide.erledigt&&c==='erledigt'&&!(p.wartung&&!UI.hide.wartung)) return false; if(UI.hide.abgesagt&&c==='abgesagt') return false; if(UI.hide.wartung&&p.wartung) return false; }
     if(UI.projType&&p.type!==UI.projType) return false;
@@ -3576,7 +3580,7 @@ function projCard(p,big){
   return `<article class="pcard c-${cat} ${p.cover?'has-cover':''}" data-act="openProject" data-id="${p.id}" tabindex="0"${own?` data-drag="proj:${p.id}" data-drop-proj="${p.id}"`:''}>${p.cover?`<div class="pc-cover"><img data-blob="${esc(p.cover)}" alt="" loading="lazy"></div>`:''}
     <div class="pc-top"><span class="type t-${p.type} hot" data-act="openAt" data-id="${p.id}" data-at="infos" title="Projektdaten öffnen">${TYPES[p.type]||''}</span><span class="pill ${CAT_CLS[cat]}">${CATS[cat]}</span></div>
     <div class="pc-head"><div class="ring hot" data-act="openAt" data-id="${p.id}" data-at="status" title="Statusverlauf öffnen" style="--p:${pct}" role="img" aria-label="${pp.work} von ${pp.total} Statusschritten"><span>${pp.work}<small>/${pp.total}</small></span></div>
-      <div style="min-width:0"><h3>${esc(p.name)}</h3><div class="sub hot" data-act="openAt" data-id="${p.id}" data-at="infos" title="Projektdaten öffnen">${esc([p.nr,p.pl?shortWho(p.pl):''].filter(Boolean).join(' · ')||'Projektdaten ergänzen')}</div></div></div>
+      <div style="min-width:0"><h3>${esc(p.name)}${projLock(p)}</h3><div class="sub hot" data-act="openAt" data-id="${p.id}" data-at="infos" title="Projektdaten öffnen">${esc([p.nr,p.pl?shortWho(p.pl):''].filter(Boolean).join(' · ')||'Projektdaten ergänzen')}</div></div></div>
     <div class="pc-st hot" data-act="openAt" data-id="${p.id}" data-at="notes" title="Notizen öffnen"><span class="eyebrow">Aktueller Stand${sv&&sv.d?' · '+esc(fmtD(sv.d).slice(3)):''}${sv&&sv.by?' · '+esc(sv.by):''}</span><b class="pc-note" ${sv&&sv.ai?'title="Von der KI aus den neuesten Einträgen zusammengefasst"':''}>${sv?esc(sv.t):'<span class="muted">Noch keine Notiz – hier klicken und schreiben</span>'}</b><span class="small muted pc-step" data-act="openAt" data-id="${p.id}" data-at="status">Ablauf: ${pp.last?esc(pp.label):'noch kein Schritt'}</span></div>
     ${(()=>{ const ot=openTasks(p.id); if(ot.length) return `<div class="pc-nx hot" data-act="openAt" data-id="${p.id}" data-at="tasks" title="Offene To-Dos"><span>Offene To-Dos · ${ot.length}</span>${ot.slice(0,big?6:3).map(t=>`<div class="pc-task">${t.ext?'↗ ':''}${esc(t.title)} <b>${esc(t.ext?t.ext:(t.who?shortWho(t.who):'offen'))}</b>${t.due?` · ${esc(fmtD(t.due).slice(3))}`:''}</div>`).join('')}${ot.length>(big?6:3)?`<div class="small muted">+ ${ot.length-(big?6:3)} weitere</div>`:''}</div>`;
       return active?`<div class="pc-nx hot" data-act="openAt" data-id="${p.id}" data-at="next" title="Keine offenen To-Dos – Next Step zuweisen"><span>Offene To-Dos · keine</span>${pp.next?'<div class="pc-task">Vorschlag: '+esc(pp.nextLabel)+'</div>':''}</div>`:''; })()}
@@ -3591,9 +3595,9 @@ function projListHtml(){
   return `<div class="small muted" style="margin-bottom:8px">${lbl} · sortiert nach ${esc(SORTS[UI.sort][0])}</div><div class="card"><div class="plist">${rows.map(projRow).join('')||'<div class="empty"><b>Keine Projekte in dieser Ansicht</b>Filter ändern oder neues Projekt über „Neu“ anlegen.</div>'}</div></div>`;
 }
 function vProjects(){
-  if(!CATS[UI.projFilter]&&!['wartung','alle','aktiv'].includes(UI.projFilter)) UI.projFilter='alle';
+  if(!CATS[UI.projFilter]&&!['wartung','alle','aktiv','intern'].includes(UI.projFilter)) UI.projFilter='alle';
   const f=UI.projFilter, cnt=k=>filterProjects(k).length;
-  const chips=[['alle','Alle'],['aktiv','Alle laufenden'],...Object.entries(CATS),['wartung','Wartungsverträge']];
+  const chips=[['alle','Alle'],['aktiv','Alle laufenden'],...Object.entries(CATS),['intern','🔒 Interne Projekte'],['wartung','Wartungsverträge']];
   const hideOn=['alle','aktiv'].includes(f);
   const all=arr('projects').filter(p=>!isIntern(p)), cc=k=>all.filter(p=>catOf(p)===k).length, openT=arr('tasks').filter(t=>!t.done).length;
   const mwp=all.filter(p=>['planung','laufend'].includes(catOf(p))&&PV.includes(p.type)).reduce((a,p)=>a+(+p.kwp||0),0)/1000;
@@ -3614,7 +3618,7 @@ function vProjects(){
 function board(){
   return `<div class="board" style="grid-auto-columns:250px">${Object.entries(CATS).map(([k,l])=>{ const inn=filterProjects(k);
     return `<div class="col"><h4><span>${l}</span><span class="mono">${inn.length}</span></h4>${inn.map(p=>{ const pp=pipe(p);
-      return `<div class="bcard" data-act="openProject" data-id="${p.id}"><span class="type t-${p.type}">${TYPES[p.type]||''}</span><div class="nm">${esc(p.name)}</div><div class="small muted">${esc([p.nr,p.pl].filter(Boolean).join(' · '))}</div>${mstrip(p)}<div class="small">${pp.last?esc(pp.label):'noch kein Status'}</div></div>`; }).join('')}</div>`; }).join('')}</div>`;
+      return `<div class="bcard" data-act="openProject" data-id="${p.id}"><span class="type t-${p.type}">${TYPES[p.type]||''}</span><div class="nm">${esc(p.name)}${projLock(p)}</div><div class="small muted">${esc([p.nr,p.pl].filter(Boolean).join(' · '))}</div>${mstrip(p)}<div class="small">${pp.last?esc(pp.label):'noch kein Status'}</div></div>`; }).join('')}</div>`; }).join('')}</div>`;
 }
 function vProject(){
   const p=S.projects[UI.pid]&&projVis(S.projects[UI.pid])?S.projects[UI.pid]:null; if(!p) return head('Projekt nicht gefunden','')+'<div class="card"><div class="empty">Dieses Projekt existiert nicht mehr. <button class="btn" data-act="nav" data-v="projects">Zur Liste</button></div></div>';
@@ -3646,7 +3650,7 @@ function vProject(){
     <button class="icon-btn" data-act="openProject" data-keep="1" data-id="${next?next.id:''}" ${next?'':'disabled'} title="${next?'Nächstes: '+esc(next.name):''}" aria-label="Nächstes Projekt">${ic('right')}</button>
     <select class="catsel jump" data-chg="jumpProject" aria-label="Projekt wählen">${Object.entries(CATS).map(([k,l])=>{ const g=allAz.filter(x=>catOf(x)===k); return g.length?`<optgroup label="${l} (${g.length})">${g.map(x=>`<option value="${x.id}" ${x.id===p.id?'selected':''}>${esc(x.name)}${x.nr?' · '+esc(x.nr):''}</option>`).join('')}</optgroup>`:''; }).join('')}</select></div>`;
   const bigNav=`<button class="big-nav l" data-act="openProject" data-keep="1" data-id="${prev?prev.id:''}" ${prev?'':'disabled'} aria-label="Vorheriges Projekt${prev?': '+esc(prev.name):''}">${ic('left')}${prev?`<span class="bn-t">${esc(prev.name)}</span>`:''}</button><button class="big-nav r" data-act="openProject" data-keep="1" data-id="${next?next.id:''}" ${next?'':'disabled'} aria-label="Nächstes Projekt${next?': '+esc(next.name):''}">${ic('right')}${next?`<span class="bn-t">${esc(next.name)}</span>`:''}</button>`;
-  return bigNav+pnav+(p.cover?`<div class="proj-cover"><img data-blob="${esc(p.cover)}" alt=""></div>`:'')+`<div class="topbar"><div class="t"><div class="eyebrow"><a href="#" data-act="nav" data-v="projects" style="color:inherit">Projekte</a> / ${esc(p.nr||'')}</div><h1>${esc(p.name)}</h1>
+  return bigNav+pnav+(p.cover?`<div class="proj-cover"><img data-blob="${esc(p.cover)}" alt=""></div>`:'')+`<div class="topbar"><div class="t"><div class="eyebrow"><a href="#" data-act="nav" data-v="projects" style="color:inherit">Projekte</a> / ${esc(p.nr||'')}</div><h1>${esc(p.name)}${projLock(p)}</h1>
      <div class="row small" style="margin-top:6px"><select class="catsel" data-chg="setCat" data-pid="${p.id}" aria-label="Kategorie">${Object.entries(CATS).map(([k,l])=>`<option value="${k}" ${cat===k?'selected':''}>${l}</option>`).join('')}</select><span class="type t-${p.type}">${TYPES[p.type]||''}</span><span class="muted">${esc([p.customer,p.place,sizeLbl(p)].filter(Boolean).join(' · '))}</span>${p.pl?`<span class="role">PL ${esc(p.pl)}</span>`:''}${p.wartung?'<span class="pill ok">Wartungsvertrag</span>':''}${p.example?'<span class="pill">Beispiel</span>':''}</div></div>
      <div class="row">${mayWrite('events')?`<button class="btn pri" data-act="newEvent" data-pid="${p.id}">${ic('plus')}Termin</button>`:''}<button class="btn" data-act="editProject" data-id="${p.id}">${ic('edit')}Bearbeiten</button><button class="btn sun desk" data-act="newMenu">${ic('plus')}Neu</button></div></div>
     ${isIntern(p)?'<div class="hint" style="margin-bottom:12px">Allgemeines Projekt ohne Statusablauf: Notizen, To-Dos, Bestellungen, Material und Dateien für alles ohne Kundenbezug (Lager, Büro, Werkstatt, Fahrzeuge).</div>':''}<section class="rail-wrap" ${isIntern(p)?'hidden':''}>
@@ -4123,7 +4127,9 @@ function allCheckItems(){ const out=[];
 // Standard-Auswahl je Ablauf: Typ-Zuordnung wie bisher (Ablauf → typischer Projekttyp)
 const FLOW_TYPE={efh:'dach',gdach:'dach',ffa:'ffa',speicher:'bess',lade:'lade',technik:'sonst',service:'sonst'};
 function checkSel(fid){ const c=((S.config||{}).checks||{})[fid]; if(Array.isArray(c)) return new Set(c); const ty=FLOW_TYPE[fid]||'dach'; return new Set(allCheckItems().filter(i=>!i.custom&&(!i.types||i.types.includes(ty))).map(i=>i.id)); }
-function saveTpl(patch){ if(!isAdmin()) return toast('Nur Admins können Vorlagen ändern.'); putConfig({...(S.config||{}),...patch}); applyTplConfig(); }
+// Vorlagen aendern: Admins und alle mit dem Recht Vorlagen bearbeiten (Admin: Rechte)
+const tplOk=()=>canEdit('templates');
+function saveTpl(patch){ if(!tplOk()) return toast('Vorlagen ändern dürfen nur Admins und Personen mit dem Recht „Vorlagen bearbeiten“.'); putConfig({...(S.config||{}),...patch}); applyTplConfig(); }
 function flowSave(fid,f){ const flows={...((S.config||{}).flows||{})}; flows[fid]=f; saveTpl({flows}); }
 function vTemplates(){
   const tab=UI.tplTab||'flows';
@@ -4140,7 +4146,7 @@ function vTemplates(){
 }
 function flowPicker(){ const fid=UI.tplFlow&&FLOWS[UI.tplFlow]?UI.tplFlow:Object.keys(FLOWS)[0]; UI.tplFlow=fid;
   return {fid,html:`<div class="tpl-pick"><label for="tplFlowSel">Projektart</label><select id="tplFlowSel" class="inp" data-chg="tplFlow">${Object.entries(FLOWS).map(([k,f])=>`<option value="${k}" ${k===fid?'selected':''}>${esc(f.n)}</option>`).join('')}</select>
-    ${isAdmin()?`<button class="btn sm" data-act="tplFlowRename">${ic('edit')}Umbenennen</button><button class="btn sm" data-act="tplFlowNew">${ic('plus')}Neue Projektart</button><button class="btn ghost sm" data-act="tplFlowReset">Standard</button>${FLOWS_DEF[fid]?'':`<button class="btn ghost sm" data-act="tplFlowDel">Löschen</button>`}`:''}
+    ${tplOk()?`<button class="btn sm" data-act="tplFlowRename">${ic('edit')}Umbenennen</button><button class="btn sm" data-act="tplFlowNew">${ic('plus')}Neue Projektart</button><button class="btn ghost sm" data-act="tplFlowReset">Standard</button>${FLOWS_DEF[fid]?'':`<button class="btn ghost sm" data-act="tplFlowDel">Löschen</button>`}`:''}
     <span class="small muted">${arr('projects').filter(p=>flowId(p)===fid).length} Projekte nutzen diese Projektart</span></div>`}; }
 const chipStep=(n,from,opt)=>`<div class="tchip" draggable="true" data-tdrag="${n}" data-from="${from}"><span class="ss-grip" aria-hidden="true">⋮⋮</span><span class="tc-t">${esc(PIPE[n-1])}${opt?' <span class="small muted">(optional)</span>':''}</span>${from==='pool'?`<button class="icon-btn sm" data-act="tplAddStep" data-n="${n}" title="Zum Ablauf hinzufügen" aria-label="${esc(PIPE[n-1])} hinzufügen">+</button>`:`<button class="icon-btn sm" data-act="tplOptStep" data-n="${n}" title="optional an/aus">☆</button><button class="icon-btn sm" data-act="tplRemStep" data-n="${n}" title="Aus dem Ablauf nehmen" aria-label="${esc(PIPE[n-1])} entfernen">–</button>`}</div>`;
 function tplFlows(){
@@ -4148,10 +4154,10 @@ function tplFlows(){
   const pool=ALL_STEPS().filter(n=>!used.has(n)&&(!q||PIPE[n-1].toLowerCase().includes(q)));
   return `<div class="card"><div class="card-b">${html}</div></div><div class="tpl-two">
     <section class="card tpl-sel"><div class="card-h"><h3>Im Ablauf „${esc(f.n)}“</h3><span class="small muted">Reihenfolge per Ziehen ändern</span></div>
-      ${f.st.map(([name,steps],pi)=>`<div class="tph" data-tdrop="ph:${pi}"><div class="tph-h"><input class="inp tph-n" value="${esc(name)}" data-chg="tplPhName" data-pi="${pi}" aria-label="Phasenname" ${isAdmin()?'':'disabled'}><span class="mono small">${steps.length}</span>${isAdmin()?`<button class="icon-btn sm" data-act="tplPhDel" data-pi="${pi}" title="Phase entfernen (Schritte zurück in die Auswahl)">${ic('x')}</button>`:''}</div>
+      ${f.st.map(([name,steps],pi)=>`<div class="tph" data-tdrop="ph:${pi}"><div class="tph-h"><input class="inp tph-n" value="${esc(name)}" data-chg="tplPhName" data-pi="${pi}" aria-label="Phasenname" ${tplOk()?'':'disabled'}><span class="mono small">${steps.length}</span>${tplOk()?`<button class="icon-btn sm" data-act="tplPhDel" data-pi="${pi}" title="Phase entfernen (Schritte zurück in die Auswahl)">${ic('x')}</button>`:''}</div>
         <div class="tph-list">${steps.map(n=>chipStep(n,'ph:'+pi,f.opt.includes(n))).join('')||'<div class="tdrop-hint">Schritte hierher ziehen</div>'}</div></div>`).join('')}
-      ${isAdmin()?`<div class="card-b"><button class="btn sm" data-act="tplPhNew">${ic('plus')}Phase hinzufügen</button></div>`:''}</section>
-    <section class="card tpl-pool" data-tdrop="pool"><div class="card-h"><h3>Alle Schritte</h3>${isAdmin()?`<button class="btn sm" data-act="tplStepNew">${ic('plus')}Eigener Schritt</button>`:''}</div>
+      ${tplOk()?`<div class="card-b"><button class="btn sm" data-act="tplPhNew">${ic('plus')}Phase hinzufügen</button></div>`:''}</section>
+    <section class="card tpl-pool" data-tdrop="pool"><div class="card-h"><h3>Alle Schritte</h3>${tplOk()?`<button class="btn sm" data-act="tplStepNew">${ic('plus')}Eigener Schritt</button>`:''}</div>
       <div style="padding:0 12px 8px"><input class="inp" type="search" placeholder="Schritt suchen" value="${esc(UI.tplQ||'')}" data-chg="tplQ" style="width:100%" aria-label="Schritt suchen"></div>
       <div class="tph-list pool">${pool.map(n=>chipStep(n,'pool')).join('')||'<div class="tdrop-hint">Alle Schritte sind im Ablauf.</div>'}</div></section></div>`;
 }
@@ -4162,7 +4168,7 @@ function tplChecks(){
   const pool=all.filter(i=>!sel.has(i.id)&&(!q||i.t.toLowerCase().includes(q)));
   return `<div class="card"><div class="card-b">${html}</div></div><div class="tpl-two">
     <section class="card tpl-sel" data-tdrop="csel"><div class="card-h"><h3>Checkliste „${esc(FLOWS[fid].n)}“</h3><span class="small muted">${sel.size} Punkte</span></div>${byPh(all.filter(i=>sel.has(i.id)),true)||'<div class="tdrop-hint">Punkte hierher ziehen</div>'}</section>
-    <section class="card tpl-pool" data-tdrop="cpool"><div class="card-h"><h3>Alle Checklistenpunkte</h3>${isAdmin()?`<button class="btn sm" data-act="tplChkNew">${ic('plus')}Eigener Punkt</button>`:''}</div>
+    <section class="card tpl-pool" data-tdrop="cpool"><div class="card-h"><h3>Alle Checklistenpunkte</h3>${tplOk()?`<button class="btn sm" data-act="tplChkNew">${ic('plus')}Eigener Punkt</button>`:''}</div>
       <div style="padding:0 12px 8px"><input class="inp" type="search" placeholder="Punkt suchen" value="${esc(UI.tplQ||'')}" data-chg="tplQ" style="width:100%" aria-label="Punkt suchen"></div>${byPh(pool,false)||'<div class="tdrop-hint">Alle Punkte sind ausgewählt.</div>'}</section></div>`;
 }
 // Ablauf ändern: Schritt n in Phase pi an Position idx (idx<0 = ans Ende); null = entfernen
@@ -4170,7 +4176,7 @@ function flowMove(n,pi,idx){ const fid=UI.tplFlow, f=JSON.parse(JSON.stringify(F
   f.st.forEach(s=>{ s[1]=s[1].filter(x=>x!==n); }); if(pi!=null){ const l=f.st[pi][1]; if(idx<0||idx>l.length) l.push(n); else l.splice(idx,0,n); } else f.opt=f.opt.filter(x=>x!==n);
   flowSave(fid,f); }
 function checkSet(id,on){ const fid=UI.tplFlow, s=checkSel(fid); if(on) s.add(id); else s.delete(id); const checks={...((S.config||{}).checks||{})}; checks[fid]=[...s]; saveTpl({checks}); }
-document.addEventListener('dragstart',e=>{ const t=e.target.closest&&e.target.closest('[data-tdrag],[data-cdrag]'); if(!t) return; if(!isAdmin()){ e.preventDefault(); return toast('Nur Admins können Vorlagen ändern.'); }
+document.addEventListener('dragstart',e=>{ const t=e.target.closest&&e.target.closest('[data-tdrag],[data-cdrag]'); if(!t) return; if(!tplOk()){ e.preventDefault(); return toast('Vorlagen ändern dürfen nur Admins und Personen mit dem Recht „Vorlagen bearbeiten“.'); }
   e.dataTransfer.setData('text/x-tpl',JSON.stringify({n:t.dataset.tdrag?+t.dataset.tdrag:null,c:t.dataset.cdrag||null})); e.dataTransfer.effectAllowed='move'; t.classList.add('dragging'); });
 document.addEventListener('dragend',e=>{ document.querySelectorAll('.tchip.dragging,.tdrop-over').forEach(x=>x.classList.remove('dragging','tdrop-over')); });
 document.addEventListener('dragover',e=>{ const z=e.target.closest&&e.target.closest('[data-tdrop]'); if(z&&[...e.dataTransfer.types].includes('text/x-tpl')){ e.preventDefault(); document.querySelectorAll('.tdrop-over').forEach(x=>x!==z&&x.classList.remove('tdrop-over')); z.classList.add('tdrop-over'); } });
