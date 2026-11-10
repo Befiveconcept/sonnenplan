@@ -2346,7 +2346,9 @@ function describeChange(coll,prev,o){
 }
 // Schreibrecht je Rubrik (Admin-Bereich „Rechte“): ohne Häkchen „bearbeiten“ wird nichts gespeichert
 const COLL_AREA={projects:'projects',tasks:'todos',orders:'orders',offers:'offers',events:'week',plan:'week',reports:'reports',files:'files',stock:'stock',picks:'stock',lager:'stock',inv:'stock',chat:'chat',meetings:'meetings',hrtime:'hr',hrabs:'hr',hrstaff:'hr',hrdocs:'hr',kunden:'stamm',lieferanten:'stamm',artikel:'stamm',sales:'sales',fin:'fin',anlagen:'fin'};
-function mayWrite(coll){ const a=COLL_AREA[coll]; if(a==='fin'&&ME) return finOk()&&(isAdmin()||editsOf(ME).includes('fin')); if(!a||!ME||isAdmin()) return true; if(a==='hr') return !['hrstaff','hrdocs'].includes(coll); return canEdit(a); }
+const lagerOk=()=>isAdmin()||canEdit('stock');
+const stDelOk=k=>isAdmin()||(k==='artikel'&&lagerOk());
+function mayWrite(coll){ const a=COLL_AREA[coll]; if(a==='fin'&&ME) return finOk()&&(isAdmin()||editsOf(ME).includes('fin')); if(!a||!ME||isAdmin()) return true; if(coll==='artikel'&&canEdit('stock')) return true; if(a==='hr') return !['hrstaff','hrdocs'].includes(coll); return canEdit(a); }
 /* ---------- Doppelt-Sperre (greift bei JEDEM Speichern: Formular, KI, Meeting, Smart-Drop, Sprache, Belege, Handy) ---------- */
 const dupNorm=s=>String(s||'').toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').replace(/^\s*(bitte|todo|to-do|aufgabe)\s*:?\s+/,'').replace(/[^a-z0-9]+/g,' ').trim();
 // Notiz-/Update-Text ohne Datum, Uhrzeit und Kürzel davor („02.11.26 15:33 (EP): …“)
@@ -5336,7 +5338,7 @@ const lgPayload=id=>'LP'+String(id).toUpperCase();
 function lgResolve(code){ const c=String(code||'').trim(); if(!c) return null; const m=c.match(/^(?:NDS-?)?LP[:\-]?([0-9a-z]+)$/i); if(m){ const n=lgNode(m[1].toLowerCase()); if(n) return n; }
   const lc=c.toLowerCase(); return lgAll().find(n=>lgIsBin(n)&&lgCode(n.id).toLowerCase()===lc)||lgAll().find(n=>n.seg&&lgCode(n.id).toLowerCase()===lc)||lgNode(c)||null; }
 // Lagerorte verwalten: Admins und freigegebene Personen. Buchen: wer das Lager bearbeiten darf. Lesen: wer es sehen darf.
-const lgMgr=()=>!!ME&&mayWrite('lager')&&(isAdmin()||((S.config||{}).lagerMgr||[]).map(x=>String(x).toLowerCase()).includes(meK().toLowerCase()));
+const lgMgr=()=>!!ME&&mayWrite('lager')&&(lagerOk()||((S.config||{}).lagerMgr||[]).map(x=>String(x).toLowerCase()).includes(meK().toLowerCase()));
 const LGON=()=>lgAll().some(lgIsBin);
 const binsOf=s=>Object.entries((s&&s.bins)||{}).filter(([,q])=>+q>0);
 const unassigned=s=>r3((+s.qty||0)-binsOf(s).reduce((a,[,q])=>a+(+q),0));
@@ -5457,7 +5459,7 @@ const LG_PRE={regal:'R',ebene:'E',platz:'P'};
 function lgSuggestSeg(kind,parentId,name){ if(kind==='standort'||kind==='bereich'){ const w=String(name||'').trim().split(/[\s\-\/]+/).filter(Boolean); if(!w.length) return ''; return (w.length>1?w.map(x=>x[0]).join(''):w[0].slice(0,2)).toUpperCase().replace(/[^0-9A-ZÄÖÜ]/g,'').slice(0,4); }
   const pre=LG_PRE[kind]||''; let mx=0; lgKids(parentId).filter(n=>n.kind===kind).forEach(n=>{ const m=String(n.seg||'').match(/(\d+)$/); if(m) mx=Math.max(mx,+m[1]); }); return pre+String(mx+1).padStart(2,'0'); }
 const lgAllowed=parentId=>{ const p=lgNode(parentId); return p?LG_NEXT[p.kind]:['standort']; };
-function lgNodeForm(n,parentId,kindPre){ if(!lgMgr()) return toast('Lagerorte verwalten dürfen nur Admins und Personen, die unter „Lagerorte & Plätze“ freigegeben sind.'); closeSheet();
+function lgNodeForm(n,parentId,kindPre){ if(!lgMgr()) return toast('Lagerorte verwalten dürfen Admins und alle mit dem Recht „Lagerverwaltung – Bearbeiten“.'); closeSheet();
   const isNew=!n, par0=isNew?(parentId||''):(n.parent||''), allowed=lgAllowed(par0);
   const kind0=isNew?(kindPre&&allowed.includes(kindPre)?kindPre:(allowed.includes('platz')&&lgNode(par0)&&['regal','ebene'].includes(lgNode(par0).kind)?(lgNode(par0).kind==='ebene'?'platz':'ebene'):allowed[0])):n.kind;
   const v=isNew?{parent:par0,kind:kind0,ltype:'fach',count:1,status:'aktiv',seg:lgSuggestSeg(kind0,par0,'')}:{...n,parent:n.parent||'',status:n.off?'still':n.blocked?'gesperrt':'aktiv'};
@@ -5535,7 +5537,7 @@ function vLgPlaces(sw){ const q=(UI.lgq||'').toLowerCase().trim(), mgr=lgMgr(), 
     `<div class="card"><div class="card-h lg-bar"><input class="inp" type="search" style="flex:1;min-width:180px" placeholder="Suchen: Platzcode, Bezeichnung oder Standort" value="${esc(UI.lgq||'')}" data-chg="lgQ" aria-label="Lagerorte suchen">${roots.length?`<button class="btn sm" data-act="lgOpenAll">Alle aufklappen</button><button class="btn sm" data-act="lgCloseAll">Alle zuklappen</button>`:''}</div>
       ${!mgr?'<div class="small muted" style="padding:0 16px 8px">Ansehen ist für alle mit Lagerrechten möglich. Anlegen und Ändern dürfen Admins und freigegebene Personen.</div>':''}
       <div class="lg-tree">${roots.map(r=>row(r,0)).join('')||`<div class="lg-empty"><b>Noch keine Lagerorte angelegt.</b><div class="small muted">So geht's: 1. „Neuer Standort“ (z. B. Bornheim, Kürzel BO). 2. Am Standort „+ Unterelement“ → Bereich (z. B. Hauptlager, HL). 3. Darunter Regal R01 – dabei gleich „Ebenen“ und „Plätze je Ebene“ eintragen, dann entstehen alle Plätze auf einmal (BO-HL-R01-E01-P01 …).</div>${mgr?`<button class="btn sun" data-act="lgNew" data-parent="">${ic('plus')}Neuer Standort</button>`:''}</div>`}</div></div>`+(mgr?lgMigHtml():'')+lgMgrBox(); }
-const lgMgrBox=()=>isAdmin()?`<div class="card"><div class="card-h"><div><h3>Wer darf Lagerorte verwalten?</h3><div class="small muted">Admins immer. Buchen (Zugang, Entnahme, Umlagern, Zählen) darf, wer das Lager bearbeiten darf – nur ansehen, wer es nur sehen darf. Beides unter „Admin: Rechte“.</div></div></div><div class="row" style="gap:6px 14px;flex-wrap:wrap;padding:0 16px 14px">${staff().map(s=>{ const k=shortWho(s.name), on=((S.config||{}).lagerMgr||[]).map(x=>String(x).toLowerCase()).includes(k.toLowerCase()); return `<label class="small" style="display:inline-flex;gap:5px;align-items:center"><input type="checkbox" data-chg="lgMgrSet" value="${esc(k)}" ${on?'checked':''}>${esc(k)}</label>`; }).join('')}</div></div>`:'';
+const lgMgrBox=()=>isAdmin()?`<div class="card"><div class="card-h"><div><h3>Wer darf Lagerorte verwalten?</h3><div class="small muted">Admins und alle, die unter „Admin: Rechte“ bei <b>Lagerverwaltung</b> das Häkchen <b>Bearbeiten</b> haben: Lagerorte anlegen/ändern/löschen, buchen, Inventur freigeben, Lager- und Stammdaten-Artikel löschen (auch mehrere auf einmal). Wer die Lagerverwaltung nur sehen darf, kann nur ansehen.</div></div></div><div class="small muted" style="padding:0 16px 14px">Bearbeiten dürfen aktuell: ${esc(staff().filter(s=>s.name&&(permOf(s.name)||{}).admin||editsOf(s.name).includes('stock')&&viewsOf(s.name).includes('stock')).map(s=>shortWho(s.name)).join(', ')||'–')}</div></div>`:'';
 // Übernahme alter Bestände: nichts automatisch. Je alter Lagerort-Text ein Platz wählen → Vorschau → Übernehmen (als Bewegung „Übernahme“ protokolliert).
 var LG_MIG=[];
 function lgMigHtml(){ const st=arr('stock').filter(s=>unassigned(s)>0); if(!st.length) return ''; if(!LGON()) return `<div class="card"><div class="empty">${st.length} Artikel haben Bestand ohne Lagerplatz. Sobald Lagerplätze angelegt sind, kannst du sie hier übernehmen.</div></div>`;
@@ -5721,7 +5723,7 @@ function stockForm(s,pre){ pre=pre||{};
     onSave:v=>{ const q=v.qty===''||v.qty==null?null:+v.qty, old=+s.qty||0, b=$('#nb_bin')?$('#nb_bin').value:''; delete v.qty; delete v.binx; if(b&&!lgUsable(lgNode(b))){ toast('Dieser Lagerplatz ist gesperrt oder stillgelegt.'); return false; } Object.assign(s,v);
       if(isNew){ s.qty=0; s.moves=[]; s.bins={}; if(q) stockMove(s,q,'Anfangsbestand','','',{t:'anfang',bin:b}); } else if(q!=null&&q!==old&&isAdmin()) stockMove(s,q-old,'Bestandskorrektur','','',{t:'korrektur'});
       s.min=+s.min||0; put('stock',s); toast('Lagerartikel gespeichert.'); if(pre.bin) setTimeout(()=>lgBinSheet(pre.bin),80); },
-    onDelete:isNew||!isAdmin()?null:()=>{ del('stock',s.id); closeSheet(); }});
+    onDelete:isNew||!lagerOk()?null:()=>{ del('stock',s.id); closeSheet(); }});
 }
 function stockHist(id){ const s=S.stock[id]; if(!s) return; closeSheet(); const u=unassigned(s), b=binsOf(s).sort((x,y)=>y[1]-x[1]), w=mayWrite('stock'), on=LGON();
   openSheet({title:s.art,wide:1,html:`<div class="fld full"><div class="small muted">${esc([firmOf(s),s.artNr].filter(Boolean).join(' · '))}</div></div>
@@ -6741,7 +6743,7 @@ const A = {
  chatDel:d=>{ const m=S.chat[d.id]; if(!m) return; if(m.from!==ME&&!isAdmin()) return; del('chat',d.id); },
  unlinkUser:d=>{ if(!isAdmin()) return; const map={...((S.config||{}).userMap||{})}; const n=map[d.id]; delete map[d.id]; putConfig({...(S.config||{}),userMap:map}); toast('Verknüpfung mit '+(n||'Konto')+' gelöst. Die Person wählt beim nächsten Öffnen neu.'); },
  stockEdit:d=>{ if(!isAdmin()) return; stockForm(S.stock[d.id]); },
- stockDel:d=>{ if(!isAdmin()) return; const s=S.stock[d.id]; if(!s) return; openSheet({title:'Lagerartikel löschen?',html:`<div class="fld full"><b>${esc(s.art)}</b> · Bestand ${qn(s.qty)} ${esc(s.unit||'')}<div class="small muted" style="margin-top:6px">Artikel und Bewegungen werden gelöscht. Die Löschung steht im Verlauf.</div></div>`,saveLabel:'Ja, löschen',onSave:()=>{ del('stock',d.id); toast('Lagerartikel gelöscht.'); }}); },
+ stockDel:d=>{ if(!lagerOk()) return; const s=S.stock[d.id]; if(!s) return; openSheet({title:'Lagerartikel löschen?',html:`<div class="fld full"><b>${esc(s.art)}</b> · Bestand ${qn(s.qty)} ${esc(s.unit||'')}<div class="small muted" style="margin-top:6px">Artikel und Bewegungen werden gelöscht. Die Löschung steht im Verlauf.</div></div>`,saveLabel:'Ja, löschen',onSave:()=>{ del('stock',d.id); toast('Lagerartikel gelöscht.'); }}); },
  pickLineDel:d=>{ if(!isAdmin()) return; const p=clone(S.picks[d.id]); if(!p) return; p.items.splice(+d.i,1); put('picks',p); toast('Position entfernt.'); },
  stockTab:d=>{ UI.stockTab=d.v; render(); },
  stockNew:()=>stockForm(null),
@@ -8360,7 +8362,7 @@ function vStamm(){
   const cats=[...new Set(all.map(x=>x.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'de')), lim=UI.stLim||100;
   const cities=k==='artikel'?[]:Object.entries(all.reduce((m,x)=>{ const c=String(x.city||'').split(',')[0].trim(); if(c) m[c]=(m[c]||0)+1; return m; },{})).sort((a,b)=>b[1]-a[1]).slice(0,40);
   const lnkTxt=n=>!n?'':k==='kunden'?n+' Projekt'+(n>1?'e':''):k==='lieferanten'?n+' Bestellung'+(n>1?'en':''):'im Lager';
-  const adm=isAdmin(), sel=new Set(((UI.stSel||{})[k]||[]).filter(id=>(S[k]||{})[id])), shown=list.slice(0,lim); ST_SHOWN={k,page:shown.map(x=>x.id),all:list.map(x=>x.id)};
+  const adm=stDelOk(k), sel=new Set(((UI.stSel||{})[k]||[]).filter(id=>(S[k]||{})[id])), shown=list.slice(0,lim); ST_SHOWN={k,page:shown.map(x=>x.id),all:list.map(x=>x.id)};
   const row=x=>{ const n=links(x), d=dup.byId[x.id]!=null; return `<tr class="clickable ${d?'st-dup':''}${sel.has(x.id)?' st-on':''}" data-act="stEdit" data-k="${k}" data-id="${esc(x.id)}">${adm?`<td class="st-ck" data-act="stSel" data-k="${k}" data-id="${esc(x.id)}"><input type="checkbox" class="ck" ${sel.has(x.id)?'checked':''} aria-label="${esc(x.name||'')} auswählen"></td>`:''}${D.cols.map(([c])=>`<td class="${c==='nr'||c==='price'?'mono':''}">${c==='name'?`<b>${esc(x.name||'')}</b>${d?' <span class="pill warn" title="möglicherweise doppelt">doppelt?</span>':''}`:c==='price'&&x.price!=null&&x.price!==''?esc(nf(+x.price,2)):c[0]==='_'?artCell(x,c):esc(x[c]||'')}</td>`).join('')}<td class="small muted">${lnkTxt(n)}</td></tr>`; };
   const filterBar=`<div class="chips st-f">${ST_FILTERS[k].map(([f,l])=>`<button class="chip ${ff===f?'on':''}" data-act="stF" data-f="${f}">${l}${f==='dup'?` <span class="mono small">${dup.groups.reduce((a,g)=>a+g.items.length,0)}</span>`:''}</button>`).join('')}${ff||cf||city||q?`<button class="chip" data-act="stF" data-f="" title="Alle Filter zurücksetzen">✕ zurücksetzen</button>`:''}</div>`;
   const selBar=adm&&sel.size&&ff!=='dup'?`<div class="st-selbar"><b>${sel.size.toLocaleString('de-DE')} ausgewählt</b>${list.length>sel.size?`<button class="btn sm" data-act="stSelAll" data-k="${k}" data-all="1">Alle ${list.length.toLocaleString('de-DE')} Treffer auswählen</button>`:''}<button class="btn sm" data-act="stSelNone" data-k="${k}">Auswahl aufheben</button><span class="spacer"></span><button class="btn sm danger" data-act="stSelDel" data-k="${k}">${ic('x')}Ausgewählte löschen</button></div>`:'';
@@ -8377,11 +8379,11 @@ function vStamm(){
 // Mehrfachauswahl (nur Admins, wie das einzelne Löschen): Häkchen je Zeile, „Alle auf dieser Seite“ / „Alle Treffer“, dann gemeinsam löschen
 var ST_SHOWN={k:'',page:[],all:[]};
 queueMicrotask(()=>Object.assign(A,{
- stSel:d=>{ if(!isAdmin()) return; const m={...(UI.stSel||{})}, s=new Set(m[d.k]||[]); if(s.has(d.id)) s.delete(d.id); else s.add(d.id); m[d.k]=[...s]; UI.stSel=m; render(); },
- stSelAll:d=>{ if(!isAdmin()||ST_SHOWN.k!==d.k) return; const m={...(UI.stSel||{})}, s=new Set(m[d.k]||[]), ids=d.all?ST_SHOWN.all:ST_SHOWN.page;
+ stSel:d=>{ if(!stDelOk(d.k)) return; const m={...(UI.stSel||{})}, s=new Set(m[d.k]||[]); if(s.has(d.id)) s.delete(d.id); else s.add(d.id); m[d.k]=[...s]; UI.stSel=m; render(); },
+ stSelAll:d=>{ if(!stDelOk(d.k)||ST_SHOWN.k!==d.k) return; const m={...(UI.stSel||{})}, s=new Set(m[d.k]||[]), ids=d.all?ST_SHOWN.all:ST_SHOWN.page;
    if(!d.all&&ids.length&&ids.every(id=>s.has(id))) ids.forEach(id=>s.delete(id)); else ids.forEach(id=>s.add(id)); m[d.k]=[...s]; UI.stSel=m; render(); },
  stSelNone:d=>{ const m={...(UI.stSel||{})}; m[d.k]=[]; UI.stSel=m; render(); },
- stSelDel:d=>{ if(!isAdmin()) return; const k=d.k, D=ST_DEF[k], ids=((UI.stSel||{})[k]||[]).filter(id=>(S[k]||{})[id]); if(!ids.length) return; const links=stLinks(k), linked=ids.filter(id=>links(S[k][id])>0).length;
+ stSelDel:d=>{ if(!stDelOk(d.k)) return; const k=d.k, D=ST_DEF[k], ids=((UI.stSel||{})[k]||[]).filter(id=>(S[k]||{})[id]); if(!ids.length) return; const links=stLinks(k), linked=ids.filter(id=>links(S[k][id])>0).length;
    openSheet({title:ids.length.toLocaleString('de-DE')+' '+D.l+' löschen?',html:`<div class="fld full"><div>${esc(ids.slice(0,8).map(id=>S[k][id].name||'(ohne Name)').join(', '))}${ids.length>8?' … und '+(ids.length-8).toLocaleString('de-DE')+' weitere':''}</div>${linked?`<div class="banner" style="margin-top:10px">${linked} davon ${k==='kunden'?'hängen an Projekten':k==='lieferanten'?'hängen an Bestellungen':'sind im Lager'}. Projekte, Bestellungen und Lagerbestand bleiben erhalten – nur der Stammdaten-Eintrag verschwindet.</div>`:''}<div class="small muted" style="margin-top:10px">Das lässt sich nicht rückgängig machen. Die Löschung steht im Verlauf.</div></div>`,saveLabel:'Ja, '+ids.length.toLocaleString('de-DE')+' löschen',
      onSave:()=>{ ids.forEach(id=>del(k,id)); ST_DUP_CACHE={}; stListsDirty=true; const m={...(UI.stSel||{})}; m[k]=[]; UI.stSel=m; toast(ids.length.toLocaleString('de-DE')+' '+D.l+' gelöscht.'); }}); } }));
 // Dopplungen: Gruppen mit Grund; „Zusammenführen“ (leere Felder ergänzen, andere löschen) oder „kein Duplikat“
@@ -8417,7 +8419,7 @@ function stForm(k,x){ const D=ST_DEF[k], isNew=!x; x=x?clone(x):{id:D.pre+uid()}
     onSave:v=>{ delete v.lk; delete v.lo; delete v.srcx; delete v.arti; delete v.lm; if(k==='artikel'){ v.res=artResRead(); ['price','vk','minQty','reQty'].forEach(f=>{ if(v[f]!==''&&v[f]!=null) v[f]=+String(v[f]).replace(',','.'); }); }
       const dup=Object.values(S[k]||{}).find(y=>y.id!==x.id&&v.nr&&String(y.nr)===String(v.nr)); if(dup){ toast('Die Nummer '+v.nr+' ist schon vergeben ('+dup.name+').'); return false; }
       put(k,{...x,...v}); stListsDirty=true; toast(D.one+' gespeichert.'); },
-    onDelete:isNew||!isAdmin()?null:()=>confirmSheet(D.one+' „'+(x.name||'')+'“ löschen?',()=>{ del(k,x.id); stListsDirty=true; closeSheet(); })}); }
+    onDelete:isNew||!stDelOk(k)?null:()=>confirmSheet(D.one+' „'+(x.name||'')+'“ löschen?',()=>{ del(k,x.id); stListsDirty=true; closeSheet(); })}); }
 Object.assign(A,{
  stEdit:d=>{ stLoad(); stForm(d.k,d.id?(S[d.k]||{})[d.id]:null); },
  stMore:()=>{ UI.stLim=(UI.stLim||100)+200; render(); },
