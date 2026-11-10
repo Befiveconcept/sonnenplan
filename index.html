@@ -2629,23 +2629,34 @@ function briefSpeakNext(noGap){ const ss=window.speechSynthesis, q=BRIEF_Q; if(q
   if(q.i>=q.parts.length){ q.st='stop'; q.i=0; BRIEF_SPK=false; briefSpkUi(); return; }
   // Atempause wie im Radio: vor neuen Beiträgen länger, beim Kapitelwechsel mit Signalton. Pause/Sprung bricht sie über das Token ab.
   const gap=(q.gaps&&q.gaps[q.i])||0; if(gap&&!noGap){ const tk=q.tok=(q.tok||0)+1; clearTimeout(q.wd); if(q.gongs&&q.gongs[q.i]) briefGong(); carSync(); q.wd=setTimeout(()=>{ if(q.st==='play'&&q.tok===tk) briefSpeakNext(true); },gap); return; }
-  const txt=q.parts[q.i], u=new SpeechSynthesisUtterance(txt), v=briefVoice(); u.lang='de-DE'; if(v) u.voice=v; u.rate=briefRate();
-  const tok=q.tok=(q.tok||0)+1, nx=()=>{ if(q.st==='play'&&q.tok===tok){ clearTimeout(q.wd); q.i++; briefSpeakNext(); } }; u.onend=nx;
+  // Direkt nach cancel() verschluckt Chrome gern den nächsten Satz nach wenigen Wörtern: dann erst kurz warten
+  if((ss.speaking||ss.pending)&&!q.cw){ q.cw=1; ss.cancel(); const tk0=q.tok=(q.tok||0)+1; clearTimeout(q.wd); q.wd=setTimeout(()=>{ if(q.st==='play'&&q.tok===tk0) briefSpeakNext(true); },150); return; }
+  q.cw=0; const txt=q.parts[q.i], u=new SpeechSynthesisUtterance(txt), v=briefVoice(); u.lang='de-DE'; if(v) u.voice=v; u.rate=briefRate();
+  // Satz-Objekt festhalten: Sonst räumt Chrome es weg und meldet das Satzende nie – das Vorlesen bleibt dann nach den ersten Wörtern hängen
+  q.u=u; const tok=q.tok=(q.tok||0)+1, nx=()=>{ if(q.st==='play'&&q.tok===tok){ clearTimeout(q.wd); q.u=null; q.i++; briefSpeakNext(); } }; u.onend=nx;
+  const longWd=()=>{ clearTimeout(q.wd); q.wd=setTimeout(()=>{ if(q.st==='play'&&q.tok===tok){ q.tok++; ss.cancel(); q.i++; briefSpeakNext(); } },txt.length*130/u.rate+4000); };
+  u.onstart=()=>{ q.startAt=Date.now(); q.retry=0; if(q.tok===tok){ clearTimeout(q.wd); q.wd=setTimeout(()=>{ if(q.st==='play'&&q.tok===tok){ q.tok++; ss.cancel(); q.i++; briefSpeakNext(); } },txt.length*130/u.rate+4000); } };
   // Blockiert das Gerät die Stimme, nicht still durch den Text laufen, sondern anhalten und den Grund zeigen
   u.onerror=ev=>{ const c=ev&&ev.error; if(CAR.on&&c&&!['interrupted','canceled'].includes(c)&&q.st==='play'&&q.tok===tok){ clearTimeout(q.wd); q.tok++; q.st='pause'; CAR.err=c; briefSpkUi(); return; } nx(); };
-  // Manche Handys melden das Satzende nicht: dann nach großzügiger Wartezeit trotzdem weiter, statt still hängenzubleiben
-  clearTimeout(q.wd); q.wd=setTimeout(()=>{ if(q.st==='play'&&q.tok===tok){ q.tok++; ss.cancel(); q.i++; briefSpeakNext(); } },txt.length*150/u.rate+6000);
-  ss.speak(u); carSync(); }
+  // Startet der Satz gar nicht (Stimme hängt), einmal neu anstoßen statt zu überspringen
+  // (Geräte ohne Start-Meldung, die aber sprechen: dann nur die lange Wartezeit nach Textlänge)
+  clearTimeout(q.wd); q.wd=setTimeout(()=>{ if(q.st==='play'&&q.tok===tok&&ss.speaking){ q.startAt=q.startAt||Date.now(); longWd(); return; } if(q.st==='play'&&q.tok===tok){ q.tok++; ss.cancel(); if(!q.retry){ q.retry=1; setTimeout(()=>briefSpeakNext(true),150); } else { q.retry=0; q.i++; briefSpeakNext(true); } } },3500);
+  if(ss.paused) try{ ss.resume(); }catch(e){}
+  q.retry=q.retry||0; ss.speak(u); carSync(); }
+// Gegen „hängt nach wenigen Wörtern“ bei langen Texten: Chrome bricht lange Sätze mit Online-Stimmen nach ~15 s ab – kurz anstupsen hält sie am Laufen
+setInterval(()=>{ try{ const ss=window.speechSynthesis; if(ss&&BRIEF_Q.st==='play'&&ss.speaking&&!ss.paused&&/Chrome/.test(navigator.userAgent)&&!/Android|iPhone|iPad/.test(navigator.userAgent)){ ss.pause(); ss.resume(); } }catch(e){} },10000);
 function briefSpeak(){ const ss=window.speechSynthesis; if(!ss) return toast('Vorlesen geht in diesem Browser leider nicht.'); const q=BRIEF_Q;
   if(q.st==='play'){ q.st='pause'; q.tok++; ss.cancel(); briefSpkUi(); return; }       // Pause (der angefangene Satz wird bei „Weiter“ neu gelesen)
   CAR.err='';
-  if(q.st==='pause'){ q.st='play'; BRIEF_SPK=true; briefSpkUi(); briefSpeakNext(); return; } // Weiter
+  if(q.st==='pause'){ q.st='play'; q.playAt=Date.now(); BRIEF_SPK=true; briefSpkUi(); briefSpeakNext(); return; } // Weiter
   if(!BRIEF||BRIEF.d!==TODAY()||!BRIEF.data) return toast('Das Briefing wird noch erstellt – gleich nochmal versuchen.');
   if(ss.speaking||ss.pending) ss.cancel(); q.parts=[]; q.marks=[]; q.titles={}; q.gaps={}; q.gongs={};
-  briefScript(BRIEF).forEach(bl=>{ const ss2=briefSpoken(bl.text).split(/\n|(?<=[^\d\s][.!?])\s+(?=[A-ZÄÖÜ])/).map(s=>s.trim()).filter(Boolean); if(!ss2.length) return; const at=q.parts.length;
+  briefScript(BRIEF).forEach(bl=>{ const raw=briefSpoken(bl.text).split(/\n|(?<=[^\d\s][.!?])\s+(?=[A-ZÄÖÜ])/).map(s=>s.trim()).filter(Boolean);
+    // Kurze Sätze zusammenfassen (z. B. „Guten Morgen, Ellen.“ + nächster Satz): weniger Übergänge zwischen Sätzen = weniger Stocken
+    const ss2=[]; raw.forEach(s=>{ const l=ss2.length-1; if(l>=0&&(ss2[l].length<70||s.length<40)&&ss2[l].length+s.length<200) ss2[l]+=' '+s; else ss2.push(s); }); if(!ss2.length) return; const at=q.parts.length;
     // Eine Kapitelansage gehört zum folgenden Beitrag: danach nur kurz atmen. Sonst vor jedem Beitrag eine deutliche Pause, mit Signal 1,6 s.
     q.marks.push(at); q.titles[at]=bl.title; if(bl.gong){ q.gaps[at]=1600; q.gongs[at]=1; } else if(at) q.gaps[at]=q.afterLead?450:950; q.afterLead=!!bl.lead; q.parts.push(...ss2); });
-  q.i=0; q.st='play'; BRIEF_SPK=true; briefSpkUi(); briefSpeakNext(); }
+  q.i=0; q.st='play'; q.playAt=Date.now(); BRIEF_SPK=true; briefSpkUi(); briefSpeakNext(); }
 // Vor/zurück springt abschnittsweise (Projekt für Projekt); zurück wiederholt erst den aktuellen Abschnitt
 function briefSkip(dir){ const q=BRIEF_Q, m=q.marks||[]; if(q.st==='stop'||!m.length) return; const to=dir>0?m.find(x=>x>q.i):[...m].reverse().find(x=>x<q.i); q.i=to==null?(dir>0?q.parts.length:0):to;
   q.tok=(q.tok||0)+1; clearTimeout(q.wd); if(q.st==='play'){ speechSynthesis.cancel(); briefSpeakNext(); } else carSync(); }
@@ -2672,7 +2683,9 @@ async function carTest(){ if(CAR.testing) return; const q=BRIEF_Q, ss=speechSynt
   sh('Was kam im Auto an: der Piepton, Test 2, Test 3? Bitte zusammen mit dieser Zeile an Claude schicken.'); const d=$('#carDiag'); if(d) d.textContent=`Ton: ${r.ton} · Spur: ${r.spur}, danach ${r.spurDanach} · Test 2: ${r.s2} · Test 3: ${r.s3} · Stimmen: ${vs.length} (deutsch ${de.length}) · gewählt: ${bv?bv.name:'keine'} · Wachhalten: ${CAR.lock?'an':navigator.wakeLock?'aus':'nicht verfügbar'} · ${/iPhone|iPad/.test(navigator.userAgent)?'iPhone/iPad':/Android/.test(navigator.userAgent)?'Android':navigator.platform}`; }
 async function carWake(){ try{ if(CAR.on&&navigator.wakeLock&&!CAR.lock){ CAR.lock=await navigator.wakeLock.request('screen'); CAR.lock.addEventListener('release',()=>{ CAR.lock=null; }); } }catch(e){} }
 function carSession(on){ const ms=navigator.mediaSession; if(!ms) return; const set=(a,f)=>{ try{ ms.setActionHandler(a,on?f:null); }catch(e){} }; const go=()=>{ if(BRIEF_Q.st!=='play') briefSpeak(); };
-  set('play',go); set('pause',()=>{ if(BRIEF_Q.st==='play') briefSpeak(); }); set('stop',()=>carClose()); set('nexttrack',()=>briefSkip(1)); set('previoustrack',()=>briefSkip(-1)); if(!on){ ms.metadata=null; ms.playbackState='none'; } }
+  // Beim Einsetzen der Stimme schicken manche Autos/Handys ein „Pause“, weil die Hintergrundspur kurz den Ton abgibt. Das darf das Vorlesen nicht anhalten:
+  // „Pause“ zählt nur, wenn die Stimme schon mindestens 2,5 s läuft.
+  set('play',go); set('pause',()=>{ const q=BRIEF_Q; if(q.st!=='play') return; if(Date.now()-(q.startAt||0)<2500||Date.now()-(q.playAt||0)<2500){ carAudioPlay(); return; } briefSpeak(); }); set('stop',()=>carClose()); set('nexttrack',()=>briefSkip(1)); set('previoustrack',()=>briefSkip(-1)); if(!on){ ms.metadata=null; ms.playbackState='none'; } }
 function carSec(){ const q=BRIEF_Q, m=q.marks||[]; let k=0; m.forEach((x,i)=>{ if(x<=q.i) k=i; }); return {n:k+1,tot:m.length,t:(q.titles&&q.titles[m[k]])||q.parts[m[k]]||''}; }
 function carSync(){ if(!CAR.on||CAR.testing) return; const q=BRIEF_Q, st=q.st, s=carSec(), el=$('#carNow'), n=$('#carPos');
   // beim Laden weiterlaufen lassen: Der Start im Klick darf nicht verloren gehen. Nach Pause/Weiter genau einmal neu starten.
@@ -3527,7 +3540,7 @@ function taskLi(t){  const late=t.due&&t.due<TODAY()&&!t.done;
   // Farbe nach Dringlichkeit (sichtbar auf der Projektseite); ein überfälliges Datum bleibt in der Zeile rot
   const cf=t.done?'':'cf-'+(PRIO[t.prio]?t.prio:'normal');
   const grip=!t.done&&!bsel&&!READONLY&&mayWrite('tasks')&&(UI.view==='project'||(UI.view==='todos'&&UI.todoMode!=='board'));
-  return `<div class="li ${cf} ${t.done?'done':''} ${bsel&&SEL.has(t.id)?'sel':''}" data-drag="task:${t.id}"${t.done?'':` data-drop-task="${t.id}"`}>${bsel?`<input type="checkbox" class="sel-ck" data-chg="selTask" data-id="${t.id}" ${SEL.has(t.id)?'checked':''} aria-label="Auswählen: ${esc(t.title)}" title="Für Mehrfachbearbeitung auswählen">`:''}${grip?`<span class="td-grip" title="Ziehen, um die Reihenfolge zu ändern" aria-hidden="true">⋮⋮</span>`:''}<input type="checkbox" class="ck" data-chg="toggleTask" data-id="${t.id}" ${t.done?'checked':''} aria-label="Erledigt"><div class="body clickable" data-act="editTask" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="mt">${t.ext?`<span class="pill ext-pill" title="Liegt extern">extern: ${esc(t.ext)}</span>`:''}${t.pid&&S.projects[t.pid]&&!(UI.view==='project'&&UI.pid===t.pid)?`<button type="button" class="proj-link" data-act="openProject" data-id="${esc(t.pid)}" title="Zum Projekt ${esc(projName(t.pid))}">📁 ${esc(projName(t.pid))} ↗</button>`:t.pid?`<span>${esc(projName(t.pid))}</span>`:''}${t.due?`<span class="${late?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${t.wv&&!t.done?`<span class="pill wv-pill ${t.wv<=TODAY()?'bad':''}" title="${esc(t.wvNote||'Wiedervorlage')}">🔔 WV ${t.wv<=TODAY()?(t.wv===TODAY()?'heute':'seit '+fmtD(t.wv).slice(0,6)):fmtD(t.wv).slice(0,6)}</span>`:''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?`<span class="pill ${PRIO[t.prio][2]}">${PRIO[t.prio][0]}</span>`:''}${t.pool?'<span class="pill">allgemein</span>':''}${t.from&&S.tasks[t.from]?`<span class="pill link-pill" data-act="editTask" data-id="${esc(t.from)}" title="Folgt aus: ${esc(S.tasks[t.from].title)}">↰ aus: ${esc(S.tasks[t.from].title.slice(0,32))}${S.tasks[t.from].title.length>32?'…':''}</span>`:''}${(()=>{ const k=taskKids(t.id).filter(x=>!x.done).length; return k?`<span class="pill link-pill" title="Offene Folge-To-Dos">↳ ${k} Folge-To-Do${k>1?'s':''}</span>`:''; })()}${t.by&&t.by!=='?'?`<span class="by-line">angelegt ${esc(t.by)} ${esc(fmtD((t.at||'').slice(0,10)).slice(3))}</span>`:''}${t.done?`<span class="done-by">✓ erledigt von <b>${esc(t.doneBy||t.updBy||'?')}</b>${t.doneAt?' · '+esc(stampTxt(t.doneAt)):''}${t.doneNote?' – '+esc(t.doneNote):''}</span>`:''}</div>${taskUpdInline(t)}</div>
+  return `<div class="li ${cf} ${t.done?'done':''} ${bsel&&SEL.has(t.id)?'sel':''}" data-drag="task:${t.id}"${t.done?'':` data-drop-task="${t.id}"`}>${bsel?`<input type="checkbox" class="sel-ck" data-chg="selTask" data-id="${t.id}" ${SEL.has(t.id)?'checked':''} aria-label="Auswählen: ${esc(t.title)}" title="Für Mehrfachbearbeitung auswählen">`:''}${grip?`<span class="td-grip" title="Ziehen, um die Reihenfolge zu ändern" aria-hidden="true">⋮⋮</span>`:''}<input type="checkbox" class="ck" data-chg="toggleTask" data-id="${t.id}" ${t.done?'checked':''} aria-label="Erledigt"><div class="body clickable" data-act="editTask" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="mt">${t.src==='kitel'?`<span class="pill ext-pill" title="Kam als Anrufzusammenfassung vom KI-Telefonassistenten">📞 Extern: KI Telefon</span>`:''}${t.ext?`<span class="pill ext-pill" title="Liegt extern">extern: ${esc(t.ext)}</span>`:''}${t.pid&&S.projects[t.pid]&&!(UI.view==='project'&&UI.pid===t.pid)?`<button type="button" class="proj-link" data-act="openProject" data-id="${esc(t.pid)}" title="Zum Projekt ${esc(projName(t.pid))}">📁 ${esc(projName(t.pid))} ↗</button>`:t.pid?`<span>${esc(projName(t.pid))}</span>`:''}${t.due?`<span class="${late?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${t.wv&&!t.done?`<span class="pill wv-pill ${t.wv<=TODAY()?'bad':''}" title="${esc(t.wvNote||'Wiedervorlage')}">🔔 WV ${t.wv<=TODAY()?(t.wv===TODAY()?'heute':'seit '+fmtD(t.wv).slice(0,6)):fmtD(t.wv).slice(0,6)}</span>`:''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?`<span class="pill ${PRIO[t.prio][2]}">${PRIO[t.prio][0]}</span>`:''}${t.pool?'<span class="pill">allgemein</span>':''}${t.from&&S.tasks[t.from]?`<span class="pill link-pill" data-act="editTask" data-id="${esc(t.from)}" title="Folgt aus: ${esc(S.tasks[t.from].title)}">↰ aus: ${esc(S.tasks[t.from].title.slice(0,32))}${S.tasks[t.from].title.length>32?'…':''}</span>`:''}${(()=>{ const k=taskKids(t.id).filter(x=>!x.done).length; return k?`<span class="pill link-pill" title="Offene Folge-To-Dos">↳ ${k} Folge-To-Do${k>1?'s':''}</span>`:''; })()}${t.by&&t.by!=='?'?`<span class="by-line">angelegt ${esc(t.by)} ${esc(fmtD((t.at||'').slice(0,10)).slice(3))}</span>`:''}${t.done?`<span class="done-by">✓ erledigt von <b>${esc(t.doneBy||t.updBy||'?')}</b>${t.doneAt?' · '+esc(stampTxt(t.doneAt)):''}${t.doneNote?' – '+esc(t.doneNote):''}</span>`:''}</div>${taskUpdInline(t)}</div>
     <div class="li-side">${t.done?'':`<button type="button" class="task-upd" data-act="taskQuickUpd" data-id="${t.id}" title="Update zu diesem To-Do eintragen" aria-label="Update eintragen: ${esc(t.title)}">${ic('plus')}Update</button>`}${(t.who2||[]).length?`<button type="button" class="who-more" data-act="taskWhoMulti" data-id="${t.id}" title="Ebenfalls zuständig: ${esc(t.who2.join(', '))} – ändern">+ ${esc(t.who2.map(shortWho).join(' '))}</button>`:''}<select class="who-sel ${t.who?'':'none'}" data-chg="taskWho" data-id="${t.id}" aria-label="Zuständig für: ${esc(t.title)}" title="Zuständigkeit ändern"><option value="">offen</option>${(()=>{ const cw=whoCanon(t.who), l=staffUniq().map(s=>s.name); if(cw&&!l.includes(cw)) l.push(cw); return l.map(n=>`<option value="${esc(n)}" ${n===cw?'selected':''}>${esc(shortWho(n))}</option>`).join(''); })()}<option value="__multi">👥 mehrere Personen …</option><option value="__ext">→ liegt extern …</option>${t.ext?'<option value="__int">→ wieder intern</option>':''}</select></div>${isAdmin()?`<button type="button" class="icon-btn task-del" title="Aufgabe löschen" aria-label="Aufgabe löschen: ${esc(t.title)}" data-act="taskDel" data-id="${t.id}">${ic('x')}</button>`:''}</div>`;
 }
 
@@ -6237,6 +6250,8 @@ async function ingestFiles(files,text,pidHint){
   if(pidHint) recs.forEach(r=>{ r.pid=pidHint; r.why='in der Projektakte abgelegt'; });
   recs.forEach(r=>{ if(!STD2_RX.test(r.name)){ r.orig=r.orig||r.name; r.name=fileStdName(r,recs); r.autoName=r.name; } });
   recs.forEach(r=>{ r.auto=r.pid?'regel':''; put('files',r); });
+  // KI-Telefon-Mails direkt in der Datenablage abgelegt: To-Do trotzdem anlegen (schon vorhandenes wird erkannt)
+  recs.filter(r=>r.kind==='mail'&&!r.parent&&isKiTel(r)).forEach(r=>setTimeout(()=>kiTelTodo({subject:r.subject,from:r.from,text:r.text},null,'',{noFile:1,quiet:1,pid:r.pid}),150));
   const n=recs.filter(r=>r.pid).length;
   toast(recs.length+' Eintr'+(recs.length===1?'ag':'äge')+' abgelegt · '+n+' einem Projekt zugeordnet'+(recs.length-n&&SAMPLE?' · Claude prüft den Rest …':''));
   if(pidHint&&pidHint!==INTERN&&SAMPLE) setTimeout(()=>fileCheck(pidHint,recs),300);
@@ -7742,6 +7757,51 @@ function mailTodoDropHtml(){
     <div class="dz-ic">${ic('chat')}</div><div><b>E-Mail hierher ziehen → To-Dos erkennen</b><div class="small muted">${SAMPLE?'Claude liest die Mail, ordnet sie einem Projekt zu und schlägt Aufgaben mit Zuständigem und Frist vor.':'Die App sucht Projekt und Aufgaben-Sätze in der Mail.'} Outlook-Mail erst auf den Desktop ziehen, dann die .msg hier ablegen – oder Mailtext kopieren, hier klicken, Strg+V.</div></div>
     <div class="dz-btns"><button type="button" class="btn sm" data-act="mtPick">Mail wählen</button><button type="button" class="btn sun sm" data-act="bulkTodo">Mehrere To-Dos einlesen</button></div></div><input type="file" id="mtIn" accept=".msg,.eml,message/rfc822,text/plain" hidden>`;
 }
+/* ========== Anrufzusammenfassungen vom IONOS KI-Telefonassistenten → automatisch ein To-Do ========== */
+const isKiTel=m=>!!m&&(/ki-telefonassistent/i.test(m.from||'')||/^\s*Anrufzusammenfassung f(ü|ue)r/i.test(m.subject||'')||(/KI-Telefonassistent/i.test(m.text||'')&&/Anrufzusammenfassung|Details zur Kundenanfrage/i.test(m.text||'')));
+function kiTelParse(m){
+  const t=String(m.text||'').replace(/\r/g,'').replace(/<https?:[^>]*>/g,'').replace(/[ \t ]+/g,' ');
+  const det=(t.split(/Details zur Kundenanfrage/i)[1]||t).split(/Zusammenfassung des Gesprächs/i)[0];
+  const kv=[], seen=new Set(); det.split('\n').forEach(l=>{ const x=l.match(/^\s*[-•*]?\s*([A-Za-zÄÖÜäöüß_ ]{3,70}?)\s*:\s*(\S.*)$/); if(!x) return; const k=x[1].trim().toLowerCase().replace(/\s+/g,'_'); if(seen.has(k)) return; seen.add(k); kv.push([k,x[2].trim().replace(/(\d)\s*,\s*(?=\d)/g,'$1')]); });
+  const g=(...ks)=>{ for(const k of ks){ const h=kv.find(([a])=>a===k||a.includes(k)); if(h) return h[1]; } return ''; };
+  const sm=(t.split(/Zusammenfassung des Gesprächs/i)[1]||'').split(/Die gesamte Anrufhistorie|Mit freundlichen Grüßen|Weitere Informationen zum KI/i)[0].split('\n').map(s=>s.trim()).filter(Boolean);
+  const head=sm.length>1?sm[0]:'', sum=(sm.length>1?sm.slice(1):sm).join(' ');
+  const name=g('name','kundenname','anrufer'), tel=g('telefonnummer','rückrufnummer','telefon')||((m.subject||'').match(/(\+?\d[\d ]{6,})/)||[])[1]||'';
+  const id=(t.match(/\bID:\s*([0-9a-f][0-9a-f-]{15,})/i)||[])[1]||'';
+  const pretty=k=>{ const s=k.replace(/_/g,' ').trim(); return s.charAt(0).toUpperCase()+s.slice(1); };
+  const extra=kv.filter(([k])=>!['name','kundenname','telefonnummer','id'].includes(k)).map(([k,v])=>pretty(k)+': '+v);
+  return {name,tel:tel.trim(),head,sum,id,extra,anliegen:g('anliegen'),anfrage:g('anfrage'),proj:g('projekt'),key:id||(name+'|'+tel+'|'+(head||sum).slice(0,60))};
+}
+async function kiTelTodo(m,files,text,o={}){
+  const P=kiTelParse(m);
+  const old=arr('tasks').find(x=>x.kiKey&&x.kiKey===P.key);
+  if(old){ if(!o.quiet) toast('Dieser Anruf ist schon als To-Do angelegt: „'+old.title.slice(0,60)+'“'); return old; }
+  const what=P.head||P.anliegen||P.anfrage||P.sum.split(/(?<=\.)\s/)[0]||'Anruf';
+  let title=('Rückruf '+(P.name||P.tel||'Anrufer')+': '+what).slice(0,160), pid=o.pid||matchProject([P.proj,P.anliegen,P.head,P.sum,P.name].join('\n')).pid||'', who='', prio='hoch';
+  if(SAMPLE){ toast('📞 KI-Telefon-Anruf erkannt – Claude legt das To-Do an …');
+    const plist=arr('projects').filter(p=>['laufend','planung','onhold','fertig'].includes(catOf(p))).map(p=>`${p.id} | ${p.name} | ${p.nr||''} | ${String(p.place||'').replace(/\n/g,' ')} | ${p.customer||''}`).join('\n');
+    const roster=staff().map(s=>`${shortWho(s.name)} = ${s.name.replace(/\s*\([^)]*\)$/,'')} (${ROLES[s.role]||s.role})`).join('\n');
+    try{ const r=await SAMPLE.json(`Heute ist ${TODAY()}. Unser KI-Telefonassistent (nutz die Sonne GmbH; PV, Speicher, Ladesäulen) hat einen Anruf entgegengenommen:
+Anrufer: ${P.name||'?'} · Tel. ${P.tel||'?'}
+${P.extra.join('\n')}
+Zusammenfassung: ${P.head} ${P.sum}
+Projekte (ID | Name | Nummer | Ort | Kunde):\n${plist}
+Mitarbeiter (Kürzel = Name, Rolle):\n${roster}
+Mache daraus genau EIN To-Do für uns (meist Rückruf + Anliegen). Titel kurz im Imperativ mit Name des Anrufers, z. B. „Katrin Mannheim zurückrufen: Inbetriebsetzungsauftrag Westnetz“. Projekt nur bei eindeutigem Bezug (Name, Adresse – Korrekturen des Anrufers beachten –, Kunde, Nummer), sonst "". Zuständig nur, wenn klar aus der Rolle, sonst "".
+Antworte nur mit JSON: {"title":"","projectId":"","who":"Kürzel oder leer","prio":"dringend|hoch|normal"}`,{modelTier:'default'});
+      if(r&&String(r.title||'').trim()) title=String(r.title).trim().slice(0,160);
+      if(r&&r.projectId&&S.projects[r.projectId]) pid=r.projectId;
+      if(r&&r.who){ const s=staff().find(s=>shortWho(s.name).toLowerCase()===String(r.who).toLowerCase()); if(s) who=shortWho(s.name); }
+      if(r&&PRIO[r.prio]) prio=r.prio; }
+    catch(e){ if(e&&e.code&&e.code!=='cancelled') toast(SAMPLE_ERR[e.code]||'Claude nicht erreichbar – To-Do aus der Mail angelegt.'); } }
+  const notes=['Extern: KI Telefon','Anrufer: '+[P.name,P.tel?'Tel. '+P.tel:''].filter(Boolean).join(' · '),...P.extra,(P.head||P.sum)?'Zusammenfassung: '+[P.head,P.sum].filter(Boolean).join(' – '):'',m.date?'Anruf: '+String(m.date).slice(0,25):''].filter(Boolean).join('\n');
+  const t={id:uid(),title,pid:pid===INTERN?'':pid,done:false,prio,due:TODAY(),src:'kitel',kiKey:P.key,notes:notes.slice(0,2000)}; if(who) t.who=who;
+  put('tasks',t);
+  if(t.pid&&S.projects[t.pid]){ const p=clone(S.projects[t.pid]); p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+nowStamp()+' (Extern: KI Telefon): Anruf '+(P.name||P.tel||'')+(what?' – '+what:'')+' → To-Do: '+t.title; delete p.now; delete p.nowD; put('projects',p); }
+  if(!o.noFile){ const mf=[...(files||[])].filter(f=>/\.(msg|eml)$/i.test(f.name||'')||f.type==='message/rfc822'); if(mf.length||String(text||'').trim()) setTimeout(()=>ingestFiles(mf,mf.length?'':text,t.pid||''),80); }
+  toast('📞 To-Do angelegt (Extern: KI Telefon): „'+t.title.slice(0,70)+'“'+(t.pid?' · '+projName(t.pid):''));
+  return t;
+}
 async function readMail(files,text){
   const f=[...(files||[])].find(x=>/\.(msg|eml)$/i.test(x.name||'')||x.type==='message/rfc822');
   if(f){ const ab=await f.arrayBuffer(); let m=null;
@@ -7757,6 +7817,7 @@ async function mailToTodos(files,text){
   const txt=String(text||''); if(!(files&&files.length)&&isOutlookRow(txt)){ toast('Outlook gibt beim Ziehen nur die Betreffzeile weiter: Mail erst auf den Desktop ziehen, dann die Datei (.eml/.msg) hier ablegen – oder Mailtext kopieren und hier einfügen.'); return; }
   if(!(files&&files.length)&&isTodoList(txt)) return listToTodos(txt);
   const m=await readMail(files,txt); if(!m||m.text.trim().length<10){ toast('Bitte eine E-Mail (.msg/.eml) oder kopierten Mailtext ablegen.'); return; }
+  if(isKiTel(m)) return kiTelTodo(m,files,txt);
   m.kind='mail'; return analyzeTodos(m,files,txt);
 }
 async function listToTodos(text){ const t=String(text||'').trim(); if(!t) return toast('Bitte To-Dos eingeben, eine Zeile pro Aufgabe.');
@@ -7934,6 +7995,7 @@ async function smartDrop(files,text){
     else if(/^image\//.test(x.type||'')&&imgs.length<3){ try{ imgs.push(new Blob([await mappeToJpg(x,1600)],{type:'image/jpeg'})); }catch(e){} items.push('Foto „'+x.name+'“ (das Bild ist angehängt – Inhalt direkt aus dem Bild lesen: Absender, Nummern, Positionen, Projekt/Kommission)'); }
     else items.push('Datei „'+x.name+'“ ('+(x.type||'unbekannt')+')'); }
   if(!files.length){ body=text.trim(); if(/^(Von|From|Betreff|Subject)\s*:/im.test(body)) mail={...(await readMail([],body)),kind:'mail'}; items.push((mail?'Kopierte E-Mail':'Kopierter Text')+':\n'+body.slice(0,3000)); }
+  if(mail&&isKiTel(mail)){ kiTelTodo(mail,files,text); return; } // Anruf über das KI-Telefon: ohne Rückfrage direkt ein To-Do
   const all=items.join('\n\n---\n\n');
   // Lokale Vermutung
   let type=guessKind((f&&f.name)||'',all,!!mail,f&&f.type); type={mail:'korrespondenz'}[type]||type;
