@@ -711,7 +711,12 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .menu-row{display:flex;align-items:stretch}.menu-row>button:first-child{flex:1;min-width:0}
 .menu .menu-x{flex:none;width:30px;justify-content:center;padding:0;color:var(--muted);font-size:17px;font-weight:700;opacity:.45}.menu .menu-row:hover .menu-x{opacity:1}.menu .menu-x:hover{color:var(--ink);background:var(--sunken)}
 .p-lock{display:inline-flex;vertical-align:middle;margin-left:.35em;color:var(--muted);line-height:0}.p-lock svg{width:.8em;height:.8em;min-width:12px;min-height:12px}h1 .p-lock{color:var(--ink)}
-.st-sw{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin}.st-sw button{white-space:nowrap}
+.lg-bar{flex-wrap:wrap;gap:8px}.lg-row.hi>.lg-main{background:color-mix(in srgb,var(--sun) 35%,transparent)}.lg-ab{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px 3px 6px;font:inherit;font-size:12px;cursor:pointer;color:var(--ink);white-space:nowrap}.lg-ab:hover{background:var(--sun);border-color:var(--sun)}.lg-ab svg{width:14px;height:14px}.icon-btn.on-off{color:var(--bad)}
+.lg-empty{display:flex;flex-direction:column;gap:10px;align-items:flex-start;padding:22px 18px}.lg-prev{padding:10px 12px;border-radius:8px;background:var(--sunken);font-size:14px}.lg-prev .bad{color:var(--bad);font-weight:600}.lg-prev .ok{color:var(--ok);font-weight:600}
+.lbl-c{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;padding:14px 16px 6px}.lbl-f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}.lbl-f .inp{width:100%}.lbl-t{gap:14px;padding:4px 16px 8px;flex-wrap:wrap}.lbl-a{gap:8px;padding:8px 16px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:center}
+.lbl-list{display:block;max-height:58vh;overflow:auto;padding:0 16px}.lbl-it{display:grid;grid-template-columns:24px minmax(130px,auto) 1fr auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);cursor:pointer}.lbl-it.on{background:color-mix(in srgb,var(--sun) 14%,transparent)}.lbl-h{position:sticky;top:0;background:var(--surface);z-index:1;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.lbl-frame{width:100%;height:62vh;border:1px solid var(--line);border-radius:8px;background:#e4e4e4;margin-top:8px}
+@media(max-width:640px){.lbl-it{grid-template-columns:24px 1fr;}.lbl-it>span:last-child{grid-column:2}.lg-ab span{display:none}.lg-ab{padding:4px}}.st-sw{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin}.st-sw button{white-space:nowrap}
 .bp{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.bp>select{flex:2 1 220px;min-width:0}.bp .bp-code{flex:1 1 150px;min-width:0}.bp .btn svg,.btn>svg{width:16px;height:16px}
 .lg-tree{padding:2px 8px 10px}.lg-row{display:flex;align-items:center;gap:2px;padding-left:calc(var(--dep)*18px)}.lg-main{flex:1;min-width:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:9px 6px;font:inherit;color:var(--ink);cursor:pointer;border-radius:6px}.lg-main:hover{background:var(--sunken)}
 .lg-kind{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);min-width:58px}.lg-standort>.lg-main{background:var(--sunken);font-size:15px}.lg-standort .lg-kind{color:var(--ink)}.lg-platz .lg-kind{color:#8a6d00}.lg-row.off{opacity:.55}.lg-tw{display:inline-block;width:12px;color:var(--muted)}.lg-acts{display:flex;gap:2px}
@@ -5196,7 +5201,7 @@ function routeSheet(oid,got){
 // Etikett/Scan: „LP“ + interne ID (nur Buchstaben/Ziffern). Bleibt beim Umbenennen gleich, enthält keine Zugangsdaten. Rechte prüft die App bei jedem Öffnen/Buchen.
 const LG_KINDS={standort:'Lagerstandort',bereich:'Bereich / Raum',regal:'Regal / Schrank / Zone',ebene:'Ebene / Schublade',platz:'Lagerplatz / Fach / Stellplatz'};
 const LG_SHORT={standort:'Standort',bereich:'Bereich',regal:'Regal',ebene:'Ebene',platz:'Platz'};
-const LG_NEXT={standort:['bereich','regal','platz'],bereich:['regal','platz'],regal:['ebene','platz'],ebene:['platz'],platz:[]};
+const LG_NEXT={standort:['bereich','regal','platz'],bereich:['bereich','regal','platz'],regal:['ebene','platz'],ebene:['platz'],platz:[]};
 const LG_TYPES={fach:'Fachboden',palette:'Palettenstellplatz',klein:'Kleinteilefach',boden:'Bodenlager'};
 const MV_T={zugang:'Zugang',wareneingang:'Wareneingang',entnahme:'Entnahme',umlagerung:'Umlagerung',uebernahme:'Übernahme',inventur:'Inventur',korrektur:'Korrektur',anfang:'Anfangsbestand'};
 const LG_SCAN_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10"/></svg>';
@@ -5331,54 +5336,93 @@ function stockShiftSheet(sid,pre){ pre=pre||{}; const s=S.stock[sid]; if(!s) ret
 
 /* ---------- Lagerorte & Lagerplätze verwalten ---------- */
 const lgInc=(seg,i,cnt)=>{ if(cnt<=1) return seg; const m=String(seg||'').match(/^(.*?)(\d+)$/); if(!m) return (seg||'')+String(i+1).padStart(2,'0'); return m[1]+String(+m[2]+i).padStart(m[2].length,'0'); };
-function lgNodeForm(n,parentId){ if(!lgMgr()) return toast('Lagerorte verwalten dürfen nur Admins und freigegebene Personen.'); closeSheet();
-  const isNew=!n, par=isNew?lgNode(parentId):lgNode(n.parent), kinds=isNew?(par?LG_NEXT[par.kind]:['standort']):[n.kind]; if(!kinds.length) return toast('Unter einem Lagerplatz kann nichts mehr angelegt werden.');
-  const v=isNew?{kind:kinds.includes('platz')&&par&&par.kind==='ebene'?'platz':kinds[0],ltype:'fach',count:1,status:'aktiv'}:{...n,status:n.off?'still':n.blocked?'gesperrt':'aktiv'};
-  openSheet({title:isNew?(par?'Neu unter '+lgFullName(par.id):'Neuer Lagerstandort'):LG_KINDS[n.kind]+' bearbeiten',value:v,saveLabel:isNew?'Anlegen':'Speichern',
-    fields:[{k:'kind',label:'Art',type:'select',options:kinds.map(k=>[k,LG_KINDS[k]])},{k:'name',label:'Bezeichnung',ph:'z. B. Hauptlager, Elektro-Kleinteile, Kabelregal'},{k:'seg',label:'Kürzel für den Platzcode',ph:'z. B. R01, E02, P03, EK, PAL'},
-      {k:'ltype',label:'Lagertyp (bei Plätzen)',type:'select',options:Object.entries(LG_TYPES)},{k:'status',label:'Status',type:'select',options:[['aktiv','aktiv'],['gesperrt','gesperrt – keine Einlagerung'],['still','stillgelegt']]},
-      {k:'cap',label:'Max. Kapazität (optional)',ph:'z. B. 1 Palette, 20 Kartons'},{k:'maxKg',label:'Max. Gewicht in kg (optional)',type:'number'},
-      ...(isNew?[{k:'count',label:'Anzahl (fortlaufend nummeriert)',type:'number'},{k:'ebN',label:'Ebenen / Schubladen darunter (bei Regal)',type:'number'},{k:'plN',label:'Plätze / Fächer je Ebene',type:'number'}]:[]),
-      {k:'notes',label:'Beschreibung / Hinweise',type:'textarea'},
-      {k:'hint',label:'',type:'html',full:1,html:`<div class="small muted">Platzcode = Kürzel aller Stufen, z. B. <b>R01-E02-P03</b> oder <b>EK-S01-S03-F05</b>. Der Standort braucht kein Kürzel.${isNew?' Beispiel Regal: Kürzel R01, Anzahl 3, Ebenen 4, Plätze 5 → R01–R03 mit je 4 Ebenen und 5 Plätzen.':''} Der QR-Code enthält eine feste interne Kennung und bleibt auch nach dem Umbenennen gültig.${!isNew?'<br>Aktueller Code: <b>'+esc(lgCode(n.id))+'</b>':''}</div>`}],
-    extraBtn:!isNew&&!lgIsBin(n)?`<button type="button" class="btn" data-act="lgPrintNode" data-id="${n.id}">Etiketten aller Plätze darunter</button>`:!isNew?`<button type="button" class="btn" data-act="lgPrintOne" data-id="${n.id}">Etikett</button>`:'',
+// Klartext je Stufe: Standort/Bereich mit Namen, sonst „Regal R01“, „Ebene E02“, „Platz P03“ oder eigener Name + Kürzel („Schrank S01“, „Fach 05“)
+const lgPart=n=>{ if(!n) return ''; if(n.kind==='standort'||n.kind==='bereich') return n.name||n.seg||''; const nm=String(n.name||'').trim(), sg=String(n.seg||''); if(nm&&sg&&nm.toLowerCase().includes(sg.toLowerCase())) return nm; return (nm||LG_SHORT[n.kind])+(sg?' '+sg:''); };
+const lgPlainIn=(M,id)=>lgPathIn(M,id).map(lgPart).filter(Boolean).join(' / ');
+const lgPlain=id=>lgPlainIn(S.lager||{},id);
+// Kürzel-Vorschlag: Standort/Bereich aus dem Namen (Bornheim → BO, Elektro-Kleinteile → EK), sonst nächste freie Nummer (R03, E02, P05)
+const LG_PRE={regal:'R',ebene:'E',platz:'P'};
+function lgSuggestSeg(kind,parentId,name){ if(kind==='standort'||kind==='bereich'){ const w=String(name||'').trim().split(/[\s\-\/]+/).filter(Boolean); if(!w.length) return ''; return (w.length>1?w.map(x=>x[0]).join(''):w[0].slice(0,2)).toUpperCase().replace(/[^0-9A-ZÄÖÜ]/g,'').slice(0,4); }
+  const pre=LG_PRE[kind]||''; let mx=0; lgKids(parentId).filter(n=>n.kind===kind).forEach(n=>{ const m=String(n.seg||'').match(/(\d+)$/); if(m) mx=Math.max(mx,+m[1]); }); return pre+String(mx+1).padStart(2,'0'); }
+const lgAllowed=parentId=>{ const p=lgNode(parentId); return p?LG_NEXT[p.kind]:['standort']; };
+function lgNodeForm(n,parentId,kindPre){ if(!lgMgr()) return toast('Lagerorte verwalten dürfen nur Admins und Personen, die unter „Lagerorte & Plätze“ freigegeben sind.'); closeSheet();
+  const isNew=!n, par0=isNew?(parentId||''):(n.parent||''), allowed=lgAllowed(par0);
+  const kind0=isNew?(kindPre&&allowed.includes(kindPre)?kindPre:(allowed.includes('platz')&&lgNode(par0)&&['regal','ebene'].includes(lgNode(par0).kind)?(lgNode(par0).kind==='ebene'?'platz':'ebene'):allowed[0])):n.kind;
+  const v=isNew?{parent:par0,kind:kind0,ltype:'fach',count:1,status:'aktiv',seg:lgSuggestSeg(kind0,par0,'')}:{...n,parent:n.parent||'',status:n.off?'still':n.blocked?'gesperrt':'aktiv'};
+  const bad=n?new Set([n.id,...lgSub(n.id).map(x=>x.id)]):new Set();
+  const parOpts=[['','– oberste Ebene (nur für Standorte) –'],...lgAll().filter(x=>!lgIsBin(x)&&!bad.has(x.id)).sort((a,b)=>lgPlain(a.id).localeCompare(lgPlain(b.id),'de',{numeric:true})).map(x=>[x.id,lgPlain(x.id)])];
+  openSheet({title:isNew?'Neues Element in der Lagerstruktur':LG_KINDS[n.kind]+' bearbeiten',value:v,saveLabel:isNew?'Anlegen':'Speichern',
+    fields:[{k:'parent',label:'Übergeordnetes Element',type:'select',full:1,options:parOpts},{k:'kind',label:'Typ',type:'select',options:Object.entries(LG_KINDS)},
+      {k:'name',label:'Name / Bezeichnung',ph:'z. B. Bornheim, Hauptlager, Schrank, Fach'},{k:'seg',label:'Kürzel / Code',ph:'z. B. BO, HL, R01, E02, P03'},
+      {k:'codex',label:'',type:'html',full:1,html:'<div class="lg-prev" id="lg_prev"></div>'},
+      {k:'ltype',label:'Platztyp',type:'select',options:Object.entries(LG_TYPES)},{k:'status',label:'Status',type:'select',options:[['aktiv','aktiv'],['gesperrt','gesperrt – keine Einlagerung'],['still','deaktiviert (stillgelegt)']]},
+      {k:'cap',label:'Kapazität (optional)',ph:'z. B. 1 Palette, 20 Kartons'},{k:'maxKg',label:'Max. Gewicht kg (optional)',type:'number'},
+      ...(isNew?[{k:'count',label:'Anzahl anlegen (fortlaufend nummeriert)',type:'number'},{k:'ebN',label:'Darunter gleich Ebenen / Schubladen anlegen',type:'number'},{k:'plN',label:'Darunter gleich Plätze / Fächer anlegen (je Ebene)',type:'number'}]:[]),
+      {k:'notes',label:'Beschreibung / Hinweise (optional)',type:'textarea',ai:false}],
+    extraBtn:!isNew&&!lgIsBin(n)?`<button type="button" class="btn" data-act="lgPrintNode" data-id="${n.id}">Etiketten aller Plätze darunter</button>`:!isNew?`<button type="button" class="btn" data-act="lgPrintOne" data-id="${n.id}">Etikett drucken</button>`:'',
     onDelete:isNew?null:()=>lgNodeDel(n.id), deleteLabel:'Löschen',
-    onSave:v=>lgNodeSave(n,par,v)}); }
-function lgNodeSave(n,par,v){ const kind=v.kind, name=String(v.name||'').trim(), seg=String(v.seg||'').trim().replace(/\s+/g,''), st=v.status, now=new Date().toISOString();
-  if(kind==='standort'&&!name){ toast('Bitte eine Bezeichnung für den Standort eintragen.'); return false; }
+    onSave:vv=>lgNodeSave(n,vv)});
+  setTimeout(()=>lgFormWire(n),0); }
+// Formular lebendig machen: erlaubte Typen je übergeordnetem Element, Kürzel-Vorschlag, Felder nur wo sinnvoll, Code-Vorschau mit Doppelt-Prüfung
+function lgFormWire(n){ const P=$('#f_parent'), K=$('#f_kind'), N=$('#f_name'), G=$('#f_seg'), out=$('#lg_prev'); if(!P||!K||!out) return; let auto=!n;
+  const row=id=>{ const e=$('#'+id); return e?e.closest('.fld'):null; }, show=(id,on)=>{ const r=row(id); if(r) r.hidden=!on; };
+  const sync=()=>{ const al=lgAllowed(P.value); [...K.options].forEach(o=>{ o.disabled=n?o.value!==n.kind:!al.includes(o.value); }); if(!n&&!al.includes(K.value)) K.value=al[0]||'';
+    const k=K.value; if(auto) G.value=lgSuggestSeg(k,P.value,N.value);
+    show('f_ltype',k==='platz'); show('f_cap',k==='platz'); show('f_maxKg',k==='platz'); show('f_ebN',!n&&k==='regal'); show('f_plN',!n&&k!=='platz'); if($('#f_plN')) row('f_plN').querySelector('label').textContent=k==='regal'?'Plätze / Fächer je Ebene':'Darunter gleich Plätze / Fächer anlegen';
+    const M={...(S.lager||{})}, cnt=Math.max(1,Math.min(100,Math.round(+(($('#f_count')||{}).value)||1))), seg=G.value.trim(), tmp=id=>({...(n||{}),id,parent:P.value,kind:k,name:N.value.trim(),seg:lgInc(seg,cnt>1?id==='__b'?cnt-1:0:0,cnt)});
+    M.__a=tmp('__a'); if(n) delete M[n.id]; if(n) lgSub(n.id).forEach(c=>{ M[c.id]={...c,parent:c.parent===n.id?'__a':c.parent}; });
+    let codeA=lgCodeIn(M,'__a'), codeB=''; if(cnt>1){ M.__b=tmp('__b'); codeB=lgCodeIn(M,'__b'); }
+    const others=new Set(lgAll().filter(x=>lgIsBin(x)&&(!n||x.id!==n.id)).map(x=>lgCode(x.id).toLowerCase()));
+    const ok=!/[^0-9A-Za-zÄÖÜäöü]/.test(seg), dup=k==='platz'&&others.has(codeA.toLowerCase());
+    out.innerHTML=!al_ok(P.value,k,n)?`<span class="bad">„${esc(LG_KINDS[k]||k)}“ kann nicht unter „${esc(lgPlain(P.value)||'oberster Ebene')}“ liegen.</span>`
+      :!ok?'<span class="bad">Kürzel bitte nur aus Buchstaben und Ziffern (ohne Bindestrich und Leerzeichen).</span>'
+      :k==='platz'?`Lagerplatzcode: <b class="mono">${esc(codeA||'–')}</b>${codeB?` … <b class="mono">${esc(codeB)}</b>`:''} ${dup?'<span class="bad">gibt es schon</span>':codeA?'<span class="ok">frei</span>':''}<div class="small muted">${esc(lgPlainIn(M,'__a'))}</div>`
+      :`Code-Anfang für Plätze darunter: <b class="mono">${esc(codeA?codeA+'-…':'–')}</b><div class="small muted">${esc(lgPlainIn(M,'__a'))}</div>`; };
+  const al_ok=(par,k,node)=>lgAllowed(par).includes(k);
+  P.addEventListener('change',sync); K.addEventListener('change',sync); N.addEventListener('input',sync); G.addEventListener('input',()=>{ auto=false; sync(); }); ['f_count','f_ebN','f_plN'].forEach(id=>{ const e=$('#'+id); if(e) e.addEventListener('input',sync); });
+  sync(); if(!n&&window.innerWidth>900) setTimeout(()=>{ (K.value==='standort'||K.value==='bereich'?N:G).focus(); },30); }
+function lgNodeSave(n,v){ const kind=n?n.kind:v.kind, parent=v.parent||'', par=lgNode(parent), name=String(v.name||'').trim(), seg=String(v.seg||'').trim().replace(/\s+/g,''), st=v.status, now=new Date().toISOString();
+  if(!lgAllowed(parent).includes(kind)){ toast(LG_KINDS[kind]+' kann nicht unter „'+(par?lgPlain(par.id):'oberster Ebene')+'“ liegen.'); return false; }
+  if(n&&parent!==(n.parent||'')&&(parent===n.id||lgSub(n.id).some(x=>x.id===parent))){ toast('Ein Element kann nicht unter sich selbst verschoben werden.'); return false; }
+  if(kind==='standort'&&!name){ toast('Bitte einen Namen für den Standort eintragen.'); return false; }
   if(kind==='platz'&&!seg){ toast('Bitte ein Kürzel für den Platz eintragen (z. B. P01).'); return false; }
-  if(kind!=='standort'&&!seg&&!name){ toast('Bitte ein Kürzel oder eine Bezeichnung eintragen.'); return false; }
+  if(kind!=='standort'&&!seg&&!name){ toast('Bitte ein Kürzel oder einen Namen eintragen.'); return false; }
   if(seg&&!/^[0-9A-Za-zÄÖÜäöü]+$/.test(seg)){ toast('Das Kürzel bitte nur aus Buchstaben und Ziffern (ohne Bindestrich und Leerzeichen).'); return false; }
-  const M={...(S.lager||{})}, out=[]; const mx=v.maxKg===''||v.maxKg==null?'':+v.maxKg;
-  if(n){ const x={...clone(n),name,seg,ltype:v.ltype,cap:v.cap||'',maxKg:mx,notes:v.notes||'',blocked:st==='gesperrt',off:st==='still',updBy:meK(),updAt:now};
-    if(x.off&&!n.off){ const full=[n,...lgSub(n.id)].filter(lgIsBin).filter(b=>binStock(b.id).length); if(full.length){ toast('Stilllegen geht erst ohne Bestand: auf '+full.length+' Platz/Plätzen liegt noch Ware. Bitte vorher umlagern.'); return false; } }
+  const M={...(S.lager||{})}, out=[], mx=v.maxKg===''||v.maxKg==null?'':+v.maxKg;
+  if(n){ const x={...clone(n),parent,name,seg,ltype:v.ltype,cap:v.cap||'',maxKg:mx,notes:v.notes||'',blocked:st==='gesperrt',off:st==='still',updBy:meK(),updAt:now};
+    if(x.off&&!n.off){ const full=[n,...lgSub(n.id)].filter(lgIsBin).filter(b=>binStock(b.id).length); if(full.length){ toast('Deaktivieren geht erst ohne Bestand: auf '+full.length+' Platz/Plätzen liegt noch Ware. Bitte vorher umlagern.'); return false; } }
     M[x.id]=x; out.push(x); }
-  else { const cnt=Math.max(1,Math.min(100,Math.round(+v.count||1))), eb=Math.max(0,Math.min(40,Math.round(+v.ebN||0))), pl=Math.max(0,Math.min(80,Math.round(+v.plN||0))), pad=i=>String(i).padStart(2,'0');
-    const mk=(k,parent,nm,sg,extra)=>{ const x={id:uid()+out.length.toString(36),parent:parent||'',kind:k,name:nm||'',seg:sg||'',blocked:st==='gesperrt',off:st==='still',by:meK(),at:now,...(k==='platz'?{ltype:v.ltype||'fach'}:{}),...(extra||{})}; M[x.id]=x; out.push(x); return x; };
-    for(let i=0;i<cnt;i++){ const x=mk(kind,par?par.id:'',cnt>1&&name?name+' '+(i+1):name,lgInc(seg,i,cnt),{cap:v.cap||'',maxKg:mx,notes:v.notes||''});
-      if(kind==='regal'&&eb>0){ for(let e=1;e<=eb;e++){ const E=mk('ebene',x.id,'Ebene '+e,'E'+pad(e)); for(let p=1;p<=pl;p++) mk('platz',E.id,'','P'+pad(p)); } }
-      else if(kind!=='platz'&&pl>0){ for(let p=1;p<=pl;p++) mk('platz',x.id,'','P'+pad(p)); } }
+  else { const cnt=Math.max(1,Math.min(100,Math.round(+v.count||1))), eb=kind==='regal'?Math.max(0,Math.min(40,Math.round(+v.ebN||0))):0, pl=kind==='platz'?0:Math.max(0,Math.min(80,Math.round(+v.plN||0))), pad=i=>String(i).padStart(2,'0');
+    const mk=(k,pa,nm,sg,extra)=>{ const x={id:uid()+out.length.toString(36),parent:pa||'',kind:k,name:nm||'',seg:sg||'',blocked:st==='gesperrt',off:st==='still',by:meK(),at:now,...(k==='platz'?{ltype:v.ltype||'fach'}:{}),...(extra||{})}; M[x.id]=x; out.push(x); return x; };
+    for(let i=0;i<cnt;i++){ const x=mk(kind,parent,cnt>1&&name&&(kind==='standort'||kind==='bereich')?name+' '+(i+1):name,lgInc(seg,i,cnt),{cap:v.cap||'',maxKg:mx,notes:v.notes||''});
+      if(eb>0){ for(let e=1;e<=eb;e++){ const E=mk('ebene',x.id,'','E'+pad(e)); for(let p=1;p<=pl;p++) mk('platz',E.id,'','P'+pad(p)); } }
+      else if(pl>0){ for(let p=1;p<=pl;p++) mk('platz',x.id,'','P'+pad(p)); } }
     if(out.length>1500){ toast('Bitte höchstens 1.500 Einträge auf einmal anlegen.'); return false; } }
   const seen={}; let dup=''; Object.values(M).filter(x=>x.kind==='platz').forEach(x=>{ const c=lgCodeIn(M,x.id).toLowerCase(); if(seen[c]&&!dup) dup=lgCodeIn(M,x.id); seen[c]=1; });
-  if(dup){ toast('Den Platzcode „'+dup+'“ gäbe es dann doppelt. Bitte ein anderes Kürzel wählen.'); return false; }
-  out.forEach(x=>put('lager',x)); if(par){ const c={...(UI.lgCol||{})}; c[par.id]=false; UI.lgCol=c; }
-  toast(n?'Gespeichert.':out.length===1?'Angelegt: '+(out[0].kind==='platz'?lgCodeIn(M,out[0].id):out[0].name||out[0].seg):out.length+' Einträge angelegt, davon '+out.filter(x=>x.kind==='platz').length+' Lagerplätze.'); }
-function lgNodeDel(id){ const n=lgNode(id); if(!n||!lgMgr()) return; if(lgKids(id).length) return toast('Bitte zuerst die Einträge darunter löschen oder stilllegen.');
+  if(dup){ toast('Den Lagerplatzcode „'+dup+'“ gäbe es dann doppelt. Bitte ein anderes Kürzel wählen.'); return false; }
+  out.forEach(x=>put('lager',x)); const c={...(UI.lgCol||{})}; lgPathIn(M,out[0].id).forEach(p=>{ c[p.id]=false; }); UI.lgCol=c; UI.lgHi=out[0].id;
+  toast(n?'Gespeichert.':out.length===1?'Angelegt: '+(out[0].kind==='platz'?lgCodeIn(M,out[0].id):lgPlainIn(M,out[0].id)):out.length+' Einträge angelegt, davon '+out.filter(x=>x.kind==='platz').length+' Lagerplätze.'); }
+function lgNodeDel(id){ const n=lgNode(id); if(!n||!lgMgr()) return; if(lgKids(id).length) return toast('Bitte zuerst die Elemente darunter löschen – oder dieses Element deaktivieren.');
   if(lgIsBin(n)&&binStock(id).length) return toast('Auf diesem Platz liegt noch Ware. Bitte zuerst umlagern.');
   if(arr('inv').some(x=>['offen','pruefen'].includes(x.status)&&(x.bins||[]).includes(id))) return toast('Dieser Platz ist Teil einer laufenden Inventur.');
   const used=arr('stock').some(s=>(s.moves||[]).some(m=>m.from===id||m.to===id||(m.auto||[]).some(a=>a.bin===id)));
-  confirmSheet((used?'Auf diesem Platz gab es früher Buchungen. Zum Erhalt des Verlaufs besser „stillgelegt“ wählen. ':'')+LG_KINDS[n.kind]+' „'+lgFullName(id)+'“ wirklich löschen?',()=>{ del('lager',id); closeSheet(); toast('Gelöscht.'); }); }
-function vLgPlaces(sw){ const q=(UI.lgq||'').toLowerCase().trim(), mgr=lgMgr(), all=lgAll(), col=UI.lgCol||{};
-  const hit=n=>[n.name,n.seg,lgCode(n.id),n.notes,LG_TYPES[n.ltype]].join(' ').toLowerCase().includes(q);
+  confirmSheet((used?'Auf diesem Platz gab es früher Buchungen. Damit der Verlauf lesbar bleibt, besser „deaktiviert“ wählen. ':'')+LG_KINDS[n.kind]+' „'+lgPlain(id)+'“ wirklich löschen?',()=>{ del('lager',id); closeSheet(); toast('Gelöscht.'); }); }
+function lgOffToggle(id){ const n=lgNode(id); if(!n||!lgMgr()) return; if(!n.off){ const full=[n,...lgSub(id)].filter(lgIsBin).filter(b=>binStock(b.id).length); if(full.length) return toast('Deaktivieren geht erst ohne Bestand: auf '+full.length+' Platz/Plätzen liegt noch Ware.'); }
+  put('lager',{...clone(n),off:!n.off,updBy:meK(),updAt:new Date().toISOString()}); toast(lgPlain(id)+(n.off?' ist wieder aktiv.':' ist deaktiviert.')); }
+const LG_OFF_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg>';
+function vLgPlaces(sw){ const q=(UI.lgq||'').toLowerCase().trim(), mgr=lgMgr(), all=lgAll(), col=UI.lgCol||{}, hi=UI.lgHi; UI.lgHi='';
+  const hit=n=>[n.name,n.seg,lgCode(n.id),lgPlain(n.id),n.notes,LG_TYPES[n.ltype]].join(' ').toLowerCase().includes(q);
   const keep=new Set(); if(q) all.filter(hit).forEach(n=>{ lgPath(n.id).forEach(p=>keep.add(p.id)); lgSub(n.id).forEach(c=>keep.add(c.id)); });
-  const isCol=n=>!q&&(col[n.id]!=null?col[n.id]:n.kind==='regal');
+  const isCol=n=>!q&&(col[n.id]!=null?col[n.id]:n.kind==='regal'||n.kind==='ebene');
   const row=(n,dep)=>{ if(q&&!keep.has(n.id)) return ''; const kids=lgKids(n.id), bin=lgIsBin(n), inside=bin?binStock(n.id).length:lgSub(n.id).filter(lgIsBin).length, c=isCol(n)&&kids.length;
-    const flags=(n.off?'<span class="pill">stillgelegt</span>':'')+(n.blocked?'<span class="pill bad">gesperrt</span>':'');
-    return `<div class="lg-row lg-${n.kind}${lgOff(n)?' off':''}" style="--dep:${dep}"><button type="button" class="lg-main" data-act="${bin?'lgBin':'lgToggle'}" data-id="${n.id}"><span class="lg-tw">${bin?'':kids.length?(c?'▸':'▾'):''}</span><span class="lg-kind">${esc(LG_SHORT[n.kind])}</span><b>${esc(bin?lgCode(n.id):[n.seg,n.name].filter(Boolean).join(' · '))}</b>${bin&&n.name?`<span class="small muted">${esc(n.name)}</span>`:''}${bin&&n.ltype?`<span class="small muted">${esc(LG_TYPES[n.ltype]||'')}</span>`:''}${flags}<span class="spacer"></span><span class="small muted">${bin?(inside?inside+' Artikel':'leer'):inside+' Plätze'}</span></button>${mgr?`<span class="lg-acts">${LG_NEXT[n.kind].length?`<button type="button" class="icon-btn" title="Darunter anlegen" aria-label="Darunter anlegen" data-act="lgNew" data-parent="${n.id}">${ic('plus')}</button>`:''}<button type="button" class="icon-btn" title="Bearbeiten" aria-label="Bearbeiten" data-act="lgNodeEdit" data-id="${n.id}">${ic('edit')}</button></span>`:''}</div>${c?'':kids.map(k=>row(k,dep+1)).join('')}`; };
-  const roots=lgKids(''), unN=arr('stock').filter(s=>unassigned(s)>0).length;
-  return head('Lagerverwaltung',roots.length+' Standort'+(roots.length===1?'':'e')+' · '+all.filter(lgIsBin).length+' Lagerplätze'+(unN&&LGON()?' · '+unN+' Artikel mit Bestand ohne Platz':''),lgHeadBtns()+(mgr?`<button class="btn sun" data-act="lgNew" data-parent="">${ic('plus')}Lagerstandort</button>`:''))+sw+
-    `<div class="card"><div class="card-h"><input class="inp" type="search" style="flex:1" placeholder="Platzcode, Regal, Bereich oder Standort suchen" value="${esc(UI.lgq||'')}" data-chg="lgQ" aria-label="Lagerorte suchen"></div>
-      <div class="lg-tree">${roots.map(r=>row(r,0)).join('')||`<div class="empty">Noch keine Lagerorte. ${mgr?'Lege mit „+ Lagerstandort“ z. B. „Hauptlager“ an, darunter Bereiche, Regale, Ebenen und Plätze. Beim Regal kannst du Ebenen und Plätze gleich mit anlegen lassen.':'Lagerorte legt die Lagerverwaltung an.'}</div>`}</div></div>`+(mgr?lgMigHtml():'')+lgMgrBox(); }
+    const flags=(n.off?'<span class="pill">deaktiviert</span>':'')+(n.blocked?'<span class="pill bad">gesperrt</span>':'');
+    return `<div class="lg-row lg-${n.kind}${lgOff(n)?' off':''}${n.id===hi?' hi':''}" style="--dep:${dep}"><button type="button" class="lg-main" data-act="${bin?'lgBin':'lgToggle'}" data-id="${n.id}" aria-expanded="${bin?'':!c}"><span class="lg-tw">${bin?'·':kids.length?(c?'▸':'▾'):''}</span><span class="lg-kind">${esc(LG_SHORT[n.kind])}</span>${bin?`<b class="mono">${esc(lgCode(n.id))}</b><span class="small muted">${esc(lgPart(n))}${n.ltype?' · '+esc(LG_TYPES[n.ltype]||''):''}</span>`:`<b>${esc(lgPart(n))}</b>${n.seg&&lgPart(n).indexOf(n.seg)<0?`<span class="mono small muted">${esc(n.seg)}</span>`:''}`}${flags}<span class="spacer"></span><span class="small muted">${bin?(inside?inside+' Artikel':'leer'):inside+' Plätze'}</span></button>${mgr?`<span class="lg-acts">${LG_NEXT[n.kind].length?`<button type="button" class="lg-ab" data-act="lgNew" data-parent="${n.id}" title="Unterelement anlegen">${ic('plus')}<span>Unterelement</span></button>`:''}<button type="button" class="icon-btn" title="Bearbeiten / umbenennen" aria-label="Bearbeiten" data-act="lgNodeEdit" data-id="${n.id}">${ic('edit')}</button><button type="button" class="icon-btn ${n.off?'on-off':''}" title="${n.off?'Wieder aktivieren':'Deaktivieren'}" aria-label="${n.off?'Aktivieren':'Deaktivieren'}" data-act="lgOff" data-id="${n.id}">${LG_OFF_IC}</button></span>`:''}</div>${c?'':kids.map(k=>row(k,dep+1)).join('')}`; };
+  const roots=lgKids(''), unN=arr('stock').filter(s=>unassigned(s)>0).length, nb=all.filter(lgIsBin).length;
+  const btns=mgr?`<button class="btn sun" data-act="lgNew" data-parent="">${ic('plus')}Neuer Standort</button>${roots.length?`<button class="btn" data-act="lgNewBin">${ic('plus')}Neuer Lagerplatz</button>`:''}`:'';
+  return head('Lagerverwaltung',roots.length+' Standort'+(roots.length===1?'':'e')+' · '+nb+' Lagerplätze'+(unN&&nb?' · '+unN+' Artikel mit Bestand ohne Platz':''),lgHeadBtns()+btns)+sw+
+    `<div class="card"><div class="card-h lg-bar"><input class="inp" type="search" style="flex:1;min-width:180px" placeholder="Suchen: Platzcode, Bezeichnung oder Standort" value="${esc(UI.lgq||'')}" data-chg="lgQ" aria-label="Lagerorte suchen">${roots.length?`<button class="btn sm" data-act="lgOpenAll">Alle aufklappen</button><button class="btn sm" data-act="lgCloseAll">Alle zuklappen</button>`:''}</div>
+      ${!mgr?'<div class="small muted" style="padding:0 16px 8px">Ansehen ist für alle mit Lagerrechten möglich. Anlegen und Ändern dürfen Admins und freigegebene Personen.</div>':''}
+      <div class="lg-tree">${roots.map(r=>row(r,0)).join('')||`<div class="lg-empty"><b>Noch keine Lagerorte angelegt.</b><div class="small muted">So geht's: 1. „Neuer Standort“ (z. B. Bornheim, Kürzel BO). 2. Am Standort „+ Unterelement“ → Bereich (z. B. Hauptlager, HL). 3. Darunter Regal R01 – dabei gleich „Ebenen“ und „Plätze je Ebene“ eintragen, dann entstehen alle Plätze auf einmal (BO-HL-R01-E01-P01 …).</div>${mgr?`<button class="btn sun" data-act="lgNew" data-parent="">${ic('plus')}Neuer Standort</button>`:''}</div>`}</div></div>`+(mgr?lgMigHtml():'')+lgMgrBox(); }
 const lgMgrBox=()=>isAdmin()?`<div class="card"><div class="card-h"><div><h3>Wer darf Lagerorte verwalten?</h3><div class="small muted">Admins immer. Buchen (Zugang, Entnahme, Umlagern, Zählen) darf, wer das Lager bearbeiten darf – nur ansehen, wer es nur sehen darf. Beides unter „Admin: Rechte“.</div></div></div><div class="row" style="gap:6px 14px;flex-wrap:wrap;padding:0 16px 14px">${staff().map(s=>{ const k=shortWho(s.name), on=((S.config||{}).lagerMgr||[]).map(x=>String(x).toLowerCase()).includes(k.toLowerCase()); return `<label class="small" style="display:inline-flex;gap:5px;align-items:center"><input type="checkbox" data-chg="lgMgrSet" value="${esc(k)}" ${on?'checked':''}>${esc(k)}</label>`; }).join('')}</div></div>`:'';
 // Übernahme alter Bestände: nichts automatisch. Je alter Lagerort-Text ein Platz wählen → Vorschau → Übernehmen (als Bewegung „Übernahme“ protokolliert).
 var LG_MIG=[];
@@ -5392,39 +5436,74 @@ function lgMigPreview(){ if(!lgMgr()) return; const plan=[]; LG_MIG.forEach((g,i
   openSheet({title:'Übernahme prüfen',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">${plan.length} Artikel werden von „nicht zugeordnet“ auf den gewählten Platz umgebucht. Der Gesamtbestand ändert sich nicht. Jede Umbuchung steht danach unter „Bewegungen“ (Art „Übernahme“).</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Artikel</th><th>Firma</th><th style="text-align:right">Menge</th><th>Alter Lagerort</th><th>Neuer Platz</th></tr></thead><tbody>${plan.map(x=>{ const s=S.stock[x.id]; return `<tr><td>${esc(s.art)}</td><td>${esc(firmShort(firmOf(s)))}</td><td style="text-align:right">${qn(unassigned(s))} ${esc(s.unit||'')}</td><td>${esc(x.k)}</td><td><b>${esc(lgLabel(x.bin))}</b></td></tr>`; }).join('')}</tbody></table></div></div>`,saveLabel:'Jetzt übernehmen',
     onSave:()=>{ let n=0; plan.forEach(x=>{ const s=S.stock[x.id]; if(!s||!lgUsable(lgNode(x.bin))) return; const u=Math.max(0,unassigned(s)); if(u<=0) return; const ss=clone(s); stockShift(ss,'',x.bin,u,'Übernahme aus altem Lagerort „'+x.k+'“','uebernahme'); put('stock',ss); n++; }); toast(n+' Artikel übernommen.'); }}); }
 
-/* ---------- Etiketten: QR-Code und/oder Code 128 mit Klartext ---------- */
-const LBL_SIZES={r_50x30:{l:'Etikettendrucker 50 × 30 mm',w:50,h:30},r_62x29:{l:'Etikettendrucker 62 × 29 mm',w:62,h:29},r_100x50:{l:'Etikettendrucker 100 × 50 mm',w:100,h:50},a4_70x37:{l:'A4-Bogen 3 × 8 (70 × 37 mm)',w:70,h:37,cols:3,rows:8},a4_105x48:{l:'A4-Bogen 2 × 6 (105 × 48 mm)',w:105,h:48,cols:2,rows:6}};
+/* ---------- Etiketten: QR-Code und/oder Code 128, Klartext, Vorschau, Druck, Nachdruck ---------- */
+const LBL_SIZES={r_50x30:{l:'50 × 30 mm (Etikettendrucker)',w:50,h:30},r_62x29:{l:'62 × 29 mm (Etikettendrucker)',w:62,h:29},r_100x50:{l:'100 × 50 mm (Etikettendrucker)',w:100,h:50},a4_70x37:{l:'A4-Bogen 3 × 8, je 70 × 37 mm',w:70,h:37,cols:3,rows:8},a4_105x48:{l:'A4-Bogen 2 × 6, je 105 × 48 mm',w:105,h:48,cols:2,rows:6}};
 const LBL_MODES={qr:'QR-Code',bar:'Barcode (Code 128)',both:'QR-Code und Barcode'};
-async function lgPrint(ids){ ids=(ids||[]).filter(id=>lgIsBin(lgNode(id))); if(!ids.length) return toast('Bitte mindestens einen Lagerplatz auswählen.');
-  const sz=LBL_SIZES[UI.lblSize]||LBL_SIZES.r_50x30, mode=LBL_MODES[UI.lblMode]?UI.lblMode:'qr';
+// Etiketten-Stand je Platz: neu (nie gedruckt), ok, veraltet (Code oder Bezeichnung seit dem Druck geändert)
+const lblState=n=>!n.lblAt?'neu':(n.lblCode!==lgCode(n.id)||(n.lblTxt!=null&&n.lblTxt!==lgPlain(n.id)))?'alt':'ok';
+async function lgLabelDoc(ids,screen){ const sz=LBL_SIZES[UI.lblSize]||LBL_SIZES.r_50x30, mode=LBL_MODES[UI.lblMode]?UI.lblMode:'qr';
   try{ if(mode!=='bar'&&!window.qrcode) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'); if(mode!=='qr'&&!window.JsBarcode) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js'); }
-  catch(e){ return toast('Der Etiketten-Baustein konnte nicht geladen werden. Bitte die Internetverbindung prüfen.'); }
+  catch(e){ toast('Der Etiketten-Baustein konnte nicht geladen werden. Bitte die Internetverbindung prüfen.'); return null; }
   const qrSvg=t=>{ let q; try{ q=qrcode(0,'M'); q.addData(t,'Alphanumeric'); q.make(); }catch(e){ q=qrcode(0,'M'); q.addData(t); q.make(); } return q.createSvgTag({cellSize:4,margin:0,scalable:true}); };
   const barSvg=t=>{ const s=document.createElementNS('http://www.w3.org/2000/svg','svg'); JsBarcode(s,t,{format:'CODE128',displayValue:false,margin:0,height:50,width:2}); const w=parseFloat(s.getAttribute('width'))||200, h=parseFloat(s.getAttribute('height'))||50; s.setAttribute('viewBox','0 0 '+w+' '+h); s.setAttribute('preserveAspectRatio','none'); s.removeAttribute('width'); s.removeAttribute('height'); s.removeAttribute('style'); return s.outerHTML; };
   const H=sz.h, W=sz.w, pad=Math.max(1.5,H*0.07);
-  const one=id=>{ const n=lgNode(id), code=lgCode(id), pay=lgPayload(id), sub=lgPath(id).slice(0,-1).map(x=>x.kind==='standort'?x.name:(x.seg||x.name)).join(' / '), textW=mode==='bar'?W-2*pad:W-H-pad, fs=Math.max(2.6,Math.min(H*(mode==='both'?0.2:0.26),textW/Math.max(4,code.length)*1.75));
-    return `<div class="l"><div class="in" style="padding:${pad}mm">${mode!=='bar'?`<div class="q" style="width:${H-2*pad}mm;height:${H-2*pad}mm">${qrSvg(pay)}</div>`:''}<div class="t"><div class="c" style="font-size:${fs.toFixed(2)}mm">${esc(code)}</div>${sub?`<div class="s">${esc(sub)}</div>`:''}${n.name?`<div class="s">${esc(n.name)}</div>`:''}${mode!=='qr'?`<div class="b" style="height:${(H*(mode==='both'?0.26:0.36)).toFixed(1)}mm">${barSvg(pay)}</div>`:''}<div class="id">${esc(pay)}</div></div></div></div>`; };
+  const one=id=>{ const code=lgCode(id), pay=lgPayload(id), plain=lgPlain(id), textW=mode==='bar'?W-2*pad:W-H-pad, fs=Math.max(2.4,Math.min(H*(mode==='both'?0.17:0.2),textW/Math.max(4,code.length)*1.72));
+    return `<div class="l"><div class="in" style="padding:${pad}mm">${mode!=='bar'?`<div class="q" style="width:${(H-2*pad).toFixed(2)}mm;height:${(H-2*pad).toFixed(2)}mm">${qrSvg(pay)}</div>`:''}<div class="t"><div class="c" style="font-size:${fs.toFixed(2)}mm">${esc(code)}</div><div class="s">${esc(plain)}</div>${mode!=='qr'?`<div class="b" style="height:${(H*(mode==='both'?0.24:0.32)).toFixed(1)}mm">${barSvg(pay)}</div>`:''}<div class="id">${esc(pay)}</div></div></div></div>`; };
   const css=`*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,Helvetica,sans-serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .l{width:${W}mm;height:${H}mm;overflow:hidden;break-inside:avoid}.in{display:flex;gap:${pad}mm;height:100%;align-items:center}.q{flex:none}.q svg,.q img{width:100%;height:100%;display:block}
-    .t{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:.6mm;height:100%}.c{font-weight:700;line-height:1;white-space:nowrap;overflow:hidden}.s{font-size:${Math.max(2,Math.min(3.2,H*0.09)).toFixed(2)}mm;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .b svg{width:100%;height:100%;display:block}.id{font-size:${Math.max(1.6,Math.min(2.2,H*0.06)).toFixed(2)}mm;color:#444;letter-spacing:.02em}
-    ${sz.cols?`@page{size:A4;margin:0}.pg{width:210mm;height:297mm;padding:${((297-sz.rows*H)/2).toFixed(2)}mm ${((210-sz.cols*W)/2).toFixed(2)}mm;display:grid;grid-template-columns:repeat(${sz.cols},${W}mm);grid-auto-rows:${H}mm;align-content:start;break-after:page}`:`@page{size:${W}mm ${H}mm;margin:0}.l{break-after:page}`}`;
+    .l{width:${W}mm;height:${H}mm;overflow:hidden;break-inside:avoid;background:#fff}.in{display:flex;gap:${pad.toFixed(2)}mm;height:100%;align-items:center}.q{flex:none}.q svg,.q img{width:100%;height:100%;display:block}
+    .t{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:.5mm;height:100%;overflow:hidden}.c{font-weight:700;line-height:1;white-space:nowrap;overflow:hidden}
+    .s{font-size:${Math.max(1.9,Math.min(3,H*0.085)).toFixed(2)}mm;line-height:1.15;overflow:hidden;display:-webkit-box;-webkit-line-clamp:${H>=45?3:2};-webkit-box-orient:vertical}
+    .b svg{width:100%;height:100%;display:block}.id{font-size:${Math.max(1.5,Math.min(2.1,H*0.055)).toFixed(2)}mm;color:#444;letter-spacing:.02em}
+    ${sz.cols?`@page{size:A4;margin:0}.pg{width:210mm;height:297mm;padding:${((297-sz.rows*H)/2).toFixed(2)}mm ${((210-sz.cols*W)/2).toFixed(2)}mm;display:grid;grid-template-columns:repeat(${sz.cols},${W}mm);grid-auto-rows:${H}mm;align-content:start;break-after:page;background:#fff}`:`@page{size:${W}mm ${H}mm;margin:0}@media print{.l{break-after:page}}`}
+    @media screen{body{background:#e4e4e4;padding:12px}.l{display:inline-block;vertical-align:top;margin:0 10px 10px 0;box-shadow:0 0 0 1px #bbb}.pg{margin:0 auto 14px;box-shadow:0 1px 6px rgba(0,0,0,.25)}.pg .l{margin:0;box-shadow:inset 0 0 0 .5px #ccc}}`;
   let body=''; if(sz.cols){ const per=sz.cols*sz.rows; for(let i=0;i<ids.length;i+=per) body+=`<div class="pg">${ids.slice(i,i+per).map(one).join('')}</div>`; } else body=ids.map(one).join('');
+  return `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Lagerplatz-Etiketten</title><style>${css}</style></head><body>${body}</body></html>`; }
+const lblIds=ids=>(ids||[]).filter(id=>lgIsBin(lgNode(id))).sort((a,b)=>lgCode(a).localeCompare(lgCode(b),'de',{numeric:true}));
+async function lgPrint(ids){ ids=lblIds(ids); if(!ids.length) return toast('Bitte mindestens einen Lagerplatz auswählen.');
+  const html=await lgLabelDoc(ids); if(!html) return;
   const f=document.createElement('iframe'); f.setAttribute('aria-hidden','true'); f.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0'; document.body.appendChild(f);
-  const d=f.contentDocument; d.open(); d.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Lagerplatz-Etiketten</title><style>${css}</style></head><body>${body}</body></html>`); d.close();
+  const d=f.contentDocument; d.open(); d.write(html); d.close();
   setTimeout(()=>{ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){ toast('Drucken nicht möglich.'); } setTimeout(()=>f.remove(),120000); },350);
-  toast(ids.length+' Etikett'+(ids.length===1?'':'en')+' zum Drucken vorbereitet.'); }
-function vLgLabels(sw){ const site=UI.lblSite||'', sel=new Set(UI.lblSel||[]), nodes=lgAll().filter(n=>!lgIsBin(n)&&!lgOff(n)).sort((a,b)=>lgFullName(a.id).localeCompare(lgFullName(b.id),'de',{numeric:true}));
-  const bins=lgAll().filter(lgIsBin).filter(b=>!lgOff(b)).filter(b=>!site||lgPath(b.id).some(p=>p.id===site)).sort((a,b)=>lgFullName(a.id).localeCompare(lgFullName(b.id),'de',{numeric:true})), n=bins.filter(b=>sel.has(b.id)).length;
-  UI.lblShown=bins.map(b=>b.id);
-  return head('Lagerverwaltung','Etiketten für Lagerplätze drucken',lgHeadBtns())+sw+
-    `<div class="card"><div class="card-h lbl-c"><select class="inp" data-chg="lblSite" aria-label="Bereich"><option value="">Alle Lagerorte</option>${nodes.map(x=>`<option value="${x.id}" ${x.id===site?'selected':''}>${esc(lgFullName(x.id))}</option>`).join('')}</select>
-      <select class="inp" data-chg="lblSize" aria-label="Etikettengröße">${Object.entries(LBL_SIZES).map(([k,v])=>`<option value="${k}" ${k===(UI.lblSize||'r_50x30')?'selected':''}>${esc(v.l)}</option>`).join('')}</select>
-      <select class="inp" data-chg="lblMode" aria-label="Code-Art">${Object.entries(LBL_MODES).map(([k,v])=>`<option value="${k}" ${k===(UI.lblMode||'qr')?'selected':''}>${esc(v)}</option>`).join('')}</select></div>
-      <div class="row" style="padding:0 16px 10px;gap:6px"><button class="btn sm" data-act="lblAll">Alle ${bins.length} wählen</button><button class="btn sm" data-act="lblNone">Keine</button><span class="spacer"></span><button class="btn sun" data-act="lblPrint" ${n?'':'disabled'}>Drucken (${n})</button></div>
-      <div class="lbl-list">${bins.map(b=>`<label class="lbl-it"><input type="checkbox" class="ck" data-chg="lblPick" value="${b.id}" ${sel.has(b.id)?'checked':''}><b class="mono">${esc(lgCode(b.id))}</b><span class="small muted">${esc(lgFullName(b.id))}${b.name?' · '+esc(b.name):''}</span></label>`).join('')||'<div class="empty">Noch keine Lagerplätze angelegt.</div>'}</div>
-      <div class="small muted" style="padding:10px 16px 14px">Der Code auf dem Etikett ist eine feste Kennung des Platzes (z. B. LP…). Er bleibt gültig, auch wenn der Platz umbenannt wird – Etiketten können jederzeit nachgedruckt werden. Beim Drucken im Dialog „Seitenränder: keine“ und Maßstab 100 % wählen.</div></div>`; }
-
+  // Druck merken (wann, wer, wie oft, mit welchem Code) – für „ohne aktuelles Etikett“ und Nachdruck
+  if(mayWrite('lager')){ const at=new Date().toISOString(); ids.forEach(id=>{ const n=lgNode(id); if(n) put('lager',{...clone(n),lblAt:at,lblBy:meK(),lblCnt:(+n.lblCnt||0)+1,lblCode:lgCode(id),lblTxt:lgPlain(id)}); }); }
+  toast(ids.length+' Etikett'+(ids.length===1?'':'en')+' an den Drucker geschickt.'); }
+async function lgPreview(ids){ ids=lblIds(ids); if(!ids.length) return toast('Bitte mindestens einen Lagerplatz auswählen.'); const show=ids.slice(0,48);
+  const html=await lgLabelDoc(show,true); if(!html) return; closeSheet(); const sz=LBL_SIZES[UI.lblSize]||LBL_SIZES.r_50x30;
+  openSheet({title:'Etiketten-Vorschau',wide:1,saveLabel:'Drucken ('+ids.length+')',html:`<div class="fld full"><div class="small muted">${esc(sz.l)} · ${esc(LBL_MODES[UI.lblMode]||LBL_MODES.qr)} · ${ids.length} Etikett${ids.length===1?'':'en'}${ids.length>show.length?' (Vorschau zeigt die ersten '+show.length+')':''}. Beim Drucken: Seitenränder „keine“, Maßstab 100 %, Papierformat = Etikettengröße bzw. A4.</div><iframe id="lblFrame" class="lbl-frame" title="Etiketten-Vorschau"></iframe></div>`,
+    onSave:()=>{ lgPrint(ids); }});
+  setTimeout(()=>{ const f=$('#lblFrame'); if(!f) return; const d=f.contentDocument; d.open(); d.write(html); d.close(); },30); }
+function lblFilter(){ const site=UI.lblSite||'', q=(UI.lblQ||'').toLowerCase().trim();
+  return lgAll().filter(lgIsBin).filter(b=>UI.lblInact||!lgOff(b)).filter(b=>!site||lgPath(b.id).some(p=>p.id===site)).filter(b=>!UI.lblNew||lblState(b)!=='ok').filter(b=>!q||[lgCode(b.id),lgPlain(b.id),b.name,b.notes].join(' ').toLowerCase().includes(q))
+    .sort((a,b)=>lgCode(a.id).localeCompare(lgCode(b.id),'de',{numeric:true})); }
+function vLgLabels(sw){ const sel=new Set((UI.lblSel||[]).filter(id=>lgIsBin(lgNode(id)))), list=lblFilter(), nodes=lgAll().filter(n=>!lgIsBin(n)).sort((a,b)=>lgPlain(a.id).localeCompare(lgPlain(b.id),'de',{numeric:true}));
+  UI.lblShown=list.map(b=>b.id); const nSel=sel.size, nHidden=[...sel].filter(id=>!UI.lblShown.includes(id)).length, allOn=list.length&&list.every(b=>sel.has(b.id));
+  const stTxt=b=>{ const s=lblState(b); return s==='neu'?'<span class="pill warn">noch kein Etikett</span>':s==='alt'?`<span class="pill bad" title="Code oder Bezeichnung seit dem Druck geändert">veraltet – neu drucken</span>`:`<span class="pill ok" title="gedruckt von ${esc(b.lblBy||'')}">gedruckt ${esc(fmtD(String(b.lblAt).slice(0,10)))}${+b.lblCnt>1?' · '+b.lblCnt+'×':''}</span>`; };
+  if(!lgAll().some(lgIsBin)) return head('Lagerverwaltung','Etiketten für Lagerplätze',lgHeadBtns())+sw+`<div class="card"><div class="lg-empty"><b>Noch keine Lagerplätze angelegt.</b><div class="small muted">Etiketten entstehen aus den echten Lagerplätzen. Lege sie unter „Lagerorte & Plätze“ an – danach erscheinen sie hier.</div><button class="btn sun" data-act="stockTab" data-v="plaetze">Zu Lagerorte & Plätze</button></div></div>`;
+  return head('Lagerverwaltung','Etiketten für Lagerplätze erzeugen, ansehen und drucken',lgHeadBtns())+sw+
+    `<div class="card"><div class="lbl-c">
+      <label class="lbl-f"><span>Bereich</span><select class="inp" data-chg="lblSite"><option value="">Alle Standorte</option>${nodes.map(x=>`<option value="${x.id}" ${x.id===UI.lblSite?'selected':''}>${esc(LG_SHORT[x.kind])}: ${esc(lgPlain(x.id))}</option>`).join('')}</select></label>
+      <label class="lbl-f"><span>Suche</span><input class="inp" type="search" placeholder="Platzcode oder Bezeichnung" value="${esc(UI.lblQ||'')}" data-chg="lblQ"></label>
+      <label class="lbl-f"><span>Etikettengröße</span><select class="inp" data-chg="lblSize">${Object.entries(LBL_SIZES).map(([k,v])=>`<option value="${k}" ${k===(UI.lblSize||'r_50x30')?'selected':''}>${esc(v.l)}</option>`).join('')}</select></label>
+      <label class="lbl-f"><span>Code</span><select class="inp" data-chg="lblMode">${Object.entries(LBL_MODES).map(([k,v])=>`<option value="${k}" ${k===(UI.lblMode||'qr')?'selected':''}>${esc(v)}</option>`).join('')}</select></label></div>
+      <div class="row lbl-t"><label class="tog"><input type="checkbox" data-chg="lblInact" ${UI.lblInact?'':'checked'}><span>nur aktive Plätze</span></label><label class="tog"><input type="checkbox" data-chg="lblNew" ${UI.lblNew?'checked':''}><span>nur ohne aktuelles Etikett</span></label></div>
+      <div class="row lbl-a"><b>${nSel} ausgewählt</b>${nHidden?`<span class="small muted">(davon ${nHidden} durch Filter ausgeblendet)</span>`:''}<button class="btn sm" data-act="lblAll" ${list.length?'':'disabled'}>Alle ${list.length} gezeigten wählen</button><button class="btn sm" data-act="lblNone" ${nSel?'':'disabled'}>Keine</button><span class="spacer"></span><button class="btn" data-act="lblPreview" ${nSel?'':'disabled'}>Vorschau</button><button class="btn sun" data-act="lblPrint" ${nSel?'':'disabled'}>Drucken (${nSel})</button></div>
+      <div class="lbl-list">${list.length?`<label class="lbl-it lbl-h"><input type="checkbox" class="ck" data-chg="lblPickAll" ${allOn?'checked':''} aria-label="Alle gezeigten wählen"><span>Lagerplatzcode</span><span>Bezeichnung</span><span>Etikett</span></label>`+list.map(b=>`<label class="lbl-it${sel.has(b.id)?' on':''}"><input type="checkbox" class="ck" data-chg="lblPick" value="${b.id}" ${sel.has(b.id)?'checked':''}><b class="mono">${esc(lgCode(b.id))}</b><span class="small">${esc(lgPlain(b.id))}${lgOff(b)?' <span class="pill">deaktiviert</span>':''}</span><span>${stTxt(b)}</span></label>`).join(''):'<div class="empty">Keine Lagerplätze für diesen Filter.</div>'}</div>
+      <div class="small muted" style="padding:10px 16px 14px">Das Etikett zeigt den Lagerplatzcode, die Bezeichnung (Standort / Bereich / Regal / Ebene / Platz) und den QR-Code bzw. Barcode. Der Code darin ist die feste interne Kennung des Platzes (LP…) – er bleibt nach Umbenennungen gültig. „veraltet“ heißt: Code oder Bezeichnung haben sich seit dem Druck geändert – dann am besten neu drucken.</div></div>`; }
+// Bedienung Baum und Etiketten (überschreibt ältere Fassungen gleichen Namens)
+queueMicrotask(()=>{ Object.assign(A,{
+  lgOff:d=>lgOffToggle(d.id),
+  lgNewBin:()=>{ const pick=lgAll().filter(n=>['ebene','regal','bereich','standort'].includes(n.kind)&&!lgOff(n)).sort((a,b)=>['ebene','regal','bereich','standort'].indexOf(a.kind)-['ebene','regal','bereich','standort'].indexOf(b.kind))[0]; lgNodeForm(null,pick?pick.id:'','platz'); },
+  lgOpenAll:()=>{ const c={}; lgAll().forEach(n=>c[n.id]=false); UI.lgCol=c; render(); },
+  lgCloseAll:()=>{ const c={}; lgAll().forEach(n=>{ if(n.kind!=='standort') c[n.id]=true; }); UI.lgCol=c; render(); },
+  lblAll:()=>{ UI.lblSel=[...new Set([...(UI.lblSel||[]),...(UI.lblShown||[])])]; render(); },
+  lblNone:()=>{ UI.lblSel=[]; render(); },
+  lblPreview:()=>lgPreview(UI.lblSel||[]),
+  lblPrint:()=>lgPrint(UI.lblSel||[]) });
+  Object.assign(CHG,{
+  lblQ:(d,el)=>{ UI.lblQ=el.value; render(); },
+  lblInact:(d,el)=>{ UI.lblInact=!el.checked; render(); },
+  lblNew:(d,el)=>{ UI.lblNew=el.checked; render(); },
+  lblPickAll:(d,el)=>{ const s=new Set(UI.lblSel||[]); (UI.lblShown||[]).forEach(id=>el.checked?s.add(id):s.delete(id)); UI.lblSel=[...s]; render(); } }); });
 /* ---------- Bewegungen: alle Zu- und Abgänge, Umlagerungen, Korrekturen ---------- */
 const mvType=m=>m.t||(m.d<0?'entnahme':'zugang');
 const mvFrom=m=>'from' in m?(m.from?lgLabel(m.from):'nicht zugeordnet'):m.auto?[...m.auto.map(a=>lgLabel(a.bin)+' ('+qn(a.n)+')')].join(', '):m.t&&m.d<0?'nicht zugeordnet':'';
