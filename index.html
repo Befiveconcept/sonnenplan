@@ -718,6 +718,8 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .lg-empty{display:flex;flex-direction:column;gap:10px;align-items:flex-start;padding:22px 18px}.lg-prev{padding:10px 12px;border-radius:8px;background:var(--sunken);font-size:14px}.lg-prev .bad{color:var(--bad);font-weight:600}.lg-prev .ok{color:var(--ok);font-weight:600}
 .lbl-c{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;padding:14px 16px 6px}.lbl-f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}.lbl-f .inp{width:100%}.lbl-t{gap:14px;padding:4px 16px 8px;flex-wrap:wrap}.lbl-a{gap:8px;padding:8px 16px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:center}
 .lbl-list{display:block;max-height:58vh;overflow:auto;padding:0 16px}.lbl-it{display:grid;grid-template-columns:24px minmax(130px,auto) 1fr auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);cursor:pointer}.lbl-it.on{background:color-mix(in srgb,var(--sun) 14%,transparent)}.lbl-h{position:sticky;top:0;background:var(--surface);z-index:1;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.wz-c{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:10px}.wz-b{display:flex;flex-direction:column;gap:6px;text-align:left;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font:inherit;color:var(--ink);cursor:pointer}.wz-b:hover{border-color:var(--ink);background:color-mix(in srgb,var(--sun) 25%,var(--surface))}.wz-b b{font-size:15px}
+.wz-sum{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px}.wz-sum span{padding:4px 10px;border-radius:999px;background:var(--sunken);font-size:13px}.wz-sum span.big{background:var(--sun);font-weight:700}.wz-tree{max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;line-height:1.5}.wz-tree .wz-n{padding-left:calc(var(--d)*16px)}.wz-tree .wz-p{padding-left:calc(var(--d)*16px);color:var(--muted)}.wz-tree .mono{font-size:12px}
 .lbl-frame{width:100%;height:62vh;border:1px solid var(--line);border-radius:8px;background:#e4e4e4;margin-top:8px}
 @media(max-width:640px){.lbl-it{grid-template-columns:24px 1fr;}.lbl-it>span:last-child{grid-column:2}.lg-ab span{display:none}.lg-ab{padding:4px}}.st-sw{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin}.st-sw button{white-space:nowrap}
 .bp{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.bp>select{flex:2 1 220px;min-width:0}.bp .bp-code{flex:1 1 150px;min-width:0}.bp .btn svg,.btn>svg{width:16px;height:16px}
@@ -1895,7 +1897,15 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
       onSnapshot(cb,err){ (subs[coll]=subs[coll]||[]).push(cb); load(coll).then(()=>{ live(); cb(snapOf(coll)); }).catch(e=>err&&err(Object.assign(e,{code:e.code||'load_failed'}))); return ()=>{ subs[coll]=subs[coll].filter(x=>x!==cb); }; },
       async get(){ await load(coll); return snapOf(coll); }
     }; },
-    doc(path){ const {coll,id}=splitPath(path); return docRef(coll,id); }
+    doc(path){ const {coll,id}=splitPath(path); return docRef(coll,id); },
+    // Viele Datensätze in EINER Anweisung speichern (ganz oder gar nicht)
+    async batchSet(coll,rows){ const list=rows.map(r=>({coll,id:r.id,data:stripDel(JSON.parse(JSON.stringify(r.data)))})); list.forEach(r=>{ pend[coll+'/'+r.id]=(pend[coll+'/'+r.id]||0)+1; });
+      let error; try{ ({error}=await sb.from('docs').upsert(list)); } finally{ list.forEach(r=>{ pend[coll+'/'+r.id]--; }); }
+      if(error) throw Object.assign(new Error(error.message),{code:error.code||'write_failed'});
+      const c=(cache[coll]=cache[coll]||new Map()); list.forEach(r=>c.set(r.id,r.data)); emit(coll); list.slice(0,40).forEach(r=>ping(coll,r.id)); },
+    // Viele Datensätze löschen – Reihenfolge wird eingehalten (z. B. erst Plätze, dann Regal), Pakete à 250
+    async batchDel(coll,ids){ for(let i=0;i<ids.length;i+=250){ const part=ids.slice(i,i+250); const {error}=await sb.from('docs').delete().eq('coll',coll).in('id',part); if(error) throw Object.assign(new Error(error.message),{code:error.code||'write_failed'}); if(cache[coll]) part.forEach(id=>cache[coll].delete(id)); }
+      emit(coll); ids.slice(0,40).forEach(id=>ping(coll,id,true)); }
   };
 
   /* ---------- Angemeldete Person ---------- */
@@ -2957,15 +2967,17 @@ function eachDay(s,e,from,to,fn){ const last=e&&e>s?e:s; let d=s<from?from:s; co
 const evWhos=e=>[e.who,...(e.who2||[])].filter(Boolean);
 const itemHas=(x,n)=>!!n&&(x.who===n||(x.whos||[]).includes(n));
 const calSplit=x=>x.whos&&x.whos.length>1?x.whos.map(w=>({...x,who:w})):[x];
+// Homeoffice auch erkennen, wenn der Eintrag früher unter einer anderen Art angelegt wurde (Titel „Homeoffice“/„Home Office“/„HO“)
+const isHoTxt=t=>/^\s*(home[\s-]?office|ho)\b/i.test(String(t||''));
 function calItems(from,to){
   const out=[];
-  arr('events').forEach(e=>{ if(!e.date) return; const multi=!!(e.end&&e.end>e.date), whos=evWhos(e); eachDay(e.date,e.end,from,to,(d,first,last)=>out.push({d,k:e.kind||'intern',t:e.title,m:[e.time,projName(e.pid),whos.join(', '),e.km!=null?String(e.km).replace('.',',')+' km':'',multi?'bis '+fmtD(e.end):''].filter(Boolean).join(' · '),act:'editEvent',id:e.id,who:e.who,whos,ref:'event:'+e.id,first,last,multi,rz:true})); });
+  arr('events').forEach(e=>{ if(!e.date) return; const multi=!!(e.end&&e.end>e.date), whos=evWhos(e); eachDay(e.date,e.end,from,to,(d,first,last)=>out.push({d,k:isHoTxt(e.title)&&!['abw','urlaub','krank','lehrgang'].includes(e.kind)?'ho':e.kind||'intern',t:e.title,m:[e.time,projName(e.pid),whos.join(', '),e.km!=null?String(e.km).replace('.',',')+' km':'',multi?'bis '+fmtD(e.end):''].filter(Boolean).join(' · '),act:'editEvent',id:e.id,who:e.who,whos,ref:'event:'+e.id,first,last,multi,rz:true})); });
   arr('orders').forEach(o=>{ const st=orderState(o); if(o.delivery&&o.delivery>=from&&o.delivery<=to&&st.open) out.push({d:o.delivery,k:'lief',t:'Lieferung: '+(o.supplier||'Lieferant'),m:[projName(o.pid),(o.items||[]).length+' Pos.'].filter(Boolean).join(' · '),act:'receive',id:o.id,ref:'order:'+o.id,first:true,last:true}); });
   arr('tasks').forEach(t=>{ if(!t.done&&t.due&&t.due>=from&&t.due<=to) out.push({d:t.due,k:'todo',t:t.title,m:[t.who,projName(t.pid)].filter(Boolean).join(' · '),act:'editTask',id:t.id,who:t.who,ref:'task:'+t.id,first:true,last:true}); });
   activeProjects().forEach(p=>{ if(p.start&&p.start>=from&&p.start<=to) out.push({d:p.start,k:'proj',t:'Baubeginn '+p.name,m:TYPES[p.type],act:'openProject',id:p.id,ref:'pstart:'+p.id,first:true,last:true});
     if(p.end&&p.end>=from&&p.end<=to) out.push({d:p.end,k:'proj',t:'Bau-Fertigstellung '+p.name,m:TYPES[p.type],act:'openProject',id:p.id,ref:'pend:'+p.id,first:true,last:true}); });
   arr('projects').forEach(p=>{ if(catOf(p)==='onhold'&&p.wvl&&p.wvl>=from&&p.wvl<=to) out.push({d:p.wvl,k:'proj',t:'Wiedervorlage (Onhold): '+p.name,m:'Projekt prüfen und ggf. wieder aktivieren',act:'openProject',id:p.id,ref:'wvl:'+p.id,first:true,last:true}); });
-  arr('plan').forEach(w=>(w.entries||[]).forEach((e,i)=>{ if(!e.d||(e.pid&&!projVisId(e.pid))) return; const multi=!!(e.end&&e.end>e.d), whos=evWhos(e); eachDay(e.d,e.end,from,to,(d,first,last)=>out.push({d,k:e.kind==='abw'?'abw':e.kind==='ho'?'ho':'bau',t:e.t,whos,m:[whos.join(', ')||'Teamplanung',e.km!=null?String(e.km).replace('.',',')+' km':'',multi?'bis '+fmtD(e.end):''].filter(Boolean).join(' · '),act:'editPlan',id:w.id+'|'+i,who:e.who,lbl:e.kind==='abw'?'Abwesend':e.kind==='ho'?'Homeoffice':'Team',ref:'plan:'+w.id+'|'+i,e,first,last,multi,rz:true})); }));
+  arr('plan').forEach(w=>(w.entries||[]).forEach((e,i)=>{ if(!e.d||(e.pid&&!projVisId(e.pid))) return; const multi=!!(e.end&&e.end>e.d), whos=evWhos(e); eachDay(e.d,e.end,from,to,(d,first,last)=>out.push({d,k:e.kind==='abw'?'abw':e.kind==='ho'||isHoTxt(e.t)?'ho':'bau',t:e.t,whos,m:[whos.join(', ')||'Teamplanung',e.km!=null?String(e.km).replace('.',',')+' km':'',multi?'bis '+fmtD(e.end):''].filter(Boolean).join(' · '),act:'editPlan',id:w.id+'|'+i,who:e.who,lbl:e.kind==='abw'?'Abwesend':e.kind==='ho'?'Homeoffice':'Team',ref:'plan:'+w.id+'|'+i,e,first,last,multi,rz:true})); }));
   arr('hrabs').forEach(a=>{ if(!hrAbsLive(a)||!a.from) return; const see=a.who===ME||isAdmin(); eachDay(a.from,a.to||a.from,from,to,d=>{ if(!hrIsWork(a.who,d)) return; out.push({d,k:'abw',hr:1,t:(see?(HR_ABS[a.type]||['Abwesend'])[0]:'Abwesend')+(a.status==='beantragt'?' (beantragt)':''),m:shortWho(a.who),act:'hrAbsEdit',id:a.id,who:a.who,lbl:'Abwesend',first:true,last:true}); }); });
   return out.sort((a,b)=>a.d.localeCompare(b.d));
 }
@@ -3948,7 +3960,7 @@ function planCard(x){
   if(x.hr) return `<div class="en k-abw" data-act="hrAbsEdit" data-id="${x.id}"><span class="tag">abwesend</span> ${esc(x.t)}</div>`; // Urlaub/Krank aus HR
   if(!x.ref||!x.ref.startsWith('plan:')) return `<div class="en ${cont?'cont':''} k-${esc(x.k||'kunde')}" data-act="${x.act}" data-id="${x.id}" data-drag="${x.ref||''}"><span class="small muted">${x.k==='lief'?'Lieferung':x.k==='todo'?'Frist':esc(EV_KINDS[x.k]||'Termin')}</span> ${cont?'↳ ':''}${esc(x.t)}${rz}</div>`;
   const e=x.e, mat=e.mat||[], ok=mat.filter(m=>m.ok).length, pj=e.pid&&S.projects[e.pid];
-  return `<div class="en pe ${cont?'cont':''} k-${e.kind==='abw'?'abw':e.kind==='haus'?'intern':'bau'}" data-act="editPlan" data-id="${x.id}" data-drag="${x.ref}">
+  return `<div class="en pe ${cont?'cont':''} k-${e.kind==='abw'?'abw':e.kind==='ho'||isHoTxt(e.t)?'ho':e.kind==='haus'?'intern':'bau'}" data-act="editPlan" data-id="${x.id}" data-drag="${x.ref}">
     ${cont?'↳ ':''}${e.time&&!cont?`<b class="mono">${esc(e.time)}</b> `:''}${pj?`<b>${esc(pj.name)}</b><br>`:''}${esc(e.t||'')}
     ${e.kind==='haus'?'<span class="tag">im Haus</span>':''}${e.kind==='abw'?'<span class="tag">abwesend</span>':''}${mat.length&&!cont?`<span class="tag ${ok===mat.length?'ok':''}">Material ${ok}/${mat.length}</span>`:''}${x.multi&&x.last?`<span class="tag">bis ${esc(fmtD(e.end))}</span>`:''}${!cont&&(e.updBy||e.by)&&e.by!=='Import'||e.updBy?`<span class="tag by" title="${esc(planTrail(e))}">${esc(e.updBy||e.by)}</span>`:''}${rz}</div>`;
 }
@@ -5313,16 +5325,23 @@ function routeSheet(oid,got){
 // Bestand je Platz steht am Lagerartikel (s.bins). s.qty bleibt der Gesamtbestand für alle bisherigen Funktionen. Rest ohne Platz = „nicht zugeordnet“.
 // Physischer Ort (Platz) und Eigentümer (Firma am Lagerartikel) sind getrennt: Umlagern ändert nie die Firma.
 // Etikett/Scan: „LP“ + interne ID (nur Buchstaben/Ziffern). Bleibt beim Umbenennen gleich, enthält keine Zugangsdaten. Rechte prüft die App bei jedem Öffnen/Buchen.
-const LG_KINDS={standort:'Lagerstandort',bereich:'Bereich / Raum',regal:'Regal / Schrank / Zone',ebene:'Ebene / Schublade',platz:'Lagerplatz / Fach / Stellplatz'};
-const LG_SHORT={standort:'Standort',bereich:'Bereich',regal:'Regal',ebene:'Ebene',platz:'Platz'};
-const LG_NEXT={standort:['bereich','regal','platz'],bereich:['bereich','regal','platz'],regal:['ebene','platz'],ebene:['platz'],platz:[]};
-const LG_TYPES={fach:'Fachboden',palette:'Palettenstellplatz',klein:'Kleinteilefach',boden:'Bodenlager'};
+// Stufen: Standort → Bereich/Raum → Regal/Schrank/Lagerzone → Regalfeld → Ebene/Schublade → Stellplatz/Fach. Nicht jede Struktur braucht alle Stufen.
+const LG_KINDS={standort:'Lagerstandort',bereich:'Bereich / Raum',regal:'Regal / Schrank / Lagerzone',feld:'Regalfeld',ebene:'Ebene / Schublade',platz:'Stellplatz / Fach (buchbarer Lagerplatz)'};
+const LG_SHORT={standort:'Standort',bereich:'Bereich',regal:'Regal',feld:'Feld',ebene:'Ebene',platz:'Platz'};
+const LG_NEXT={standort:['bereich','regal','platz'],bereich:['bereich','regal','platz'],regal:['feld','ebene','platz'],feld:['ebene','platz'],ebene:['platz'],platz:[]};
+// Strukturtyp (nur Strukturelemente): [Bezeichnung, Code-Präfix]. Lagerplatztyp (nur buchbare Plätze): LG_TYPES.
+const LG_STYPES={standort:{standort:['Standort','']},bereich:{bereich:['Bereich',''],raum:['Raum',''],halle:['Halle',''],keller:['Keller',''],aussen:['Außenlager','']},
+  regal:{regal:['Regal','R'],hochregal:['Hochregal','R'],schrank:['Schrank','S'],zone:['Lagerzone','Z'],palzone:['Palettenzone','Z']},feld:{feld:['Regalfeld','F']},
+  ebene:{ebene:['Ebene','E'],schublade:['Schublade','SL'],boden:['Fachboden','E']}};
+const LG_TYPES={palette:'Palettenstellplatz',fach:'Fachboden',schubfach:'Schubladenfach',klein:'Kleinteilefach',boden:'Bodenplatz',gitterbox:'Gitterbox',langgut:'Langgut',trommel:'Kabeltrommel',behaelter:'Behälter'};
+const lgStype=n=>{ const t=LG_STYPES[n&&n.kind]; if(!t) return null; return t[n.stype]||Object.values(t)[0]; };
+const lgStLabel=n=>n&&n.kind!=='platz'?(lgStype(n)||[LG_SHORT[n.kind]])[0]:LG_SHORT.platz;
 const MV_T={zugang:'Zugang',wareneingang:'Wareneingang',entnahme:'Entnahme',umlagerung:'Umlagerung',uebernahme:'Übernahme',inventur:'Inventur',korrektur:'Korrektur',anfang:'Anfangsbestand'};
 const LG_SCAN_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10"/></svg>';
 const r3=x=>Math.round((+x||0)*1000)/1000;
 const lgAll=()=>arr('lager');
 const lgNode=id=>id?(S.lager||{})[id]||null:null;
-function lgPathIn(M,id){ const out=[]; let n=id?M[id]:null, g=0; while(n&&g++<10){ out.unshift(n); n=n.parent?M[n.parent]:null; } return out; }
+function lgPathIn(M,id){ const out=[]; let n=id?M[id]:null, g=0; while(n&&g++<16){ out.unshift(n); n=n.parent?M[n.parent]:null; } return out; }
 const lgPath=id=>lgPathIn(S.lager||{},id);
 const lgCodeIn=(M,id)=>{ const p=lgPathIn(M,id); return p.map(n=>n.seg).filter(Boolean).join('-')||(p.length?p[p.length-1].name||'':''); };
 const lgCode=id=>lgCodeIn(S.lager||{},id);
@@ -5336,7 +5355,21 @@ const lgFullName=id=>lgPath(id).map(x=>x.kind==='standort'?x.name:(x.seg||x.name
 const lgLabel=id=>{ if(!id) return 'nicht zugeordnet'; const p=lgPath(id); return p.length?p[0].name+' / '+lgCode(id):'unbekannter Platz'; };
 const lgPayload=id=>'LP'+String(id).toUpperCase();
 function lgResolve(code){ const c=String(code||'').trim(); if(!c) return null; const m=c.match(/^(?:NDS-?)?LP[:\-]?([0-9a-z]+)$/i); if(m){ const n=lgNode(m[1].toLowerCase()); if(n) return n; }
-  const lc=c.toLowerCase(); return lgAll().find(n=>lgIsBin(n)&&lgCode(n.id).toLowerCase()===lc)||lgAll().find(n=>n.seg&&lgCode(n.id).toLowerCase()===lc)||lgNode(c)||null; }
+  const lc=c.toLowerCase(); return lgAll().find(n=>lgIsBin(n)&&lgCode(n.id).toLowerCase()===lc)||lgAll().find(n=>n.seg&&lgCode(n.id).toLowerCase()===lc)
+    // früher ausgegebener (inzwischen geänderter) Platzcode: über die gemerkten alten Codes weiterhin eindeutig auflösbar
+    ||lgAll().find(n=>lgIsBin(n)&&(n.oldCodes||[]).some(x=>String(x).toLowerCase()===lc)&&!lgAll().some(o=>o.id!==n.id&&lgIsBin(o)&&lgCode(o.id).toLowerCase()===lc))||lgNode(c)||null; }
+// Codeänderung durch Umbenennen/Verschieben: alte Platzcodes am Platz merken (für Scanner und gedruckte Etiketten mit Klartext-Code)
+function lgKeepOldCodes(Mnew,ids){ const out=[]; ids.forEach(id=>{ const n=Mnew[id]; if(!n||n.kind!=='platz') return; const was=lgCode(id), now=lgCodeIn(Mnew,id); if(was&&now&&was!==now){ const x={...n,oldCodes:[...new Set([...(n.oldCodes||[]),was])].slice(-10)}; Mnew[id]=x; out.push(x); } }); return out; }
+// Mehrere Lager-Elemente in EINEM Schreibvorgang speichern bzw. löschen: klappt alles oder nichts (bei Fehler wird der Zustand im Browser zurückgesetzt)
+async function lgWriteMany(objs,delIds){ objs=objs||[]; delIds=delIds||[]; if(!mayWrite('lager')){ toast('Keine Bearbeitungsrechte für die Lagerverwaltung.'); return false; }
+  const now=new Date().toISOString(), prev={}; [...objs.map(o=>o.id),...delIds].forEach(id=>{ prev[id]=S.lager[id]; });
+  objs.forEach(o=>{ o.upd=now; o.updBy=meK(); if(!prev[o.id]){ o.at=o.at||now; o.by=o.by||meK(); } S.lager[o.id]=o; }); delIds.forEach(id=>{ delete S.lager[id]; }); scheduleRender();
+  if(MODE!=='cloud'){ saveLocal(); return true; }
+  try{ busy(1,'lgw'); if(objs.length){ if(DB.batchSet) await DB.batchSet('lager',objs.map(o=>({id:o.id,data:JSON.parse(JSON.stringify(o))}))); else for(const o of objs) await DB.collection('lager').doc(o.id).set(JSON.parse(JSON.stringify(o))); }
+    if(delIds.length){ if(DB.batchDel) await DB.batchDel('lager',delIds); else for(const id of delIds) await DB.collection('lager').doc(id).delete(); }
+    return true; }
+  catch(e){ Object.entries(prev).forEach(([id,p])=>{ if(p) S.lager[id]=p; else delete S.lager[id]; }); scheduleRender(); toast('Speichern ging nicht – es wurde nichts geändert ('+(e.message||e)+'). Bitte erneut versuchen.'); return false; }
+  finally{ busy(-1,'lgw'); } }
 // Lagerorte verwalten: Admins und freigegebene Personen. Buchen: wer das Lager bearbeiten darf. Lesen: wer es sehen darf.
 const lgMgr=()=>!!ME&&mayWrite('lager')&&(lagerOk()||((S.config||{}).lagerMgr||[]).map(x=>String(x).toLowerCase()).includes(meK().toLowerCase()));
 const LGON=()=>lgAll().some(lgIsBin);
@@ -5452,92 +5485,177 @@ function stockShiftSheet(sid,pre){ pre=pre||{}; const s=S.stock[sid]; if(!s) ret
 const lgInc=(seg,i,cnt)=>{ if(cnt<=1) return seg; const m=String(seg||'').match(/^(.*?)(\d+)$/); if(!m) return (seg||'')+String(i+1).padStart(2,'0'); return m[1]+String(+m[2]+i).padStart(m[2].length,'0'); };
 // Klartext je Stufe: Standort/Bereich mit Namen, sonst „Regal R01“, „Ebene E02“, „Platz P03“ oder eigener Name + Kürzel („Schrank S01“, „Fach 05“)
 // Klartext je Ebene: eigener Name, wenn vergeben (der Code steht ja schon daneben) – sonst „Regal R01“ usw.
-const lgPart=n=>{ if(!n) return ''; if(n.kind==='standort'||n.kind==='bereich') return n.name||n.seg||''; const nm=String(n.name||'').trim(), sg=String(n.seg||''); if(nm) return nm; return LG_SHORT[n.kind]+(sg?' '+sg:''); };
+const lgPart=n=>{ if(!n) return ''; if(n.kind==='standort'||n.kind==='bereich') return n.name||n.seg||''; const nm=String(n.name||'').trim(), sg=String(n.seg||''); if(nm) return nm; return (n.stype?lgStLabel(n):LG_SHORT[n.kind])+(sg?' '+sg:''); };
 const lgPlainIn=(M,id)=>lgPathIn(M,id).map(lgPart).filter(Boolean).join(' / ');
 const lgPlain=id=>lgPlainIn(S.lager||{},id);
 // Kürzel-Vorschlag: Standort/Bereich aus dem Namen (Bornheim → BO, Elektro-Kleinteile → EK), sonst nächste freie Nummer (R03, E02, P05)
-const LG_PRE={regal:'R',ebene:'E',platz:'P'};
-function lgSuggestSeg(kind,parentId,name){ if(kind==='standort'||kind==='bereich'){ const w=String(name||'').trim().split(/[\s\-\/]+/).filter(Boolean); if(!w.length) return ''; return (w.length>1?w.map(x=>x[0]).join(''):w[0].slice(0,2)).toUpperCase().replace(/[^0-9A-ZÄÖÜ]/g,'').slice(0,4); }
-  const pre=LG_PRE[kind]||''; let mx=0; lgKids(parentId).filter(n=>n.kind===kind).forEach(n=>{ const m=String(n.seg||'').match(/(\d+)$/); if(m) mx=Math.max(mx,+m[1]); }); return pre+String(mx+1).padStart(2,'0'); }
+const LG_PRE={regal:'R',feld:'F',ebene:'E',platz:'P'};
+const lgPre=(kind,stype)=>{ const t=(LG_STYPES[kind]||{})[stype]; return t&&t[1]?t[1]:(LG_PRE[kind]||''); };
+function lgSuggestSeg(kind,parentId,name,stype){ if(kind==='standort'||kind==='bereich'){ const w=String(name||'').trim().split(/[\s\-\/]+/).filter(Boolean); if(!w.length) return ''; return (w.length>1?w.map(x=>x[0]).join(''):w[0].slice(0,2)).toUpperCase().replace(/[^0-9A-ZÄÖÜ]/g,'').slice(0,4); }
+  const pre=lgPre(kind,stype); let mx=0; lgKids(parentId).filter(n=>n.kind===kind&&String(n.seg||'').toUpperCase().startsWith(pre)).forEach(n=>{ const m=String(n.seg||'').match(/(\d+)$/); if(m) mx=Math.max(mx,+m[1]); }); return pre+String(mx+1).padStart(2,'0'); }
 const lgAllowed=parentId=>{ const p=lgNode(parentId); return p?LG_NEXT[p.kind]:['standort']; };
 function lgNodeForm(n,parentId,kindPre){ if(!lgMgr()) return toast('Lagerorte verwalten dürfen Admins und alle mit dem Recht „Lagerverwaltung – Bearbeiten“.'); closeSheet();
-  const isNew=!n, par0=isNew?(parentId||''):(n.parent||''), allowed=lgAllowed(par0);
-  const kind0=isNew?(kindPre&&allowed.includes(kindPre)?kindPre:(allowed.includes('platz')&&lgNode(par0)&&['regal','ebene'].includes(lgNode(par0).kind)?(lgNode(par0).kind==='ebene'?'platz':'ebene'):allowed[0])):n.kind;
-  const v=isNew?{parent:par0,kind:kind0,ltype:'fach',count:1,status:'aktiv',seg:lgSuggestSeg(kind0,par0,'')}:{...n,parent:n.parent||'',status:n.off?'still':n.blocked?'gesperrt':'aktiv'};
+  const isNew=!n, par0=isNew?(parentId||''):(n.parent||''), allowed=lgAllowed(par0), pn=lgNode(par0), pk=(pn||{}).kind;
+  const kind0=isNew?(kindPre&&allowed.includes(kindPre)?kindPre:(pk==='ebene'?'platz':pk==='feld'?'ebene':pk==='regal'?(pn.stype==='schrank'?'ebene':pn.stype==='zone'||pn.stype==='palzone'?'platz':'feld'):allowed[0])):n.kind;
+  const st0=isNew?(kind0==='ebene'&&pn&&pn.stype==='schrank'?'schublade':kind0==='regal'?'regal':''):(n.stype||'');
+  const sibBin=isNew&&lgKids(par0).find(lgIsBin);
+  const lt0=isNew?(sibBin&&sibBin.ltype?sibBin.ltype:pn&&pn.stype==='schublade'?'schubfach':pn&&(pn.stype==='palzone'||pn.stype==='hochregal')?'palette':'fach'):(n.ltype||'fach');
+  const v=isNew?{parent:par0,kind:kind0,stype:st0,ltype:lt0,count:1,status:'aktiv',seg:lgSuggestSeg(kind0,par0,'',st0)}:{...n,stype:n.stype||'',ltype:n.ltype||'fach',parent:n.parent||'',status:n.off?'still':n.blocked?'gesperrt':'aktiv'};
   const bad=n?new Set([n.id,...lgSub(n.id).map(x=>x.id)]):new Set();
-  const parOpts=[['','– oberste Ebene (nur für Standorte) –'],...lgAll().filter(x=>!lgIsBin(x)&&!bad.has(x.id)).sort((a,b)=>lgPlain(a.id).localeCompare(lgPlain(b.id),'de',{numeric:true})).map(x=>[x.id,lgPlain(x.id)])];
-  openSheet({title:isNew?'Neues Element in der Lagerstruktur':LG_KINDS[n.kind]+' bearbeiten',value:v,saveLabel:isNew?'Anlegen':'Speichern',
-    fields:[{k:'parent',label:'Übergeordnetes Element',type:'select',full:1,options:parOpts},{k:'kind',label:'Typ',type:'select',options:Object.entries(LG_KINDS)},
-      {k:'name',label:'Name / Bezeichnung',ph:'z. B. Bornheim, Hauptlager, Schrank, Fach'},{k:'seg',label:'Kürzel / Code',ph:'z. B. BO, HL, R01, E02, P03'},
+  const parOpts=[['','– oberste Ebene (nur für Standorte) –'],...lgAll().filter(x=>!lgIsBin(x)&&!bad.has(x.id)).sort((a,b)=>lgPlain(a.id).localeCompare(lgPlain(b.id),'de',{numeric:true})).map(x=>[x.id,lgStLabel(x)+': '+lgPlain(x.id)])];
+  const nKids=n?lgSub(n.id).length:0;
+  openSheet({title:isNew?'Neues Element in der Lagerstruktur':lgStLabel(n)+' bearbeiten',value:v,saveLabel:isNew?'Anlegen':'Speichern',
+    fields:[{k:'parent',label:'Übergeordnetes Element',type:'select',full:1,options:parOpts},{k:'kind',label:'Stufe',type:'select',options:Object.entries(LG_KINDS)},
+      {k:'stype',label:'Strukturtyp',type:'select',options:Object.entries(LG_STYPES[kind0]||{}).map(([k,x])=>[k,x[0]])},
+      {k:'ltype',label:'Lagerplatztyp',type:'select',options:Object.entries(LG_TYPES)},
+      {k:'name',label:'Name / Bezeichnung (optional)',ph:'z. B. Bornheim, Hauptlager, links, unten'},{k:'seg',label:'Kürzel / Code',ph:'z. B. BO, HL, R01, F03, E02, P02'},
       {k:'codex',label:'',type:'html',full:1,html:'<div class="lg-prev" id="lg_prev"></div>'},
-      {k:'ltype',label:'Platztyp',type:'select',options:Object.entries(LG_TYPES)},{k:'status',label:'Status',type:'select',options:[['aktiv','aktiv'],['gesperrt','gesperrt – keine Einlagerung'],['still','deaktiviert (stillgelegt)']]},
+      {k:'status',label:'Status',type:'select',options:[['aktiv','aktiv'],['gesperrt','gesperrt – keine Einlagerung'],['still','deaktiviert (stillgelegt)']]},
       {k:'cap',label:'Kapazität (optional)',ph:'z. B. 1 Palette, 20 Kartons'},{k:'maxKg',label:'Max. Gewicht kg (optional)',type:'number'},
-      ...(isNew?[{k:'count',label:'Anzahl anlegen (fortlaufend nummeriert)',type:'number'},{k:'ebN',label:'Darunter gleich Ebenen / Schubladen anlegen',type:'number'},{k:'plN',label:'Darunter gleich Plätze / Fächer anlegen (je Ebene)',type:'number'}]:[]),
+      ...(isNew?[{k:'count',label:'Anzahl anlegen (fortlaufend nummeriert)',type:'number'}]:[]),
       {k:'notes',label:'Beschreibung / Hinweise (optional)',type:'textarea',ai:false}],
-    extraBtn:!isNew&&!lgIsBin(n)?`<button type="button" class="btn" data-act="lgPrintNode" data-id="${n.id}">Etiketten aller Plätze darunter</button>`:!isNew?`<button type="button" class="btn" data-act="lgPrintOne" data-id="${n.id}">Etikett drucken</button>`:'',
-    onDelete:isNew?null:()=>lgNodeDel(n.id), deleteLabel:'Löschen',
+    extraBtn:(isNew?'':!lgIsBin(n)?`<button type="button" class="btn" data-act="lgPrintNode" data-id="${n.id}">Etiketten aller Plätze darunter</button>`:`<button type="button" class="btn" data-act="lgPrintOne" data-id="${n.id}">Etikett drucken</button>`)
+      +(isNew?`<button type="button" class="btn" data-act="lgWiz" data-parent="${esc(par0)}">Assistent für ganze Regale …</button>`:''),
+    onDelete:isNew?null:()=>lgNodeDel(n.id), deleteLabel:nKids?'Mit allem darunter löschen ('+nKids+')':'Löschen',
     onSave:vv=>lgNodeSave(n,vv)});
   setTimeout(()=>lgFormWire(n),0); }
-// Formular lebendig machen: erlaubte Typen je übergeordnetem Element, Kürzel-Vorschlag, Felder nur wo sinnvoll, Code-Vorschau mit Doppelt-Prüfung
-function lgFormWire(n){ const P=$('#f_parent'), K=$('#f_kind'), N=$('#f_name'), G=$('#f_seg'), out=$('#lg_prev'); if(!P||!K||!out) return; let auto=!n;
+// Formular lebendig machen: erlaubte Stufen je übergeordnetem Element, Strukturtyp nur bei Strukturelementen, Lagerplatztyp/Kapazität nur bei buchbaren Plätzen
+function lgFormWire(n){ const P=$('#f_parent'), K=$('#f_kind'), T=$('#f_stype'), N=$('#f_name'), G=$('#f_seg'), out=$('#lg_prev'); if(!P||!K||!out) return; let auto=!n;
   const row=id=>{ const e=$('#'+id); return e?e.closest('.fld'):null; }, show=(id,on)=>{ const r=row(id); if(r) r.hidden=!on; };
-  const sync=()=>{ const al=lgAllowed(P.value); [...K.options].forEach(o=>{ o.disabled=n?o.value!==n.kind:!al.includes(o.value); }); if(!n&&!al.includes(K.value)) K.value=al[0]||'';
-    const k=K.value; if(auto) G.value=lgSuggestSeg(k,P.value,N.value);
-    show('f_ltype',k==='platz'); show('f_cap',k==='platz'); show('f_maxKg',k==='platz'); show('f_ebN',!n&&k==='regal'); show('f_plN',!n&&k!=='platz'); if($('#f_plN')) row('f_plN').querySelector('label').textContent=k==='regal'?'Plätze / Fächer je Ebene':'Darunter gleich Plätze / Fächer anlegen';
-    const M={...(S.lager||{})}, cnt=Math.max(1,Math.min(100,Math.round(+(($('#f_count')||{}).value)||1))), seg=G.value.trim(), tmp=id=>({...(n||{}),id,parent:P.value,kind:k,name:N.value.trim(),seg:lgInc(seg,cnt>1?id==='__b'?cnt-1:0:0,cnt)});
+  const kidsOk=k=>!n||lgKids(n.id).every(c=>(LG_NEXT[k]||[]).includes(c.kind));
+  let lastK=K.value;
+  const sync=()=>{ const al=lgAllowed(P.value);
+    [...K.options].forEach(o=>{ o.disabled=n?(n.kind==='platz'?o.value!=='platz':(o.value==='platz'||!al.includes(o.value)||!kidsOk(o.value))):!al.includes(o.value); });
+    if(K.selectedOptions[0]&&K.selectedOptions[0].disabled){ const f=[...K.options].find(o=>!o.disabled); if(f) K.value=f.value; }
+    const k=K.value, sts=Object.entries(LG_STYPES[k]||{});
+    if(T&&(k!==lastK||!T.options.length)){ const cur=T.value; T.innerHTML=sts.map(([key,x])=>`<option value="${key}">${esc(x[0])}</option>`).join(''); if(sts.some(([key])=>key===cur)) T.value=cur; }
+    lastK=k; if(auto) G.value=lgSuggestSeg(k,P.value,N.value,T?T.value:'');
+    show('f_stype',k!=='platz'&&sts.length>1); show('f_ltype',k==='platz'); show('f_cap',k==='platz'); show('f_maxKg',k==='platz');
+    const M={...(S.lager||{})}, cnt=Math.max(1,Math.min(100,Math.round(+(($('#f_count')||{}).value)||1))), seg=G.value.trim(), tmp=id=>({...(n||{}),id,parent:P.value,kind:k,stype:T?T.value:'',name:N.value.trim(),seg:lgInc(seg,cnt>1&&id==='__b'?cnt-1:0,cnt)});
     M.__a=tmp('__a'); if(n) delete M[n.id]; if(n) lgSub(n.id).forEach(c=>{ M[c.id]={...c,parent:c.parent===n.id?'__a':c.parent}; });
     let codeA=lgCodeIn(M,'__a'), codeB=''; if(cnt>1){ M.__b=tmp('__b'); codeB=lgCodeIn(M,'__b'); }
     const others=new Set(lgAll().filter(x=>lgIsBin(x)&&(!n||x.id!==n.id)).map(x=>lgCode(x.id).toLowerCase()));
+    const sib=seg&&lgKids(P.value).find(x=>(!n||x.id!==n.id)&&x.kind===k&&String(x.seg||'').toLowerCase()===seg.toLowerCase());
     const ok=!/[^0-9A-Za-zÄÖÜäöü]/.test(seg), dup=k==='platz'&&others.has(codeA.toLowerCase());
-    out.innerHTML=!al_ok(P.value,k,n)?`<span class="bad">„${esc(LG_KINDS[k]||k)}“ kann nicht unter „${esc(lgPlain(P.value)||'oberster Ebene')}“ liegen.</span>`
+    const moved=n?lgSub(n.id).filter(lgIsBin).filter(b=>lblState(b)!=='neu').length:0, chg=n&&(seg!==(n.seg||'')||P.value!==(n.parent||''));
+    out.innerHTML=!al.includes(k)?`<span class="bad">„${esc(LG_KINDS[k]||k)}“ kann nicht unter „${esc(lgPlain(P.value)||'oberster Ebene')}“ liegen.</span>`
       :!ok?'<span class="bad">Kürzel bitte nur aus Buchstaben und Ziffern (ohne Bindestrich und Leerzeichen).</span>'
-      :k==='platz'?`Lagerplatzcode: <b class="mono">${esc(codeA||'–')}</b>${codeB?` … <b class="mono">${esc(codeB)}</b>`:''} ${dup?'<span class="bad">gibt es schon</span>':codeA?'<span class="ok">frei</span>':''}<div class="small muted">${esc(lgPlainIn(M,'__a'))}</div>`
-      :`Code-Anfang für Plätze darunter: <b class="mono">${esc(codeA?codeA+'-…':'–')}</b><div class="small muted">${esc(lgPlainIn(M,'__a'))}</div>`; };
-  const al_ok=(par,k,node)=>lgAllowed(par).includes(k);
-  P.addEventListener('change',sync); K.addEventListener('change',sync); N.addEventListener('input',sync); G.addEventListener('input',()=>{ auto=false; sync(); }); ['f_count','f_ebN','f_plN'].forEach(id=>{ const e=$('#'+id); if(e) e.addEventListener('input',sync); });
+      :sib?`<span class="bad">Kürzel „${esc(seg)}“ gibt es hier schon (${esc(lgPlain(sib.id))}).</span>`
+      :k==='platz'?`Lagerplatzcode: <b class="mono">${esc(codeA||'–')}</b>${codeB?` … <b class="mono">${esc(codeB)}</b>`:''} ${dup?'<span class="bad">gibt es schon</span>':codeA?'<span class="ok">frei</span>':''}<div class="small muted">${esc(lgPlainIn(M,'__a'))}</div>${chg&&lblState(n)!=='neu'?'<div class="small muted">Der Code ändert sich: Das Etikett wird als „veraltet“ markiert. Der QR-Code bleibt gültig, der alte Code wird gemerkt.</div>':''}`
+      :`Strukturelement (kein buchbarer Platz, kein Etikett). Code-Anfang für Plätze darunter: <b class="mono">${esc(codeA?codeA+'-…':'–')}</b><div class="small muted">${esc(lgPlainIn(M,'__a'))}</div>${chg&&moved?`<div class="small muted">${moved} Etikett${moved>1?'en':''} darunter ändern ihren Code → werden als „veraltet“ markiert, QR-Codes bleiben gültig.</div>`:''}`; };
+  P.addEventListener('change',sync); K.addEventListener('change',sync); if(T) T.addEventListener('change',sync); N.addEventListener('input',sync); G.addEventListener('input',()=>{ auto=false; sync(); }); const c=$('#f_count'); if(c) c.addEventListener('input',sync);
   sync(); if(!n&&window.innerWidth>900) setTimeout(()=>{ (K.value==='standort'||K.value==='bereich'?N:G).focus(); },30); }
-function lgNodeSave(n,v){ const kind=n?n.kind:v.kind, parent=v.parent||'', par=lgNode(parent), name=String(v.name||'').trim(), seg=String(v.seg||'').trim().replace(/\s+/g,''), st=v.status, now=new Date().toISOString();
+function lgCleanNode(x){ if(x.kind==='platz'){ delete x.stype; x.ltype=LG_TYPES[x.ltype]?x.ltype:'fach'; } else { const t=LG_STYPES[x.kind]||{}; x.stype=t[x.stype]?x.stype:Object.keys(t)[0]||''; delete x.ltype; delete x.cap; delete x.maxKg; } return x; }
+function lgDupBin(M){ const seen={}; let dup=''; Object.values(M).filter(x=>x.kind==='platz').forEach(x=>{ const c=lgCodeIn(M,x.id).toLowerCase(); if(seen[c]&&!dup) dup=lgCodeIn(M,x.id); seen[c]=1; }); return dup; }
+function lgNodeSave(n,v){ const parent=v.parent||'', par=lgNode(parent), name=String(v.name||'').trim(), seg=String(v.seg||'').trim().replace(/\s+/g,''), st=v.status, now=new Date().toISOString();
+  let kind=n?(n.kind==='platz'?'platz':v.kind):v.kind;
+  if(n&&n.kind!=='platz'&&kind==='platz'){ toast('Ein Strukturelement kann nicht in einen Lagerplatz umgewandelt werden.'); return false; }
+  if(n&&lgKids(n.id).some(c=>!(LG_NEXT[kind]||[]).includes(c.kind))){ toast('Die Elemente darunter passen nicht unter „'+LG_KINDS[kind]+'“.'); return false; }
   if(!lgAllowed(parent).includes(kind)){ toast(LG_KINDS[kind]+' kann nicht unter „'+(par?lgPlain(par.id):'oberster Ebene')+'“ liegen.'); return false; }
   if(n&&parent!==(n.parent||'')&&(parent===n.id||lgSub(n.id).some(x=>x.id===parent))){ toast('Ein Element kann nicht unter sich selbst verschoben werden.'); return false; }
   if(kind==='standort'&&!name){ toast('Bitte einen Namen für den Standort eintragen.'); return false; }
   if(kind==='platz'&&!seg){ toast('Bitte ein Kürzel für den Platz eintragen (z. B. P01).'); return false; }
   if(kind!=='standort'&&!seg&&!name){ toast('Bitte ein Kürzel oder einen Namen eintragen.'); return false; }
   if(seg&&!/^[0-9A-Za-zÄÖÜäöü]+$/.test(seg)){ toast('Das Kürzel bitte nur aus Buchstaben und Ziffern (ohne Bindestrich und Leerzeichen).'); return false; }
-  const M={...(S.lager||{})}, out=[], mx=v.maxKg===''||v.maxKg==null?'':+v.maxKg;
-  if(n){ const x={...clone(n),parent,name,seg,ltype:v.ltype,cap:v.cap||'',maxKg:mx,notes:v.notes||'',blocked:st==='gesperrt',off:st==='still',updBy:meK(),updAt:now};
+  const M={...(S.lager||{})}, out=[], mx=v.maxKg===''||v.maxKg==null?'':+v.maxKg, cnt=n?1:Math.max(1,Math.min(100,Math.round(+v.count||1)));
+  for(let i=0;i<cnt;i++){ const sg=lgInc(seg,i,cnt); if(sg&&lgKids(parent).some(x=>(!n||x.id!==n.id)&&x.kind===kind&&String(x.seg||'').toLowerCase()===sg.toLowerCase())){ toast('Das Kürzel „'+sg+'“ gibt es unter „'+(par?lgPlain(par.id):'oberster Ebene')+'“ schon.'); return false; } }
+  if(n){ const x=lgCleanNode({...clone(n),parent,kind,stype:v.stype,name,seg,ltype:v.ltype,cap:v.cap||'',maxKg:mx,notes:v.notes||'',blocked:st==='gesperrt',off:st==='still'});
     if(x.off&&!n.off){ const full=[n,...lgSub(n.id)].filter(lgIsBin).filter(b=>binStock(b.id).length); if(full.length){ toast('Deaktivieren geht erst ohne Bestand: auf '+full.length+' Platz/Plätzen liegt noch Ware. Bitte vorher umlagern.'); return false; } }
-    M[x.id]=x; out.push(x); }
-  else { const cnt=Math.max(1,Math.min(100,Math.round(+v.count||1))), eb=kind==='regal'?Math.max(0,Math.min(40,Math.round(+v.ebN||0))):0, pl=kind==='platz'?0:Math.max(0,Math.min(80,Math.round(+v.plN||0))), pad=i=>String(i).padStart(2,'0');
-    const mk=(k,pa,nm,sg,extra)=>{ const x={id:uid()+out.length.toString(36),parent:pa||'',kind:k,name:nm||'',seg:sg||'',blocked:st==='gesperrt',off:st==='still',by:meK(),at:now,...(k==='platz'?{ltype:v.ltype||'fach'}:{}),...(extra||{})}; M[x.id]=x; out.push(x); return x; };
-    for(let i=0;i<cnt;i++){ const x=mk(kind,parent,cnt>1&&name&&(kind==='standort'||kind==='bereich')?name+' '+(i+1):name,lgInc(seg,i,cnt),{cap:v.cap||'',maxKg:mx,notes:v.notes||''});
-      if(eb>0){ for(let e=1;e<=eb;e++){ const E=mk('ebene',x.id,'','E'+pad(e)); for(let p=1;p<=pl;p++) mk('platz',E.id,'','P'+pad(p)); } }
-      else if(pl>0){ for(let p=1;p<=pl;p++) mk('platz',x.id,'','P'+pad(p)); } }
-    if(out.length>1500){ toast('Bitte höchstens 1.500 Einträge auf einmal anlegen.'); return false; } }
-  const seen={}; let dup=''; Object.values(M).filter(x=>x.kind==='platz').forEach(x=>{ const c=lgCodeIn(M,x.id).toLowerCase(); if(seen[c]&&!dup) dup=lgCodeIn(M,x.id); seen[c]=1; });
-  if(dup){ toast('Den Lagerplatzcode „'+dup+'“ gäbe es dann doppelt. Bitte ein anderes Kürzel wählen.'); return false; }
-  out.forEach(x=>put('lager',x)); const c={...(UI.lgCol||{})}; lgPathIn(M,out[0].id).forEach(p=>{ c[p.id]=false; }); UI.lgCol=c; UI.lgHi=out[0].id;
-  toast(n?'Gespeichert.':out.length===1?'Angelegt: '+(out[0].kind==='platz'?lgCodeIn(M,out[0].id):lgPlainIn(M,out[0].id)):out.length+' Einträge angelegt, davon '+out.filter(x=>x.kind==='platz').length+' Lagerplätze.'); }
-function lgNodeDel(id){ const n=lgNode(id); if(!n||!lgMgr()) return; if(lgKids(id).length) return toast('Bitte zuerst die Elemente darunter löschen – oder dieses Element deaktivieren.');
-  if(lgIsBin(n)&&binStock(id).length) return toast('Auf diesem Platz liegt noch Ware. Bitte zuerst umlagern.');
-  if(arr('inv').some(x=>['offen','pruefen'].includes(x.status)&&(x.bins||[]).includes(id))) return toast('Dieser Platz ist Teil einer laufenden Inventur.');
-  const used=arr('stock').some(s=>(s.moves||[]).some(m=>m.from===id||m.to===id||(m.auto||[]).some(a=>a.bin===id)));
-  confirmSheet((used?'Auf diesem Platz gab es früher Buchungen. Damit der Verlauf lesbar bleibt, besser „deaktiviert“ wählen. ':'')+LG_KINDS[n.kind]+' „'+lgPlain(id)+'“ wirklich löschen?',()=>{ del('lager',id); closeSheet(); toast('Gelöscht.'); }); }
+    M[x.id]=x; out.push(x); out.push(...lgKeepOldCodes(M,[n.id,...lgSub(n.id).map(c=>c.id)]).filter(c=>c.id!==x.id));
+    const xi=out.findIndex(o=>o.id===x.id); if(M[x.id]!==x) out[xi]=M[x.id]; }
+  else { for(let i=0;i<cnt;i++){ const x=lgCleanNode({id:uid()+i.toString(36),parent,kind,stype:v.stype,ltype:v.ltype,name:cnt>1&&name&&(kind==='standort'||kind==='bereich')?name+' '+(i+1):name,seg:lgInc(seg,i,cnt),cap:v.cap||'',maxKg:mx,notes:v.notes||'',blocked:st==='gesperrt',off:st==='still'}); M[x.id]=x; out.push(x); } }
+  const dup=lgDupBin(M); if(dup){ toast('Den Lagerplatzcode „'+dup+'“ gäbe es dann doppelt. Bitte ein anderes Kürzel wählen.'); return false; }
+  const c={...(UI.lgCol||{})}; lgPathIn(M,out[0].id).forEach(p=>{ c[p.id]=false; }); UI.lgCol=c; UI.lgHi=out[0].id;
+  lgWriteMany(out).then(ok=>{ if(ok) toast(n?'Gespeichert.'+(out.length>1?' '+(out.length-1)+' Platzcode(s) darunter haben sich geändert – Etiketten neu drucken.':''):out.length===1?'Angelegt: '+(out[0].kind==='platz'?lgCodeIn(M,out[0].id):lgPlainIn(M,out[0].id)):out.length+' Einträge angelegt.'); }); }
+// Löschen – auch ganze Bereiche/Regale mit allem darunter. Gesperrt, solange irgendwo darunter Ware liegt oder eine Inventur läuft. Alles in einem Schreibvorgang.
+function lgNodeDel(id){ const n=lgNode(id); if(!n||!lgMgr()) return; const all=[n,...lgSub(id)], bins=all.filter(lgIsBin), ids=new Set(all.map(x=>x.id));
+  const full=bins.filter(b=>binStock(b.id).length); if(full.length) return toast('Auf '+full.length+' Platz/Plätzen darunter liegt noch Ware ('+full.slice(0,3).map(b=>lgCode(b.id)).join(', ')+(full.length>3?' …':'')+'). Bitte zuerst umlagern.');
+  if(arr('inv').some(x=>['offen','pruefen'].includes(x.status)&&(x.bins||[]).some(b=>ids.has(b)))) return toast('Ein Platz darunter ist Teil einer laufenden Inventur.');
+  const used=arr('stock').some(s=>(s.moves||[]).some(m=>ids.has(m.from)||ids.has(m.to)||(m.auto||[]).some(a=>ids.has(a.bin))));
+  const cnt={}; all.slice(1).forEach(x=>{ const l=lgStLabel(x); cnt[l]=(cnt[l]||0)+1; });
+  const what=Object.entries(cnt).map(([l,c])=>c+' × '+l).join(', ');
+  confirmSheet(lgStLabel(n)+' „'+lgPlain(id)+'“'+(all.length>1?' mit allem darunter ('+what+(bins.length?'; insgesamt '+bins.length+' Lagerplätze':'')+')':'')+' wirklich löschen? Das lässt sich nicht rückgängig machen.'+(used?' Hinweis: Auf '+(all.length>1?'diesen Plätzen':'diesem Platz')+' gab es früher Buchungen – im Verlauf steht danach „unbekannter Platz“. Wenn der Verlauf lesbar bleiben soll, besser „deaktiviert“ wählen.':''),
+    ()=>{ const order=all.map(x=>({id:x.id,d:lgPath(x.id).length})).sort((a,b)=>b.d-a.d).map(x=>x.id), label=lgStLabel(n)+' „'+lgPlain(id)+'“';
+      lgWriteMany([],order).then(ok=>{ if(!ok) return; const l={id:'d'+uid(),at:new Date().toISOString(),by:meK(),a:'Gelöscht: Lager '+label+(all.length>1?' mit '+(all.length-1)+' Elementen darunter ('+bins.length+' Lagerplätze)':''),coll:'lager',pid:''}; S.log[l.id]=l; if(MODE==='cloud') DB.collection('log').doc(l.id).set(l).catch(()=>{}); else saveLocal();
+        closeSheet(); toast(all.length>1?all.length+' Elemente gelöscht.':'Gelöscht.'); }); }); }
+/* ---------- Anlage-Assistent: ganze Regale, Palettenzonen, Kleinteileschränke auf einmal – erst Vorschau, dann alles oder nichts ---------- */
+const WZ_T={regal:{l:'Regal / Hochregal',d:'Regal mit Regalfeldern, Ebenen und Stellplätzen. Beispiel: R01 links – 8 Felder × 3 Ebenen × 3 Paletten = 72 Lagerplätze.'},zone:{l:'Palettenzone / Bodenlager',d:'Zone mit nummerierten Stell- oder Bodenplätzen. Beispiel: Keller → Palettenzone mit 20 Stellplätzen.'},schrank:{l:'Kleinteileschrank',d:'Schrank mit Schubladen und Fächern. Beispiel: Schraubenschrank – 6 Schubladen × 8 Fächer.'}};
+var WZ=null;
+function lgWiz(parentId){ if(!lgMgr()) return toast('Lagerorte verwalten dürfen Admins und alle mit dem Recht „Lagerverwaltung – Bearbeiten“.'); if(!lgAll().some(n=>n.kind==='standort')) return toast('Bitte zuerst einen Lagerstandort anlegen („Neuer Standort“).'); closeSheet();
+  openSheet({title:'Lagerstruktur per Assistent anlegen',html:`<div class="fld full"><div class="small muted">Was möchtest du anlegen? Alle Unterelemente und Lagerplätze entstehen auf einmal. Vor dem Anlegen siehst du eine Vorschau.</div><div class="wz-c">${Object.entries(WZ_T).map(([k,t])=>`<button type="button" class="wz-b" data-act="lgWizT" data-t="${k}" data-parent="${esc(parentId||'')}"><b>${esc(t.l)}</b><span class="small muted">${esc(t.d)}</span></button>`).join('')}</div></div>`,saveLabel:'Abbrechen',onSave:()=>{}}); }
+function lgWizForm(t,parentId,val){ closeSheet(); const hosts=lgAll().filter(x=>(LG_NEXT[x.kind]||[]).includes('regal')&&!lgOff(x)).sort((a,b)=>lgPlain(a.id).localeCompare(lgPlain(b.id),'de',{numeric:true}));
+  const p0=val?val.parent:(hosts.some(h=>h.id===parentId)?parentId:(lgNode(parentId)&&lgPath(parentId).reverse().find(x=>hosts.some(h=>h.id===x.id))||hosts[0]||{}).id||'');
+  const d={regal:{parent:p0,bType:'bereich',rType:'regal',rSeg:lgSuggestSeg('regal',p0,'','regal'),rName:'',rCount:1,fN:8,eN:3,eNames:'unten, Mitte, oben',pN:3,ltype:'palette'},
+    zone:{parent:p0,bType:'keller',zType:'palzone',zSeg:lgSuggestSeg('regal',p0,'','palzone'),zName:'',pN:20,ltype:'palette'},
+    schrank:{parent:p0,bType:'raum',sSeg:lgSuggestSeg('regal',p0,'','schrank'),sName:'',sCount:1,eN:6,eNames:'',pN:8,ltype:'schubfach'}}[t];
+  const v={...d,...(val||{})}, bt=Object.entries(LG_STYPES.bereich).map(([k,x])=>[k,x[0]]);
+  const common=[{k:'parent',label:'Anlegen unter',type:'select',full:1,options:hosts.map(x=>[x.id,lgStLabel(x)+': '+lgPlain(x.id)])},
+    {k:'bName',label:'Optional: neuen Bereich / Raum dazwischen anlegen – Name',ph:'z. B. Hauptlager, Keller, Schraubenlager'},{k:'bSeg',label:'Kürzel des neuen Bereichs',ph:'z. B. HL, KE, SL'},{k:'bType',label:'Art des Bereichs',type:'select',options:bt}];
+  const pl=[{k:'ltype',label:'Lagerplatztyp',type:'select',options:Object.entries(LG_TYPES)}];
+  const F={regal:[...common,{k:'rType',label:'Strukturtyp',type:'select',options:[['regal','Regal'],['hochregal','Hochregal']]},{k:'rSeg',label:'Kürzel des (ersten) Regals',ph:'R01'},{k:'rName',label:'Name (optional)',ph:'z. B. links'},{k:'rCount',label:'Anzahl gleicher Regale',type:'number'},
+      {k:'fN',label:'Regalfelder je Regal (0 = ohne Felder)',type:'number'},{k:'eN',label:'Ebenen je Feld',type:'number'},{k:'eNames',label:'Namen der Ebenen (optional, von unten nach oben, mit Komma)',full:1,ph:'unten, Mitte, oben'},{k:'pN',label:'Stellplätze je Ebene',type:'number'},...pl],
+    zone:[...common,{k:'zType',label:'Strukturtyp',type:'select',options:[['palzone','Palettenzone'],['zone','Lagerzone']]},{k:'zSeg',label:'Kürzel der Zone',ph:'Z01'},{k:'zName',label:'Name (optional)',ph:'z. B. Palettenzone Nord'},{k:'pN',label:'Anzahl Stellplätze',type:'number'},...pl],
+    schrank:[...common,{k:'sSeg',label:'Kürzel des (ersten) Schranks',ph:'S01'},{k:'sName',label:'Name (optional)',ph:'z. B. Schraubenschrank'},{k:'sCount',label:'Anzahl gleicher Schränke',type:'number'},{k:'eN',label:'Schubladen je Schrank',type:'number'},{k:'eNames',label:'Namen der Schubladen (optional, mit Komma)',full:1,ph:'z. B. M4, M5, M6, M8'},{k:'pN',label:'Fächer je Schublade',type:'number'},...pl]}[t];
+  openSheet({title:'Assistent: '+WZ_T[t].l,value:v,fields:F.map(f=>({...f,ai:false})),saveLabel:'Vorschau',noReq:()=>true,
+    extraBtn:`<button type="button" class="btn" data-act="lgWiz" data-parent="${esc(v.parent)}">Andere Vorlage</button>`,
+    onSave:vv=>{ const r=lgWizBuild(t,vv); if(typeof r==='string'){ toast(r); return false; } WZ={t,v:vv}; setTimeout(()=>lgWizPreview(r),60); }});
+  setTimeout(()=>{ const sync=()=>{ const P=$('#f_parent'); if(!P) return; const k=t==='regal'?'rSeg':t==='zone'?'zSeg':'sSeg', e=$('#f_'+k); if(e&&!e.dataset.own){ const host=($('#f_bName')||{}).value?'':P.value; e.value=lgSuggestSeg('regal',host,'',t==='regal'?'regal':t==='zone'?'palzone':'schrank'); } };
+    ['rSeg','zSeg','sSeg'].forEach(k=>{ const e=$('#f_'+k); if(e) e.addEventListener('input',()=>{ e.dataset.own='1'; }); }); const P=$('#f_parent'); if(P) P.addEventListener('change',sync); const B=$('#f_bName'); if(B) B.addEventListener('input',sync);
+    const bS=$('#f_bSeg'); if(B&&bS) B.addEventListener('input',()=>{ if(!bS.dataset.own) bS.value=lgSuggestSeg('bereich','',B.value); }); if(bS) bS.addEventListener('input',()=>{ bS.dataset.own='1'; }); },0); }
+// Plan bauen (nur im Speicher). Gibt Fehlertext oder {out,M,root} zurück.
+function lgWizBuild(t,v){ const M={...(S.lager||{})}, out=[], now=new Date().toISOString(), num=(x,lo,hi,def)=>{ const n=Math.round(+x); return isFinite(n)&&String(x).trim()!==''?Math.max(lo,Math.min(hi,n)):def; };
+  const pad=(i,n)=>String(i).padStart(n>99?3:2,'0'), okSeg=s=>/^[0-9A-Za-zÄÖÜäöü]+$/.test(s);
+  let seq=0; const mk=(kind,parent,name,seg,extra)=>{ const x=lgCleanNode({id:uid()+(seq++).toString(36),parent,kind,name:name||'',seg:seg||'',...(extra||{})}); M[x.id]=x; out.push(x); return x; };
+  let parent=v.parent||''; const host=lgNode(parent); if(!host||!(LG_NEXT[host.kind]||[]).includes('regal')) return 'Bitte auswählen, unter welchem Standort oder Bereich angelegt werden soll.';
+  const withType=(nm,st)=>{ nm=String(nm||'').trim(); const l=(LG_STYPES.regal[st]||['Regal'])[0]; return !nm||nm.toLowerCase().includes(l.toLowerCase())||/regal|schrank|zone/i.test(nm)?nm:l+' '+nm; }; // „links“ → „Hochregal links“
+  const sibClash=(par,kind,seg)=>lgKids(par).find(x=>x.kind===kind&&String(x.seg||'').toLowerCase()===String(seg).toLowerCase());
+  const bName=String(v.bName||'').trim(); let bSeg=String(v.bSeg||'').trim().replace(/\s+/g,'');
+  if(bName||bSeg){ if(!bSeg) bSeg=lgSuggestSeg('bereich','',bName); if(!okSeg(bSeg)) return 'Kürzel des Bereichs bitte nur aus Buchstaben und Ziffern.'; if(sibClash(parent,'bereich',bSeg)) return 'Einen Bereich mit Kürzel „'+bSeg+'“ gibt es unter „'+lgPlain(parent)+'“ schon – dann bitte diesen Bereich oben auswählen.';
+    parent=mk('bereich',parent,bName,bSeg,{stype:v.bType}).id; }
+  const names=String(v.eNames||'').split(/[,;\n]/).map(s=>s.trim()).filter(Boolean), lt=LG_TYPES[v.ltype]?v.ltype:'fach';
+  if(t==='regal'||t==='schrank'){ const isS=t==='schrank', cnt=num(isS?v.sCount:v.rCount,1,50,1), seg0=String((isS?v.sSeg:v.rSeg)||'').trim().replace(/\s+/g,'')||(isS?'S01':'R01'), nm=String((isS?v.sName:v.rName)||'').trim();
+    const fN=isS?0:num(v.fN,0,99,0), eN=num(v.eN,0,99,isS?6:3), pN=num(v.pN,1,999,1);
+    if(!okSeg(seg0)) return 'Kürzel bitte nur aus Buchstaben und Ziffern (z. B. R01).';
+    for(let i=0;i<cnt;i++){ const sg=lgInc(seg0,i,cnt); if(sibClash(parent,'regal',sg)) return '„'+sg+'“ gibt es unter „'+lgPlain(parent)+'“ schon. Bitte ein anderes Kürzel wählen (z. B. das nächste freie: '+lgSuggestSeg('regal',parent,'',isS?'schrank':'regal')+').';
+      const rst=isS?'schrank':(v.rType==='hochregal'?'hochregal':'regal'); const R=mk('regal',parent,withType(cnt>1&&nm?nm+' '+(i+1):nm,rst),sg,{stype:rst});
+      const fields=fN>0?Array.from({length:fN},(_,f)=>mk('feld',R.id,'','F'+pad(f+1,fN),{stype:'feld'})):[R];
+      fields.forEach(F=>{ if(eN>0){ for(let e=1;e<=eN;e++){ const en=names[e-1]||''; const E=mk('ebene',F.id,en?(isS?'Schublade ':'Ebene ')+en:'',(isS?'SL':'E')+pad(e,eN),{stype:isS?'schublade':'ebene'}); for(let p=1;p<=pN;p++) mk('platz',E.id,'','P'+pad(p,pN),{ltype:lt}); } }
+        else for(let p=1;p<=pN;p++) mk('platz',F.id,'','P'+pad(p,pN),{ltype:lt}); }); } }
+  else { const sg=String(v.zSeg||'').trim().replace(/\s+/g,'')||'Z01', pN=num(v.pN,1,999,1); if(!okSeg(sg)) return 'Kürzel bitte nur aus Buchstaben und Ziffern (z. B. Z01).'; if(sibClash(parent,'regal',sg)) return '„'+sg+'“ gibt es unter „'+lgPlain(parent)+'“ schon.';
+    const zst=v.zType==='zone'?'zone':'palzone'; const Z=mk('regal',parent,withType(v.zName,zst),sg,{stype:zst}); for(let p=1;p<=pN;p++) mk('platz',Z.id,'','P'+pad(p,pN),{ltype:lt}); }
+  if(out.length>3000) return 'Das wären '+out.length+' Einträge – bitte höchstens 3.000 auf einmal anlegen.';
+  const dup=lgDupBin(M); if(dup) return 'Der Lagerplatzcode „'+dup+'“ wäre doppelt. Bitte ein anderes Kürzel wählen.';
+  out.forEach(x=>{ x.by=meK(); x.at=now; }); return {out,M}; }
+function lgWizPreview(r){ const {out,M}=r, bins=out.filter(x=>x.kind==='platz'), ids=new Set(out.map(x=>x.id)), top=out.filter(x=>!ids.has(x.parent));
+  const cnt={}; out.forEach(x=>{ const l=x.kind==='platz'?'Lagerplätze ('+(LG_TYPES[x.ltype]||'')+')':(LG_STYPES[x.kind][x.stype]||[LG_SHORT[x.kind]])[0]; cnt[l]=(cnt[l]||0)+1; });
+  const kids={}; out.forEach(x=>{ (kids[x.parent]=kids[x.parent]||[]).push(x); });
+  let lines=0; const tree=(x,d)=>{ if(lines>400) return ''; lines++; const ch=kids[x.id]||[], pls=ch.filter(c=>c.kind==='platz'), st=ch.filter(c=>c.kind!=='platz');
+    return `<div class="wz-n" style="--d:${d}"><b>${esc(lgPart(x))}</b> <span class="mono muted">${esc(x.seg)}</span></div>`+(pls.length?`<div class="wz-p" style="--d:${d+1}">${pls.length} Plätze: <span class="mono">${esc(lgCodeIn(M,pls[0].id))}</span>${pls.length>1?` … <span class="mono">${esc(lgCodeIn(M,pls[pls.length-1].id))}</span>`:''}</div>`:'')+st.map(c=>tree(c,d+1)).join(''); };
+  openSheet({title:'Vorschau – '+bins.length+' Lagerplätze',wide:1,saveLabel:'Jetzt alle '+out.length+' anlegen',
+    html:`<div class="fld full"><div class="small muted">Wird angelegt unter: <b>${esc(lgPlainIn(M,top[0].parent)||'oberster Ebene')}</b>. Es wird alles auf einmal gespeichert – oder bei einem Fehler gar nichts.</div>
+      <div class="wz-sum"><span class="big">${bins.length} Lagerplätze</span>${Object.entries(cnt).filter(([l])=>!l.startsWith('Lagerplätze')).map(([l,c])=>`<span>${c} × ${esc(l)}</span>`).join('')}<span>Typ: ${esc([...new Set(bins.map(b=>LG_TYPES[b.ltype]))].join(', '))}</span></div>
+      <div class="small" style="margin-bottom:6px">Codes: <b class="mono">${esc(lgCodeIn(M,bins[0].id))}</b> bis <b class="mono">${esc(lgCodeIn(M,bins[bins.length-1].id))}</b> – alle eindeutig.</div>
+      <div class="wz-tree">${top.map(x=>tree(x,0)).join('')}${lines>400?'<div class="muted">… (gekürzt)</div>':''}</div></div>`,
+    extraBtn:`<button type="button" class="btn" data-act="lgWizBack">Zurück und ändern</button>`,
+    onSave:()=>{ const r2=lgWizBuild(WZ.t,WZ.v); if(typeof r2==='string'){ toast(r2); return false; } // nochmal prüfen – jemand anderes könnte inzwischen angelegt haben
+      lgWriteMany(r2.out).then(ok=>{ if(!ok) return; const c={...(UI.lgCol||{})}; const first=r2.out.find(x=>x.kind==='platz'); lgPathIn(r2.M,first.parent).forEach(p=>{ c[p.id]=false; }); UI.lgCol=c; UI.lgHi=r2.out[0].id; UI.stockTab='plaetze';
+        toast(r2.out.length+' Einträge angelegt, davon '+r2.out.filter(x=>x.kind==='platz').length+' Lagerplätze.'); }); }}); }
 function lgOffToggle(id){ const n=lgNode(id); if(!n||!lgMgr()) return; if(!n.off){ const full=[n,...lgSub(id)].filter(lgIsBin).filter(b=>binStock(b.id).length); if(full.length) return toast('Deaktivieren geht erst ohne Bestand: auf '+full.length+' Platz/Plätzen liegt noch Ware.'); }
   put('lager',{...clone(n),off:!n.off,updBy:meK(),updAt:new Date().toISOString()}); toast(lgPlain(id)+(n.off?' ist wieder aktiv.':' ist deaktiviert.')); }
 const LG_OFF_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v8"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg>';
 function vLgPlaces(sw){ const q=(UI.lgq||'').toLowerCase().trim(), mgr=lgMgr(), all=lgAll(), col=UI.lgCol||{}, hi=UI.lgHi; UI.lgHi='';
   const hit=n=>[n.name,n.seg,lgCode(n.id),lgPlain(n.id),n.notes,LG_TYPES[n.ltype]].join(' ').toLowerCase().includes(q);
   const keep=new Set(); if(q) all.filter(hit).forEach(n=>{ lgPath(n.id).forEach(p=>keep.add(p.id)); lgSub(n.id).forEach(c=>keep.add(c.id)); });
-  const isCol=n=>!q&&(col[n.id]!=null?col[n.id]:n.kind==='regal'||n.kind==='ebene');
+  const isCol=n=>!q&&(col[n.id]!=null?col[n.id]:['regal','feld','ebene'].includes(n.kind));
   const row=(n,dep)=>{ if(q&&!keep.has(n.id)) return ''; const kids=lgKids(n.id), bin=lgIsBin(n), inside=bin?binStock(n.id).length:lgSub(n.id).filter(lgIsBin).length, c=isCol(n)&&kids.length;
     const flags=(n.off?'<span class="pill">deaktiviert</span>':'')+(n.blocked?'<span class="pill bad">gesperrt</span>':'');
-    return `<div class="lg-row lg-${n.kind}${lgOff(n)?' off':''}${n.id===hi?' hi':''}" style="--dep:${dep}"><button type="button" class="lg-main" data-act="${bin?'lgBin':'lgToggle'}" data-id="${n.id}" aria-expanded="${bin?'':!c}"><span class="lg-tw">${bin?'·':kids.length?(c?'▸':'▾'):''}</span><span class="lg-kind">${esc(LG_SHORT[n.kind])}</span>${bin?`<b class="mono">${esc(lgCode(n.id))}</b><span class="small muted">${esc(lgPart(n))}${n.ltype?' · '+esc(LG_TYPES[n.ltype]||''):''}</span>`:`<b>${esc(lgPart(n))}</b>${n.seg&&lgPart(n).indexOf(n.seg)<0?`<span class="mono small muted">${esc(n.seg)}</span>`:''}`}${flags}<span class="spacer"></span><span class="small muted">${bin?(inside?inside+' Artikel':'leer'):inside+' Plätze'}</span></button>${mgr?`<span class="lg-acts">${LG_NEXT[n.kind].length?`<button type="button" class="lg-ab" data-act="lgNew" data-parent="${n.id}" title="Unterelement anlegen">${ic('plus')}<span>Unterelement</span></button>`:''}<button type="button" class="icon-btn" title="Bearbeiten / umbenennen" aria-label="Bearbeiten" data-act="lgNodeEdit" data-id="${n.id}">${ic('edit')}</button><button type="button" class="icon-btn ${n.off?'on-off':''}" title="${n.off?'Wieder aktivieren':'Deaktivieren'}" aria-label="${n.off?'Aktivieren':'Deaktivieren'}" data-act="lgOff" data-id="${n.id}">${LG_OFF_IC}</button></span>`:''}</div>${c?'':kids.map(k=>row(k,dep+1)).join('')}`; };
+    return `<div class="lg-row lg-${n.kind}${lgOff(n)?' off':''}${n.id===hi?' hi':''}" style="--dep:${dep}"><button type="button" class="lg-main" data-act="${bin?'lgBin':'lgToggle'}" data-id="${n.id}" aria-expanded="${bin?'':!c}"><span class="lg-tw">${bin?'·':kids.length?(c?'▸':'▾'):''}</span><span class="lg-kind">${esc(bin?(n.ltype==='palette'||n.ltype==='boden'||n.ltype==='gitterbox'?'Stellplatz':n.ltype==='schubfach'||n.ltype==='klein'||n.ltype==='fach'?'Fach':'Platz'):lgStLabel(n))}</span>${bin?`<b class="mono">${esc(lgCode(n.id))}</b><span class="small muted">${esc(lgPart(n))}${n.ltype?' · '+esc(LG_TYPES[n.ltype]||''):''}</span>`:`<b>${esc(lgPart(n))}</b>${n.seg&&lgPart(n).indexOf(n.seg)<0?`<span class="mono small muted">${esc(n.seg)}</span>`:''}`}${flags}<span class="spacer"></span><span class="small muted">${bin?(inside?inside+' Artikel':'leer'):inside+' Plätze'}</span></button>${mgr?`<span class="lg-acts">${LG_NEXT[n.kind].includes('regal')?`<button type="button" class="lg-ab" data-act="lgWiz" data-parent="${n.id}" title="Ganze Regale, Zonen oder Schränke mit allen Plätzen anlegen">${ic('plus')}<span>Assistent</span></button>`:''}${LG_NEXT[n.kind].length?`<button type="button" class="lg-ab" data-act="lgNew" data-parent="${n.id}" title="Unterelement anlegen">${ic('plus')}<span>Unterelement</span></button>`:''}<button type="button" class="icon-btn" title="Bearbeiten / umbenennen" aria-label="Bearbeiten" data-act="lgNodeEdit" data-id="${n.id}">${ic('edit')}</button><button type="button" class="icon-btn" title="${kids.length?'Mit allem darunter löschen':'Löschen'}" aria-label="Löschen" data-act="lgDel" data-id="${n.id}">${ic('x')}</button><button type="button" class="icon-btn ${n.off?'on-off':''}" title="${n.off?'Wieder aktivieren':'Deaktivieren'}" aria-label="${n.off?'Aktivieren':'Deaktivieren'}" data-act="lgOff" data-id="${n.id}">${LG_OFF_IC}</button></span>`:''}</div>${c?'':kids.map(k=>row(k,dep+1)).join('')}`; };
   const roots=lgKids(''), unN=arr('stock').filter(s=>unassigned(s)>0).length, nb=all.filter(lgIsBin).length;
-  const btns=mgr?`<button class="btn sun" data-act="lgNew" data-parent="">${ic('plus')}Neuer Standort</button>${roots.length?`<button class="btn" data-act="lgNewBin">${ic('plus')}Neuer Lagerplatz</button>`:''}`:'';
+  const btns=mgr?`<button class="btn sun" data-act="lgNew" data-parent="">${ic('plus')}Neuer Standort</button>${roots.length?`<button class="btn sun" data-act="lgWiz" data-parent="">${ic('plus')}Assistent: Regal / Zone / Schrank</button><button class="btn" data-act="lgNewBin">${ic('plus')}Einzelner Lagerplatz</button>`:''}`:'';
   return head('Lagerverwaltung',roots.length+' Standort'+(roots.length===1?'':'e')+' · '+nb+' Lagerplätze'+(unN&&nb?' · '+unN+' Artikel mit Bestand ohne Platz':''),lgHeadBtns()+btns)+sw+
     `<div class="card"><div class="card-h lg-bar"><input class="inp" type="search" style="flex:1;min-width:180px" placeholder="Suchen: Platzcode, Bezeichnung oder Standort" value="${esc(UI.lgq||'')}" data-chg="lgQ" aria-label="Lagerorte suchen">${roots.length?`<button class="btn sm" data-act="lgOpenAll">Alle aufklappen</button><button class="btn sm" data-act="lgCloseAll">Alle zuklappen</button>`:''}</div>
       ${!mgr?'<div class="small muted" style="padding:0 16px 8px">Ansehen ist für alle mit Lagerrechten möglich. Anlegen und Ändern dürfen Admins und freigegebene Personen.</div>':''}
-      <div class="lg-tree">${roots.map(r=>row(r,0)).join('')||`<div class="lg-empty"><b>Noch keine Lagerorte angelegt.</b><div class="small muted">So geht's: 1. „Neuer Standort“ (z. B. Bornheim, Kürzel BO). 2. Am Standort „+ Unterelement“ → Bereich (z. B. Hauptlager, HL). 3. Darunter Regal R01 – dabei gleich „Ebenen“ und „Plätze je Ebene“ eintragen, dann entstehen alle Plätze auf einmal (BO-HL-R01-E01-P01 …).</div>${mgr?`<button class="btn sun" data-act="lgNew" data-parent="">${ic('plus')}Neuer Standort</button>`:''}</div>`}</div></div>`+(mgr?lgMigHtml():'')+lgMgrBox(); }
+      <div class="lg-tree">${roots.map(r=>row(r,0)).join('')||`<div class="lg-empty"><b>Noch keine Lagerorte angelegt.</b><div class="small muted">So geht's: 1. „Neuer Standort“ (z. B. Bornheim, Kürzel BO). 2. Am Standort „Assistent“ → Regal, Palettenzone oder Kleinteileschrank wählen, optional gleich einen Bereich (z. B. Hauptlager, HL) dazu – alle Felder, Ebenen und Plätze entstehen auf einmal (BO-HL-R01-F01-E01-P01 …).</div>${mgr?`<button class="btn sun" data-act="lgNew" data-parent="">${ic('plus')}Neuer Standort</button>`:''}</div>`}</div></div>`+(mgr?lgMigHtml():'')+lgMgrBox(); }
 const lgMgrBox=()=>isAdmin()?`<div class="card"><div class="card-h"><div><h3>Wer darf Lagerorte verwalten?</h3><div class="small muted">Admins und alle, die unter „Admin: Rechte“ bei <b>Lagerverwaltung</b> das Häkchen <b>Bearbeiten</b> haben: Lagerorte anlegen/ändern/löschen, buchen, Inventur freigeben, Lager- und Stammdaten-Artikel löschen (auch mehrere auf einmal). Wer die Lagerverwaltung nur sehen darf, kann nur ansehen.</div></div></div><div class="small muted" style="padding:0 16px 14px">Bearbeiten dürfen aktuell: ${esc(staff().filter(s=>s.name&&(permOf(s.name)||{}).admin||editsOf(s.name).includes('stock')&&viewsOf(s.name).includes('stock')).map(s=>shortWho(s.name)).join(', ')||'–')}</div></div>`:'';
 // Übernahme alter Bestände: nichts automatisch. Je alter Lagerort-Text ein Platz wählen → Vorschau → Übernehmen (als Bewegung „Übernahme“ protokolliert).
 var LG_MIG=[];
@@ -5613,7 +5731,11 @@ function vLgLabels(sw){ const sel=new Set((UI.lblSel||[]).filter(id=>lgIsBin(lgN
 // Bedienung Baum und Etiketten (überschreibt ältere Fassungen gleichen Namens)
 queueMicrotask(()=>{ Object.assign(A,{
   lgOff:d=>lgOffToggle(d.id),
-  lgNewBin:()=>{ const pick=lgAll().filter(n=>['ebene','regal','bereich','standort'].includes(n.kind)&&!lgOff(n)).sort((a,b)=>['ebene','regal','bereich','standort'].indexOf(a.kind)-['ebene','regal','bereich','standort'].indexOf(b.kind))[0]; lgNodeForm(null,pick?pick.id:'','platz'); },
+  lgNewBin:()=>{ const O=['ebene','feld','regal','bereich','standort'], pick=lgAll().filter(n=>O.includes(n.kind)&&!lgOff(n)).sort((a,b)=>O.indexOf(a.kind)-O.indexOf(b.kind))[0]; lgNodeForm(null,pick?pick.id:'','platz'); },
+  lgWiz:d=>lgWiz(d.parent||''),
+  lgWizT:d=>lgWizForm(d.t,d.parent||''),
+  lgWizBack:()=>{ if(WZ) lgWizForm(WZ.t,WZ.v.parent,WZ.v); },
+  lgDel:d=>lgNodeDel(d.id),
   lgOpenAll:()=>{ const c={}; lgAll().forEach(n=>c[n.id]=false); UI.lgCol=c; render(); },
   lgCloseAll:()=>{ const c={}; lgAll().forEach(n=>{ if(n.kind!=='standort') c[n.id]=true; }); UI.lgCol=c; render(); },
   lblAll:()=>{ UI.lblSel=[...new Set([...(UI.lblSel||[]),...(UI.lblShown||[])])]; render(); },
@@ -5696,7 +5818,7 @@ queueMicrotask(()=>{ Object.assign(A,{
   lgBinIn:d=>lgBinInSheet(d.id),
   lgNew:d=>lgNodeForm(null,d.parent||''),
   lgNodeEdit:d=>lgNodeForm(lgNode(d.id)),
-  lgToggle:d=>{ const n=lgNode(d.id); if(!n) return; const c={...(UI.lgCol||{})}, cur=c[d.id]!=null?c[d.id]:n.kind==='regal'; c[d.id]=!cur; UI.lgCol=c; render(); },
+  lgToggle:d=>{ const n=lgNode(d.id); if(!n) return; const c={...(UI.lgCol||{})}, cur=c[d.id]!=null?c[d.id]:['regal','feld','ebene'].includes(n.kind); c[d.id]=!cur; UI.lgCol=c; render(); },
   lgPrintOne:d=>lgPrint([d.id]),
   lgPrintNode:d=>lgPrint(lgSub(d.id).filter(lgIsBin).filter(b=>!lgOff(b)).map(b=>b.id)),
   lgMigPreview:()=>lgMigPreview(),
