@@ -1563,7 +1563,7 @@ button.link-ms:hover{color:var(--ink)}
 .ag-it .bar{align-self:stretch;border-radius:2px;background:var(--kc,var(--muted))}
 .ag-it .tt{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ag-it .mt{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* Terminfarben: Rot = abwesend (Krankheit, Urlaub, Lehrgang), Grau = Kundentermin und Baustelle, Gelb = alles andere */ .k-abw,.k-urlaub,.k-krank,.k-lehrgang{--kc:#D32F2F} .k-kunde,.k-bau,.k-proj{--kc:#8A8F98} .k-evu,.k-lief,.k-ausw,.k-teams,.k-intern,.k-sonst,.k-todo{--kc:#F4DB02} .k-ho{--kc:#E91E8C}
+/* Terminfarben: Rot = abwesend (Krankheit, Urlaub, Lehrgang), Grau = Kundentermin und Baustelle, Gelb = alles andere */ .k-abw,.k-urlaub,.k-krank,.k-lehrgang{--kc:#D32F2F} .k-kunde,.k-bau,.k-proj{--kc:#8A8F98} .k-evu,.k-lief,.k-ausw,.k-teams,.k-intern,.k-sonst,.k-todo{--kc:#F4DB02} .k-ho{--kc:#8E44CC}
 /* Termine farbig hinterlegt (nach Art), damit man Urlaub, Krankheit, Teams usw. auf einen Blick unterscheidet */
 .cal .ev[class*="k-"],.team .en[class*="k-"],.day-it .en[class*="k-"],.dev[class*="k-"]{background:color-mix(in srgb,var(--kc) 17%,var(--surface))}
 .dev[class*="k-"]{background:color-mix(in srgb,var(--kc,transparent) 11%,var(--surface))}
@@ -4838,7 +4838,7 @@ var FX_CUR=null;
 async function formDocPrint(pid,k){ const p=S.projects[pid], f=formDef(k); if(!p||!f) return; const box=document.createElement('div'); box.style.cssText='position:fixed;left:-10000px;top:0;width:900px'; document.body.appendChild(box);
   try{ const r=await fxRender(k,box); const dd=((p.forms||{})[k]||{})._doc||{}; fxApply(r.ps,dd.p,false);
     const fr=document.createElement('iframe'); fr.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0'; document.body.appendChild(fr); const d=fr.contentDocument;
-    d.open(); d.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${esc(f.n+' – '+p.name)}</title><style>@page{margin:0}body{margin:0}.docx-wrapper{background:none!important;padding:0!important}.docx-wrapper>section.docx{box-shadow:none!important;margin:0!important;break-after:page}.fx-ck{cursor:default}</style></head><body>${box.innerHTML}</body></html>`); d.close();
+    d.open(); d.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${esc(stdName(TODAY(),'Formular',f.n,'',FIRMS()[0],p.name))}</title><style>@page{margin:0}body{margin:0}.docx-wrapper{background:none!important;padding:0!important}.docx-wrapper>section.docx{box-shadow:none!important;margin:0!important;break-after:page}.fx-ck{cursor:default}</style></head><body>${box.innerHTML}</body></html>`); d.close();
     setTimeout(()=>{ try{ fr.contentWindow.focus(); fr.contentWindow.print(); }catch(e){} setTimeout(()=>fr.remove(),120000); },500); }
   catch(e){ toast('Drucken nicht möglich: '+e.message); } finally{ box.remove(); } }
 // Vorlage ansehen (Vorlagen → Digitale Formulare): Original anzeigen, herunterladen, neue Word-Version hinterlegen, Kurz-Checkliste bearbeiten
@@ -5988,15 +5988,38 @@ function guessKind(name,text,isMail,mime){
   if(/^image\//.test(mime||'')||/\.(jpe?g|png|heic|webp)$/i.test(name)) return 'foto';
   return 'sonst';
 }
-// Einheitliche Dateinamen in der Datenablage: JJJJMMTT_Thema_Detail(.ext)
-const nameSafe=s=>String(s||'').normalize('NFC').replace(/^(re|aw|fw|wg)\s*:\s*/gi,'').replace(/[\\/:*?"<>|]+/g,' ').replace(/[\s_]+/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').slice(0,60);
-function stdName(date,kind,detail,ext){ const d=String(date||TODAY()).replace(/-/g,'').slice(0,8), th=FILE_KINDS[kind]||kind||'Dokument';
-  // Thema nicht im Detail wiederholen („Angebot_Angebot-…“), Füllwörter weg
-  const det=String(detail||'').replace(new RegExp('^\\s*('+th.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'|bestelleingangsbestätigung für|auftragsbestätigung zu|ihre)\\s*','i'),'').trim();
-  return d+'_'+nameSafe(th)+'_'+(nameSafe(det)||'ohne-Detail')+(ext||''); }
+// Einheitliche Dateinamen in der Datenablage: JJJJMMTT_Firma-Absender_Art_Titel_Detail(.ext) – Detail entfällt, wenn leer
+const nameSafe=s=>String(s||'').normalize('NFC').replace(/^((re|aw|fw|wg|fwd)\s*:\s*)+/gi,'').replace(/[\\/:*?"<>|]+/g,' ').replace(/[\s_]+/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').slice(0,60);
+const NAME_ART={angebot:'Angebot',rapport:'Rapport',kommi:'Kommiliste',rechnung:'Rechnung',ab:'Auftragsbestaetigung',bestellung:'Bestellung',lieferschein:'Lieferschein',mail:'Mail',vertrag:'Vertrag',plan:'Plan',foto:'Bild',sonst:'Dokument'};
+const artOf=k=>NAME_ART[k]||FILE_KINDS[k]||k||'Dokument';
+const OWN_FIRM=()=>nmFirm(FIRMS()[0]);
+// Firmenname kurz: Rechtsform weg („nutz die Sonne GmbH“ → „nutz-die-Sonne“)
+const nmFirm=s=>nameSafe(String(s||'').replace(/<[^>]*>/g,'').replace(/["']/g,'').replace(/\((?:[^)]*)\)/g,' ').replace(/\b(gmbh|mbh|ag|kg|ohg|gbr|ug|se|e\.\s?k\.?|e\.\s?v\.?|ltd\.?|inc\.?|haftungsbeschränkt|co\.?)(?=\s|$|[.,&])/gi,' ').replace(/[&+,.]+/g,' ').trim()).slice(0,40);
+const FREE_MAIL=/^(gmail|googlemail|web|gmx|t-online|outlook|hotmail|live|yahoo|icloud|me|aol|freenet|posteo|mail|online|arcor|vodafone|1und1|ionos)\./i;
+function senderFirm(r,list){ if(!r) return ''; stLoad();
+  if(r.parent){ const p=S.files[r.parent]||(list||[]).find(x=>x.id===r.parent); if(p&&p!==r) return senderFirm(p,list); }
+  const from=String(r.from||''), em=(from.match(/[\w.+-]+@[\w-]+(\.[\w-]+)+/)||[''])[0].toLowerCase(), dom=em.split('@')[1]||'';
+  if(em){ const own=staffAll().some(s=>{ const e=String(s.email||'').toLowerCase(); return e&&(e===em||(!FREE_MAIL.test(dom)&&e.split('@')[1]===dom)); }); if(own) return OWN_FIRM();
+    for(const k of ['lieferanten','kunden']){ const hit=Object.values(S[k]||{}).find(x=>{ const e=String(x.email||'').toLowerCase(); return e&&(e===em||(!FREE_MAIL.test(dom)&&e.split('@')[1]===dom)); }); if(hit&&hit.name) return nmFirm(hit.name); }
+    const nm=from.replace(/<[^>]*>/g,'').replace(em,'').replace(/["']/g,'').trim();
+    if(FREE_MAIL.test(dom)) return nmFirm(nm)||nameSafe(em.split('@')[0]);
+    const lab=dom.split('.').slice(-2,-1)[0]||dom; return nameSafe(lab.charAt(0).toUpperCase()+lab.slice(1)); }
+  if(from) return nmFirm(from);
+  // Datei ohne Absender: bekannten Lieferanten/Kunden im Namen oder Text suchen
+  const T=(String(r.orig||r.name||'')+'\n'+String(r.text||'').slice(0,4000)).toLowerCase();
+  for(const k of ['lieferanten','kunden']){ const hit=Object.values(S[k]||{}).filter(x=>x.name&&String(x.name).length>3).sort((a,b)=>String(b.name).length-String(a.name).length).find(x=>{ const n=nmFirm(x.name).replace(/-/g,' ').toLowerCase(); return n.length>3&&T.includes(n); }); if(hit) return nmFirm(hit.name); }
+  return ''; }
+function stdName(date,kind,title,ext,firm,detail){ const d=String(date||TODAY()).replace(/-/g,'').slice(0,8), art=artOf(kind), th=FILE_KINDS[kind]||art;
+  // Art nicht im Titel wiederholen („Angebot_Angebot-…“), Füllwörter weg
+  const clean=s=>String(s||'').replace(new RegExp('^\\s*('+[art,th].map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+'|bestelleingangsbestätigung für|auftragsbestätigung zu|ihre)\\s*','i'),'').trim();
+  const t=nameSafe(clean(title))||'ohne-Titel', det=nameSafe(clean(detail));
+  return [d,nmFirm(firm)||'unbekannt',nameSafe(art),t,det&&det!==t?det:''].filter(Boolean).join('_')+(ext||''); }
 const extOf=n=>{ const m=String(n||'').match(/\.[a-z0-9]{2,5}$/i); return m?m[0].toLowerCase():''; };
 const stemOf=n=>String(n||'').replace(/\.[a-z0-9]{2,5}$/i,'');
-const STD_RX=/^(\d{8})_([^_]+)_(.+?)(\.[a-z0-9]{2,5})?$/i;
+const STD_RX=/^(\d{8})_([^_]+)_(.+?)(\.[a-z0-9]{2,5})?$/i; // altes Schema Datum_Thema_Detail
+const STD2_RX=/^(\d{8})_([^_]+)_([^_]+)_([^_]+?)(?:_([^_]+?))?(\.[a-z0-9]{2,5})?$/i; // neues Schema Datum_Firma_Art_Titel[_Detail]
+const fileStdName=(r,list)=>{ const isMail=r.mime==='message/rfc822'||r.mime==='text/plain'; const pn=r.pid&&r.pid!==INTERN?projName(r.pid):'';
+  return stdName(r.date,r.kind,isMail?(r.subject||r.orig||r.name):stemOf(r.orig||r.name),isMail?'':extOf(r.orig||r.name),senderFirm(r,list),pn); };
 const GEN_W=new Set(['gmbh','co.','kg','gbr','gebäude','halle','dach','projekt','solarpark','energie','strasse','straße','haus','anlage','park','der','die','das','und','für','von','eph1','geb.']);
 function matchProject(text){
   const T=String(text||'').toLowerCase(), tw=words(T), digits=T.replace(/[^0-9]/g,' ');
@@ -6083,19 +6106,20 @@ async function ingestFiles(files,text,pidHint){
     const r=mk({name:subj,subject:subj,from:(lines.find(l=>/^(Von|From)\s*:/i.test(l))||'').replace(/^[^:]+:\s*/,''),mime:'text/plain',text:text.slice(0,8000),kind:'mail',fp:await fileFp(text)}); const m=matchProject(text); r.pid=m.pid; r.why=m.why; recs.push(r); }
   if(!recs.length){ toast('Bitte Dateien, E-Mails (.msg/.eml) oder kopierten Mailtext ablegen.'); return; }
   if(pidHint) recs.forEach(r=>{ r.pid=pidHint; r.why='in der Projektakte abgelegt'; });
-  recs.forEach(r=>{ if(!STD_RX.test(r.name)){ r.orig=r.name; const isMail=r.mime==='message/rfc822'||r.mime==='text/plain'; r.name=stdName(r.date,r.kind,isMail?(r.subject||r.from||r.name):stemOf(r.name),isMail?'':extOf(r.name)); } });
+  recs.forEach(r=>{ if(!STD2_RX.test(r.name)){ r.orig=r.orig||r.name; r.name=fileStdName(r,recs); r.autoName=r.name; } });
   recs.forEach(r=>{ r.auto=r.pid?'regel':''; put('files',r); });
   const n=recs.filter(r=>r.pid).length;
   toast(recs.length+' Eintr'+(recs.length===1?'ag':'äge')+' abgelegt · '+n+' einem Projekt zugeordnet'+(recs.length-n&&SAMPLE?' · Claude prüft den Rest …':''));
   if(pidHint&&pidHint!==INTERN&&SAMPLE) setTimeout(()=>fileCheck(pidHint,recs),300);
   if(mailImgs.length) mailImgAsk(mailImgs,async sel=>{ const start=recs.length;
     for(const {a,mail,ctx} of sel){ const r=await addFile(new File([a.blob],a.name,{type:a.type}),mail.id,ctx); const pm=(S.files[mail.id]||mail).pid; if(pidHint){ r.pid=pidHint; r.why='in der Projektakte abgelegt'; } else if(!r.pid&&pm){ r.pid=pm; r.why='aus der Mail'; } }
-    recs.slice(start).forEach(r=>{ if(!STD_RX.test(r.name)){ r.orig=r.name; r.name=stdName(r.date,r.kind,stemOf(r.name),extOf(r.name)); } r.auto=r.pid?'regel':''; put('files',r); });
+    recs.slice(start).forEach(r=>{ if(!STD2_RX.test(r.name)){ r.orig=r.orig||r.name; r.name=fileStdName(r,recs); r.autoName=r.name; } r.auto=r.pid?'regel':''; put('files',r); });
     toast(sel.length+' Bild'+(sel.length===1?'':'er')+' übernommen.'); });
   // Rest mit Claude zuordnen
   for(const r of recs.filter(r=>!r.pid)){ const a=await aiClassify(r); if(!a) continue; const cur=S.files[r.id]; if(!cur||cur.pid) continue; const nu=clone(cur);
     if(a.projectId&&(S.projects[a.projectId]||a.projectId===INTERN)){ nu.pid=a.projectId; nu.why='Claude: '+String(a.why||'').slice(0,120); nu.auto='claude'; }
     if(FILE_KINDS[a.kind]&&nu.kind==='sonst') nu.kind=a.kind;
+    if(cur.autoName&&cur.name===cur.autoName){ nu.name=fileStdName(nu); nu.autoName=nu.name; } // automatisch vergebener Name: Projekt/Art nachziehen
     if(nu.pid!==cur.pid||nu.kind!==cur.kind){ put('files',nu); if(nu.pid) toast('„'+nu.name.slice(0,40)+'“ → '+projName(nu.pid)); } }
 }
 // Im Projekt abgelegte Dateien/Mails: Claude prüft, ob etwas davon in die Notizen gehört, ein neues To-Do ist
@@ -6136,11 +6160,11 @@ Lieber nichts als Unwichtiges. Antworte nur mit JSON: {"note":"","updates":[{"ta
 function allFiles(){
   const own=arr('files');
   const od=[]; arr('orders').forEach(o=>(o.docs||[]).forEach(d=>{ const k=/liefer/i.test(d.kind||'')?'lieferschein':/^ab$/i.test(d.kind||'')?'ab':'rechnung';
-    od.push({id:'od_'+d.id,name:STD_RX.test(d.name)?d.name:stdName(d.date,k,[o.supplier,d.docNo||stemOf(d.name)].filter(Boolean).join(' '),extOf(d.name)),asset:d.id,mime:d.type,kind:k,pid:o.pid,date:d.date,virtual:true,src:'Bestellung '+(o.supplier||''),vact:'editOrder',vid:o.id}); }));
-  arr('offers').forEach(o=>od.push({id:'of_'+o.id,name:stdName(o.date,'angebot',[o.no,o.title||o.customer].filter(Boolean).join(' ')),kind:'angebot',pid:o.pid,date:o.date,at:o.upd,virtual:true,src:'Angebot · '+(OFFER_ST[o.status]||o.status||''),vact:'editOffer',vid:o.id}));
-  arr('sales').filter(s=>s.pid&&(s.nr||s.status!=='entwurf')).forEach(s=>{ const k=s.type==='angebot'?'angebot':s.type==='auftrag'?'ab':s.type==='lieferschein'?'lieferschein':'rechnung', m=saleSums(s); od.push({id:'sa_'+s.id,name:stdName(s.date,k,[SALE_T[s.type][0]==='Rechnung'?'':SALE_T[s.type][0],s.nr,(s.cust||{}).name].filter(Boolean).join(' ')),kind:k,pid:s.pid,date:s.date,at:s.upd,virtual:true,src:'Verkauf · '+(SALE_ST[s.status]||[s.status])[0]+(s.type==='lieferschein'?'':' · '+euro(isInv(s.type)?m.pay:m.gross)),vact:'saleEdit',vid:s.id}); });
-  arr('picks').forEach(k=>od.push({id:'pk_'+k.id,name:stdName(k.date,'kommi',projName(k.pid)||'Liste'),kind:'kommi',pid:k.pid,date:k.date,at:k.upd,virtual:true,src:(PICK_ST[k.status]||k.status)+' · '+(k.items||[]).length+' Artikel'+(k.who?' · '+shortWho(k.who):''),vact:'openPick',vid:k.id}));
-  arr('reports').forEach(r=>od.push({id:'rp_'+r.id,name:stdName(r.date,'rapport',projName(r.pid)||'Baustelle'),kind:'rapport',pid:r.pid,date:r.date,at:r.upd,virtual:true,src:r.status==='vorbereitet'?'vorbereitet':'ausgefüllt',vact:'editReport',vid:r.id}));
+    od.push({id:'od_'+d.id,name:STD2_RX.test(d.name)?d.name:stdName(d.date,k,d.docNo||stemOf(d.name),extOf(d.name),o.supplier,projName(o.pid)),asset:d.id,mime:d.type,kind:k,pid:o.pid,date:d.date,virtual:true,src:'Bestellung '+(o.supplier||''),vact:'editOrder',vid:o.id}); }));
+  arr('offers').forEach(o=>od.push({id:'of_'+o.id,name:stdName(o.date,'angebot',o.title||o.customer,'',FIRMS()[0],o.no),kind:'angebot',pid:o.pid,date:o.date,at:o.upd,virtual:true,src:'Angebot · '+(OFFER_ST[o.status]||o.status||''),vact:'editOffer',vid:o.id}));
+  arr('sales').filter(s=>s.pid&&(s.nr||s.status!=='entwurf')).forEach(s=>{ const k=s.type==='angebot'?'angebot':s.type==='auftrag'?'ab':s.type==='lieferschein'?'lieferschein':'rechnung', m=saleSums(s); od.push({id:'sa_'+s.id,name:stdName(s.date,k,(s.cust||{}).name||projName(s.pid),'',s.firm||FIRMS()[0],[['Rechnung','Angebot'].includes(SALE_T[s.type][0])?'':SALE_T[s.type][0],s.nr].filter(Boolean).join(' ')),kind:k,pid:s.pid,date:s.date,at:s.upd,virtual:true,src:'Verkauf · '+(SALE_ST[s.status]||[s.status])[0]+(s.type==='lieferschein'?'':' · '+euro(isInv(s.type)?m.pay:m.gross)),vact:'saleEdit',vid:s.id}); });
+  arr('picks').forEach(k=>od.push({id:'pk_'+k.id,name:stdName(k.date,'kommi',projName(k.pid)||'Liste','',FIRMS()[0]),kind:'kommi',pid:k.pid,date:k.date,at:k.upd,virtual:true,src:(PICK_ST[k.status]||k.status)+' · '+(k.items||[]).length+' Artikel'+(k.who?' · '+shortWho(k.who):''),vact:'openPick',vid:k.id}));
+  arr('reports').forEach(r=>od.push({id:'rp_'+r.id,name:stdName(r.date,'rapport',projName(r.pid)||'Baustelle','',FIRMS()[0]),kind:'rapport',pid:r.pid,date:r.date,at:r.upd,virtual:true,src:r.status==='vorbereitet'?'vorbereitet':'ausgefüllt',vact:'editReport',vid:r.id}));
   return own.concat(od).sort((a,b)=>(b.at||b.date||'').localeCompare(a.at||a.date||''));
 }
 function fileProjOpts(cur){ return `<option value="">– nicht zugeordnet –</option><option value="${INTERN}" ${cur===INTERN?'selected':''}>Haus intern</option>`+arr('projects').filter(p=>!isIntern(p)).filter(p=>catOf(p)!=='abgesagt'||p.id===cur).sort((a,b)=>(catOf(a)==='laufend'?0:1)-(catOf(b)==='laufend'?0:1)||a.name.localeCompare(b.name)).map(p=>`<option value="${p.id}" ${p.id===cur?'selected':''}>${esc(p.name)}${catOf(p)==='laufend'?'':' ('+CATS[catOf(p)]+')'}</option>`).join(''); }
@@ -6156,9 +6180,15 @@ function filesTable(list,inProject){
 // Datei bearbeiten: Dateiname direkt tippen (= eigener Name) oder aus Datum/Thema/Detail/Rubrik live zusammenbauen
 var FREN={ext:'',manual:false};
 document.addEventListener('input',e=>{ const id=e.target&&e.target.id; if(id==='f_fname'){ FREN.manual=true; return; }
-  if(!['f_date','f_thema','f_detail'].includes(id)||!$('#f_fname')||FREN.manual) return; const g=k=>(($('#f_'+k)||{}).value||'');
-  $('#f_fname').value=g('date').replace(/-/g,'')+'_'+nameSafe(g('thema'))+'_'+nameSafe(g('detail'))+FREN.ext; });
-document.addEventListener('change',e=>{ if(e.target&&e.target.id==='f_kind'&&$('#f_fname')&&$('#f_thema')&&!FREN.manual){ const th=$('#f_thema'); if(Object.values(FILE_KINDS).includes(th.value)){ th.value=FILE_KINDS[e.target.value]; th.dispatchEvent(new Event('input',{bubbles:true})); } } });
+  if(!['f_date','f_firma','f_thema','f_titel','f_detail'].includes(id)||!$('#f_fname')||FREN.manual) return; const g=k=>(($('#f_'+k)||{}).value||'');
+  $('#f_fname').value=nmBuild(g('date'),g('firma'),g('thema'),g('titel'),g('detail'),FREN.ext); });
+document.addEventListener('change',e=>{ if(e.target&&e.target.id==='f_kind'&&$('#f_fname')&&$('#f_thema')&&!FREN.manual){ const th=$('#f_thema'); if([...Object.values(NAME_ART),...Object.values(FILE_KINDS)].includes(th.value)){ th.value=artOf(e.target.value); th.dispatchEvent(new Event('input',{bubbles:true})); } } });
+function nmBuild(date,firma,art,titel,detail,ext){ const t=nameSafe(titel)||'ohne-Titel', d=nameSafe(detail); return [String(date||TODAY()).replace(/-/g,''),nmFirm(firma)||'unbekannt',nameSafe(art)||'Dokument',t,d&&d!==t?d:''].filter(Boolean).join('_')+(ext||''); }
+// Bestehenden Namen in seine Teile zerlegen (neues oder altes Schema)
+function nmParts(f){ const n=String(f.name||''), m2=n.match(STD2_RX), dd=s=>s.slice(0,4)+'-'+s.slice(4,6)+'-'+s.slice(6,8), un=s=>String(s||'').replace(/-/g,' ');
+  if(m2) return {date:dd(m2[1]),firma:un(m2[2]),thema:un(m2[3]),titel:un(m2[4]),detail:un(m2[5]),ext:m2[6]||extOf(n)};
+  const m=n.match(STD_RX); if(m) return {date:dd(m[1]),firma:un(senderFirm(f)),thema:artOf(f.kind),titel:un(m[3]),detail:f.pid&&f.pid!==INTERN?projName(f.pid):'',ext:m[4]||extOf(n)};
+  return {date:f.date||TODAY(),firma:un(senderFirm(f)),thema:artOf(f.kind),titel:f.subject||stemOf(n),detail:f.pid&&f.pid!==INTERN?projName(f.pid):'',ext:extOf(n)}; }
 /* ---------- Dateien per Drag & Drop in eine andere Rubrik verschieben ---------- */
 // Beim Ziehen erscheint oben eine Leiste mit allen Rubriken; außerdem nehmen die Rubrik-Chips und Projektordner Dateien an.
 // Sind mehrere Dateien markiert und eine davon wird gezogen, wandern alle markierten mit.
@@ -6250,7 +6280,7 @@ async function mappeBuild(o){ busy(1,'mappe'); toast('Kundenmappe wird erstellt 
     const all=out.getPages(), tot=all.length, ft=pdfSafe('nutz die Sonne GmbH  ·  '+(o.title||'Projektmappe')+(o.proj?'  ·  '+o.proj:''));
     all.forEach((p,i)=>{ if(!i) return; const {width:pw}=p.getSize(), s='Seite '+(i+1)+' von '+tot; p.drawText(ft,{x:28,y:16,size:7.5,font:F,color:GREY}); p.drawText(s,{x:pw-28-F.widthOfTextAtSize(s,7.5),y:16,size:7.5,font:F,color:GREY}); });
     out.setTitle(pdfSafe((o.title||'Projektmappe')+(o.proj?' – '+o.proj:''))); out.setAuthor('nutz die Sonne GmbH'); out.setCreator('Sonnenplan');
-    const bytes=await out.save(), blob=new Blob([bytes],{type:'application/pdf'}), name=stdName(TODAY(),'sonst',('Kundenmappe '+(o.proj||o.cust||'')).trim(),'.pdf');
+    const bytes=await out.save(), blob=new Blob([bytes],{type:'application/pdf'}), name=stdName(TODAY(),'sonst','Kundenmappe','.pdf',FIRMS()[0],o.proj||o.cust||'');
     saveBlob(blob,name);
     if(o.save&&ASSETS){ try{ const file=new File([blob],name,{type:'application/pdf'}); const r=await ASSETS.upload(file,{type:'application/pdf'}); put('files',{id:uid(),name,mime:'application/pdf',size:blob.size,asset:r.id,kind:'sonst',pid:o.pid||'',date:TODAY(),at:new Date().toISOString(),note:'Kundenmappe ('+docs.length+' Dokumente)'}); }catch(e){ toast('PDF erstellt, aber nicht in der Ablage gespeichert.'); } }
     toast('Kundenmappe erstellt: '+tot+' Seiten.'+(docs.some(d=>d.err)?' Hinweis: '+docs.filter(d=>d.err).length+' Dokument(e) nicht lesbar.':'')); }
@@ -6273,6 +6303,15 @@ function fileDropHtml(pid){
     <div class="dz-ic">${ic('files')}</div><div><b>Dateien & E-Mails hierher ziehen</b><div class="small muted">Angebote, Rechnungen, Lieferscheine, Pläne, Fotos, Outlook-Mails (.msg) mit Anhängen. ${pid?'Alles landet in diesem Projekt.':'Art und Projekt werden automatisch erkannt und lassen sich ändern.'} Kopierten Mailtext: hier klicken und Strg+V.</div></div>
     <div class="dz-btns"><button type="button" class="btn sm" data-act="fdPick" data-pid="${esc(pid||'')}">Dateien wählen</button></div></div>`;
 }
+// Einmalige Umstellung: abgelegte Dateien mit altem Namen ins neue Schema Datum_Firma_Art_Titel_Detail
+function fileRenPlan(){ return arr('files').filter(f=>f&&f.name&&!STD2_RX.test(f.name)).map(f=>{ const old=String(f.name), m=old.match(STD_RX);
+  // altes Schema: Datum und Detail-Text übernehmen; sonst Originalname/Betreff
+  const g=m?{...f,date:m[1].slice(0,4)+'-'+m[1].slice(4,6)+'-'+m[1].slice(6,8),subject:f.subject||m[3].replace(/-/g,' '),orig:m[3].replace(/-/g,' ')+(m[4]||extOf(f.orig||''))}:f;
+  return {id:f.id,old,neu:fileStdName(g)}; }).filter(x=>x.neu&&x.neu!==x.old); }
+function fileRenAll(){ if(!mayWrite('files')) return toast('Keine Berechtigung.'); const plan=fileRenPlan(); if(!plan.length) return toast('Alle Dateien haben schon das neue Schema.');
+  openSheet({title:plan.length+' Dateien umbenennen',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Vorschau: links der jetzige, rechts der neue Name. Der alte Name bleibt gespeichert. Einzelne Namen kannst du danach über „Datei bearbeiten“ anpassen.</div><div class="tbl-wrap" style="max-height:55vh"><table class="tbl"><thead><tr><th>jetzt</th><th>neu</th></tr></thead><tbody>${plan.slice(0,500).map(x=>`<tr><td class="small muted">${esc(x.old)}</td><td class="small"><b>${esc(x.neu)}</b></td></tr>`).join('')}</tbody></table></div>${plan.length>500?`<div class="small muted">… und ${plan.length-500} weitere</div>`:''}</div>`,saveLabel:'Alle '+plan.length+' umbenennen',
+    onSave:()=>{ let n=0; plan.forEach(x=>{ const f=S.files[x.id]; if(!f||f.name!==x.old) return; put('files',{...clone(f),orig:f.orig||x.old,name:x.neu,autoName:x.neu}); n++; }); toast(n+' Dateien umbenannt.'); }}); }
+queueMicrotask(()=>Object.assign(A,{ fileRenAll:()=>fileRenAll() }));
 function vFiles(){
   const all=allFiles(), q=(UI.fq||'').toLowerCase(), kf=UI.fkind||'', pf=UI.fproj||'';
   const MAINK=['angebot','rechnung','lieferschein','rapport','kommi','mail'];
@@ -6281,7 +6320,10 @@ function vFiles(){
   const un=all.filter(f=>!f.pid).length;
   const SUBT={mail:'Korrespondenz',angebot:'Angebote',rechnung:'Rechnungen',lieferschein:'Lieferscheine',rapport:'Tagesrapporte',kommi:'Kommissionierung',sonst:'Sonstiges'};
   const act=kf==='angebot'?`<button class="btn" data-act="newOffer">${ic('plus')}Angebot</button><button class="btn ghost" data-act="nav" data-v="offers">Angebotsliste</button>`:kf==='rapport'?`<button class="btn" data-act="newReport">${ic('plus')}Tagesrapport vorbereiten</button><button class="btn ghost" data-act="nav" data-v="reports">Rapportliste</button>`:kf==='kommi'?`<button class="btn" data-act="pickNew">${ic('plus')}Kommissionierliste</button>`:'';
-  return head(SUBT[kf]?'Datenablage · '+SUBT[kf]:'Datenablage',list.length+' Einträge'+(un?' · '+un+' ohne Projekt':''),act)+(kf==='kommi'||kf==='rapport'?'':fileDropHtml(''))+
+  const oldN=mayWrite('files')?arr('files').filter(f=>f&&f.name&&!STD2_RX.test(f.name)).length:0;
+  return head(SUBT[kf]?'Datenablage · '+SUBT[kf]:'Datenablage',list.length+' Einträge'+(un?' · '+un+' ohne Projekt':''),act)+
+   (oldN?`<div class="card" style="padding:12px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span><b>${oldN} Datei${oldN>1?'en haben':' hat'} noch den alten Namen.</b> <span class="small muted">Neues Schema: Datum_Firma_Art_Titel_Detail</span></span><span class="spacer"></span><button class="btn sun sm" data-act="fileRenAll">Vorschau & umbenennen</button></div>`:'')+
+   (kf==='kommi'||kf==='rapport'?'':fileDropHtml(''))+
    `<div class="card"><div class="card-h fl-filter"><input class="inp" type="search" placeholder="Suchen (Name, Absender, Projekt, Inhalt)" value="${esc(UI.fq||'')}" data-chg="fileQ" aria-label="Suchen">
      <select class="inp" data-chg="fileProjF" aria-label="Projekt-Filter"><option value="">Alle Projekte</option><option value="ohne" ${pf==='ohne'?'selected':''}>Ohne Projekt (${un})</option>${arr('projects').filter(p=>all.some(f=>f.pid===p.id)).sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${p.id}" ${pf===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}${all.some(f=>f.pid===INTERN)?`<option value="${INTERN}" ${pf===INTERN?'selected':''}>Haus intern</option>`:''}</select></div>
      <div class="chips" style="padding:0 16px 10px"><button class="chip ${!kf?'on':''}" data-act="fileKindF" data-v="">Alle</button>${Object.entries(FILE_KINDS).filter(([k])=>all.some(f=>f.kind===k)).map(([k,l])=>`<button class="chip ${kf===k?'on':''}" data-act="fileKindF" data-v="${k}" data-fkind-drop="${k}">${l} ${all.filter(f=>f.kind===k).length}</button>`).join('')}</div>
@@ -6774,14 +6816,13 @@ const A = {
    openSheet({title:f.name,wide:1,html:`<div class="fld full"><div class="small muted">${esc([f.from,fmtD(f.date),FILE_KINDS[f.kind],projName(f.pid)].filter(Boolean).join(' · '))}</div>
      ${f.origAsset?`<div style="margin-top:8px"><a class="btn sm" href="/_blob/${esc(f.origAsset)}" target="_blank" rel="noopener" download="${esc(f.orig||'mail.msg')}">${ic('files')}Original-Mail öffnen (Outlook)</a></div>`:''}
      ${kids.length?`<div class="small" style="margin-top:8px">Anhänge: ${kids.map(k=>`<a href="/_blob/${esc(k.asset)}" target="_blank" rel="noopener">${esc(k.orig||k.name)}</a>`).join(' · ')}</div>`:f.atts&&f.atts.length?`<div class="small" style="margin-top:6px">Anhänge: ${esc(f.atts.join(', '))}</div>`:''}<div class="longtext" style="margin-top:10px;max-height:60vh">${esc(f.text||'(kein Text)')}</div></div>`,saveLabel:'Schließen',onSave:()=>{}}); },
- fileRename:d=>{ const f=S.files[d.id]; if(!f) return; const m=String(f.name).match(STD_RX)||[];
-   const dd=m[1]?m[1].slice(0,4)+'-'+m[1].slice(4,6)+'-'+m[1].slice(6,8):(f.date||TODAY());
+ fileRename:d=>{ const f=S.files[d.id]; if(!f) return; const P=nmParts(f);
    const k0=FILE_KINDS[f.kind]?f.kind:'sonst';
-   FREN={ext:m[4]||extOf(f.name),manual:false};
-   openSheet({title:'Datei bearbeiten',html:'',fields:[{k:'fname',label:'Dateiname (direkt änderbar – oder unten aus Datum, Thema, Detail bauen lassen)',full:1,req:1},{k:'kind',label:'Rubrik',type:'select',options:Object.entries(FILE_KINDS)},{k:'pid',label:'Projekt',type:'select',options:projOpts()},{k:'date',label:'Datum',type:'date',req:1},{k:'thema',label:'Thema (im Dateinamen)',req:1,list:'kindList'},{k:'detail',label:'Detail',req:1,full:1}],value:{fname:f.name,kind:k0,pid:f.pid||'',date:dd,thema:m[2]?m[2].replace(/-/g,' '):FILE_KINDS[f.kind]||'',detail:m[3]?m[3].replace(/-/g,' '):stemOf(f.name)},saveLabel:'Speichern',
-     onSave:v=>{ const ff=clone(S.files[d.id]); ff.orig=ff.orig||ff.name; let th=v.thema; if(v.kind!==k0&&String(th).trim()===String(FILE_KINDS[k0]||'').trim()) th=FILE_KINDS[v.kind]; // Thema folgt der Rubrik, solange es nicht eigens geändert wurde
-       let nm=String(v.fname||'').trim().replace(/[\\/:*?"<>|]+/g,'_'); if(!FREN.manual||!nm) nm=String(v.date).replace(/-/g,'')+'_'+nameSafe(th)+'_'+nameSafe(v.detail)+FREN.ext; else if(FREN.ext&&!/\.[a-z0-9]{2,5}$/i.test(nm)) nm+=FREN.ext; // eigene Endung behalten
-       ff.name=nm; ff.kind=v.kind; ff.pid=v.pid||''; put('files',ff); toast('Gespeichert: '+ff.name+(v.kind!==k0?' · Rubrik '+FILE_KINDS[v.kind]:'')); }}); },
+   FREN={ext:P.ext,manual:false};
+   openSheet({title:'Datei bearbeiten',html:'',fields:[{k:'fname',label:'Dateiname (direkt änderbar – oder unten aus den Teilen bauen lassen: Datum_Firma_Art_Titel_Detail)',full:1,req:1,ai:false},{k:'kind',label:'Rubrik',type:'select',options:Object.entries(FILE_KINDS)},{k:'pid',label:'Projekt',type:'select',options:projOpts()},{k:'date',label:'Datum',type:'date',req:1},{k:'firma',label:'Firma (Absender)',req:1,ai:false},{k:'thema',label:'Art (Mail, Bild, Angebot …)',req:1,list:'kindList',ai:false},{k:'titel',label:'Titel',req:1,ai:false},{k:'detail',label:'Detail (optional)',full:1,ai:false}],value:{fname:f.name,kind:k0,pid:f.pid||'',...P},saveLabel:'Speichern',
+     onSave:v=>{ const ff=clone(S.files[d.id]); ff.orig=ff.orig||ff.name; let th=v.thema; if(v.kind!==k0&&[artOf(k0),FILE_KINDS[k0]].includes(String(th).trim())) th=artOf(v.kind); // Art folgt der Rubrik, solange sie nicht eigens geändert wurde
+       let nm=String(v.fname||'').trim().replace(/[\\/:*?"<>|]+/g,'_'); if(!FREN.manual||!nm) nm=nmBuild(v.date,v.firma,th,v.titel,v.detail,FREN.ext); else if(FREN.ext&&!/\.[a-z0-9]{2,5}$/i.test(nm)) nm+=FREN.ext; // eigene Endung behalten
+       ff.name=nm; ff.autoName=''; ff.kind=v.kind; ff.pid=v.pid||''; put('files',ff); toast('Gespeichert: '+ff.name+(v.kind!==k0?' · Rubrik '+FILE_KINDS[v.kind]:'')); }}); },
  fileDel:d=>{ const f=S.files[d.id]; if(!f) return; openSheet({title:'Eintrag löschen?',html:`<div class="fld full"><b>${esc(f.name)}</b><div class="small muted" style="margin-top:6px">Der Eintrag verschwindet aus der Datenablage. Die Löschung wird mit deinem Kürzel festgehalten.</div></div>`,saveLabel:'Ja, löschen',onSave:()=>{ del('files',d.id); toast('Eintrag gelöscht.'); }}); },
  lsScan:d=>{ const f=$('#lsIn'); f.value=''; f.dataset.id=d.id; f.click(); },
  rcvAllDa:()=>{ document.querySelectorAll('.rcv input[type=radio][value=da]').forEach(r=>r.checked=true); },
@@ -6875,8 +6916,8 @@ const CHG = {
  pickWho:(d,el)=>{ const p=clone(S.picks[d.id]); if(!p) return; p.who=el.value; put('picks',p); },
  pickShowAll:(d,el)=>{ UI.pickAll=el.checked; render(); },
  stockQ:(d,el)=>{ UI.sq=el.value; render(); },
- filePid:(d,el)=>{ const f=clone(S.files[d.id]); if(!f) return; f.pid=el.value; f.why=el.value?'von Hand zugeordnet':''; f.auto='hand'; put('files',f); toast(el.value?'Zugeordnet: '+projName(el.value):'Zuordnung entfernt.'); },
- fileKind:(d,el)=>{ const f=clone(S.files[d.id]); if(!f) return; f.kind=el.value; const m=String(f.name).match(STD_RX); if(m) f.name=m[1]+'_'+nameSafe(FILE_KINDS[f.kind])+'_'+m[3]+(m[4]||''); put('files',f); },
+ filePid:(d,el)=>{ const f=clone(S.files[d.id]); if(!f) return; f.pid=el.value; f.why=el.value?'von Hand zugeordnet':''; f.auto='hand'; if(f.autoName&&f.name===f.autoName){ f.name=fileStdName(f); f.autoName=f.name; } put('files',f); toast(el.value?'Zugeordnet: '+projName(el.value):'Zuordnung entfernt.'); },
+ fileKind:(d,el)=>{ const f=clone(S.files[d.id]); if(!f) return; f.kind=el.value; const m2=String(f.name).match(STD2_RX), m=!m2&&String(f.name).match(STD_RX); if(m2) f.name=[m2[1],m2[2],nameSafe(artOf(f.kind)),m2[4],m2[5]].filter(Boolean).join('_')+(m2[6]||''); else if(m) f.name=m[1]+'_'+nameSafe(FILE_KINDS[f.kind])+'_'+m[3]+(m[4]||''); if(f.autoName) f.autoName=f.name; put('files',f); },
  fileQ:(d,el)=>{ UI.fq=el.value; render(); },
  fileProjF:(d,el)=>{ UI.fproj=el.value; render(); },
  toggleDoneSw:(d,el)=>{ UI.todoShowDone=el.checked; saveUI(); render(); },
@@ -6931,7 +6972,8 @@ function printDoc(title,sub,body,landscape,pages){
   const html=(pages||[[title,sub,body]]).map(([t,s,b])=>prPage(t,s,b,landscape)).join('');
   let el=$('#printArea'); if(!el){ el=document.createElement('div'); el.id='printArea'; document.body.appendChild(el); }
   el.innerHTML=html; document.body.classList.add('printing'); document.body.classList.toggle('print-land',!!landscape);
-  const done=()=>{ document.body.classList.remove('printing','print-land'); window.removeEventListener('afterprint',done); };
+  const t0=document.title; document.title=stdName(TODAY(),'sonst',String(title||'Ausdruck').replace(/<[^>]*>/g,''),'',FIRMS()[0],String(sub||'').replace(/<[^>]*>/g,'').slice(0,50)); // Name der PDF beim Speichern
+  const done=()=>{ document.body.classList.remove('printing','print-land'); document.title=t0; window.removeEventListener('afterprint',done); };
   window.addEventListener('afterprint',done); setTimeout(()=>window.print(),60);
 }
 
@@ -8777,7 +8819,7 @@ ${refs}
 </rsm:SupplyChainTradeTransaction>
 </rsm:CrossIndustryInvoice>`; }
 async function saleXRech(id){ const s=S.sales[id]; if(!s) return; const miss=saleXmlCheck(s); if(miss.length){ openSheet({title:'E-Rechnung: Angaben fehlen',html:`<div class="fld full"><div>Für eine gültige XRechnung fehlt noch:</div><ul>${miss.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`,saveLabel:'OK',onSave:()=>{}}); return; }
-  const xml=saleXml(s), name='XRechnung_'+String(s.nr).replace(/[^\w-]+/g,'_')+'.xml', blob=new Blob([xml],{type:'application/xml'}); saveBlob(blob,name);
+  const xml=saleXml(s), name=stdName(s.date,'rechnung',(s.cust&&s.cust.name)||projName(s.pid)||'Kunde','.xml',s.firm||FIRMS()[0],'XRechnung '+String(s.nr||'')), blob=new Blob([xml],{type:'application/xml'}); saveBlob(blob,name);
   if(ASSETS&&s.pid) try{ const r=await ASSETS.upload(new File([blob],name,{type:'application/xml'}),{type:'application/xml'}); put('files',{id:uid(),name,mime:'application/xml',size:blob.size,asset:r.id,kind:'rechnung',pid:s.pid,date:TODAY(),at:new Date().toISOString(),note:'E-Rechnung (XRechnung) zu '+SALE_T[s.type][0]+' '+s.nr}); }catch(e){}
   salePut({...clone(s),xrAt:new Date().toISOString(),xrBy:meK()}); toast('E-Rechnung (XRechnung) erstellt'+(s.pid?' und in der Datenablage gespeichert':'')+'.'); }
 queueMicrotask(()=>Object.assign(A,{ /* A wird weiter unten angelegt */
@@ -8824,7 +8866,7 @@ function salePrintHtml(s){ const T=SALE_T[s.type], m=saleSums(s), pos=(s.items||
   const foot=`<div class="lt-foot"><div><b>${esc(NDS.name)}</b><br>${esc(NDS.street)}<br>${esc(NDS.city)}<br>${esc(NDS.country)}</div><div><b>Geschäftsführer: ${esc(NDS.gf)}</b><br>E-Mail: ${esc(NDS.mail)}<br>Telefon: ${esc(NDS.tel)}<br>${esc(NDS.hrb)}<br>USt-ID: ${esc(NDS.ustid)}</div><div><b>Bankverbindungen</b><br>${esc(NDS.bank)}<br>IBAN ${esc(NDS.iban)}<br>BIC/Swift ${esc(NDS.bic)}</div></div>`;
   return `<div class="pr-letter">${foot}<table class="lt-wrap"><thead><tr><td><div class="lt-hsp"></div></td></tr></thead><tbody><tr><td>${body}</td></tr></tbody><tfoot><tr><td><div class="lt-fsp"></div></td></tr></tfoot></table></div>`; }
 function salePrint(id){ const s=S.sales[id]||SALE_CUR; if(!s) return; let el=$('#printArea'); if(!el){ el=document.createElement('div'); el.id='printArea'; document.body.appendChild(el); }
-  el.innerHTML=salePrintHtml(s); document.body.classList.add('printing','print-letter'); const t0=document.title; document.title=(SALE_T[s.type][0]+' '+(s.nr||'Entwurf')+' '+((s.cust&&s.cust.name)||'')).trim();
+  el.innerHTML=salePrintHtml(s); document.body.classList.add('printing','print-letter'); const t0=document.title, sk=s.type==='angebot'?'angebot':s.type==='auftrag'?'ab':s.type==='lieferschein'?'lieferschein':'rechnung'; document.title=stdName(s.date,sk,(s.cust&&s.cust.name)||projName(s.pid)||'Kunde','',s.firm||FIRMS()[0],[['Rechnung','Angebot'].includes(SALE_T[s.type][0])?'':SALE_T[s.type][0],s.nr||'Entwurf'].filter(Boolean).join(' ')); // Name der PDF beim Speichern
   const done=()=>{ document.body.classList.remove('printing','print-letter'); document.title=t0; window.removeEventListener('afterprint',done); }; window.addEventListener('afterprint',done); setTimeout(()=>window.print(),80);
   if(s.status==='offen'&&S.sales[s.id]) salePut({...clone(S.sales[s.id]),status:'versendet'}); }
 
