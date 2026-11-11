@@ -2400,6 +2400,14 @@ const dupBody=s=>dupNorm(String(s||'').replace(/^\s*\d{1,2}\.\d{1,2}\.(\d{2,4})?
 function dupTask(t){ const n=dupNorm(t.title); if(n.length<3) return null; const lim=new Date(Date.now()-3*864e5).toISOString();
   return arr('tasks').find(x=>x&&x.id!==t.id&&dupNorm(x.title)===n&&(x.pid||'')===(t.pid||'')&&!!x.pool===!!t.pool&&(t.pid||t.pool||(x.who||'')===(t.who||'')||!x.who||!t.who)&&(!x.done||String(x.doneAt||'')>=lim))||null; }
 const dupToast=m=>setTimeout(()=>toast(m),450); // nach der Meldung des Aufrufers ("To-Do angelegt")
+// Herkunft eines Updates: dieselbe Mail ergibt überall (Was-ist-das, Ablage-Prüfung, To-Dos aus Mail) dieselbe Kennung → pro To-Do nur ein Update je Mail
+const mailSrc=(subject,from,text)=>{ const k=dupNorm(subject).slice(0,120)+'|'+dupNorm(String(from||'').replace(/<[^>]*>/g,'')).slice(0,40)+'|'+dupNorm(text).slice(0,160); return k.replace(/\|/g,'').trim()?'m'+strHash(k).slice(1):''; };
+const taskHasSrc=(t,src)=>!!(t&&src)&&(t.upd2||[]).some(u=>u&&u.src===src);
+// ähnlich formuliert? (gleiche Kernwörter) – z. B. „Lieferung kommt am 12.11.“ und „Mail von X: Lieferung am 12.11. bestätigt“
+function updSim(a,b){ const W=s=>new Set(dupBody(s).split(' ').filter(w=>w.length>=4&&!['mail','update','neue','info','bitte','wurde','wird','noch','dass','sind','eine','einen','heute'].includes(w))); const A=W(a), B=W(b); if(A.size<3||B.size<3) return 0;
+  let n=0; A.forEach(w=>{ if(B.has(w)) n++; }); return Math.max(n/(A.size+B.size-n), .9*n/Math.min(A.size,B.size)); }
+const dayDiff=(a,b)=>{ const x=kvISOd(a), y=kvISOd(b); return x&&y?Math.abs((new Date(x)-new Date(y))/864e5):0; };
+const kvISOd=s=>{ const m=String(s||'').match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})?/); if(m){ const y=m[3]?(m[3].length===2?'20'+m[3]:m[3]):TODAY().slice(0,4); return y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'); } const i=String(s||'').match(/\d{4}-\d{2}-\d{2}/); return i?i[0]:''; };
 function dupGuard(coll,obj){ if(!obj||obj._dupOk){ if(obj) delete obj._dupOk; return false; } const prev=S[coll]&&S[coll][obj.id];
   if(coll==='tasks'&&!prev&&!obj.example&&!(obj.pool&&obj.repeat)){ const x=dupTask(obj); if(x){
       // statt Doppel: fehlende Angaben ins bestehende To-Do übernehmen
@@ -2407,7 +2415,11 @@ function dupGuard(coll,obj){ if(!obj||obj._dupOk){ if(obj) delete obj._dupOk; re
       if(ch) put('tasks',c); obj.id=x.id; // Aufrufer, die die id weiterverwenden, zeigen so auf das bestehende To-Do
       dupToast('Gibt es schon'+(x.done?' (gerade erledigt)':'')+': „'+String(x.title).slice(0,50)+'“ – nicht doppelt angelegt.'); return true; } }
   if(coll==='tasks'&&prev&&Array.isArray(obj.upd2)&&obj.upd2.length>(prev.upd2||[]).length){ const old=new Set((prev.upd2||[]).map(tuKey)), seen=[]; let drop=0;
-    obj.upd2=obj.upd2.filter(u=>{ const b=dupBody(u.t), isNew=!old.has(tuKey(u)); if(isNew&&b&&seen.some(s=>s.b===b&&(b.length>=15||s.d===(u.d||'')))){ drop++; return false; } seen.push({b,d:u.d||''}); return true; });
+    obj.upd2=obj.upd2.filter(u=>{ const b=dupBody(u.t), isNew=!old.has(tuKey(u));
+      if(isNew&&(u.src&&seen.some(s=>s.src===u.src) // aus derselben Mail schon eingetragen
+        ||b&&seen.some(s=>s.b===b&&(b.length>=15||s.d===(u.d||''))) // gleicher Text
+        ||(u.src||u.auto)&&seen.some(s=>dayDiff(s.d,u.d)<=1&&updSim(s.t,u.t)>=.65))){ drop++; return false; } // automatisch erzeugt (Mail/Datei/KI) und ähnlich formuliert, gleicher oder nächster Tag
+      seen.push({b,d:u.d||'',src:u.src||'',t:u.t||''}); return true; });
     if(drop){ dupToast(drop>1?drop+' Updates standen schon drin – nicht doppelt gespeichert.':'Dieses Update steht schon drin – nicht doppelt gespeichert.'); if(JSON.stringify(obj.upd2)===JSON.stringify(prev.upd2||[])&&Object.keys(obj).every(k=>['upd2','upd','updBy','hist'].includes(k)||JSON.stringify(obj[k])===JSON.stringify(prev[k]))) return true; } }
   if(coll==='projects'&&prev) ['notes','updates'].forEach(k=>{ const was=noteBlocks(prev[k]), now=noteBlocks(obj[k]); if(now.length<=was.length) return; const have=new Set(was.map(dupBody).filter(Boolean)); let drop=0;
     const keep=now.filter((b,i)=>{ if(i<was.length&&b===was[i]) return true; const d=dupBody(b); if(d&&d.length>=8&&have.has(d)){ drop++; return false; } if(d) have.add(d); return true; });
@@ -6321,7 +6333,9 @@ Entscheide, was davon über die reine Ablage hinaus wichtig ist:
 - updates: Neuigkeiten zu einem der offenen To-Dos oben (task = id, t = kurzer Satz).
 - todos: neue Aufgaben, die sich daraus ergeben (Imperativ; who nur wenn genannt; due nur wenn Termin genannt) – keine Doppelung zu offenen To-Dos.
 Lieber nichts als Unwichtiges. Antworte nur mit JSON: {"note":"","updates":[{"task":"","t":""}],"todos":[{"title":"","who":"","due":""}]}`,{modelTier:'default'}); }catch(e){ return; }
-  const note=fixNames(String(r&&r.note||'').trim()), ups=(r&&Array.isArray(r.updates)?r.updates:[]).filter(u=>u&&S.tasks[u.task]&&String(u.t||'').trim()).slice(0,6), todos=(r&&Array.isArray(r.todos)?r.todos:[]).filter(t=>t&&String(t.title||'').trim()).slice(0,6);
+  // Kennung der abgelegten Mail(s): Hat ein To-Do aus dieser Mail schon ein Update (z. B. eben im „Was ist das?“-Fenster), nicht noch einmal vorschlagen
+  const srcs=recs.filter(x=>x.kind==='mail'&&!x.parent).map(x=>mailSrc(x.subject||x.name,x.from,x.text)).filter(Boolean), src1=srcs.length===1?srcs[0]:'';
+  const note=fixNames(String(r&&r.note||'').trim()), ups=(r&&Array.isArray(r.updates)?r.updates:[]).filter(u=>u&&S.tasks[u.task]&&String(u.t||'').trim()&&!srcs.some(s=>taskHasSrc(S.tasks[u.task],s))).slice(0,6), todos=(r&&Array.isArray(r.todos)?r.todos:[]).filter(t=>t&&String(t.title||'').trim()).slice(0,6);
   if(!note&&!ups.length&&!todos.length){ toast('Nur in der Datenablage abgelegt – nichts für Notizen oder To-Dos.'); return; }
   const byK={}; staff().forEach(s=>byK[shortWho(s.name).toLowerCase()]=s.name);
   const show=()=>openSheet({title:'Wichtig fürs Projekt?',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:10px">Abgelegt in „${esc(p.name)}“. Claude schlägt zusätzlich vor – prüfen, ändern, übernehmen:</div>
@@ -6332,7 +6346,7 @@ Lieber nichts als Unwichtiges. Antworte nur mit JSON: {"note":"","updates":[{"ta
     saveLabel:'Ausgewählte übernehmen',
     onSave:()=>{ let a=0;
       if(note&&$('#fc_nc').checked){ const t=fixNames($('#fc_n').value.trim()); if(t){ const pp=clone(S.projects[pid]); pp.notes=(pp.notes?pp.notes.replace(/\s+$/,'')+'\n':'')+nowStamp()+' ('+meK()+'): '+t; delete pp.now; delete pp.nowD; put('projects',pp); a++; } }
-      ups.forEach((u,i)=>{ if(!$('#fc_uc'+i).checked) return; const k=clone(S.tasks[u.task]); const t=$('#fc_u'+i).value.trim(); if(!k||!t) return; k.upd2=[...(k.upd2||[]),{d:TODAY(),tm:nowStamp().slice(9),by:meK(),t,at:new Date().toISOString()}]; put('tasks',k); a++; });
+      ups.forEach((u,i)=>{ if(!$('#fc_uc'+i).checked) return; const k=clone(S.tasks[u.task]); const t=$('#fc_u'+i).value.trim(); if(!k||!t) return; k.upd2=[...(k.upd2||[]),{d:TODAY(),tm:nowStamp().slice(9),by:meK(),t,at:new Date().toISOString(),auto:1,...(src1?{src:src1}:{})}]; put('tasks',k); a++; });
       todos.forEach((_,i)=>{ if(!$('#fc_tc'+i).checked) return; const title=$('#fc_t'+i).value.trim(); if(!title) return; const t={id:uid(),title,who:$('#fc_w'+i).value,due:$('#fc_d'+i).value,pid,done:false,prio:($('#fc_r'+i)||{}).value||'normal',src:'datei',created:TODAY()}; if(!t.due) delete t.due; put('tasks',t); a++; });
       toast(a?a+' Eintr'+(a>1?'äge':'ag')+' übernommen.':'Nur in der Datenablage abgelegt.'); }});
   if(SHEET) setTimeout(show,700); else show();
@@ -8546,6 +8560,8 @@ Antworte nur mit JSON: {"projectId":"","why":"kurz","summary":"1 Satz","todos":[
   todos=todos.filter(t=>t&&String(t.title||'').trim()).slice(0,isMail?10:40).map(t=>({...t,projectId:okP(t.projectId)||(isMail?pid:'')}));
   // Zusammenhang mit bestehenden offenen To-Dos: Claude-Vorschlag, sonst Wortvergleich
   todos.forEach(t=>{ const ok=t.relatedId&&S.tasks[t.relatedId]&&!S.tasks[t.relatedId].done; const fr=ok?null:findRelated(t); t.rel=ok?t.relatedId:fr?fr.id:''; t.relation=ok&&['update','erledigt','neu'].includes(t.relation)?t.relation:fr?(fr.strong?'update':'neu'):''; t.relBy=ok?'Claude':fr?'Wortvergleich':''; });
+  // Zu einem To-Do, das aus dieser Mail schon ein Update hat, kein zweites Update vorschlagen
+  const msrc=isMail?mailSrc(m.subject,m.from,m.text):''; if(msrc){ const n0=todos.length; todos=todos.filter(t=>!(t.rel&&t.relation==='update'&&taskHasSrc(S.tasks[t.rel],msrc))); if(todos.length<n0) dupToast((n0-todos.length)+' Update'+(n0-todos.length>1?'s':'')+' aus dieser Mail '+(n0-todos.length>1?'stehen':'steht')+' schon beim To-Do – nicht noch einmal vorgeschlagen.'); }
   showMailTodos(m,pid,why,todos,r&&r.summary||'',files,txt);
 }
 const TOK_STOP=new Set(['bitte','noch','und','oder','für','mit','beim','dass','eine','einen','nach','über','wegen','anrufen','nachfragen','klären','prüfen','machen','erledigen','schicken','senden','bestellen','projekt','kunde','termin','heute','morgen']);
@@ -8578,7 +8594,8 @@ function showMailTodos(m,pid,why,todos,summary,files,text){
       document.querySelectorAll('#mt_list .mt-row').forEach(row=>{ const g=s=>row.querySelector('[id^="mt_'+s+'"]'); if(!g('c').checked) return; const title=g('t').value.trim(); if(!title) return; const p=g('p').value;
         const relBox=row.querySelector('.mt-rel'), act=relBox?g('a').value:'neu';
         if(relBox&&act!=='neu'&&S.tasks[relBox.dataset.rel]){ const x=clone(S.tasks[relBox.dataset.rel]); const info=title+(isMail?' (Mail'+(m.from?' von '+mailFromShort(m.from):'')+(m.subject?': '+m.subject:'')+')':'');
-          x.upd2=[...(x.upd2||[]),{d:TODAY(),by:meK(),t:info.slice(0,400),at:new Date().toISOString()}]; const pr=(g('r')||{}).value; if(pr&&PRIO[pr]&&PRIO[pr][1]>prioN(x)) x.prio=pr; if(!x.due&&g('d').value) x.due=g('d').value; if(!x.who&&g('w').value) x.who=g('w').value;
+          const msrc=isMail?mailSrc(m.subject,m.from,m.text):''; if(msrc&&taskHasSrc(x,msrc)&&act!=='erledigt'){ dupToast('Das Update aus dieser Mail steht bei „'+String(x.title).slice(0,40)+'“ schon drin – nicht doppelt gespeichert.'); return; }
+          x.upd2=[...(x.upd2||[]),{d:TODAY(),by:meK(),t:info.slice(0,400),at:new Date().toISOString(),...(msrc?{src:msrc,auto:1}:{})}]; const pr=(g('r')||{}).value; if(pr&&PRIO[pr]&&PRIO[pr][1]>prioN(x)) x.prio=pr; if(!x.due&&g('d').value) x.due=g('d').value; if(!x.who&&g('w').value) x.who=g('w').value;
           if(act==='erledigt'){ x.done=true; x.doneAt=new Date().toISOString(); x.doneBy=meK(); x.doneNote=info.slice(0,300); }
           put('tasks',x); upd.push({...x,_act:act}); return; }
         const t={id:uid(),title,who:g('w').value,due:g('d').value,ext:g('e').value.trim(),pid:p===INTERN?'':p,done:false,prio:(g('r')||{}).value||'normal',src:isMail?'mail':'liste',...(relBox?{relOk:1}:{}),notes:isMail?'Aus E-Mail: '+(m.subject||'')+(m.from?' · von '+m.from:''):''};
@@ -8740,7 +8757,7 @@ function smartSheet(c){
     onSave:()=>{ const act=(document.querySelector('input[name=sm_act]:checked')||{}).value, pid=$('#sm_pid').value;
       // markierte To-Do-Updates zuerst speichern (Datum + Kürzel; bei „erledigt“ abhaken und in den Projekt-Notizen vermerken)
       let nu=0; rel.forEach((x,i)=>{ if(!$('#smr_c'+i).checked||!S.tasks[x.id]) return; const how=$('#smr_a'+i).value, txt=($('#smr_t'+i).value||'').trim()||'Neue Info'+(c.mail&&c.mail.subject?' (Mail: '+c.mail.subject+')':'');
-        const t=clone(S.tasks[x.id]); t.upd2=[...(t.upd2||[]),{d:TODAY(),by:meK(),t:txt.slice(0,400),at:new Date().toISOString()}];
+        const t=clone(S.tasks[x.id]), msrc=c.mail?mailSrc(c.mail.subject,c.mail.from,c.mail.text):''; if(msrc&&taskHasSrc(t,msrc)) return; t.upd2=[...(t.upd2||[]),{d:TODAY(),by:meK(),t:txt.slice(0,400),at:new Date().toISOString(),...(msrc?{src:msrc,auto:1}:{})}];
         if(how==='erledigt'){ t.done=true; t.doneAt=new Date().toISOString(); t.doneBy=meK(); t.doneNote=txt.slice(0,300);
           if(t.pid&&S.projects[t.pid]){ const p=clone(S.projects[t.pid]), d0=new Date(), stamp=nowStamp(); p.updates=(p.updates?p.updates.replace(/\s+$/,'')+'\n':'')+stamp+' '+noteByTag(taskOrigin(t))+': ✓ Erledigt: '+t.title+' – '+txt; delete p.now; delete p.nowD; put('projects',p); } }
         put('tasks',t); nu++; });
