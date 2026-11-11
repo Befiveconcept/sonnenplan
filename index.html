@@ -2311,7 +2311,8 @@ const meK=()=>ME?shortWho(ME):'?';
 const ADMINS=['EP','AvE'];
 // Rechte je Mitarbeiter (config.perms[Name] = {views:[…], admin:bool}); EP und AvE sind immer Admin und verwalten die Rechte
 const isBaseAdmin=()=>ADMINS.includes(meK());
-const permOf=n=>(((S&&S.config)||{}).perms||{})[n]||null;
+/* Rechte hängen am Namen; nach einer Umbenennung (z. B. Schreibweise korrigiert) über das gleiche Kürzel weiter finden */
+const permOf=n=>{ const P=(((S&&S.config)||{}).perms||{}); if(P[n]) return P[n]; const k=String(shortWho(n)||'').toLowerCase(); if(!k) return null; const hit=Object.keys(P).find(x=>String(shortWho(x)).toLowerCase()===k&&/\(/.test(x)); return hit?P[hit]:null; };
 const isAdmin=()=>isBaseAdmin()||!!(permOf(ME)||{}).admin;
 const AREAS=[['dash','Übersicht'],['projects','Projekte'],['todos','To-Dos'],['meetings','Meetings'],['private','Private To-Dos'],['chat','Chat'],['notif','Mitteilungen & Benachrichtigungen'],['week','Kalender & Wochenplanung'],['orders','Bestellungen & Wareneingänge'],['stock','Lagerverwaltung'],['files','Datenablage'],['offers','Angebote'],['reports','Tagesrapporte'],['templates','Vorlagen'],['sales','Verkauf (Angebote, Rechnungen …)'],['fin','Finanzen (Bank, Ausgaben, Steuer, DATEV)'],['stamm','Stammdaten (Kunden, Lieferanten, Artikel)'],['hr','HR (Stempeluhr, Urlaub)'],['settings','Team & Einstellungen'],['activity','Aktivität'],['kview','Kunden-Ansicht'],['kfrei','Kunden-Ansicht: Texte freigeben']];
 const FIN_DEFAULT=['JP','AvE','EP']; /* Finanzen ohne eigene Einstellung: nur diese drei */
@@ -2325,16 +2326,19 @@ const ROLE_PRESETS={
  buero:{l:'Büro',views:['dash','projects','todos','private','chat','notif','week','files','offers','reports','orders','stock','sales','stamm','hr'],ownTodos:false,admin:false,info:'Projekte & Planung, Material & Lager, Verkauf, eigene HR-Seite'},
  buchhaltung:{l:'Buchhaltung',views:AREAS.map(a=>a[0]).filter(v=>!['templates','settings','activity','kfrei'].includes(v)),ownTodos:false,admin:true,info:'alles außer Vorlagen, Team & Einstellungen, Aktivität und Rechte'},
  admin:{l:'Admin',views:AREAS.map(a=>a[0]).filter(v=>v!=='kfrei'),ownTodos:false,admin:true,info:'alles (Freigabe der Kunden-Texte nur per eigenem Häkchen)'}};
-const ROLE_DEFAULT_BY_K={as:'monteur',moji:'monteur',abou:'monteur',hh:'buero',mk:'buero',js:'buero',pr:'buero',jp:'buchhaltung',ep:'admin',ave:'admin'};
-const ownTodosOnly=()=>!isAdmin()&&!!(permOf(ME)||{}).ownTodos;
+const ROLE_DEFAULT_BY_K={as:'monteur',moji:'monteur',hh:'buero',mk:'buero',js:'buero',pr:'buero',jp:'buchhaltung',ep:'admin',ave:'admin'};
+const ownTodosOnly=()=>!isAdmin()&&!!(permEff(ME)||{}).ownTodos;
 // Rolle anwenden: Sehen + Bearbeiten wie die Voreinstellung, Admin-Häkchen, „nur eigene To-Dos“
 function rolePerm(role,old){ const R=ROLE_PRESETS[role]; if(!R) return {...(old||{}),role:''};
   return {...(old||{}),role,v2:true,nfSet:true,views:R.views.slice(),edit:R.views.filter(v=>!['dash','activity','notif',...(R.noEdit||[])].includes(v)),admin:!!R.admin,ownTodos:!!R.ownTodos}; }
 queueMicrotask(()=>{ A.permPresetAll=()=>CHG.permPresetAll(); }); /* Knopf „Voreinstellungen übernehmen“ (A wird weiter unten angelegt) */
 /* Mitteilungen: bei früher gespeicherten Rechten (vor dieser Spalte) eingeschaltet, bis jemand das Häkchen setzt/entfernt (nfSet) */
 const nfLegacy=(p,l)=>p.nfSet||l.includes('notif')?l:[...l,'notif'];
-const viewsOf=n=>{ const p=permOf(n); return p&&Array.isArray(p.views)?nfLegacy(p,permV2(n,p,p.views)):defaultViews(n); };
-const editsOf=n=>{ const p=permOf(n); return p&&Array.isArray(p.edit)?permV2(n,p,p.edit):viewsOf(n); };
+/* Ohne gespeicherte Rechte sah bisher jeder alles. Monteure (Kürzel aus der Voreinstellung, Rolle „Montage“ in Team & Einstellungen oder Name Moji/ABou) bekommen dann automatisch die Monteur-Rechte. */
+const isMonteurDefault=n=>{ const k=String(shortWho(n)||'').toLowerCase(); if(ADMINS.map(x=>x.toLowerCase()).includes(k)) return false; if(ROLE_DEFAULT_BY_K[k]) return ROLE_DEFAULT_BY_K[k]==='monteur'; let st=null; try{ st=staff().find(s=>s.name===n||String(shortWho(s.name)).toLowerCase()===k); }catch(e){} return !!(st&&st.role==='Monteur')||/\b(moji|abou|abow)\b/i.test(String(n||'')); };
+const permEff=n=>permOf(n)||(n&&isMonteurDefault(n)?rolePerm('monteur'):null);
+const viewsOf=n=>{ const p=permEff(n); return p&&Array.isArray(p.views)?nfLegacy(p,permV2(n,p,p.views)):defaultViews(n); };
+const editsOf=n=>{ const p=permEff(n); return p&&Array.isArray(p.edit)?permV2(n,p,p.edit):viewsOf(n); };
 const canEdit=a=>isAdmin()||(!!ME&&editsOf(ME).includes(a)&&viewsOf(ME).includes(a));
 function canSee(v){ if(v==='rights') return isBaseAdmin(); if(v==='hr') return true; /* Stempeln und Urlaub: für alle */ if(String(v).startsWith('f:')) v='files'; if(String(v).startsWith('st:')) v='stamm'; if(v==='fin'||String(v).startsWith('fi:')) return finOk(); if(String(v).startsWith('vk:')) v='sales'; if(v==='dash') return true; if(!ME) return v!=='activity'; const vs=viewsOf(ME);
   if(v==='kview') return isAdmin()||vs.includes('kview')||kfreiOk();
@@ -6052,9 +6056,9 @@ document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target&&e.target.
 function vRights(){
   if(!isBaseAdmin()) return head('Rechte','')+'<div class="card"><div class="empty">Nur EP und AvE können Rechte verteilen.</div></div>';
   const st=staff();
-  return head('Admin: Rechte','Wer sieht welche Rubrik – und wer darf alles bearbeiten und löschen',`<button class="btn sun" data-act="permPresetAll" title="AS, Moji, ABou = Monteur · HH, MK, JS, PR = Büro · JP = Buchhaltung · EP, AvE = Admin">Voreinstellungen übernehmen</button>`)+`<div class="card rt-presets"><div class="card-b">${Object.values(ROLE_PRESETS).map(r=>`<div><b>${esc(r.l)}</b> <span class="small muted">${esc(r.info)}</span></div>`).join('')}<div class="small muted" style="margin-top:6px">Rolle wählen setzt die Häkchen; danach kann man pro Person einzeln anpassen (dann steht dort individuell).</div></div></div>`+
+  return head('Admin: Rechte','Wer sieht welche Rubrik – und wer darf alles bearbeiten und löschen',`<button class="btn sun" data-act="permPresetAll" title="AS (ABou), Moji = Monteur · HH, MK, JS, PR = Büro · JP = Buchhaltung · EP, AvE = Admin">Voreinstellungen übernehmen</button>`)+`<div class="card rt-presets"><div class="card-b">${Object.values(ROLE_PRESETS).map(r=>`<div><b>${esc(r.l)}</b> <span class="small muted">${esc(r.info)}</span></div>`).join('')}<div class="small muted" style="margin-top:6px">Rolle wählen setzt die Häkchen; danach kann man pro Person einzeln anpassen (dann steht dort individuell).</div></div></div>`+
    `<div class="card"><div class="tbl-wrap"><table class="tbl rights"><thead><tr><th>Mitarbeiter</th><th>Rolle</th><th title="Alles bearbeiten und löschen (wie EP/AvE)">Admin</th>${AREAS.map(([k,l])=>`<th class="rt-h"><span>${esc(l)}</span></th>`).join('')}</tr></thead><tbody>
-   ${st.map(s=>{ const base=ADMINS.includes(shortWho(s.name)), p=permOf(s.name)||{}, vs=viewsOf(s.name), es=editsOf(s.name), adm=base||p.admin;
+   ${st.map(s=>{ const base=ADMINS.includes(shortWho(s.name)), p=permEff(s.name)||{}, vs=viewsOf(s.name), es=editsOf(s.name), adm=base||p.admin;
      return `<tr><td><b>${esc(s.name)}</b><div class="small muted">${esc(ROLES[s.role]||s.role||'')}</div></td><td>${base?'<span class="pill sun">Admin</span>':`<select class="inp rt-role" data-chg="permRole" data-n="${esc(s.name)}" aria-label="Rolle: ${esc(s.name)}"><option value="">individuell</option>${Object.entries(ROLE_PRESETS).map(([k,r])=>`<option value="${k}" ${p.role===k?'selected':''}>${esc(r.l)}</option>`).join('')}</select>`}</td>
        <td class="c">${base?'<span class="pill sun">immer</span>':`<input type="checkbox" class="ck" data-chg="permAdmin" data-n="${esc(s.name)}" ${p.admin?'checked':''} aria-label="Admin: ${esc(s.name)}">`}</td>
        ${AREAS.map(([k,l])=>k==='dash'?'<td class="c"><span class="pm">👁 ✓</span></td>':k==='kfrei'?(shortWho(s.name)==='AvE'?'<td class="c"><span class="pill sun">immer</span></td>':`<td class="c"><label class="pm" title="darf Kunden-Texte freigeben"><input type="checkbox" class="ck" data-chg="permView" data-n="${esc(s.name)}" data-v="kfrei" ${vs.includes('kfrei')?'checked':''} aria-label="Kunden-Texte freigeben: ${esc(s.name)}">✓</label></td>`):`<td class="c"><label class="pm" title="sehen"><input type="checkbox" class="ck" data-chg="permView" data-n="${esc(s.name)}" data-v="${k}" ${vs.includes(k)?'checked':''} ${base?'disabled':''} aria-label="${esc(l)} sehen: ${esc(s.name)}">👁</label>${['private','activity','dash','notif'].includes(k)?'':`<label class="pm" title="bearbeiten / löschen"><input type="checkbox" class="ck" data-chg="permEdit" data-n="${esc(s.name)}" data-v="${k}" ${adm||es.includes(k)?'checked':''} ${adm||!vs.includes(k)?'disabled':''} aria-label="${esc(l)} bearbeiten: ${esc(s.name)}">✎</label>`}</td>`).join('')}</tr>`; }).join('')}
