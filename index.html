@@ -7808,10 +7808,26 @@ const KV3D=(()=>{
     bess:{l:'Batteriespeicher-Container (Anschnitt)',comps:[['racks','Batterie-Racks','klick'],['ems','Energiemanagement (EMS)','klick'],['brand','Brandschutz','grau'],['klima','Klimatisierung','grau'],['pcs','Wechselrichter (PCS)','klick'],['trafo','Transformator','klick']]},
     ladepark:{l:'Ladepark',comps:[['lader','Ladesäulen','klick'],['verteiler','Unterverteilung','klick'],['netz','Netzanschluss & Zähler','klick'],['kabel','Kabelwege','grau']]}
   };
-  const st=(s,k)=>{ const c=((s&&s.comps)||{})[k]; if(c&&c.st) return c.st; const d=(TYPES[s.type]||TYPES.haus).comps.find(x=>x[0]===k); return d?d[2]:'grau'; };
-  const lab=(s,k,pub)=>{ const c=((s&&s.comps)||{})[k]||{}, d=(TYPES[s.type]||TYPES.haus).comps.find(x=>x[0]===k); return (pub?c.label:(c.label||''))||(d?d[1]:k); };
+  TYPES.foto={l:'Foto-Skizze',comps:[]};
+  // Teile einer Szene: bei Foto-Skizzen die selbst markierten Bereiche, sonst die festen Bausteine
+  const defs=s=>s&&s.type==='foto'?(s.spots||[]).map((p,i)=>[p.id,'Bereich '+(i+1),'klick']):(TYPES[s&&s.type]||TYPES.haus).comps;
+  const st=(s,k)=>{ const c=((s&&s.comps)||{})[k]; if(c&&c.st) return c.st; const d=defs(s).find(x=>x[0]===k); return d?d[2]:'grau'; };
+  const lab=(s,k,pub)=>{ const c=((s&&s.comps)||{})[k]||{}, d=defs(s).find(x=>x[0]===k); return (pub?c.label:(c.label||''))||(d?d[1]:k); };
   // Reihenfolge der klickbaren Teile = Nummern in der Skizze
-  const clickList=s=>(TYPES[s.type]||TYPES.haus).comps.filter(([k])=>st(s,k)==='klick').map(([k],i)=>({k,n:i+1,label:lab(s,k)}));
+  const clickList=s=>defs(s).filter(([k])=>st(s,k)==='klick').map(([k],i)=>({k,n:i+1,label:lab(s,k)}));
+  // Foto-Skizze: Bild 1:1 (als Skizze umgerechnet) + markierte Bereiche; o.img = Bildadresse, o.blob = Ablage-ID (App), o.draw = Markier-Modus
+  const PCSS=`.kvph{position:relative;width:100%;border-radius:10px;overflow:hidden;background:#fff;user-select:none;-webkit-user-select:none;touch-action:manipulation}.kvph>img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;pointer-events:none}
+.kvph>svg{position:absolute;inset:0;width:100%;height:100%}.kvph.draw>svg{cursor:crosshair;touch-action:none}
+.kvph .sp{fill:rgba(244,219,2,.30);stroke:#D9BF00;stroke-width:3;vector-effect:non-scaling-stroke}.kvph .kc:hover .sp,.kvph .kc.sel .sp{fill:rgba(244,219,2,.5);stroke:#111}
+.kvph .tmp{fill:rgba(244,219,2,.25);stroke:#111;stroke-width:2;stroke-dasharray:6 4;vector-effect:non-scaling-stroke}
+.kvph.dk{background:#000}.kvph.dk>img{filter:invert(1) grayscale(1) contrast(1.15) brightness(.85)}
+.kvph.dk .sp{fill:rgba(244,219,2,.16);stroke:#F4DB02;stroke-width:2.5}.kvph.dk .kc.k{animation:kvGlow 3.2s ease-in-out infinite}.kvph.dk .kc:hover .sp,.kvph.dk .kc.sel .sp{fill:rgba(244,219,2,.32)}`;
+  function photo(s,o){ const w=+s.w||1000, h=+s.h||750, VH=Math.round(1000*h/w), R=Math.max(16,Math.min(30,Math.max(1000,VH)/42)), dk=o.theme==='dark';
+    const sp=Object.fromEntries((s.spots||[]).map(p=>[p.id,p]));
+    const rects=clickList(s).map(({k,n,label})=>{ const p=sp[k]; if(!p) return ''; const x=p.x*1000, y=p.y*VH, ww=Math.max(4,p.w*1000), hh=Math.max(4,p.h*VH), cx=Math.min(1000-R-2,Math.max(R+2,x+R*.2)), cy=Math.max(R+2,y-R*.2);
+      return `<g class="kc k${o.sel===k?' sel':''}" data-c="${k}" tabindex="0" role="button" aria-label="${escX(label)}"><rect class="sp" x="${f1(x)}" y="${f1(y)}" width="${f1(ww)}" height="${f1(hh)}" rx="6"/></g><g class="bd${o.sel===k?' sel':''}" data-c="${k}" role="button" tabindex="-1" aria-label="${escX(label)}"><circle class="pr" cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(R)}" style="animation-delay:${(n*.37%2.6).toFixed(2)}s"/><circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(R)}" style="stroke-width:3"/><text x="${f1(cx)}" y="${f1(cy)}" style="font-size:${f1(R*1.15)}px">${n}</text></g>`; }).join('');
+    const src=o.img?`src="${escX(o.img)}"`:o.blob?`data-blob="${escX(o.blob)}"`:'';
+    return `<div class="kvph${dk?' dk':''}${o.draw?' draw':''}" style="aspect-ratio:${w}/${h}"><style>${PCSS}</style><img ${src} alt="" draggable="false"><svg class="kv3d${dk?' dk':''}" viewBox="0 0 1000 ${VH}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escX(s.title||'Foto-Skizze')}"><style>${CSS}</style><rect class="bg0" x="0" y="0" width="1000" height="${VH}" fill="transparent"/>${rects}</svg></div>`; }
   function ctx(s){
     const out=[], pts=[], anch={};
     const pr=(x,y,z)=>{ const X=(x-y)*CO*K, Y=((x+y)*.5-z)*K; pts.push([X,Y]); return f1(X)+','+f1(Y); };
@@ -7948,7 +7964,7 @@ const KV3D=(()=>{
 @media (prefers-reduced-motion:reduce){.kv3d.dk,.kv3d.dk .kc.k,.kv3d.dk .k .cab,.kv3d.dk .bd .pr{animation:none}}
 .kv3d .bd circle{fill:#111;stroke:#F4DB02;stroke-width:2}.kv3d .bd text{fill:#F4DB02;font:700 12px/1 system-ui,sans-serif;text-anchor:middle;dominant-baseline:central}.kv3d .bd{cursor:pointer}
 .kv3d .kc.sel~.bd.sel circle,.kv3d .bd.sel circle{fill:#F4DB02;stroke:#111}.kv3d .bd.sel text{fill:#111}`;
-  function svg(s,o){ o=o||{}; s=s||{}; const type=DRAW[s.type]?s.type:'haus', c=ctx({...s,type});
+  function svg(s,o){ o=o||{}; s=s||{}; if(s.type==='foto') return photo(s,o); const type=DRAW[s.type]?s.type:'haus', c=ctx({...s,type});
     DRAW[type](c,{...s,type});
     let body=c.out.join('');
     // Nummern-Punkte: Größe passend zur Szene (große Szenen werden kleiner dargestellt)
@@ -7958,7 +7974,7 @@ const KV3D=(()=>{
     if(o.sel) body=body.replace(`class="kc k" data-c="${o.sel}"`,`class="kc k sel" data-c="${o.sel}"`);
     const xs=c.pts.map(p=>p[0]), ys=c.pts.map(p=>p[1]), pad=14, x0=Math.min(...xs)-pad, y0=Math.min(...ys)-pad, w=Math.max(...xs)-x0+pad, h=Math.max(...ys)-y0+pad;
     return `<svg class="kv3d${o.theme==='dark'?' dk':''}" viewBox="${f1(x0)} ${f1(y0)} ${f1(w)} ${f1(h)}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escX(s.title||TYPES[type].l)}"><style>${CSS}</style>${body}${badges}</svg>`; }
-  return {TYPES,svg,st,lab,clickList};
+  return {TYPES,svg,st,lab,clickList,defs};
 })();
 /*KV3D-END*/
 /* ========== Kunden-Ansicht je Projekt: Skizzen, Texte, Freigabe, Kundenzugang ==========
@@ -7972,17 +7988,21 @@ const kvApprovers=()=>staff().map(s=>s.name).filter(n=>shortWho(n)==='AvE'||view
 const kvPendList=kv=>{ const out=[]; ((kv&&kv.scenes)||[]).forEach((s,i)=>Object.entries(s.comps||{}).forEach(([k,c])=>{ if(c&&c.pend&&KV3D.st(s,k)!=='aus') out.push({i,k,s,c}); })); return out; };
 const kvPortalUrl=()=>{ const c=(S.config||{}).portalUrl; if(c) return c; try{ return MODE==='cloud'&&window.SB?new URL('kunde.html',location.href).href:''; }catch(e){ return ''; } };
 function kvSave(kv,msg){ kv.id=kv.pid; put('kview',kv); if(msg) toast(msg); }
-function kvPubData(p,kv){
+function kvPubData(p,kv,imgs){
   return {name:p.name,place:String(p.place||'').split('\n')[0].slice(0,120),stand:TODAY(),
     scenes:(kv.scenes||[]).map(s=>({id:s.id,type:s.type,title:s.title||KV3D.TYPES[s.type].l,n:+s.n||0,
-      comps:Object.fromEntries(KV3D.TYPES[s.type].comps.filter(([k])=>KV3D.st(s,k)!=='aus').map(([k,l])=>{ const c=(s.comps||{})[k]||{}, on=KV3D.st(s,k);
+      ...(s.type==='foto'?{w:s.w,h:s.h,spots:(s.spots||[]).filter(sp=>KV3D.st(s,sp.id)==='klick').map(({id,x,y,w,h})=>({id,x,y,w,h})),img:(imgs||{})[s.id]||''}:{}),
+      comps:Object.fromEntries(KV3D.defs(s).filter(([k])=>KV3D.st(s,k)!=='aus').map(([k,l])=>{ const c=(s.comps||{})[k]||{}, on=KV3D.st(s,k);
         return [k,{st:on,label:c.aLabel||l,...(on==='klick'&&String(c.text||'').trim()?{text:String(c.text).trim(),at:c.tAt||''}:{})}]; }))}))};
 }
 async function kvPublish(pid,quiet){ const kv=kvOf(pid), p=S.projects[pid]; if(!kv||!p) return false;
   if(!kvEditOk()&&!kfreiOk()){ toast('Keine Berechtigung für die Kunden-Ansicht.'); return false; }
   if(!(MODE==='cloud'&&window.SB)){ if(!quiet) toast('Veröffentlichen geht nur in der Online-App.'); return false; }
   const emails=[...new Set((kv.emails||[]).map(e=>String(e).trim().toLowerCase()).filter(Boolean))];
-  const {error}=await window.SB.from('portal').upsert({id:pid,emails,data:kvPubData(p,kv),updated_at:new Date().toISOString()});
+  // Foto-Skizzen: Bild direkt mitgeben (die Ablage ist für Kunden gesperrt)
+  const imgs={}; for(const s of (kv.scenes||[]).filter(x=>x.type==='foto')){ if(s.imgData){ imgs[s.id]=s.imgData; continue; } if(!s.img) continue;
+    try{ const b=await (await fetch('/_blob/'+s.img)).blob(); imgs[s.id]=await new Promise(ok=>{ const fr=new FileReader(); fr.onload=()=>ok(fr.result); fr.readAsDataURL(b); }); }catch(e){ if(!quiet) toast('Skizzenbild „'+(s.title||'')+'“ konnte nicht geladen werden.'); } }
+  const {error}=await window.SB.from('portal').upsert({id:pid,emails,data:kvPubData(p,kv,imgs),updated_at:new Date().toISOString()});
   if(error){ toast(/portal|relation|schema cache|does not exist/i.test(error.message)?'Die Kundenseite ist in der Datenbank noch nicht eingerichtet (09_kundenportal.sql ausführen).':'Veröffentlichen fehlgeschlagen: '+error.message); return false; }
   const n=clone(kvOf(pid)); n.pubAt=new Date().toISOString(); n.pubBy=meK(); kvSave(n); if(!quiet) toast('Für den Kunden veröffentlicht'+(emails.length?' ('+emails.length+' Zugang'+(emails.length>1?'e':'')+').':' – noch kein Kundenzugang eingetragen.')); return true; }
 async function kvUnpublish(pid){ if(MODE==='cloud'&&window.SB){ try{ await window.SB.from('portal').delete().eq('id',pid); }catch(e){} } }
@@ -7997,7 +8017,7 @@ function kvGuess(p){ const t=[p.name,p.scope,p.notes,p.updates,TYPES[p.type]].jo
     else if(/speicher|batterie/.test(t)) s.comps.speicher={st:'klick'}; if(gw&&/lade|wallbox/.test(t)) s.comps.lader={st:'klick'}; out.push(s); }
   return out; }
 const kvNewScene=o=>({id:uid(),type:KV3D.TYPES[o.type]?o.type:'haus',title:String(o.title||'').slice(0,60),n:+o.n||0,comps:o.comps||{}});
-const kvTypeList=()=>Object.entries(KV3D.TYPES).map(([k,t])=>`- "${k}": ${t.l} – Teile: ${t.comps.map(c=>c[0]+' ('+c[1]+')').join(', ')}`).join('\n');
+const kvTypeList=()=>Object.entries(KV3D.TYPES).filter(([k])=>k!=='foto').map(([k,t])=>`- "${k}": ${t.l} – Teile: ${t.comps.map(c=>c[0]+' ('+c[1]+')').join(', ')}`).join('\n');
 function kvProjCtx(p){ const ords=arr('orders').filter(o=>o.pid===p.id).flatMap(o=>(o.items||[]).map(i=>i.art)).filter(Boolean).slice(0,60);
   const tks=arr('tasks').filter(t=>t.pid===p.id).slice(-60).map(t=>(t.done?'✓ ':'')+t.title);
   return `Projekt: ${p.name}${p.nr?' ('+p.nr+')':''} · Typ: ${TYPES[p.type]||p.type||'-'} · Ort: ${String(p.place||'').replace(/\n/g,' ')} · Größe: ${sizeLbl(p)||'-'}
@@ -8019,21 +8039,61 @@ Antworte nur mit JSON: {"scenes":[{"type":"","title":"","n":0,"comps":{"teil":"k
     catch(e){ if(e&&e.code&&e.code!=='cancelled') toast(SAMPLE_ERR[e.code]||'Claude nicht erreichbar – einfache Erkennung.'); } }
   const old=kvOf(pid), kv=old?clone(old):{pid,scenes:[],emails:[]};
   kv.scenes=(kv.scenes||[]).concat(scenes.map(kvNewScene)); UI.kvScene=(old&&old.scenes||[]).length; kvSave(kv,scenes.length+' Skizze'+(scenes.length>1?'n':'')+' angelegt ('+why+'). Texte für den Kunden: „✨ Texte vorschlagen“.'); render(); }
+/* ---------- Foto → Skizze: gleicher Bildausschnitt, im Browser in eine Bleistift-Zeichnung umgerechnet (nichts geht an die KI) ---------- */
+async function photoToSketch(file){
+  const url=URL.createObjectURL(file); let im;
+  try{ im=await new Promise((ok,no)=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=no; i.src=url; }); } finally { setTimeout(()=>URL.revokeObjectURL(url),1000); }
+  const W=Math.min(1400,im.naturalWidth||im.width), H=Math.round((im.naturalHeight||im.height)*W/(im.naturalWidth||im.width));
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H; const cx=cv.getContext('2d',{willReadFrequently:true}); cx.fillStyle='#fff'; cx.fillRect(0,0,W,H); cx.drawImage(im,0,0,W,H);
+  const id=cx.getImageData(0,0,W,H), d=id.data, N=W*H, g=new Float32Array(N);
+  for(let i=0,j=0;i<N;i++,j+=4) g[i]=.299*d[j]+.587*d[j+1]+.114*d[j+2];
+  // weichgezeichnetes Negativ (Box-Blur, 3 Durchgänge ≈ Gauß)
+  const r=Math.max(2,Math.round(W/160)); let a=new Float32Array(N), b=new Float32Array(N); for(let i=0;i<N;i++) a[i]=255-g[i];
+  const blurH=(s,t)=>{ for(let y=0;y<H;y++){ const o=y*W; let acc=0; for(let x=-r;x<=r;x++) acc+=s[o+Math.min(W-1,Math.max(0,x))]; for(let x=0;x<W;x++){ t[o+x]=acc/(2*r+1); acc+=s[o+Math.min(W-1,x+r+1)]-s[o+Math.max(0,x-r)]; } } };
+  const blurV=(s,t)=>{ for(let x=0;x<W;x++){ let acc=0; for(let y=-r;y<=r;y++) acc+=s[Math.min(H-1,Math.max(0,y))*W+x]; for(let y=0;y<H;y++){ t[y*W+x]=acc/(2*r+1); acc+=s[Math.min(H-1,y+r+1)*W+x]-s[Math.max(0,y-r)*W+x]; } } };
+  for(let k=0;k<3;k++){ blurH(a,b); blurV(b,a); }
+  // Kanten (Sobel) für klare Konturen
+  const e=new Float32Array(N); let emax=1; for(let y=1;y<H-1;y++) for(let x=1;x<W-1;x++){ const i=y*W+x, gx=g[i-W+1]+2*g[i+1]+g[i+W+1]-g[i-W-1]-2*g[i-1]-g[i+W-1], gy=g[i+W-1]+2*g[i+W]+g[i+W+1]-g[i-W-1]-2*g[i-W]-g[i-W+1], m=Math.sqrt(gx*gx+gy*gy); e[i]=m; if(m>emax) emax=m; }
+  const ec=emax*.35;
+  for(let i=0,j=0;i<N;i++,j+=4){ let v=Math.min(255,g[i]*255/Math.max(1,255-a[i])); v=255-(255-v)*1.7; const ed=Math.min(1,e[i]/ec); v=Math.min(v,255-ed*150); v=v>238?255:v; v=Math.max(0,Math.min(255,v)); d[j]=d[j+1]=d[j+2]=v; d[j+3]=255; }
+  cx.putImageData(id,0,0);
+  const toB=(t,q)=>new Promise(ok=>cv.toBlob(ok,t,q)); const [pb,jb]=await Promise.all([toB('image/png'),toB('image/jpeg',.84)]); const blob=(pb&&jb)?(pb.size<jb.size?pb:jb):(pb||jb);
+  const dataUrl=await new Promise(ok=>{ const fr=new FileReader(); fr.onload=()=>ok(fr.result); fr.readAsDataURL(blob); });
+  return {blob,dataUrl,w:W,h:H}; }
 async function kvFromPhoto(pid,file,idx){ const p=S.projects[pid]; if(!p||!file||!kvEditOk()) return;
-  if(!SAMPLE){ toast('Foto auswerten braucht die KI – geht nur in der Online-App. Bitte die Skizze von Hand wählen.'); return; }
-  toast('Claude schaut sich das Foto an …'); let img; try{ img=new Blob([await mappeToJpg(file,1400)],{type:'image/jpeg'}); }catch(e){ toast('Foto konnte nicht gelesen werden.'); return; }
-  let r=null; try{ r=await SAMPLE.json(`Foto einer Anlage aus dem Projekt „${p.name}“ (${TYPES[p.type]||''}). Wir zeichnen daraus eine schematische 3-D-Skizze aus festen Bausteinen.
-Skizzen-Typen und ihre Teile:\n${kvTypeList()}
-Welcher Typ passt am besten zum Foto? Welche Teile sind zu sehen oder gehören erkennbar dazu ("klick"), welche sind nebensächlich ("grau"), welche fehlen ("aus")? n = sichtbare/geschätzte Zahl PV-Module (0, wenn keine).
-Antworte nur mit JSON: {"type":"","title":"kurz","n":0,"comps":{"teil":"klick|grau|aus"},"seen":"1 Satz, was zu sehen ist"}`,{modelTier:'default',images:[img]}); }
-  catch(e){ toast(SAMPLE_ERR[e&&e.code]||'Claude nicht erreichbar.'); return; }
-  if(!r||!KV3D.TYPES[r.type]){ toast('Auf dem Foto wurde keine passende Anlage erkannt.'); return; }
-  let photo=''; if(ASSETS){ try{ photo=(await ASSETS.upload(file,{type:file.type||'image/jpeg'})).id; }catch(e){} }
-  const sc=kvNewScene({type:r.type,title:r.title,n:r.n,comps:Object.fromEntries(Object.entries(r.comps||{}).filter(([k,v])=>KV3D.TYPES[r.type].comps.some(c=>c[0]===k)&&KV_ST[v]).map(([k,v])=>[k,{st:v}]))}); if(photo) sc.photo=photo;
-  const old=kvOf(pid), kv=old?clone(old):{pid,scenes:[],emails:[]};
-  if(idx!=null&&kv.scenes[idx]){ const o=kv.scenes[idx]; sc.id=o.id; Object.entries(o.comps||{}).forEach(([k,c])=>{ if(KV3D.TYPES[sc.type].comps.some(x=>x[0]===k)) sc.comps[k]={...c,st:(sc.comps[k]||{}).st||c.st}; }); kv.scenes[idx]=sc; UI.kvScene=idx; }
-  else { kv.scenes.push(sc); UI.kvScene=kv.scenes.length-1; }
-  kvSave(kv,'Skizze aus dem Foto erstellt: '+String(r.seen||KV3D.TYPES[sc.type].l).slice(0,120)); render(); }
+  toast('Foto wird in eine Skizze umgewandelt …'); let sk; try{ sk=await photoToSketch(file); }catch(e){ toast('Foto konnte nicht gelesen werden.'); return; }
+  const cur=idx!=null&&(kvOf(pid)||{}).scenes?kvOf(pid).scenes[idx]:null, repl=cur&&cur.type==='foto';
+  openSheet({title:repl?'Skizze ersetzen':'Foto-Skizze anlegen',wide:1,html:`<div class="fld full"><div class="kvbox" style="padding:0"><img src="${sk.dataUrl}" alt="Skizze" style="width:100%;display:block;border-radius:10px"></div>
+      <div class="small muted" style="margin-top:6px">So sieht der Kunde das Foto – als Skizze, gleicher Bildausschnitt (auf der Kundenseite weiß auf schwarz). ${repl?'Die markierten Bereiche bleiben erhalten.':'Danach ziehst du Rahmen um die Teile, die der Kunde anklicken kann, und gibst ihnen einen Namen.'}</div></div>
+    <div class="fld full"><label for="kv_ft">Was zeigt das Foto? (Überschrift für den Kunden)</label><input id="kv_ft" class="inp" value="${esc(repl?cur.title||'':'')}" placeholder="z. B. Ihr Technikraum, Dachansicht Süd, Trafostation"></div>`,saveLabel:repl?'Ersetzen':'Skizze übernehmen',
+    onSave:()=>{ const title=($('#kv_ft').value||'').trim(); if(!title){ toast('Bitte eine Überschrift eingeben.'); return false; }
+      (async()=>{ let asset=''; if(ASSETS){ try{ asset=(await ASSETS.upload(new File([sk.blob],'skizze_'+TODAY()+(sk.blob.type==='image/png'?'.png':'.jpg'),{type:sk.blob.type}),{type:sk.blob.type})).id; }catch(e){ asset=''; } }
+        const old=kvOf(pid), kv=old?clone(old):{pid,scenes:[],emails:[]};
+        const img=asset?{img:asset,imgData:undefined}:{img:'',imgData:sk.dataUrl}; // ohne Ablage (Testmodus): Bild direkt speichern
+        if(repl){ const o=kv.scenes[idx]; Object.assign(o,img,{title:title.slice(0,60),w:sk.w,h:sk.h}); if(!asset) o.img=''; else delete o.imgData; UI.kvScene=idx; }
+        else { const sc={id:uid(),type:'foto',title:title.slice(0,60),w:sk.w,h:sk.h,spots:[],comps:{},...img}; if(!asset) delete sc.img; else delete sc.imgData; kv.scenes.push(sc); UI.kvScene=kv.scenes.length-1; }
+        UI.kvDraw=true; kvSave(kv,repl?'Skizze ersetzt.':'Foto-Skizze angelegt. Jetzt auf der Skizze Rahmen um die Teile ziehen und benennen.'); render(); })(); }}); }
+// Markierten Bereich benennen (neu oder bearbeiten)
+function kvSpotSheet(pid,i,spot){ const kv=kvOf(pid), s=kv&&kv.scenes[i]; if(!s||!kvEditOk()) return;
+  openSheet({title:'Bereich benennen',wide:1,html:`<div class="fld full"><label for="kv_sl">Wie soll es heißen? (sieht der Kunde nach der Freigabe)</label><input id="kv_sl" class="inp" placeholder="z. B. Wechselrichter, Batteriespeicher, Zählerschrank"></div>
+    <div class="fld full"><label for="kv_st">Aktueller Stand (optional, wird ebenfalls freigegeben)</label><textarea id="kv_st" class="inp" rows="4" maxlength="800" placeholder="z. B. Montiert am 12.11. – Anschluss folgt in der Woche ab 23.11."></textarea></div>`,saveLabel:'Bereich speichern',
+    onSave:()=>{ const l=($('#kv_sl').value||'').trim(), t=($('#kv_st').value||'').trim(); if(!l){ toast('Bitte einen Namen eingeben.'); return false; }
+      const k2=clone(kvOf(pid)), s2=k2.scenes[i]; s2.spots=(s2.spots||[]).concat([spot]); s2.comps=s2.comps||{}; s2.comps[spot.id]={st:'klick',label:l.slice(0,60),draft:t,pend:true,dBy:meK(),dAt:new Date().toISOString()};
+      kvSave(k2,'Bereich „'+l+'“ angelegt – sichtbar für den Kunden nach der Freigabe.'); kvNotify(S.projects[pid],1); render(); }});
+  setTimeout(()=>{ const x=$('#kv_sl'); if(x) x.focus(); },60); }
+function kvSpotDel(pid,i,k){ const k2=clone(kvOf(pid)), s=k2.scenes[i]; if(!s) return; s.spots=(s.spots||[]).filter(p=>p.id!==k); delete (s.comps||{})[k]; kvSave(k2,'Bereich entfernt.'+(k2.pubAt?' Bitte erneut veröffentlichen.':'')); render(); }
+// Rahmen ziehen auf der Foto-Skizze (Maus, Finger, Stift)
+let KV_DRAG=null;
+document.addEventListener('pointerdown',e=>{ const box=e.target.closest&&e.target.closest('.kvbox .kvph.draw'); if(!box||e.target.closest('[data-c]')) return; const sv=box.querySelector('svg'), r=sv.getBoundingClientRect();
+  e.preventDefault(); const fx=x=>Math.min(1,Math.max(0,(x-r.left)/r.width)), fy=y=>Math.min(1,Math.max(0,(y-r.top)/r.height)), vb=sv.viewBox.baseVal;
+  const tmp=document.createElementNS('http://www.w3.org/2000/svg','rect'); tmp.setAttribute('class','tmp'); sv.appendChild(tmp);
+  KV_DRAG={box,sv,r,x0:fx(e.clientX),y0:fy(e.clientY),x1:fx(e.clientX),y1:fy(e.clientY),fx,fy,vb,tmp}; try{ sv.setPointerCapture(e.pointerId); }catch(_){} });
+document.addEventListener('pointermove',e=>{ const d=KV_DRAG; if(!d) return; d.x1=d.fx(e.clientX); d.y1=d.fy(e.clientY); const x=Math.min(d.x0,d.x1), y=Math.min(d.y0,d.y1);
+  d.tmp.setAttribute('x',x*d.vb.width); d.tmp.setAttribute('y',y*d.vb.height); d.tmp.setAttribute('width',Math.abs(d.x1-d.x0)*d.vb.width); d.tmp.setAttribute('height',Math.abs(d.y1-d.y0)*d.vb.height); });
+document.addEventListener('pointerup',e=>{ const d=KV_DRAG; if(!d) return; KV_DRAG=null; d.tmp.remove(); const host=d.box.closest('.kvbox'); if(!host) return;
+  let x=Math.min(d.x0,d.x1), y=Math.min(d.y0,d.y1), w=Math.abs(d.x1-d.x0), h=Math.abs(d.y1-d.y0);
+  if(w<.02&&h<.02){ w=.1; h=.1*(d.vb.width/d.vb.height); x=Math.max(0,Math.min(1-w,d.x0-w/2)); y=Math.max(0,Math.min(1-h,d.y0-h/2)); } // nur getippt: Standard-Rahmen um den Punkt
+  const rd=v=>Math.round(v*10000)/10000; kvSpotSheet(host.dataset.pid,+host.dataset.i,{id:'b'+uid().slice(-6),x:rd(x),y:rd(y),w:rd(w),h:rd(h)}); });
 // Mehr Projektdaten für den aktuellen Stand: Termine, Bestellstatus, erledigte Aufgaben mit Datum
 function kvStatusCtx(p){ const t=TODAY();
   const ev=arr('events').filter(e=>e.pid===p.id&&e.date).sort((a,b)=>String(a.date).localeCompare(String(b.date))).slice(-25).map(e=>(e.date<t?'war ':'geplant ')+e.date+': '+(e.title||'')+(e.notes?' ('+String(e.notes).replace(/\s+/g,' ').slice(0,120)+')':''));
@@ -8065,7 +8125,7 @@ function kvNotify(p,n){ kvApprovers().forEach(k=>nfSend(k,{type:'kview_pend',c:'
 function kvApprove(pid,items){ if(!kfreiOk()){ toast('Freigeben darf nur, wer das Recht „Kunden-Ansicht freigeben“ hat.'); return; }
   const kv=clone(kvOf(pid)); let n=0; items.forEach(({i,k})=>{ const c=((kv.scenes[i]||{}).comps||{})[k]; if(!c||!c.pend) return; c.text=String(c.draft==null?c.text||'':c.draft).trim(); c.aLabel=c.label||''; c.tAt=TODAY(); c.aBy=meK(); c.pend=false; delete c.draft; n++; });
   kvSave(kv,n+' Text'+(n>1?'e':'')+' freigegeben.'); if(n&&kv.pubAt) kvPublish(pid,true).then(ok=>ok&&toast(n+' Text'+(n>1?'e':'')+' freigegeben und für den Kunden veröffentlicht.')); render(); }
-function kvCompSheet(pid,i,k){ const kv=kvOf(pid); if(!kv) return; const s=kv.scenes[i]; if(!s) return; const d=KV3D.TYPES[s.type].comps.find(x=>x[0]===k); if(!d) return; const c=(s.comps||{})[k]||{}, ed=kvEditOk(), fr=kfreiOk();
+function kvCompSheet(pid,i,k){ const kv=kvOf(pid); if(!kv) return; const s=kv.scenes[i]; if(!s) return; const d=KV3D.defs(s).find(x=>x[0]===k); if(!d) return; const c=(s.comps||{})[k]||{}, ed=kvEditOk(), fr=kfreiOk();
   const cur=String(c.draft!=null?c.draft:c.text||'');
   openSheet({title:(c.label||d[1])+' · '+(s.title||KV3D.TYPES[s.type].l),wide:1,html:`<div class="fld"><label for="kv_l">Bezeichnung für den Kunden</label><input id="kv_l" class="inp" value="${esc(c.label||'')}" placeholder="${esc(d[1])}" ${ed?'':'disabled'}></div>
     <div class="fld"><label for="kv_s">In der Skizze</label><select id="kv_s" class="inp" ${ed?'':'disabled'}>${Object.entries(KV_ST).map(([v,l])=>`<option value="${v}" ${KV3D.st(s,k)===v?'selected':''}>${l}</option>`).join('')}</select></div>
@@ -8073,15 +8133,17 @@ function kvCompSheet(pid,i,k){ const kv=kvOf(pid); if(!kv) return; const s=kv.sc
       <div class="small muted" style="margin-top:4px">${c.pend?`⏳ Geänderter Text wartet auf Freigabe${c.dBy?' (von '+esc(c.dBy)+')':''}. `:''}${String(c.text||'').trim()?`Der Kunde sieht zurzeit: „${esc(String(c.text).slice(0,200))}“ (freigegeben ${esc(fmtD(c.tAt||''))} von ${esc(c.aBy||'?')}).`:'Der Kunde sieht noch keinen Text.'} Neue oder geänderte Texte und Bezeichnungen erscheinen erst nach der Freigabe${fr?'':' durch AvE'}.</div></div>`,
     saveLabel:ed?'Speichern':'Schließen',
     extraBtn:fr?`<button type="button" class="btn sun" data-act="kvSaveApprove" data-pid="${pid}" data-i="${i}" data-k="${k}">✓ Speichern & freigeben</button>`:'',
-    onSave:()=>{ if(!ed&&!fr) return; kvCompStore(pid,i,k,false); }}); }
+    onSave:()=>{ if(!ed&&!fr) return; kvCompStore(pid,i,k,false); },
+    ...(s.type==='foto'&&ed?{deleteLabel:'Bereich löschen',onDelete:()=>{ closeSheet(); kvSpotDel(pid,i,k); }}:{})}); }
 function kvCompStore(pid,i,k,approve){ const kv=clone(kvOf(pid)), s=kv.scenes[i]; s.comps=s.comps||{}; const c=s.comps[k]=s.comps[k]||{}, ed=kvEditOk();
   const t=($('#kv_t').value||'').trim(), l=ed?($('#kv_l').value||'').trim():c.label||''; if(ed){ const st=$('#kv_s').value; if(KV_ST[st]) c.st=st; }
   const chT=t!==String(c.text||'').trim(), chL=l!==(c.aLabel||''); c.label=l;
   if(chT||chL){ c.draft=t; c.pend=true; c.dBy=meK(); c.dAt=new Date().toISOString(); } else { delete c.draft; c.pend=false; }
   kvSave(kv); if(approve) kvApprove(pid,[{i,k}]); else if(c.pend){ toast('Gespeichert – der Kunde sieht den Text nach der Freigabe.'); kvNotify(S.projects[pid],1); } else toast('Gespeichert.'); render(); }
 function kvSceneSheet(pid,i){ const kv=kvOf(pid), isNew=i==null, s=isNew?{type:'haus',title:'',n:0}:kv.scenes[i]; if(!kvEditOk()) return;
-  openSheet({title:isNew?'Skizze hinzufügen':'Skizze bearbeiten',fields:[{k:'type',label:'Art der Skizze',type:'select',options:Object.entries(KV3D.TYPES).map(([k,t])=>[k,t.l])},{k:'title',label:'Überschrift für den Kunden',ph:'z. B. Solarpark, Trafostation, Ihr Haus'},{k:'n',label:'Ungefähre Zahl PV-Module (nur Haus)',type:'number'}],value:{type:s.type,title:s.title||'',n:s.n||''},saveLabel:isNew?'Hinzufügen':'Speichern',
-    onSave:v=>{ const k2=kvOf(pid)?clone(kvOf(pid)):{pid,scenes:[],emails:[]}; if(isNew){ k2.scenes.push(kvNewScene(v)); UI.kvScene=k2.scenes.length-1; } else { const o=k2.scenes[i]; o.title=String(v.title||'').slice(0,60); o.n=+v.n||0; if(o.type!==v.type){ o.type=v.type; o.comps={}; } } kvSave(k2,'Gespeichert.'); render(); },
+  const foto=s.type==='foto';
+  openSheet({title:isNew?'Skizze hinzufügen':'Skizze bearbeiten',fields:foto?[{k:'title',label:'Überschrift für den Kunden',ph:'z. B. Ihr Technikraum'}]:[{k:'type',label:'Art der Skizze',type:'select',options:Object.entries(KV3D.TYPES).filter(([k])=>k!=='foto').map(([k,t])=>[k,t.l])},{k:'title',label:'Überschrift für den Kunden',ph:'z. B. Solarpark, Trafostation, Ihr Haus'},{k:'n',label:'Ungefähre Zahl PV-Module (nur Haus)',type:'number'}],value:{type:s.type,title:s.title||'',n:s.n||''},saveLabel:isNew?'Hinzufügen':'Speichern',
+    onSave:v=>{ const k2=kvOf(pid)?clone(kvOf(pid)):{pid,scenes:[],emails:[]}; if(isNew){ k2.scenes.push(kvNewScene(v)); UI.kvScene=k2.scenes.length-1; } else { const o=k2.scenes[i]; o.title=String(v.title||'').slice(0,60); if(!foto){ o.n=+v.n||0; if(o.type!==v.type){ o.type=v.type; o.comps={}; } } } kvSave(k2,'Gespeichert.'); render(); },
     onDelete:isNew?null:()=>{ confirmSheet('Skizze „'+(s.title||KV3D.TYPES[s.type].l)+'“ löschen? Die Texte dazu gehen verloren.',()=>{ const k2=clone(kvOf(pid)); k2.scenes.splice(i,1); UI.kvScene=0; kvSave(k2,'Skizze gelöscht.'+(k2.pubAt?' Bitte erneut veröffentlichen.':'')); render(); }); },deleteLabel:'Skizze löschen'}); }
 function kvAccessSheet(pid){ const kv=kvOf(pid), p=S.projects[pid]; if(!kv||!p||!kvEditOk()) return; const url=kvPortalUrl();
   openSheet({title:'Kundenzugang · '+p.name,wide:1,html:`<div class="fld full"><div class="small muted">Wer hier eingetragen ist, sieht nach Anmeldung auf der Kundenseite <b>nur dieses Projekt</b> (und andere, für die er ebenfalls eingetragen ist) – nur die Skizzen und die freigegebenen Texte, sonst nichts. Der Kunde legt sein Passwort selbst an; niemand bei uns kennt es.</div></div>
@@ -8116,7 +8178,7 @@ ${(ME||'').replace(/\s*\([^)]*\)$/,'')}
 nutz die Sonne GmbH`;
   location.href='mailto:'+encodeURIComponent(ems.join(','))+'?subject='+encodeURIComponent('Ihr Projekt „'+p.name+'“ online verfolgen')+'&body='+encodeURIComponent(body); }
 function kvPreview(pid){ const p=S.projects[pid], kv=kvOf(pid); if(!p||!kv) return; const d=kvPubData(p,kv);
-  openSheet({title:'Vorschau: so sieht es der Kunde',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Nur freigegebene Texte. ${kv.pubAt?'Zuletzt veröffentlicht '+esc(fmtD(kv.pubAt.slice(0,10)))+' ('+esc(kv.pubBy||'')+').':'Noch nicht veröffentlicht.'}</div>${d.scenes.map(s=>`<h3 style="margin:10px 0 4px">${esc(s.title)}</h3><div class="kvbox kv-prev" style="background:#050608;border-color:#222">${KV3D.svg({type:s.type,n:s.n,comps:s.comps},{theme:'dark'})}</div>${KV3D.clickList({type:s.type,comps:s.comps}).map(x=>{ const c=s.comps[x.k]||{}; return `<div class="kv-pv"><span class="kv-n">${x.n}</span><div><b>${esc(c.label||x.label)}</b><div class="small">${c.text?esc(c.text):'<span class="muted">– noch kein freigegebener Text –</span>'}</div></div></div>`; }).join('')}`).join('')}</div>`,saveLabel:'Schließen',onSave:()=>{}}); }
+  openSheet({title:'Vorschau: so sieht es der Kunde',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Nur freigegebene Texte. ${kv.pubAt?'Zuletzt veröffentlicht '+esc(fmtD(kv.pubAt.slice(0,10)))+' ('+esc(kv.pubBy||'')+').':'Noch nicht veröffentlicht.'}</div>${d.scenes.map(s=>`<h3 style="margin:10px 0 4px">${esc(s.title)}</h3><div class="kvbox kv-prev" style="background:#050608;border-color:#222">${(o=>KV3D.svg(s,{theme:'dark',blob:o.img,img:o.imgData}))((kv.scenes||[]).find(x=>x.id===s.id)||{})}</div>${KV3D.clickList(s).map(x=>{ const c=s.comps[x.k]||{}; return `<div class="kv-pv"><span class="kv-n">${x.n}</span><div><b>${esc(c.label||x.label)}</b><div class="small">${c.text?esc(c.text):'<span class="muted">– noch kein freigegebener Text –</span>'}</div></div></div>`; }).join('')}`).join('')}</div>`,saveLabel:'Schließen',onSave:()=>{}}); }
 /* Registrierungsstatus der Kunden (aus Supabase, 10_kundenportal_status.sql) und tatsächlich veröffentlichte Freigaben (Tabelle portal) */
 let KV_ACC=null, KV_ACC_AT=0, KV_ACC_ERR='', KV_PORTAL=null, KV_ACC_RUN=false;
 async function kvLoadAcc(force){ if(!(MODE==='cloud'&&window.SB)||KV_ACC_RUN) return; if(!force&&Date.now()-KV_ACC_AT<60000) return; KV_ACC_AT=Date.now(); KV_ACC_RUN=true;
@@ -8147,21 +8209,21 @@ function projKview(p){ const kv=kvOf(p.id), ed=kvEditOk(), fr=kfreiOk(), url=kvP
   const intro=`Eine 3-D-Skizze der Anlage, auf der der Kunde einzelne Teile anklickt und die freigegebenen Infos dazu sieht – auf einer eigenen Webseite mit eigenem Zugang, auf der er nur sein Projekt sieht.`;
   if(!kv||!(kv.scenes||[]).length) return `<div class="card"><div class="card-h"><h3>Kunden-Ansicht</h3></div><div class="card-b"><p style="margin:0 0 12px">${intro}</p>
     ${ed?`<div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn sun" data-act="kvSuggest" data-pid="${p.id}">✨ Skizzen aus dem Projekt erstellen</button><button class="btn" data-act="kvPhoto" data-pid="${p.id}">📷 Aus Foto erstellen</button><button class="btn" data-act="kvAddScene" data-pid="${p.id}">${ic('plus')}Skizze von Hand wählen</button></div>`:'<div class="small muted">Noch keine Kunden-Ansicht angelegt.</div>'}<div style="margin-top:12px"><button type="button" class="lnk small" data-act="kvOverview">📋 Alle Kundenfreigaben ansehen</button></div></div></div><input type="file" id="kvPhotoIn" accept="image/*" hidden>`;
-  const sc=kv.scenes, i=Math.max(0,Math.min(UI.kvScene||0,sc.length-1)), s=sc[i], pend=kvPendList(kv), sel=UI.kvSel&&KV3D.st(s,UI.kvSel)==='klick'?UI.kvSel:'';
+  const sc=kv.scenes, i=Math.max(0,Math.min(UI.kvScene||0,sc.length-1)), s=sc[i], isFoto=s.type==='foto', pend=kvPendList(kv), sel=UI.kvSel&&KV3D.st(s,UI.kvSel)==='klick'?UI.kvSel:'';
   const em=kv.emails||[], status=`${em.length?`<span class="pill ok">👤 ${em.length} ${em.length>1?'Kundenzugänge':'Kundenzugang'}</span>`:'<span class="pill">kein Kundenzugang</span>'} ${kv.pubAt?`<span class="small muted">veröffentlicht ${esc(fmtD(kv.pubAt.slice(0,10)))} (${esc(kv.pubBy||'')})</span>`:'<span class="small muted">noch nicht veröffentlicht</span>'} ${pend.length?`<span class="pill warn">⏳ ${pend.length} Text${pend.length>1?'e':''} warten auf Freigabe</span>`:''}`;
-  const rows=KV3D.TYPES[s.type].comps.map(([k,l])=>{ const c=(s.comps||{})[k]||{}, on=KV3D.st(s,k), num=(KV3D.clickList(s).find(x=>x.k===k)||{}).n;
+  const rows=KV3D.defs(s).map(([k,l])=>{ const c=(s.comps||{})[k]||{}, on=KV3D.st(s,k), num=(KV3D.clickList(s).find(x=>x.k===k)||{}).n;
     const stt=on!=='klick'?`<span class="small muted">${on==='aus'?'ausgeblendet':'nur grau'}</span>`:c.pend?'<span class="pill warn">⏳ Freigabe</span>':String(c.text||'').trim()?`<span class="pill ok" title="freigegeben ${esc(fmtD(c.tAt||''))} von ${esc(c.aBy||'')}">✓ frei</span>`:'<span class="small muted">kein Text</span>';
     return `<div class="kv-row ${k===sel?'on':''} ${on==='aus'?'off':''}" data-act="kvComp" data-pid="${p.id}" data-i="${i}" data-k="${k}"><span class="kv-n ${on==='klick'?'':'g'}">${num||'·'}</span><div class="kv-rt"><b>${esc(c.label||l)}</b>${on==='klick'?`<div class="small muted kv-tx">${esc(String(c.pend?c.draft||'':c.text||'').slice(0,110))||'–'}</div>`:''}</div>${stt}</div>`; }).join('');
   return `<div class="card"><div class="card-h" style="flex-wrap:wrap;gap:8px"><h3>Kunden-Ansicht</h3><div class="row" style="gap:6px;flex-wrap:wrap">${status}</div><span class="spacer"></span>
       <div class="row" style="gap:6px;flex-wrap:wrap">${fr&&pend.length?`<button class="btn sun sm" data-act="kvApproveAll" data-pid="${p.id}">✓ Texte prüfen & freigeben (${pend.length})</button>`:''}<button class="btn sm" data-act="kvPreview" data-pid="${p.id}">👁 Vorschau wie Kunde</button>${ed?`<button class="btn sm" data-act="kvAccess" data-pid="${p.id}">👤 Kundenzugang</button><button class="btn sm pri" data-act="kvPublish" data-pid="${p.id}">⤴ Veröffentlichen</button>`:''}</div></div>
     <div class="card-b">${em.length?`<div class="kv-accs"><div class="row" style="gap:8px;margin-bottom:4px"><b class="small">Kundenzugänge</b><span class="spacer"></span><button type="button" class="lnk small" data-act="kvRefresh">↻ Status aktualisieren</button><button type="button" class="lnk small" data-act="kvOverview">📋 Alle Kundenfreigaben</button></div>${kvAccRows(p.id,em)}</div>`:`<div class="row" style="justify-content:flex-end;margin-bottom:6px"><button type="button" class="lnk small" data-act="kvOverview">📋 Alle Kundenfreigaben</button></div>`}<div class="kv-tabs">${sc.map((x,j)=>`<button class="chip ${j===i?'on':''}" data-act="kvScene" data-i="${j}">${esc(x.title||KV3D.TYPES[x.type].l)}</button>`).join('')}${ed?`<button class="chip" data-act="kvAddScene" data-pid="${p.id}">+ Skizze</button>`:''}</div>
-      <div class="kv-grid"><div><div class="kvbox" data-pid="${p.id}" data-i="${i}">${KV3D.svg(s,{sel})}</div>
-        ${ed?`<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn sm" data-act="kvEditScene" data-pid="${p.id}" data-i="${i}">${ic('edit')}Skizze</button><button class="btn sm" data-act="kvPhoto" data-pid="${p.id}" data-i="${i}">📷 Echtes Foto hochladen → Skizze</button><button class="btn sm" data-act="kvTexts" data-pid="${p.id}" data-i="${i}">✨ Aktuellen Stand zusammenfassen (alle Skizzen)</button><button class="btn sm ghost" data-act="kvSuggest" data-pid="${p.id}">✨ weitere Skizzen vorschlagen</button></div>`:''}
+      <div class="kv-grid"><div>${isFoto&&ed&&UI.kvDraw?'<div class="hint" style="margin-bottom:8px">✏️ <b>Markieren:</b> Rahmen um ein Teil ziehen (oder antippen) und benennen. Vorhandene Bereiche anklicken zum Bearbeiten oder Löschen.</div>':''}<div class="kvbox" data-pid="${p.id}" data-i="${i}">${KV3D.svg(s,{sel,blob:s.img,img:s.imgData,draw:isFoto&&ed&&UI.kvDraw})}</div>
+        ${ed?`<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px">${isFoto?`<button class="btn sm ${UI.kvDraw?'sun':''}" data-act="kvDrawTog">✏️ ${UI.kvDraw?'Markieren beenden':'Bereiche markieren'}</button><button class="btn sm" data-act="kvPhoto" data-pid="${p.id}" data-i="${i}">📷 Foto ersetzen</button>`:''}<button class="btn sm" data-act="kvEditScene" data-pid="${p.id}" data-i="${i}">${ic('edit')}Skizze</button><button class="btn sm" data-act="kvPhoto" data-pid="${p.id}">📷 Neue Skizze aus Foto</button><button class="btn sm" data-act="kvTexts" data-pid="${p.id}" data-i="${i}">✨ Aktuellen Stand zusammenfassen (alle Skizzen)</button><button class="btn sm ghost" data-act="kvSuggest" data-pid="${p.id}">✨ weitere Skizzen vorschlagen</button></div>`:''}
         ${s.photo?`<div class="small muted" style="margin-top:6px">Vorlage-Foto (nur intern): <a href="/_blob/${esc(s.photo)}" target="_blank" rel="noopener">ansehen</a></div>`:''}</div>
         <div class="kv-list"><div class="small muted" style="margin-bottom:6px">Gelbe Teile mit Nummer kann der Kunde anklicken. Anklicken zum Bearbeiten.</div>${rows}</div></div>
       <div class="small muted" style="margin-top:10px">Texte und Bezeichnungen sieht der Kunde erst nach Freigabe${fr?'':' durch AvE'} und nach „Veröffentlichen“ (danach werden Freigaben automatisch übernommen).${url?` Kundenseite: <a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a>`:''}</div></div></div><input type="file" id="kvPhotoIn" accept="image/*" hidden>`; }
 function kvApproveSheet(pid){ const kv=kvOf(pid), pend=kvPendList(kv); if(!pend.length||!kfreiOk()) return;
-  openSheet({title:'Texte für den Kunden freigeben',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Bitte lesen: Diese Texte sieht der Kunde nach der Freigabe auf seiner Projektseite.</div>${pend.map((x,j)=>{ const d=KV3D.TYPES[x.s.type].comps.find(c=>c[0]===x.k); return `<label class="mt-opt kv-ap"><input type="checkbox" class="ck kv-apc" data-j="${j}" checked><span><b>${esc(x.c.label||d[1])}</b> <span class="small muted">· ${esc(x.s.title||KV3D.TYPES[x.s.type].l)}${x.c.dBy?' · von '+esc(x.c.dBy):''}</span><div>${x.c.draft?esc(x.c.draft):'<i class="muted">(Text entfernen)</i>'}</div>${String(x.c.text||'').trim()&&x.c.text!==x.c.draft?`<div class="small muted">bisher: ${esc(x.c.text)}</div>`:''}</span></label>`; }).join('')}</div>`,saveLabel:'Markierte freigeben',
+  openSheet({title:'Texte für den Kunden freigeben',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Bitte lesen: Diese Texte sieht der Kunde nach der Freigabe auf seiner Projektseite.</div>${pend.map((x,j)=>{ const d=KV3D.defs(x.s).find(c=>c[0]===x.k); return `<label class="mt-opt kv-ap"><input type="checkbox" class="ck kv-apc" data-j="${j}" checked><span><b>${esc(x.c.label||d[1])}</b> <span class="small muted">· ${esc(x.s.title||KV3D.TYPES[x.s.type].l)}${x.c.dBy?' · von '+esc(x.c.dBy):''}</span><div>${x.c.draft?esc(x.c.draft):'<i class="muted">(Text entfernen)</i>'}</div>${String(x.c.text||'').trim()&&x.c.text!==x.c.draft?`<div class="small muted">bisher: ${esc(x.c.text)}</div>`:''}</span></label>`; }).join('')}</div>`,saveLabel:'Markierte freigeben',
     onSave:()=>{ const sel=[...document.querySelectorAll('.kv-apc:checked')].map(c=>pend[+c.dataset.j]).map(x=>({i:x.i,k:x.k})); if(!sel.length){ toast('Nichts markiert.'); return false; } kvApprove(pid,sel); }}); }
 document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('.kvbox:not(.kv-prev) [data-c]'); if(!b) return; const box=b.closest('.kvbox'); UI.kvSel=b.dataset.c; kvCompSheet(box.dataset.pid,+box.dataset.i,b.dataset.c); });
 document.addEventListener('keydown',e=>{ if(e.key!=='Enter'&&e.key!==' ') return; const b=e.target.closest&&e.target.closest('.kvbox:not(.kv-prev) .kc'); if(!b) return; e.preventDefault(); b.dispatchEvent(new MouseEvent('click',{bubbles:true})); });
@@ -8182,6 +8244,7 @@ queueMicrotask(()=>Object.assign(A,{
   kvApproveAll:d=>kvApproveSheet(d.pid),
   kvOverview:()=>kvOverview(),
   kvRefresh:()=>{ kvLoadAcc(true); toast('Status wird aktualisiert …'); },
+  kvDrawTog:()=>{ UI.kvDraw=!UI.kvDraw; render(); },
   kvGo:d=>{ closeSheet(); UI.ptab='kunde'; UI.kvScene=0; go('project',d.id); }
 }));
 /* ========== Lager-Tablet: Gerät zeigt nur noch Material & Lager (vom Admin eingerichtet, Verlassen nur mit PIN) ==========

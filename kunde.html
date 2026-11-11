@@ -110,10 +110,26 @@ const KV3D=(()=>{
     bess:{l:'Batteriespeicher-Container (Anschnitt)',comps:[['racks','Batterie-Racks','klick'],['ems','Energiemanagement (EMS)','klick'],['brand','Brandschutz','grau'],['klima','Klimatisierung','grau'],['pcs','Wechselrichter (PCS)','klick'],['trafo','Transformator','klick']]},
     ladepark:{l:'Ladepark',comps:[['lader','Ladesäulen','klick'],['verteiler','Unterverteilung','klick'],['netz','Netzanschluss & Zähler','klick'],['kabel','Kabelwege','grau']]}
   };
-  const st=(s,k)=>{ const c=((s&&s.comps)||{})[k]; if(c&&c.st) return c.st; const d=(TYPES[s.type]||TYPES.haus).comps.find(x=>x[0]===k); return d?d[2]:'grau'; };
-  const lab=(s,k,pub)=>{ const c=((s&&s.comps)||{})[k]||{}, d=(TYPES[s.type]||TYPES.haus).comps.find(x=>x[0]===k); return (pub?c.label:(c.label||''))||(d?d[1]:k); };
+  TYPES.foto={l:'Foto-Skizze',comps:[]};
+  // Teile einer Szene: bei Foto-Skizzen die selbst markierten Bereiche, sonst die festen Bausteine
+  const defs=s=>s&&s.type==='foto'?(s.spots||[]).map((p,i)=>[p.id,'Bereich '+(i+1),'klick']):(TYPES[s&&s.type]||TYPES.haus).comps;
+  const st=(s,k)=>{ const c=((s&&s.comps)||{})[k]; if(c&&c.st) return c.st; const d=defs(s).find(x=>x[0]===k); return d?d[2]:'grau'; };
+  const lab=(s,k,pub)=>{ const c=((s&&s.comps)||{})[k]||{}, d=defs(s).find(x=>x[0]===k); return (pub?c.label:(c.label||''))||(d?d[1]:k); };
   // Reihenfolge der klickbaren Teile = Nummern in der Skizze
-  const clickList=s=>(TYPES[s.type]||TYPES.haus).comps.filter(([k])=>st(s,k)==='klick').map(([k],i)=>({k,n:i+1,label:lab(s,k)}));
+  const clickList=s=>defs(s).filter(([k])=>st(s,k)==='klick').map(([k],i)=>({k,n:i+1,label:lab(s,k)}));
+  // Foto-Skizze: Bild 1:1 (als Skizze umgerechnet) + markierte Bereiche; o.img = Bildadresse, o.blob = Ablage-ID (App), o.draw = Markier-Modus
+  const PCSS=`.kvph{position:relative;width:100%;border-radius:10px;overflow:hidden;background:#fff;user-select:none;-webkit-user-select:none;touch-action:manipulation}.kvph>img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;pointer-events:none}
+.kvph>svg{position:absolute;inset:0;width:100%;height:100%}.kvph.draw>svg{cursor:crosshair;touch-action:none}
+.kvph .sp{fill:rgba(244,219,2,.30);stroke:#D9BF00;stroke-width:3;vector-effect:non-scaling-stroke}.kvph .kc:hover .sp,.kvph .kc.sel .sp{fill:rgba(244,219,2,.5);stroke:#111}
+.kvph .tmp{fill:rgba(244,219,2,.25);stroke:#111;stroke-width:2;stroke-dasharray:6 4;vector-effect:non-scaling-stroke}
+.kvph.dk{background:#000}.kvph.dk>img{filter:invert(1) grayscale(1) contrast(1.15) brightness(.85)}
+.kvph.dk .sp{fill:rgba(244,219,2,.16);stroke:#F4DB02;stroke-width:2.5}.kvph.dk .kc.k{animation:kvGlow 3.2s ease-in-out infinite}.kvph.dk .kc:hover .sp,.kvph.dk .kc.sel .sp{fill:rgba(244,219,2,.32)}`;
+  function photo(s,o){ const w=+s.w||1000, h=+s.h||750, VH=Math.round(1000*h/w), R=Math.max(16,Math.min(30,Math.max(1000,VH)/42)), dk=o.theme==='dark';
+    const sp=Object.fromEntries((s.spots||[]).map(p=>[p.id,p]));
+    const rects=clickList(s).map(({k,n,label})=>{ const p=sp[k]; if(!p) return ''; const x=p.x*1000, y=p.y*VH, ww=Math.max(4,p.w*1000), hh=Math.max(4,p.h*VH), cx=Math.min(1000-R-2,Math.max(R+2,x+R*.2)), cy=Math.max(R+2,y-R*.2);
+      return `<g class="kc k${o.sel===k?' sel':''}" data-c="${k}" tabindex="0" role="button" aria-label="${escX(label)}"><rect class="sp" x="${f1(x)}" y="${f1(y)}" width="${f1(ww)}" height="${f1(hh)}" rx="6"/></g><g class="bd${o.sel===k?' sel':''}" data-c="${k}" role="button" tabindex="-1" aria-label="${escX(label)}"><circle class="pr" cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(R)}" style="animation-delay:${(n*.37%2.6).toFixed(2)}s"/><circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(R)}" style="stroke-width:3"/><text x="${f1(cx)}" y="${f1(cy)}" style="font-size:${f1(R*1.15)}px">${n}</text></g>`; }).join('');
+    const src=o.img?`src="${escX(o.img)}"`:o.blob?`data-blob="${escX(o.blob)}"`:'';
+    return `<div class="kvph${dk?' dk':''}${o.draw?' draw':''}" style="aspect-ratio:${w}/${h}"><style>${PCSS}</style><img ${src} alt="" draggable="false"><svg class="kv3d${dk?' dk':''}" viewBox="0 0 1000 ${VH}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escX(s.title||'Foto-Skizze')}"><style>${CSS}</style><rect class="bg0" x="0" y="0" width="1000" height="${VH}" fill="transparent"/>${rects}</svg></div>`; }
   function ctx(s){
     const out=[], pts=[], anch={};
     const pr=(x,y,z)=>{ const X=(x-y)*CO*K, Y=((x+y)*.5-z)*K; pts.push([X,Y]); return f1(X)+','+f1(Y); };
@@ -250,7 +266,7 @@ const KV3D=(()=>{
 @media (prefers-reduced-motion:reduce){.kv3d.dk,.kv3d.dk .kc.k,.kv3d.dk .k .cab,.kv3d.dk .bd .pr{animation:none}}
 .kv3d .bd circle{fill:#111;stroke:#F4DB02;stroke-width:2}.kv3d .bd text{fill:#F4DB02;font:700 12px/1 system-ui,sans-serif;text-anchor:middle;dominant-baseline:central}.kv3d .bd{cursor:pointer}
 .kv3d .kc.sel~.bd.sel circle,.kv3d .bd.sel circle{fill:#F4DB02;stroke:#111}.kv3d .bd.sel text{fill:#111}`;
-  function svg(s,o){ o=o||{}; s=s||{}; const type=DRAW[s.type]?s.type:'haus', c=ctx({...s,type});
+  function svg(s,o){ o=o||{}; s=s||{}; if(s.type==='foto') return photo(s,o); const type=DRAW[s.type]?s.type:'haus', c=ctx({...s,type});
     DRAW[type](c,{...s,type});
     let body=c.out.join('');
     // Nummern-Punkte: Größe passend zur Szene (große Szenen werden kleiner dargestellt)
@@ -260,7 +276,7 @@ const KV3D=(()=>{
     if(o.sel) body=body.replace(`class="kc k" data-c="${o.sel}"`,`class="kc k sel" data-c="${o.sel}"`);
     const xs=c.pts.map(p=>p[0]), ys=c.pts.map(p=>p[1]), pad=14, x0=Math.min(...xs)-pad, y0=Math.min(...ys)-pad, w=Math.max(...xs)-x0+pad, h=Math.max(...ys)-y0+pad;
     return `<svg class="kv3d${o.theme==='dark'?' dk':''}" viewBox="${f1(x0)} ${f1(y0)} ${f1(w)} ${f1(h)}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escX(s.title||TYPES[type].l)}"><style>${CSS}</style>${body}${badges}</svg>`; }
-  return {TYPES,svg,st,lab,clickList};
+  return {TYPES,svg,st,lab,clickList,defs};
 })();
 
 window.KV3D=KV3D;
@@ -312,13 +328,13 @@ async function load(){
 }
 // Zahlen im HUD hochzählen
 function count(el){ const to=+el.dataset.to||0; if(RM||!to){ el.textContent=to; return; } let t0=null; const step=t=>{ if(!t0) t0=t; const k=Math.min(1,(t-t0)/900); el.textContent=Math.round(to*(1-Math.pow(1-k,3))); if(k<1) requestAnimationFrame(step); }; requestAnimationFrame(step); }
-function show(){ const r=ROWS[P], d=r.data, s=d.scenes[Math.min(SC,d.scenes.length-1)], list=KV3D.clickList({type:s.type,comps:s.comps});
-  const allK=d.scenes.reduce((a,x)=>a+KV3D.clickList({type:x.type,comps:x.comps}).length,0), infos=d.scenes.reduce((a,x)=>a+Object.values(x.comps||{}).filter(c=>c.text).length,0);
+function show(){ const r=ROWS[P], d=r.data, s=d.scenes[Math.min(SC,d.scenes.length-1)], list=KV3D.clickList(s);
+  const allK=d.scenes.reduce((a,x)=>a+KV3D.clickList(x).length,0), infos=d.scenes.reduce((a,x)=>a+Object.values(x.comps||{}).filter(c=>c.text).length,0);
   app.innerHTML=`${ROWS.length>1?`<div class="tabs" aria-label="Ihre Projekte">${ROWS.map((x,i)=>`<button data-p="${i}" class="${i===P?'on':''}">${esc(x.data.name)}</button>`).join('')}</div>`:''}
     <section class="hero"><div class="ey">// Ihr Projekt</div><h1>${esc(d.name)}</h1><div class="meta">${esc(d.place||'')}</div>
       <div class="hud"><div><small>Bereiche</small><b data-to="${d.scenes.length}">0</b></div><div><small>Komponenten</small><b data-to="${allK}">0</b></div><div><small>Stand</small><b><em>${esc(fmt(r.updated_at||d.stand))}</em></b></div></div></section>
     ${d.scenes.length>1?`<div class="tabs" role="tablist">${d.scenes.map((x,i)=>`<button role="tab" aria-selected="${i===SC}" data-s="${i}" class="${i===SC?'on':''}">${esc(x.title)}</button>`).join('')}</div>`:'<div style="height:22px"></div>'}
-    <div class="grid"><div class="stage" id="pic">${KV3D.svg({type:s.type,n:s.n,comps:s.comps,title:s.title},{theme:'dark'})}<div class="scan"></div><div class="cap">${esc(s.title)} · 3D</div></div>
+    <div class="grid"><div class="stage" id="pic">${KV3D.svg(s,{theme:'dark',img:s.img})}<div class="scan"></div><div class="cap">${esc(s.title)} · 3D</div></div>
       <div><p class="hint">Tippen Sie auf ein leuchtendes Teil oder eine Nummer – dann sehen Sie den aktuellen Stand dazu.</p>
       ${list.map((x,i)=>{ const c=s.comps[x.k]||{}; return `<button class="item" data-c="${x.k}" style="animation-delay:${.15+i*.07}s"><span class="n">${x.n}</span><span class="t"><b>${esc(c.label||x.label)}</b><div class="s ${c.text?'has':''}">${c.text?'● Stand'+(c.at?' · '+fmt(c.at):''):'○ noch kein Stand'}</div></span><span class="ar" aria-hidden="true">→</span></button>`; }).join('')}</div></div>`;
   app.querySelectorAll('.hud b[data-to]').forEach(count);
