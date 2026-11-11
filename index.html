@@ -8034,20 +8034,33 @@ Antworte nur mit JSON: {"type":"","title":"kurz","n":0,"comps":{"teil":"klick|gr
   if(idx!=null&&kv.scenes[idx]){ const o=kv.scenes[idx]; sc.id=o.id; Object.entries(o.comps||{}).forEach(([k,c])=>{ if(KV3D.TYPES[sc.type].comps.some(x=>x[0]===k)) sc.comps[k]={...c,st:(sc.comps[k]||{}).st||c.st}; }); kv.scenes[idx]=sc; UI.kvScene=idx; }
   else { kv.scenes.push(sc); UI.kvScene=kv.scenes.length-1; }
   kvSave(kv,'Skizze aus dem Foto erstellt: '+String(r.seen||KV3D.TYPES[sc.type].l).slice(0,120)); render(); }
-async function kvTexts(pid,idx){ const p=S.projects[pid], kv=kvOf(pid); if(!p||!kv||!kvEditOk()) return; const s=kv.scenes[idx]; if(!s) return;
-  if(!SAMPLE){ toast('Texte vorschlagen braucht die KI – geht nur in der Online-App. Texte bitte von Hand eintragen.'); return; }
-  const list=KV3D.clickList(s); if(!list.length){ toast('In dieser Skizze ist nichts klickbar.'); return; }
-  toast('Claude schreibt Texte für den Kunden …'); let r=null;
-  try{ r=await SAMPLE.json(`Heute ist ${TODAY()}. Unser Kunde kann auf einer Webseite eine 3-D-Skizze seiner Anlage sehen und einzelne Teile anklicken. Schreibe für jedes Teil einen kurzen Text (1–3 Sätze, Sie-Form, freundlich, verständlich für Laien): was das Teil macht und – nur wenn aus den Projektdaten klar – der aktuelle Stand dazu (z. B. geliefert, montiert, in Betrieb, Termin).
-STRENG: keine Preise, keine internen Probleme, keine Schuldzuweisungen, keine Namen von Mitarbeitern oder Lieferanten, keine Kürzel, nichts Vertrauliches. Lieber allgemein als falsch.
+// Mehr Projektdaten für den aktuellen Stand: Termine, Bestellstatus, erledigte Aufgaben mit Datum
+function kvStatusCtx(p){ const t=TODAY();
+  const ev=arr('events').filter(e=>e.pid===p.id&&e.date).sort((a,b)=>String(a.date).localeCompare(String(b.date))).slice(-25).map(e=>(e.date<t?'war ':'geplant ')+e.date+': '+(e.title||'')+(e.notes?' ('+String(e.notes).replace(/\s+/g,' ').slice(0,120)+')':''));
+  const ords=arr('orders').filter(o=>o.pid===p.id).slice(-30).map(o=>{ let st=''; try{ st=orderState(o).k||''; }catch(e){} return (o.date||'')+' · '+st+' · '+(o.items||[]).slice(0,6).map(i=>(i.qty?i.qty+' ':'')+i.art+(i.recv?' (geliefert '+i.recv+')':'')).join('; '); });
+  const done=arr('tasks').filter(x=>x.pid===p.id&&x.done).sort((a,b)=>String(a.doneAt||'').localeCompare(String(b.doneAt||''))).slice(-40).map(x=>String(x.doneAt||'').slice(0,10)+' erledigt: '+x.title+(x.doneNote?' – '+String(x.doneNote).slice(0,120):''));
+  const open=arr('tasks').filter(x=>x.pid===p.id&&!x.done).slice(0,30).map(x=>'offen'+(x.due?' (bis '+x.due+')':'')+': '+x.title);
+  return `Termine:\n${ev.join('\n')||'-'}\nBestellungen/Material (Datum · Status · Positionen):\n${ords.join('\n')||'-'}\nErledigte Aufgaben:\n${done.join('\n')||'-'}\nOffene Aufgaben:\n${open.join('\n')||'-'}`; }
+// Für jede klickbare Komponente (alle Skizzen) den aktuellen Stand zusammenfassen → Entwürfe, die freigegeben werden müssen
+async function kvTexts(pid){ const p=S.projects[pid], kv=kvOf(pid); if(!p||!kv||!kvEditOk()) return;
+  if(!SAMPLE){ toast('Den Stand zusammenfassen kann nur die KI – geht nur in der Online-App. Texte bitte von Hand eintragen.'); return; }
+  const all=[]; (kv.scenes||[]).forEach((s,i)=>KV3D.clickList(s).forEach(x=>all.push({i,k:x.k,id:i+':'+x.k,label:x.label,scene:s.title||KV3D.TYPES[s.type].l,cur:String((s.comps[x.k]||{}).text||'')})));
+  if(!all.length){ toast('In den Skizzen ist nichts klickbar.'); return; }
+  toast('Claude fasst den aktuellen Stand je Komponente zusammen …'); let r=null;
+  try{ r=await SAMPLE.json(`Heute ist ${TODAY()}. Unser Kunde sieht auf seiner Projektseite eine 3-D-Skizze seiner Anlage und kann einzelne Komponenten anklicken. Dort soll er den AKTUELLEN STAND genau dieser Komponente in seinem Projekt sehen.
+Fasse für jede Komponente den aktuellen Stand zusammen: was ist schon passiert und was kommt als Nächstes – mit Datum, wenn bekannt (z. B. bestellt, geliefert, montiert, angeschlossen, geprüft, Termin mit dem Netzbetreiber, Inbetriebnahme geplant am …).
+1–3 kurze Sätze, Sie-Form, freundlich, sachlich. NICHT erklären, was die Komponente ist oder wofür sie da ist. Nur Fakten, die in den Projektdaten stehen; nichts erfinden.
+Gibt es zu einer Komponente keine Information, gib "" zurück (wird dann weggelassen).
+STRENG: keine Preise, keine internen Probleme oder Verzögerungsgründe, keine Schuldzuweisungen, keine Namen von Mitarbeitern oder Lieferanten, keine Kürzel, nichts Vertrauliches.
 ${kvProjCtx(p)}
-Skizze: ${s.title||KV3D.TYPES[s.type].l}
-Teile: ${list.map(x=>x.k+' = '+x.label).join(', ')}
-Antworte nur mit JSON: {"texts":{"teil":"Text"}}`,{modelTier:'default'}); }
+${kvStatusCtx(p)}
+Komponenten (ID = Skizze/Komponente, bisheriger Kundentext):
+${all.map(x=>x.id+' = '+x.scene+' / '+x.label+(x.cur?' (bisher: „'+x.cur.slice(0,160)+'“)':'')).join('\n')}
+Antworte nur mit JSON: {"texts":{"ID":"Stand"}}`,{modelTier:'default'}); }
   catch(e){ toast(SAMPLE_ERR[e&&e.code]||'Claude nicht erreichbar.'); return; }
-  const tx=(r&&r.texts)||{}, kv2=clone(kvOf(pid)), s2=kv2.scenes[idx]; let n=0;
-  list.forEach(({k})=>{ const t=String(tx[k]||'').trim(); if(!t) return; const c=s2.comps[k]=s2.comps[k]||{}; if(String(c.text||'').trim()===t) return; c.draft=t.slice(0,800); c.pend=true; c.dBy='Claude/'+meK(); c.dAt=new Date().toISOString(); n++; });
-  kvSave(kv2,n?n+' Textvorschl'+(n>1?'äge':'ag')+' gespeichert – sichtbar für den Kunden erst nach Freigabe.':'Keine neuen Texte.'); if(n) kvNotify(p,n); render(); }
+  const tx=(r&&r.texts)||{}, kv2=clone(kvOf(pid)); let n=0, none=0;
+  all.forEach(x=>{ const t=String(tx[x.id]||'').trim(); if(!t){ none++; return; } const s2=kv2.scenes[x.i]; s2.comps=s2.comps||{}; const c=s2.comps[x.k]=s2.comps[x.k]||{}; if(String(c.text||'').trim()===t) return; c.draft=t.slice(0,800); c.pend=true; c.dBy='Claude/'+meK(); c.dAt=new Date().toISOString(); n++; });
+  kvSave(kv2,(n?n+' Stand-Text'+(n>1?'e':'')+' zur Freigabe vorbereitet – der Kunde sieht sie erst nach der Freigabe.':'Keine neuen Stände.')+(none?' Zu '+none+' Komponente'+(none>1?'n':'')+' steht noch nichts in den Projektdaten.':'')); if(n) kvNotify(p,n); render(); }
 function kvNotify(p,n){ kvApprovers().forEach(k=>nfSend(k,{type:'kview_pend',c:'projects',rid:p.id,pid:p.id,prio:'action',stamp:TODAY()+'|'+n,title:'Kunden-Ansicht: Freigabe nötig',text:n+' Text'+(n>1?'e':'')+' für die Kunden-Ansicht von „'+p.name+'“ warten auf deine Freigabe.'})); }
 function kvApprove(pid,items){ if(!kfreiOk()){ toast('Freigeben darf nur, wer das Recht „Kunden-Ansicht freigeben“ hat.'); return; }
   const kv=clone(kvOf(pid)); let n=0; items.forEach(({i,k})=>{ const c=((kv.scenes[i]||{}).comps||{})[k]; if(!c||!c.pend) return; c.text=String(c.draft==null?c.text||'':c.draft).trim(); c.aLabel=c.label||''; c.tAt=TODAY(); c.aBy=meK(); c.pend=false; delete c.draft; n++; });
@@ -8056,7 +8069,7 @@ function kvCompSheet(pid,i,k){ const kv=kvOf(pid); if(!kv) return; const s=kv.sc
   const cur=String(c.draft!=null?c.draft:c.text||'');
   openSheet({title:(c.label||d[1])+' · '+(s.title||KV3D.TYPES[s.type].l),wide:1,html:`<div class="fld"><label for="kv_l">Bezeichnung für den Kunden</label><input id="kv_l" class="inp" value="${esc(c.label||'')}" placeholder="${esc(d[1])}" ${ed?'':'disabled'}></div>
     <div class="fld"><label for="kv_s">In der Skizze</label><select id="kv_s" class="inp" ${ed?'':'disabled'}>${Object.entries(KV_ST).map(([v,l])=>`<option value="${v}" ${KV3D.st(s,k)===v?'selected':''}>${l}</option>`).join('')}</select></div>
-    <div class="fld full"><label for="kv_t">Text im Fenster, wenn der Kunde draufklickt</label><textarea id="kv_t" class="inp" rows="5" maxlength="800" ${ed||fr?'':'disabled'} placeholder="z. B. Hier wandelt der Wechselrichter den Gleichstrom der Module in Wechselstrom für Ihr Haus um. Montiert am 12.11.">${esc(cur)}</textarea>
+    <div class="fld full"><label for="kv_t">Aktueller Stand – erscheint, wenn der Kunde draufklickt</label><textarea id="kv_t" class="inp" rows="5" maxlength="800" ${ed||fr?'':'disabled'} placeholder="z. B. Geliefert am 04.11., Montage am 12.11. abgeschlossen. Als Nächstes: Anschluss und Prüfung, geplant für die Woche ab 23.11.">${esc(cur)}</textarea>
       <div class="small muted" style="margin-top:4px">${c.pend?`⏳ Geänderter Text wartet auf Freigabe${c.dBy?' (von '+esc(c.dBy)+')':''}. `:''}${String(c.text||'').trim()?`Der Kunde sieht zurzeit: „${esc(String(c.text).slice(0,200))}“ (freigegeben ${esc(fmtD(c.tAt||''))} von ${esc(c.aBy||'?')}).`:'Der Kunde sieht noch keinen Text.'} Neue oder geänderte Texte und Bezeichnungen erscheinen erst nach der Freigabe${fr?'':' durch AvE'}.</div></div>`,
     saveLabel:ed?'Speichern':'Schließen',
     extraBtn:fr?`<button type="button" class="btn sun" data-act="kvSaveApprove" data-pid="${pid}" data-i="${i}" data-k="${k}">✓ Speichern & freigeben</button>`:'',
@@ -8087,7 +8100,7 @@ function kvInvite(pid){ const p=S.projects[pid], ems=(($('#kv_em')||{}).value||(
   if(!ems.length){ toast('Bitte zuerst die E-Mail-Adresse des Kunden eintragen.'); return; }
   const body=`Guten Tag,
 
-ab sofort können Sie Ihr Projekt „${p.name}“ online verfolgen – mit einer 3-D-Skizze Ihrer Anlage. Klicken Sie einfach auf die gelb markierten Teile, dann sehen Sie, was sie tun und wie der aktuelle Stand ist.
+ab sofort können Sie Ihr Projekt „${p.name}“ online verfolgen – mit einer 3-D-Skizze Ihrer Anlage. Klicken Sie einfach auf die markierten Teile, dann sehen Sie jeweils den aktuellen Stand.
 
 So geht's:
 1. Diese Seite öffnen: ${url||'(Link folgt)'}
@@ -8143,7 +8156,7 @@ function projKview(p){ const kv=kvOf(p.id), ed=kvEditOk(), fr=kfreiOk(), url=kvP
       <div class="row" style="gap:6px;flex-wrap:wrap">${fr&&pend.length?`<button class="btn sun sm" data-act="kvApproveAll" data-pid="${p.id}">✓ Texte prüfen & freigeben (${pend.length})</button>`:''}<button class="btn sm" data-act="kvPreview" data-pid="${p.id}">👁 Vorschau wie Kunde</button>${ed?`<button class="btn sm" data-act="kvAccess" data-pid="${p.id}">👤 Kundenzugang</button><button class="btn sm pri" data-act="kvPublish" data-pid="${p.id}">⤴ Veröffentlichen</button>`:''}</div></div>
     <div class="card-b">${em.length?`<div class="kv-accs"><div class="row" style="gap:8px;margin-bottom:4px"><b class="small">Kundenzugänge</b><span class="spacer"></span><button type="button" class="lnk small" data-act="kvRefresh">↻ Status aktualisieren</button><button type="button" class="lnk small" data-act="kvOverview">📋 Alle Kundenfreigaben</button></div>${kvAccRows(p.id,em)}</div>`:`<div class="row" style="justify-content:flex-end;margin-bottom:6px"><button type="button" class="lnk small" data-act="kvOverview">📋 Alle Kundenfreigaben</button></div>`}<div class="kv-tabs">${sc.map((x,j)=>`<button class="chip ${j===i?'on':''}" data-act="kvScene" data-i="${j}">${esc(x.title||KV3D.TYPES[x.type].l)}</button>`).join('')}${ed?`<button class="chip" data-act="kvAddScene" data-pid="${p.id}">+ Skizze</button>`:''}</div>
       <div class="kv-grid"><div><div class="kvbox" data-pid="${p.id}" data-i="${i}">${KV3D.svg(s,{sel})}</div>
-        ${ed?`<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn sm" data-act="kvEditScene" data-pid="${p.id}" data-i="${i}">${ic('edit')}Skizze</button><button class="btn sm" data-act="kvPhoto" data-pid="${p.id}" data-i="${i}">📷 Echtes Foto hochladen → Skizze</button><button class="btn sm" data-act="kvTexts" data-pid="${p.id}" data-i="${i}">✨ Texte aus Projekt-Updates vorschlagen</button><button class="btn sm ghost" data-act="kvSuggest" data-pid="${p.id}">✨ weitere Skizzen vorschlagen</button></div>`:''}
+        ${ed?`<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn sm" data-act="kvEditScene" data-pid="${p.id}" data-i="${i}">${ic('edit')}Skizze</button><button class="btn sm" data-act="kvPhoto" data-pid="${p.id}" data-i="${i}">📷 Echtes Foto hochladen → Skizze</button><button class="btn sm" data-act="kvTexts" data-pid="${p.id}" data-i="${i}">✨ Aktuellen Stand zusammenfassen (alle Skizzen)</button><button class="btn sm ghost" data-act="kvSuggest" data-pid="${p.id}">✨ weitere Skizzen vorschlagen</button></div>`:''}
         ${s.photo?`<div class="small muted" style="margin-top:6px">Vorlage-Foto (nur intern): <a href="/_blob/${esc(s.photo)}" target="_blank" rel="noopener">ansehen</a></div>`:''}</div>
         <div class="kv-list"><div class="small muted" style="margin-bottom:6px">Gelbe Teile mit Nummer kann der Kunde anklicken. Anklicken zum Bearbeiten.</div>${rows}</div></div>
       <div class="small muted" style="margin-top:10px">Texte und Bezeichnungen sieht der Kunde erst nach Freigabe${fr?'':' durch AvE'} und nach „Veröffentlichen“ (danach werden Freigaben automatisch übernommen).${url?` Kundenseite: <a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a>`:''}</div></div></div><input type="file" id="kvPhotoIn" accept="image/*" hidden>`; }

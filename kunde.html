@@ -319,8 +319,8 @@ function show(){ const r=ROWS[P], d=r.data, s=d.scenes[Math.min(SC,d.scenes.leng
       <div class="hud"><div><small>Bereiche</small><b data-to="${d.scenes.length}">0</b></div><div><small>Komponenten</small><b data-to="${allK}">0</b></div><div><small>Stand</small><b><em>${esc(fmt(r.updated_at||d.stand))}</em></b></div></div></section>
     ${d.scenes.length>1?`<div class="tabs" role="tablist">${d.scenes.map((x,i)=>`<button role="tab" aria-selected="${i===SC}" data-s="${i}" class="${i===SC?'on':''}">${esc(x.title)}</button>`).join('')}</div>`:'<div style="height:22px"></div>'}
     <div class="grid"><div class="stage" id="pic">${KV3D.svg({type:s.type,n:s.n,comps:s.comps,title:s.title},{theme:'dark'})}<div class="scan"></div><div class="cap">${esc(s.title)} · 3D</div></div>
-      <div><p class="hint">Tippen Sie auf ein leuchtendes Teil oder eine Nummer – dann sehen Sie, was es macht und wie der Stand ist.</p>
-      ${list.map((x,i)=>{ const c=s.comps[x.k]||{}; return `<button class="item" data-c="${x.k}" style="animation-delay:${.15+i*.07}s"><span class="n">${x.n}</span><span class="t"><b>${esc(c.label||x.label)}</b><div class="s ${c.text?'has':''}">${c.text?'● Info'+(c.at?' · '+fmt(c.at):''):'○ noch keine Info'}</div></span><span class="ar" aria-hidden="true">→</span></button>`; }).join('')}</div></div>`;
+      <div><p class="hint">Tippen Sie auf ein leuchtendes Teil oder eine Nummer – dann sehen Sie den aktuellen Stand dazu.</p>
+      ${list.map((x,i)=>{ const c=s.comps[x.k]||{}; return `<button class="item" data-c="${x.k}" style="animation-delay:${.15+i*.07}s"><span class="n">${x.n}</span><span class="t"><b>${esc(c.label||x.label)}</b><div class="s ${c.text?'has':''}">${c.text?'● Stand'+(c.at?' · '+fmt(c.at):''):'○ noch kein Stand'}</div></span><span class="ar" aria-hidden="true">→</span></button>`; }).join('')}</div></div>`;
   app.querySelectorAll('.hud b[data-to]').forEach(count);
   app.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{ P=+b.dataset.p; SC=0; show(); });
   app.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ SC=+b.dataset.s; show(); });
@@ -331,7 +331,7 @@ function show(){ const r=ROWS[P], d=r.data, s=d.scenes[Math.min(SC,d.scenes.leng
 function hi(k,on){ const g=document.querySelector('#pic svg .kc[data-c="'+k+'"]'), b=document.querySelector('#pic svg .bd[data-c="'+k+'"]'); if(g) g.classList.toggle('sel',on); if(b) b.classList.toggle('sel',on); }
 function open(s,k,list){ const c=s.comps[k]||{}, x=list.find(y=>y.k===k); if(!x) return;
   $('#dN').textContent=x.n; $('#dT').textContent=c.label||x.label; $('#dE').textContent='// '+(s.title||'')+' · Komponente '+String(x.n).padStart(2,'0'); $('#dS').textContent=c.at?'STAND '+fmt(c.at):'';
-  const txt=c.text||'Zu diesem Teil gibt es noch keine Informationen. Wir ergänzen sie, sobald es Neuigkeiten gibt.', B=$('#dB'); clearInterval(TYPE_T);
+  const txt=c.text||'Zu dieser Komponente gibt es noch keinen neuen Stand. Wir ergänzen ihn, sobald es Neuigkeiten gibt.', B=$('#dB'); clearInterval(TYPE_T);
   const d=$('#dlg'); if(d.showModal) d.showModal(); else d.setAttribute('open','');
   if(RM){ B.textContent=txt; return; } let i=0; B.innerHTML='<span class="cur"></span>'; const step=Math.max(1,Math.round(txt.length/90));
   TYPE_T=setInterval(()=>{ i=Math.min(txt.length,i+step); B.innerHTML=esc(txt.slice(0,i))+'<span class="cur"></span>'; if(i>=txt.length){ clearInterval(TYPE_T); setTimeout(()=>{ const cu=B.querySelector('.cur'); if(cu) cu.remove(); },1200); } },16); }
