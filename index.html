@@ -7752,7 +7752,7 @@ const PFOLDERS=[['mail','Korrespondenz'],['angebot','Angebote'],['ab','Auftragsb
 /* ---------- Eigene Ordner im Projekt (jeder darf anlegen, umbenennen, löschen) ----------
    S.pfold[id] = {id,pid,name,by,at}; Datei: f.folder = Ordner-ID. Dateien ohne eigenen Ordner bleiben in den automatischen Ordnern (nach Art). */
 // Standard-Ordner: erscheinen in JEDEM Projekt (auch in alten), ohne dass etwas in der Datenbank angelegt werden muss
-const PF_STD=['00 - Checklisten & Vorlagen','01 - Aufmaß Pläne & Bilder','02 - Planung, PV Sol & Berichte','03 - Kostenplanung','04 - ERP Dokumente, Angebote & Rechnungen','05 - Baumappe, Bilder & Berichte','06 - EVU, ASA, IBN','07 - Versicherungen','08 - Verträge','09 - Abnahme & Dokumentation'];
+const PF_STD=['01 - Aufmaß Pläne & Bilder','02 - Planung, PV Sol & Berichte','03 - Kostenplanung','04 - ERP Dokumente Angebote & Rechnungen','05 - Lieferanten','06 - Baumappe & Bilder','07 - EVU, ASA, IBN','08 - Abnahme & Dokumentation'];
 const pfStd=pid=>PF_STD.map(n=>({id:'std:'+n.slice(0,2),pid,name:n,std:true}));
 const pfOf=pid=>pfStd(pid).concat(arr('pfold').filter(x=>x.pid===pid).sort((a,b)=>String(a.name).localeCompare(String(b.name),'de',{numeric:true})));
 const pfById=(id,pid)=>String(id||'').startsWith('std:')?pfStd(pid).find(x=>x.id===id)||null:(S.pfold||{})[id]||null;
