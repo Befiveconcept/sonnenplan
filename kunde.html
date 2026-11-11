@@ -110,9 +110,9 @@ const KV3D=(()=>{
     bess:{l:'Batteriespeicher-Container (Anschnitt)',comps:[['racks','Batterie-Racks','klick'],['ems','Energiemanagement (EMS)','klick'],['brand','Brandschutz','grau'],['klima','Klimatisierung','grau'],['pcs','Wechselrichter (PCS)','klick'],['trafo','Transformator','klick']]},
     ladepark:{l:'Ladepark',comps:[['lader','Ladesäulen','klick'],['verteiler','Unterverteilung','klick'],['netz','Netzanschluss & Zähler','klick'],['kabel','Kabelwege','grau']]}
   };
-  TYPES.foto={l:'Foto-Skizze',comps:[]};
-  // Teile einer Szene: bei Foto-Skizzen die selbst markierten Bereiche, sonst die festen Bausteine
-  const defs=s=>s&&s.type==='foto'?(s.spots||[]).map((p,i)=>[p.id,'Bereich '+(i+1),'klick']):(TYPES[s&&s.type]||TYPES.haus).comps;
+  TYPES.foto={l:'Foto-Skizze',comps:[]}; TYPES.custom={l:'3D-Skizze aus Foto',comps:[]};
+  // Teile einer Szene: Foto-Skizze = markierte Bereiche, 3D aus Foto = von der KI erkannte Teile, sonst die festen Bausteine
+  const defs=s=>s&&s.type==='foto'?(s.spots||[]).map((p,i)=>[p.id,'Bereich '+(i+1),'klick']):s&&s.type==='custom'?(s.parts||[]).map(p=>[p.k,p.label||p.k,'klick']):(TYPES[s&&s.type]||TYPES.haus).comps;
   const st=(s,k)=>{ const c=((s&&s.comps)||{})[k]; if(c&&c.st) return c.st; const d=defs(s).find(x=>x[0]===k); return d?d[2]:'grau'; };
   const lab=(s,k,pub)=>{ const c=((s&&s.comps)||{})[k]||{}, d=defs(s).find(x=>x[0]===k); return (pub?c.label:(c.label||''))||(d?d[1]:k); };
   // Reihenfolge der klickbaren Teile = Nummern in der Skizze
@@ -155,6 +155,26 @@ const KV3D=(()=>{
     return c;
   }
   const DRAW={
+    // Freie Szene aus Bausteinen (von der KI aus einem Foto nachgebaut): ground, box, roof, roofpanels, panels, room, cable
+    custom(c,s){ const E=(s.els||[]).slice(0,90), M={wall:'b',device:'m',dark:'d'};
+      const N=v=>{ v=+v; return isFinite(v)?Math.max(-60,Math.min(150,v)):0; }, P=v=>Math.max(0,N(v)), L=(v,a,b)=>Math.max(a,Math.min(b,Math.round(+v)||a));
+      const key=e=>{ if(!e||typeof e!=='object') return 0; if(e.t==='ground') return -1e9; if(e.t==='room') return N(e.x)+N(e.y)-.5;
+        if(e.t==='cable'){ const p=(Array.isArray(e.pts)&&e.pts[0])||[0,0,0]; return N(p[0])+N(p[1])-.2; } if(e.t==='roofpanels'){ const r=E[e.roof]; return r&&r.t==='roof'?key(r)+.01:0; }
+        return N(e.x)+P(e.w)/2+N(e.y)+P(e.d)/2+(e.t==='roof'?.005:0); };
+      E.map((e,i)=>({e,i,k:key(e)})).sort((a,b)=>a.k-b.k||a.i-b.i).forEach(({e})=>{ if(!e||typeof e!=='object') return;
+        const part=typeof e.part==='string'&&/^[a-z0-9_-]{1,24}$/i.test(e.part)?e.part:'';
+        const x=N(e.x),y=N(e.y),z=N(e.z),w=Math.max(.05,P(e.w)),d=Math.max(.05,P(e.d)),h=Math.max(.05,P(e.h));
+        c.g(part||null,()=>{ switch(e.t){
+          case 'ground': c.poly([[-1,-1,0],[w+1,-1,0],[w+1,d+1,0],[-1,d+1,0]],'gnd'); break;
+          case 'box': c.box(x,y,z,w,d,h,M[e.m]||'m'); if(e.screen) c.fy(y+d,x+w*.2,x+w*.8,z+h*.62,z+h*.82,'d l'); if(part) c.anchor(part,x+w/2,y+d/2,z+h); break;
+          case 'roof': c.poly([[x+w,y,z],[x+w,y+d,z],[x+w,y+d/2,z+h]],'b r'); c.poly([[x,y+d/2,z+h],[x+w,y+d/2,z+h],[x+w,y+d,z],[x,y+d,z]],'m t'); if(part) c.anchor(part,x+w/2,y+d*.75,z+h/2); break;
+          case 'roofpanels': { const r=E[e.roof]; if(!r||r.t!=='roof') break; const rx=N(r.x),ry=N(r.y),rz=N(r.z),rw=Math.max(.5,P(r.w)),rd=Math.max(.5,P(r.d)),rh=Math.max(.1,P(r.h)), zr=yy=>rz+rh-(yy-(ry+rd/2))*rh/(rd/2)+.08, y0=ry+rd/2+rd*.05, y1=ry+rd-rd*.05;
+            c.grid([rx+rw*.06,y0,zr(y0)],[rx+rw*.94,y0,zr(y0)],[rx+rw*.94,y1,zr(y1)],[rx+rw*.06,y1,zr(y1)],L(e.cols,1,24),L(e.rows,1,8),'d'); if(part) c.anchor(part,rx+rw/2,(y0+y1)/2,zr((y0+y1)/2)+.3); break; }
+          case 'panels': { const hb=Math.max(.2,P(e.hb)||2), hf=Math.max(.1,P(e.hf)||1); for(let px=x+.3;px<x+w;px+=Math.max(1.5,w/8)){ c.line([px,y+.2,0],[px,y+.2,hb-.05],'ln'); c.line([px,y+d-.2,0],[px,y+d-.2,hf-.05],'ln'); }
+            c.grid([x,y,hb],[x+w,y,hb],[x+w,y+d,hf],[x,y+d,hf],L(e.cols,1,40),L(e.rows,1,6),'d',.06); if(part) c.anchor(part,x+w/2,y+d/2,(hb+hf)/2+.2); break; }
+          case 'room': c.room(x,y,w,d,h); break;
+          case 'cable': { const pts=(Array.isArray(e.pts)?e.pts:[]).slice(0,20).filter(p=>Array.isArray(p)).map(p=>[N(p[0]),N(p[1]),N(p[2])]); if(pts.length>1){ c.path(pts,'cab'); if(part) c.anchor(part,pts[0][0],pts[0][1],pts[0][2]+.3); } break; }
+        } }); }); },
     haus(c,s){ const n=Math.max(6,Math.min(24,+s.n||12)), cols=Math.max(3,Math.min(9,Math.round(n/2))), rows=n>18?3:2;
       c.poly([[-3,-3,0],[25,-3,0],[25,14,0],[-3,14,0]],'gnd');
       c.box(0,0,0,11,8,5,'b'); c.fy(8,1.3,2.9,1.6,3.4); c.fy(8,4.6,6,0,2.4,'w2'); c.fy(8,7.8,9.6,1.6,3.4); c.fx(11,1.5,3.1,1.6,3.4);
@@ -270,7 +290,7 @@ const KV3D=(()=>{
     DRAW[type](c,{...s,type});
     let body=c.out.join('');
     // Nummern-Punkte: Größe passend zur Szene (große Szenen werden kleiner dargestellt)
-    const bx=c.pts.map(p=>p[0]), by=c.pts.map(p=>p[1]), sc=Math.max(.8,Math.max(Math.max(...bx)-Math.min(...bx),Math.max(...by)-Math.min(...by))/520), R=10*sc;
+    const bx=c.pts.map(p=>p[0]), by=c.pts.map(p=>p[1]), sc=Math.max(.35,Math.max(Math.max(...bx)-Math.min(...bx),Math.max(...by)-Math.min(...by))/520), R=10*sc;
     const badges=clickList({...s,type}).map(({k,n,label})=>{ const a=c.anch[k]; if(!a) return ''; const X=(a[0]-a[1])*CO*K, Y=((a[0]+a[1])*.5-a[2])*K-R*1.4; c.pts.push([X-R,Y-R-2],[X+R,Y+R]);
       return `<g class="bd${o.sel===k?' sel':''}" data-c="${k}" role="button" tabindex="-1" aria-label="${escX(label)}"><line x1="${f1(X)}" y1="${f1(Y+R*.9)}" x2="${f1(X)}" y2="${f1(Y+R*1.4)}" stroke="#111" stroke-width="${f1(1.5*sc)}"/><circle class="pr" cx="${f1(X)}" cy="${f1(Y)}" r="${f1(R)}" style="animation-delay:${(n*0.37%2.6).toFixed(2)}s"/><circle cx="${f1(X)}" cy="${f1(Y)}" r="${f1(R)}" style="stroke-width:${f1(2*sc)}"/><text x="${f1(X)}" y="${f1(Y)}" style="font-size:${f1(12*sc)}px">${n}</text></g>`; }).join('');
     if(o.sel) body=body.replace(`class="kc k" data-c="${o.sel}"`,`class="kc k sel" data-c="${o.sel}"`);
