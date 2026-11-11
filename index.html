@@ -653,6 +653,7 @@ body.kiosk .app{display:block}body.kiosk .main{padding:0}body.kiosk .wrap{max-wi
 .ks-log{margin-top:22px;display:flex;flex-direction:column;gap:4px}
 /* Kunden-Ansicht */
 .kv-stale{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between;background:var(--sun-soft,#FFF6B8);color:#1d1d1d;border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:14px}
+.pf-bar{gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 10px}.pf-own>summary h3{color:var(--ink)}.pf-own{border-left:3px solid var(--sun,#F4DB02)}.pf-std{border-left-color:#E8B200}.pf.pf-std>summary{padding-top:8px;padding-bottom:8px}.pf-sep{margin:14px 0 6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}#fkBar .fk-own{font-weight:600}
 .kv-mg{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}.kv-mg.del{opacity:.5}.kv-mg.del .inp{text-decoration:line-through}.kv-mg-o{display:flex;flex-direction:column;gap:2px}.kv-mg-t{flex:1;min-width:0}
 .kv-accs{border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin-bottom:12px;background:var(--sunken)}.kv-acc{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:3px 0}.kv-acc-m{font-weight:600;min-width:0;overflow-wrap:anywhere}
 .kv-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.kv-tabs .chip.on{background:#111;color:#F4DB02;border-color:#111}
@@ -2288,8 +2289,8 @@ const ICONS = {download:'<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M
 const ic = (n,extra='')=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ${extra}>${ICONS[n]}</svg>`;
 
 /* ========== Datenhaltung (gemeinsame Datenbank, sonst lokal) ========== */
-const COLLS = ['projects','tasks','orders','offers','events','reports','plan','log','files','stock','picks','lager','inv','chat','meetings','hrtime','hrabs','hrstaff','hrdocs','sales','pins','psum','pms','kview'];
-const S = {kview:{},lager:{},inv:{},stock:{},picks:{},pins:{},projects:{},tasks:{},orders:{},offers:{},events:{},reports:{},plan:{},log:{},hrtime:{},hrabs:{},hrstaff:{},hrdocs:{},kunden:{},lieferanten:{},artikel:{},sales:{},fin:{},anlagen:{},config:{staff:[]}};
+const COLLS = ['projects','tasks','orders','offers','events','reports','plan','log','files','stock','picks','lager','inv','chat','meetings','hrtime','hrabs','hrstaff','hrdocs','sales','pins','psum','pms','kview','pfold'];
+const S = {kview:{},pfold:{},lager:{},inv:{},stock:{},picks:{},pins:{},projects:{},tasks:{},orders:{},offers:{},events:{},reports:{},plan:{},log:{},hrtime:{},hrabs:{},hrstaff:{},hrdocs:{},kunden:{},lieferanten:{},artikel:{},sales:{},fin:{},anlagen:{},config:{staff:[]}};
 let DB=null, MODE='init', READONLY=false;
 const LS_KEY='sonnenplan-v1';
 function lsGet(k){ try{ return localStorage.getItem(k) }catch(e){ return null } }
@@ -6391,11 +6392,12 @@ let FDRAG=null;
 document.addEventListener('dragstart',e=>{ const r=e.target.closest&&e.target.closest('[data-fdrag]'); if(!r) return; const id=r.dataset.fdrag; FDRAG=fselHas(id)&&FSEL.size>1?[...FSEL].filter(x=>S.files[x]):[id];
   try{ e.dataTransfer.setData('text/x-file',id); e.dataTransfer.effectAllowed='move'; }catch(x){}
   let bar=$('#fkBar'); if(!bar){ bar=document.createElement('div'); bar.id='fkBar'; document.body.appendChild(bar); }
-  const cur=new Set(FDRAG.map(x=>(S.files[x]||{}).kind)); bar.innerHTML=`<span>${FDRAG.length>1?FDRAG.length+' Dateien':'Datei'} verschieben nach:</span>${Object.entries(FILE_KINDS).map(([k,l])=>`<div class="fk-t ${cur.size===1&&cur.has(k)?'cur':''}" data-fkind-drop="${k}">${esc(l)}</div>`).join('')}`; bar.classList.add('on'); });
+  const cur=new Set(FDRAG.map(x=>(S.files[x]||{}).kind)), pids=[...new Set(FDRAG.map(x=>(S.files[x]||{}).pid))], fo=pids.length===1&&pids[0]?pfOf(pids[0]):[];
+  bar.innerHTML=`<span>${FDRAG.length>1?FDRAG.length+' Dateien':'Datei'} verschieben nach:</span>${fo.map(o=>`<div class="fk-t fk-own" data-ffold-drop="${o.id}">📂 ${esc(o.name)}</div>`).join('')}${Object.entries(FILE_KINDS).map(([k,l])=>`<div class="fk-t ${cur.size===1&&cur.has(k)?'cur':''}" data-fkind-drop="${k}">${esc(l)}</div>`).join('')}`; bar.classList.add('on'); });
 document.addEventListener('dragend',()=>{ FDRAG=null; const b=$('#fkBar'); if(b) b.classList.remove('on'); document.querySelectorAll('.fk-over').forEach(x=>x.classList.remove('fk-over')); });
 document.addEventListener('dragover',e=>{ if(!FDRAG) return; const t=e.target.closest&&e.target.closest('[data-fkind-drop]'); if(!t) return; e.preventDefault(); document.querySelectorAll('.fk-over').forEach(x=>x!==t&&x.classList.remove('fk-over')); t.classList.add('fk-over'); });
-document.addEventListener('drop',e=>{ if(!FDRAG) return; const t=e.target.closest&&e.target.closest('[data-fkind-drop]'); if(!t) return; e.preventDefault(); e.stopPropagation(); const k=t.dataset.fkindDrop, ids=FDRAG.filter(id=>S.files[id]&&S.files[id].kind!==k);
-  ids.forEach(id=>CHG.fileKind({id},{value:k})); FDRAG=null; const b=$('#fkBar'); if(b) b.classList.remove('on'); toast(ids.length?(ids.length>1?ids.length+' Dateien':'Datei')+' verschoben nach „'+FILE_KINDS[k]+'“.':'Ist schon in „'+FILE_KINDS[k]+'“.'); },true);
+document.addEventListener('drop',e=>{ if(!FDRAG) return; const t=e.target.closest&&e.target.closest('[data-fkind-drop]'); if(!t) return; e.preventDefault(); e.stopPropagation(); const k=t.dataset.fkindDrop, ids=FDRAG.filter(id=>S.files[id]&&(S.files[id].kind!==k||S.files[id].folder));
+  ids.forEach(id=>{ if(S.files[id].folder&&mayWrite('files')){ const c=clone(S.files[id]); delete c.folder; put('files',c); } if(S.files[id].kind!==k) CHG.fileKind({id},{value:k}); }); /* aus eigenem Ordner zurück in die automatische Rubrik */ FDRAG=null; const b=$('#fkBar'); if(b) b.classList.remove('on'); toast(ids.length?(ids.length>1?ids.length+' Dateien':'Datei')+' verschoben nach „'+FILE_KINDS[k]+'“.':'Ist schon in „'+FILE_KINDS[k]+'“.'); },true);
 /* ---------- Download je Datei, Mehrfachauswahl, Kundenmappe (ein schönes PDF zum Verschicken) ---------- */
 const EXT_OF_MIME={'application/pdf':'.pdf','image/jpeg':'.jpg','image/png':'.png','image/webp':'.webp','image/heic':'.heic','application/vnd.ms-outlook':'.msg','text/plain':'.txt'};
 const fileDlName=f=>{ const n=String(f.orig||f.name||'Datei').replace(/[\\/:*?"<>|]+/g,'_'); return /\.[a-z0-9]{2,5}$/i.test(n)?n:n+(EXT_OF_MIME[f.mime]||(f.asset?'':'.txt')); };
@@ -6414,7 +6416,7 @@ var FSEL=new Set(); const fselHas=id=>FSEL.has(id);
 function fselBar(){ let b=$('#fselBar'); const show=FSEL.size&&(UI.view==='files'||UI.view==='project');
   if(!show){ if(b) b.remove(); return; } if(!b){ b=document.createElement('div'); b.id='fselBar'; document.body.appendChild(b); }
   const fs=[...FSEL].map(fileById).filter(Boolean), n=fs.length;
-  b.innerHTML=`<b>${n} ausgewählt</b><button type="button" class="btn sun sm" data-act="mappeNew">📘 Kundenmappe erstellen</button><button type="button" class="btn sm" data-act="fselDl">⬇ Alle herunterladen</button><button type="button" class="btn ghost sm" data-act="fselClear">Auswahl aufheben</button>`; }
+  b.innerHTML=`<b>${n} ausgewählt</b>${UI.view==='project'&&fs.some(f=>S.files[f.id])?'<button type="button" class="btn sm" data-act="pfMoveSel">📂 In Ordner</button>':''}<button type="button" class="btn sun sm" data-act="mappeNew">📘 Kundenmappe erstellen</button><button type="button" class="btn sm" data-act="fselDl">⬇ Alle herunterladen</button><button type="button" class="btn ghost sm" data-act="fselClear">Auswahl aufheben</button>`; }
 // ---- Kundenmappe ----
 const MAPPE_OK=f=>!!f&&(f.asset&&(/pdf|image\//.test(f.mime||'')||/\.(pdf|jpe?g|png|webp|gif)$/i.test(f.name||''))||(!f.asset&&!f.virtual&&f.text));
 function mappeForm(){ const fs=[...FSEL].map(fileById).filter(Boolean); if(!fs.length) return toast('Bitte zuerst Dateien auswählen.');
@@ -7747,12 +7749,53 @@ function matStatus(p){
 
 /* ========== Projekt: Dateien nach Ordnern, Mini-Ablage ========== */
 const PFOLDERS=[['mail','Korrespondenz'],['angebot','Angebote'],['ab','Auftragsbestätigungen'],['rechnung','Rechnungen'],['lieferschein','Lieferscheine'],['bestellung','Bestellungen'],['vertrag','Verträge'],['plan','Pläne / Zeichnungen'],['foto','Fotos'],['rapport','Tagesrapporte'],['kommi','Kommissionierung'],['sonst','Sonstiges']];
+/* ---------- Eigene Ordner im Projekt (jeder darf anlegen, umbenennen, löschen) ----------
+   S.pfold[id] = {id,pid,name,by,at}; Datei: f.folder = Ordner-ID. Dateien ohne eigenen Ordner bleiben in den automatischen Ordnern (nach Art). */
+// Standard-Ordner: erscheinen in JEDEM Projekt (auch in alten), ohne dass etwas in der Datenbank angelegt werden muss
+const PF_STD=['00 - Checklisten & Vorlagen','01 - Aufmaß Pläne & Bilder','02 - Planung, PV Sol & Berichte','03 - Kostenplanung','04 - ERP Dokumente, Angebote & Rechnungen','05 - Baumappe, Bilder & Berichte','06 - EVU, ASA, IBN','07 - Versicherungen','08 - Verträge','09 - Abnahme & Dokumentation'];
+const pfStd=pid=>PF_STD.map(n=>({id:'std:'+n.slice(0,2),pid,name:n,std:true}));
+const pfOf=pid=>pfStd(pid).concat(arr('pfold').filter(x=>x.pid===pid).sort((a,b)=>String(a.name).localeCompare(String(b.name),'de',{numeric:true})));
+const pfById=(id,pid)=>String(id||'').startsWith('std:')?pfStd(pid).find(x=>x.id===id)||null:(S.pfold||{})[id]||null;
+const pfFolderOk=f=>{ if(!f||!f.folder) return false; const o=pfById(f.folder,f.pid); return !!o&&o.pid===f.pid; };
+function pfNew(pid,then){ openSheet({title:'Neuer Ordner',fields:[{k:'name',label:'Name des Ordners',req:1,ph:'z. B. Netzbetreiber, Statik, Fotos Montage, Abnahme'}],saveLabel:'Ordner anlegen',
+  onSave:v=>{ const name=String(v.name||'').trim().slice(0,60); if(pfOf(pid).some(x=>x.name.toLowerCase()===name.toLowerCase())){ toast('Einen Ordner „'+name+'“ gibt es in diesem Projekt schon.'); return false; } /* inkl. Standard-Ordner */
+    const f={id:uid(),pid,name,by:meK(),at:new Date().toISOString()}; put('pfold',f); UI.pfOpen={...(UI.pfOpen||{}),[pid+'f:'+f.id]:true}; toast('Ordner „'+name+'“ angelegt. Dateien einfach hineinziehen oder markieren und „📂 In Ordner“ wählen.'); if(then) setTimeout(()=>then(f.id),60); }}); }
+function pfRename(id){ const o=S.pfold[id]; if(!o) return; openSheet({title:'Ordner umbenennen',fields:[{k:'name',label:'Name',req:1}],value:{name:o.name},saveLabel:'Speichern',
+  onSave:v=>{ const name=String(v.name||'').trim().slice(0,60); if(pfOf(o.pid).some(x=>x.id!==id&&x.name.toLowerCase()===name.toLowerCase())){ toast('Den Namen gibt es schon.'); return false; } put('pfold',{...clone(o),name}); toast('Umbenannt.'); }}); }
+function pfDel(id){ const o=S.pfold[id]; if(!o) return; const inF=arr('files').filter(f=>f.folder===id);
+  confirmSheet('Ordner „'+o.name+'“ löschen?'+(inF.length?' Die '+inF.length+' Datei'+(inF.length>1?'en':'')+' darin werden NICHT gelöscht – sie kommen zurück in die automatischen Ordner.':''),()=>{
+    inF.forEach(f=>{ if(mayWrite('files')){ const c=clone(f); delete c.folder; put('files',c); } }); del('pfold',id); toast('Ordner gelöscht.'+(inF.length&&!mayWrite('files')?' (Dateien bleiben verknüpft, bis jemand mit Datei-Rechten sie verschiebt.)':'')); }); }
+function pfMove(ids,folder){ if(!mayWrite('files')) return toast('Zum Verschieben von Dateien fehlt das Recht „Datenablage bearbeiten“.');
+  const fs=ids.map(id=>S.files[id]).filter(Boolean); if(!fs.length) return toast('Diese Einträge lassen sich nicht verschieben (z. B. Bestellungen oder Angebote erscheinen automatisch).');
+  let n=0; fs.forEach(f=>{ if((f.folder||'')===(folder||'')) return; const c=clone(f); if(folder) c.folder=folder; else delete c.folder; put('files',c); n++; });
+  toast(n?(n>1?n+' Dateien':'Datei')+(folder?' in „'+((pfById(folder,fs[0].pid)||{}).name||'')+'“ verschoben.':' aus dem Ordner genommen.'):'Liegt schon dort.'); if(n) setTimeout(render,30); }
+function pfMoveSheet(ids){ const fs=ids.map(id=>S.files[id]).filter(Boolean); if(!fs.length) return toast('Bitte echte Dateien auswählen (Bestellungen, Angebote usw. erscheinen automatisch).'); const pids=[...new Set(fs.map(f=>f.pid))];
+  if(pids.length!==1||!pids[0]) return toast('Bitte nur Dateien aus einem Projekt auswählen.'); const pid=pids[0], fo=pfOf(pid);
+  openSheet({title:(fs.length>1?fs.length+' Dateien':'Datei')+' in Ordner verschieben',html:`<div class="fld full"><div class="pf-pick">${fo.map(o=>`<button type="button" class="k-row" data-act="pfMoveTo" data-f="${o.id}">📂 <b>${esc(o.name)}</b> <span class="small muted">${arr('files').filter(f=>f.folder===o.id).length} Dateien</span></button>`).join('')}
+    <button type="button" class="k-row" data-act="pfMoveTo" data-f="">↩ Aus dem Ordner nehmen (automatisch nach Art)</button></div></div>`,saveLabel:'Schließen',onSave:()=>{},
+    extraBtn:`<button type="button" class="btn sun" data-act="pfNewMove" data-pid="${pid}">+ Neuer Ordner</button>`});
+  PF_MOVE=ids; }
+let PF_MOVE=[];
 function projFilesHtml(p){
-  const fl=allFiles().filter(f=>f.pid===p.id);
-  if(!fl.length) return `<div class="card"><div class="empty">Noch keine Dateien. Einfach Dateien oder Outlook-Mails oben ablegen.</div></div>`;
-  return PFOLDERS.map(([k,l])=>{ const g=fl.filter(f=>(FILE_KINDS[f.kind]?f.kind:'sonst')===k); if(!g.length) return ''; const open=UI.pfOpen&&UI.pfOpen[p.id+k]!==undefined?UI.pfOpen[p.id+k]:k==='mail';
+  const fl=allFiles().filter(f=>f.pid===p.id), fo=pfOf(p.id);
+  const bar=`<div class="row pf-bar"><button type="button" class="btn sm" data-act="pfNew" data-pid="${p.id}">📂 + Ordner</button><span class="small muted">Eigene Ordner anlegen – Dateien hineinziehen oder markieren und „📂 In Ordner“ wählen.</span></div>`;
+  const own=fo.map(o=>{ const g=fl.filter(f=>f.folder===o.id), k='f:'+o.id, open=UI.pfOpen&&UI.pfOpen[p.id+k]!==undefined?UI.pfOpen[p.id+k]:!o.std||g.length>0&&g.length<=8;
+    return `<details class="card pf pf-own ${o.std?'pf-std':''}" ${open?'open':''} data-pf="${p.id+k}"><summary class="card-h" data-ffold-drop="${o.id}"><h3>📂 ${esc(o.name)}</h3><span class="cnt-b">${g.length}</span><span class="spacer"></span>${o.std?'':`<button type="button" class="icon-btn sm" data-act="pfRename" data-id="${o.id}" title="Umbenennen" aria-label="Ordner umbenennen">${ic('edit')}</button><button type="button" class="icon-btn sm" data-act="pfDel" data-id="${o.id}" title="Ordner löschen (Dateien bleiben erhalten)" aria-label="Ordner löschen">${ic('x')}</button>`}</summary>${g.length?filesTable(g,true):'<div class="empty small" style="padding:14px">Leer – Dateien hierher ziehen.</div>'}</details>`; }).join('');
+  const rest=fl.filter(f=>!pfFolderOk(f));
+  return bar+own+(rest.length?'<div class="pf-sep">Bisherige Ablage – automatisch nach Art sortiert</div>':'')+PFOLDERS.map(([k,l])=>{ const g=rest.filter(f=>(FILE_KINDS[f.kind]?f.kind:'sonst')===k); if(!g.length) return ''; const open=UI.pfOpen&&UI.pfOpen[p.id+k]!==undefined?UI.pfOpen[p.id+k]:k==='mail';
     return `<details class="card pf" ${open?'open':''} data-pf="${p.id+k}"><summary class="card-h" data-fkind-drop="${k}"><h3>📁 ${l}</h3><span class="cnt-b">${g.length}</span></summary>${filesTable(g,true)}</details>`; }).join('');
 }
+// Knöpfe in der Ordner-Kopfzeile sollen den Ordner nicht auf-/zuklappen
+document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('summary [data-act]')) e.preventDefault(); },true);
+// Ziehen auf einen eigenen Ordner
+document.addEventListener('dragover',e=>{ if(!FDRAG) return; const t=e.target.closest&&e.target.closest('[data-ffold-drop]'); if(!t) return; e.preventDefault(); document.querySelectorAll('.fk-over').forEach(x=>x!==t&&x.classList.remove('fk-over')); t.classList.add('fk-over'); });
+document.addEventListener('drop',e=>{ if(!FDRAG) return; const t=e.target.closest&&e.target.closest('[data-ffold-drop]'); if(!t) return; e.preventDefault(); e.stopPropagation(); const ids=FDRAG.slice(); FDRAG=null; const b=$('#fkBar'); if(b) b.classList.remove('on'); pfMove(ids,t.dataset.ffoldDrop); },true);
+queueMicrotask(()=>Object.assign(A,{
+  pfNew:d=>pfNew(d.pid), pfRename:d=>pfRename(d.id), pfDel:d=>pfDel(d.id),
+  pfMoveSel:()=>pfMoveSheet([...FSEL]),
+  pfMoveTo:d=>{ closeSheet(); pfMove(PF_MOVE,d.f||''); PF_MOVE=[]; },
+  pfNewMove:d=>{ const ids=PF_MOVE.slice(); closeSheet(); pfNew(d.pid,fid=>pfMove(ids,fid)); }
+}));
 function slimDrop(pid){ return `<div class="dropz fdrop slim" data-fdrop="${esc(pid)}" tabindex="0" aria-label="Dateien in dieses Projekt ablegen">${ic('files')}<span><b>Alles fürs Projekt hier hochladen</b> <span class="small muted">Mails, PDFs, Fotos, Pläne – ${SAMPLE?'die KI schlägt vor: in die Notizen, als To-Do / Update oder nur in die Ablage':'landet in der Datenablage dieses Projekts (Mails unter Korrespondenz)'}</span></span><button type="button" class="btn sm" data-act="fdPick" data-pid="${esc(pid)}">Wählen</button></div>`; }
 
 /* ========== Aktionen ========== */
