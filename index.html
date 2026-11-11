@@ -466,6 +466,45 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .pc-task{font-size:12.5px;font-weight:500;line-height:1.35;margin-top:2px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .pc-task b{font-weight:700}
 .tbl.rights td.c{text-align:center;white-space:nowrap}
+.tbl.rights tr>:first-child{position:sticky;left:0;z-index:2;background:var(--surface);box-shadow:1px 0 0 var(--line),6px 0 8px -6px rgba(0,0,0,.18);min-width:150px;max-width:190px}
+.tbl.rights thead tr>:first-child{z-index:3}
+/* Bauzeitenplan (Gantt) */
+.gt-mode{margin:0 0 10px}.gt-card{padding:0;overflow:hidden}.gt-top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}.gt-auto{display:flex;gap:6px;flex-wrap:wrap}.gt-auto .chip{cursor:pointer}
+.gt-scroll{--gt-lw:470px;overflow:auto;max-height:74vh;position:relative;overscroll-behavior:contain}
+.gt-in{position:relative}
+.gt-head{position:sticky;top:0;z-index:6;display:flex;background:var(--surface);border-bottom:1px solid var(--line);height:52px}
+.gt-l{position:sticky;left:0;z-index:4;width:var(--gt-lw);min-width:var(--gt-lw);display:grid;grid-template-columns:1fr 104px 70px 52px;align-items:center;background:var(--surface);border-right:1px solid var(--line);box-shadow:6px 0 8px -7px rgba(0,0,0,.22);height:100%;font-size:13px}
+.gt-head .gt-l{z-index:7;font-size:12px;color:var(--muted);font-weight:600}.gt-lh>span{padding:0 8px}
+.gt-hc{position:relative;height:52px}.gt-h1,.gt-h2{position:absolute;white-space:nowrap;overflow:hidden;font-size:12px;border-left:1px solid var(--line);padding:0 6px;box-sizing:border-box}
+.gt-h1{top:0;height:26px;line-height:26px;font-weight:600}.gt-h1 small{color:var(--muted);font-weight:400}.gt-h2r{position:absolute;top:26px;left:0;right:0;height:26px;border-top:1px solid var(--line)}
+.gt-h2{top:0;height:26px;line-height:26px;color:var(--muted);text-align:center;padding:0}.gt-h2 small{opacity:.7;margin-right:2px}.gt-h2.we{background:var(--sunken)}.gt-h2.td{color:#fff;font-weight:700}.gt-h2.td::before{content:"";position:absolute;inset:4px 2px;border-radius:999px;background:#2563EB;z-index:-1}.gt-h2.td{z-index:0;isolation:isolate}
+.gt-body{position:relative}
+.gt-bg{position:absolute;top:0;left:var(--gt-lw);pointer-events:none;z-index:0}
+.gt-we{position:absolute;top:0;bottom:0;background:var(--sunken);opacity:.75}.gt-vl{position:absolute;top:0;bottom:0;border-left:1px solid var(--line);opacity:.8}.gt-vl.lt{opacity:.45}
+.gt-now{position:absolute;top:0;bottom:0;border-left:2px solid #2563EB;z-index:3}.gt-now span{position:absolute;top:2px;left:3px;font-size:10px;color:#2563EB;font-weight:700;background:var(--surface);padding:0 3px;border-radius:4px}
+.gt-tgt{position:absolute;top:0;bottom:0;border-left:2px dashed #E0A800;z-index:3}
+.gt-dep{position:absolute;top:0;left:0;overflow:visible;z-index:2}.gt-dep path{fill:none;stroke:var(--muted);stroke-width:1.3;marker-end:url(#gtArr)}.gt-dep path.bad{stroke:#E5484D}.gt-dep marker path{fill:var(--muted);stroke:none}
+.gt-r{display:flex;height:36px;border-bottom:1px solid var(--line);position:relative;z-index:1}.gt-r:hover .gt-l{background:var(--sunken)}
+.gt-r .gt-l>span,.gt-r .gt-l>b{padding:0 8px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gt-r .gt-l{grid-template-columns:22px 1fr 104px 70px 52px}.gt-head .gt-l{grid-template-columns:1fr 104px 70px 52px;padding-left:22px}
+.gt-bar{width:4px;height:22px;border-radius:2px;background:var(--c);margin-left:9px;padding:0!important}
+.gt-g .gt-l{font-weight:700;background:var(--surface)}.gt-g{background:color-mix(in srgb,var(--c) 6%,transparent)}.gt-tg{border:0;background:none;cursor:pointer;color:var(--muted);font-size:14px;width:22px;padding:0}
+.gt-n{cursor:default}.gt-n[role=button]{cursor:pointer}.gt-n[role=button]:hover{text-decoration:underline}.gt-d{color:var(--muted);font-size:12px}.gt-p{text-align:right;padding:0 8px 0 0!important;font-variant-numeric:tabular-nums;font-size:12px}
+.gt-src{font-size:9.5px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 3px;margin-left:5px;vertical-align:1px}
+.gt-dia{display:inline-block;width:10px;height:10px;background:#F2C200;transform:rotate(45deg);border-radius:2px;margin-right:7px}
+.gt-w{display:flex;align-items:center}.gt-av{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;color:#fff;font-size:9px;font-weight:700;margin-left:-5px;border:2px solid var(--surface);flex:none}.gt-av:first-child{margin-left:0}.gt-av.more{background:var(--muted)}
+.gt-c{position:relative;flex:none}
+.gt-b{position:absolute;top:6px;height:24px;border-radius:5px;background:color-mix(in srgb,var(--c) 72%,#fff);color:#fff;font-size:12px;font-weight:600;overflow:hidden;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.12);white-space:nowrap}
+.gt-b>i{position:absolute;inset:0 auto 0 0;background:var(--c);filter:brightness(.82)}.gt-b>span{position:relative;padding:0 7px;line-height:24px;text-shadow:0 1px 1px rgba(0,0,0,.25)}
+.gt-b.done{background:var(--c)}.gt-b.late{outline:2px solid #E5484D;outline-offset:1px}.gt-b.man{touch-action:none;cursor:grab}.gt-b.drag{opacity:.85;cursor:grabbing;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:5}
+.gt-rz{position:absolute;right:0;top:0;bottom:0;width:8px;cursor:ew-resize;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45))}
+.gt-r.auto .gt-b{background:color-mix(in srgb,var(--c) 45%,#fff);color:#123}.gt-r.auto .gt-b>span{text-shadow:none}.gt-r.auto .gt-b>i{filter:none;opacity:.55}
+.gt-ms{position:absolute;top:9px;width:18px;height:18px;background:var(--c);transform:rotate(45deg);border-radius:3px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2)}.gt-ms:not(.done){background:color-mix(in srgb,var(--c) 55%,#fff);outline:2px solid var(--c);outline-offset:-2px}
+.gt-ml{position:absolute;top:0;line-height:36px;font-size:12px;color:var(--muted);white-space:nowrap;pointer-events:none}
+.gt-sum{position:absolute;top:22px;height:7px;border-radius:4px;background:color-mix(in srgb,var(--c) 30%,var(--sunken));overflow:hidden}.gt-sum>i{display:block;height:100%;background:var(--c)}
+.gt-sl{position:absolute;top:3px;font-size:11px;color:var(--muted);white-space:nowrap;font-weight:600}
+.gt-foot{padding:8px 14px 12px}.gt-deps{max-height:200px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:4px 8px}
+@media (max-width:900px){.gt-scroll{--gt-lw:200px;max-height:none}.gt-r .gt-l{grid-template-columns:18px 1fr 40px}.gt-head .gt-l{grid-template-columns:1fr 40px;padding-left:18px}.gt-l .gt-d,.gt-l .gt-w{display:none}.gt-tg{width:18px}.gt-bar{margin-left:7px}}
 .pm{display:inline-flex;align-items:center;gap:1px;font-size:11px;margin:0 1px;cursor:pointer}
 .pm .ck{width:15px;height:15px}
 .tbl.rights th.rt-h{height:130px;vertical-align:bottom;padding:4px 2px;white-space:nowrap}
@@ -2328,6 +2367,8 @@ const ROLE_PRESETS={
  admin:{l:'Admin',views:AREAS.map(a=>a[0]).filter(v=>v!=='kfrei'),ownTodos:false,admin:true,info:'alles (Freigabe der Kunden-Texte nur per eigenem Häkchen)'}};
 const ROLE_DEFAULT_BY_K={as:'monteur',moji:'monteur',hh:'buero',mk:'buero',js:'buero',pr:'buero',jp:'buchhaltung',ep:'admin',ave:'admin'};
 const ownTodosOnly=()=>!isAdmin()&&!!(permEff(ME)||{}).ownTodos;
+/* Startseite für Monteure (z. B. Moji, ABou): ohne Projekt-Kacheln und Projekt-Timeline */
+const dashMonteur=()=>!!ME&&!isAdmin()&&(ownTodosOnly()||(permEff(ME)||{}).role==='monteur');
 // Rolle anwenden: Sehen + Bearbeiten wie die Voreinstellung, Admin-Häkchen, „nur eigene To-Dos“
 function rolePerm(role,old){ const R=ROLE_PRESETS[role]; if(!R) return {...(old||{}),role:''};
   return {...(old||{}),role,v2:true,nfSet:true,views:R.views.slice(),edit:R.views.filter(v=>!['dash','activity','notif',...(R.noEdit||[])].includes(v)),admin:!!R.admin,ownTodos:!!R.ownTodos}; }
@@ -2340,7 +2381,7 @@ const permEff=n=>permOf(n)||(n&&isMonteurDefault(n)?rolePerm('monteur'):null);
 const viewsOf=n=>{ const p=permEff(n); return p&&Array.isArray(p.views)?nfLegacy(p,permV2(n,p,p.views)):defaultViews(n); };
 const editsOf=n=>{ const p=permEff(n); return p&&Array.isArray(p.edit)?permV2(n,p,p.edit):viewsOf(n); };
 const canEdit=a=>isAdmin()||(!!ME&&editsOf(ME).includes(a)&&viewsOf(ME).includes(a));
-function canSee(v){ if(v==='rights') return isBaseAdmin(); if(v==='hr') return true; /* Stempeln und Urlaub: für alle */ if(String(v).startsWith('f:')) v='files'; if(String(v).startsWith('st:')) v='stamm'; if(v==='fin'||String(v).startsWith('fi:')) return finOk(); if(String(v).startsWith('vk:')) v='sales'; if(v==='dash') return true; if(!ME) return v!=='activity'; const vs=viewsOf(ME);
+function canSee(v){ if(v==='rights') return isBaseAdmin(); if(v==='hr') return true; /* Stempeln und Urlaub: für alle */ if(String(v).startsWith('f:')) v='files'; if(String(v).startsWith('st:')) v='stamm'; if(v==='fin'||String(v).startsWith('fi:')) return finOk(); if(String(v).startsWith('vk:')) v='sales'; if(v==='dash') return true; if(!ME) return MODE==='cloud'?false:v!=='activity'; /* online angemeldet, aber keinem Mitarbeiter zugeordnet: nichts außer Übersicht und eigener Stempeluhr */ const vs=viewsOf(ME);
   if(v==='kview') return isAdmin()||vs.includes('kview')||kfreiOk();
   if(v==='project') return vs.includes('projects'); if(v==='pool') return vs.includes('todos'); if(v==='meetings') return vs.includes('meetings'); if(v==='calendar') return vs.includes('week'); return vs.includes(v); }
 const canSeeActivity=()=>canSee('activity');
@@ -2467,7 +2508,10 @@ function del(coll,id){
 let USER_EMAIL='', NOMATCH_SHOWN=false;
 function staffByEmail(email){ const e=String(email||'').trim().toLowerCase(); if(!e) return null; const local=e.split('@')[0];
   const s=staff().find(s=>String(s.email||'').trim().toLowerCase()===e)||staff().find(s=>shortWho(s.name).toLowerCase()===local);
-  return s?s.name:null; }
+  if(s) return s.name;
+  /* Zusätzlich: Vorname vor dem @ (z. B. abou@… = „Abou Sow (AS)“), nur wenn genau eine Person passt */
+  const nrm=x=>String(x||'').toLowerCase().replace(/[^a-zäöüß]/g,''), lp=nrm(local.split(/[._-]/)[0]); if(lp.length<3) return null;
+  const hits=staff().filter(x=>nrm(String(x.name).replace(/\([^)]*\)/,'').trim().split(/\s+/)[0])===lp); return hits.length===1?hits[0].name:null; }
 // Konto einer ausgeschiedenen Person? Dann ist die App für dieses Konto zu.
 function staffGoneByEmail(email){ const e=String(email||'').trim().toLowerCase(); if(!e) return null; const local=e.split('@')[0]; if(staffByEmail(e)) return null; return staffAll().find(s=>staffGone(s)&&(String(s.email||'').trim().toLowerCase()===e||shortWho(s.name).toLowerCase()===local))||null; }
 var EXIT_LOCK=false;
@@ -3176,6 +3220,7 @@ function needAll(){ const out=[];
   return out; }
 function vDash(){
   const t=TODAY(), mon=mondayOf(t), days=[0,1,2,3,4].map(i=>addDays(mon,i));
+  if(MODE==='cloud'&&!ME) return `<div class="card"><div class="empty" style="padding:36px 20px"><b>Dein Konto ist noch keinem Mitarbeiter zugeordnet</b>Angemeldet mit ${esc(USER_EMAIL||'diesem Konto')}. Bis EP oder AvE die E-Mail unter „Team & Einstellungen“ bei deinem Namen eintragen, siehst du hier nichts.</div></div>`+hrDashStrip();
   if(!arr('projects').length) return dashHero(t)+smartDropHtml()+pinboardHtml()+nfCardHtml()+emptyStart();
   // 1) Wochenplanung Mo–Fr (eigene Einträge zuerst)
   const items=calItems(mon,days[4]).filter(x=>x.k!=='todo');
@@ -3201,7 +3246,7 @@ function vDash(){
     <section class="card dash-dl"><div class="card-h"><h2>Offene Lieferungen <span class="cnt-b">${dl.length}</span></h2><button class="btn ghost sm" data-act="nav" data-v="orders">Alle</button></div>
       <div class="dl-list">${dl.slice(0,7).map(dlRow).join('')||'<div class="empty">Keine offenen Lieferungen.</div>'}</div>${dl.length>7?`<button class="btn ghost sm more-b" data-act="nav" data-v="orders">+ ${dl.length-7} weitere</button>`:''}</section>
   </div>
-  <section class="card dash-week"><div class="card-h"><h2>Wochenplanung · KW ${kwOf(mon)}</h2><button class="btn ghost sm" data-act="nav" data-v="week">Zur Wochenplanung</button></div><div class="dcols week">${days.map(d=>dayCol(d,d===t?'Heute':new Date(d+'T12:00').toLocaleDateString('de-DE',{weekday:'long'}))).join('')}</div></section>`+radarHtml(t)+dashTimelineHtml(t);
+  <section class="card dash-week"><div class="card-h"><h2>Wochenplanung · KW ${kwOf(mon)}</h2><button class="btn ghost sm" data-act="nav" data-v="week">Zur Wochenplanung</button></div><div class="dcols week">${days.map(d=>dayCol(d,d===t?'Heute':new Date(d+'T12:00').toLocaleDateString('de-DE',{weekday:'long'}))).join('')}</div></section>`+(dashMonteur()?'':radarHtml(t)+dashTimelineHtml(t));
 }
 // Statusleiste der Projektakte: 29 Schritte, Bezeichnungen schräg nach oben, Klick springt zum Schritt
 function stepRail(p){
@@ -3280,7 +3325,7 @@ function dashTimelineHtml(t){ const all=rxProjects().sort((a,b)=>String(a.name).
     <div class="tl-lanes-sw dtl-sw"><button type="button" class="chip ${lanes.every(([k])=>on(k))?'on':''}" data-act="dtlAll">Alles</button>${lanes.map(([k,l])=>`<label class="chip ${on(k)?'on':''}"><input type="checkbox" data-chg="dtlLane" data-v="${k}" ${on(k)?'checked':''} hidden><i class="dtl-dot" style="background:${DTL_COL[k]}"></i>${esc(tlLaneName(k,l))}</label>`).join('')}</div>
     <div class="tl-scroll" id="dtlScroll"><div class="tl-canvas" style="width:${W}px"><div class="tl-head">${head}</div><div class="tl-now" style="left:${px(t)}px"><span>Heute</span></div>${body||'<div class="empty" style="position:sticky;left:0;width:min(100%,520px)">Für diese Auswahl gibt es im Zeitraum keine Einträge.</div>'}</div></div></section>`; }
 function dtlScrollRestore(){ const s=$('#dtlScroll'), n=s&&s.querySelector('.tl-now'); if(!s||!n) return; s.scrollLeft=UI.dtlX!=null?UI.dtlX:Math.max(0,n.offsetLeft-s.clientWidth*0.35); }
-document.addEventListener('scroll',e=>{ if(e.target&&e.target.id==='dtlScroll') UI.dtlX=e.target.scrollLeft; },true);
+document.addEventListener('scroll',e=>{ if(e.target&&e.target.id==='dtlScroll') UI.dtlX=e.target.scrollLeft; if(e.target&&e.target.id==='rtScroll') UI.rtX=e.target.scrollLeft; },true);
 queueMicrotask(()=>{ Object.assign(A,{ dtlZoom:d=>{ UI.dtlZ=d.v; UI.dtlX=null; saveUI(); render(); }, dtlToday:()=>{ UI.dtlX=null; dtlScrollRestore(); },
     dtlAll:()=>{ const ls=dtlLanes(), on=dtlOn(), every=ls.every(([k])=>on(k)); UI.dtlL=every?{ms:true,term:true}:Object.fromEntries(ls.map(([k])=>[k,true])); saveUI(); render(); } });
   Object.assign(CHG,{ dtlP:(d,el)=>{ UI.dtlP=el.value; UI.dtlX=null; saveUI(); render(); }, dtlLane:(d,el)=>{ const on=dtlOn(), n={}; TL_LANES.forEach(([k])=>{ if(on(k)) n[k]=true; }); if(el.checked) n[d.v]=true; else delete n[d.v]; UI.dtlL=n; saveUI(); render(); } }); });
@@ -3436,7 +3481,9 @@ function targetBadge(p,big){ const ti=targetInfo(p); if(!ti) return '';
   return `<span class="tgt ${cls} ${big?'big':''}" data-act="openAt" data-id="${p.id}" data-at="timeline" title="Geplanter Fertigstellungstermin">⚑ Fertigstellung ${fmtD(p.target)} · ${txt}</span>`; }
 // Startansicht beim Öffnen der Timeline: nur Meilensteine, Wochenansicht, bei „Heute“
 let TL_INIT='';
+const tlModeSw=m=>`<div class="cal-sw sm gt-mode"><button class="${m==='gantt'?'on':''}" data-act="tlMode" data-v="gantt">▤ Bauzeitenplan (Gantt)</button><button class="${m==='strahl'?'on':''}" data-act="tlMode" data-v="strahl">⋯ Zeitstrahl</button></div>`;
 function projTimeline(p){
+  if((UI.tlMode||'gantt')==='gantt') return projGantt(p);
   if(TL_INIT!==p.id){ TL_INIT=p.id; UI.tlZoom='woche'; UI.tlLanes={ms:true,status:false,mat:false,term:false,task:false,note:false}; setTimeout(tlScrollToday,60); }
   if(SAMPLE&&!tlAIData(p)&&!TL_RUN[p.id]&&noteEntries(p).length) setTimeout(()=>tlAI(p.id,true),50); // automatisch zusammenfassen
   const z=TL_ZOOM[UI.tlZoom]?UI.tlZoom:'woche', Z=TL_ZOOM[z], t0=TODAY(), items=tlItems(p), lanesOn=UI.tlLanes||{};
@@ -3455,7 +3502,7 @@ function projTimeline(p){
     const rows=[]; its.forEach(it=>{ const x=px(it.d); let r=rows.findIndex(end=>end<=x); if(r<0){ r=rows.length; rows.push(0); } rows[r]=x+CARD+6; it._r=r; it._x=x; });
     lanes+=`<div class="tll" style="height:${Math.max(1,rows.length)*44+12}px"><button type="button" class="tll-n" data-act="tlLaneRename" data-v="${lk}" title="Überschrift ändern">${esc(tlLaneName(lk,ll))}</button>${its.map(it=>`<div class="tlc l-${lk} ${it.k?'k-'+it.k:''} ${it.d>t0?'fut':''} ${it.late?'late':''} ${it.ai?'ai':''} ${it.edited||it.custom?'ed':''}" style="left:${it._x}px;top:${it._r*44+6}px;width:${CARD}px" ${it.act?`data-act="${it.act}" data-id="${esc(it.id)}"`:lk==='ms'?`data-act="tlEditMs" data-pid="${p.id}" data-key="${esc(it.key)}"`:''} title="${esc(fmtD(it.d)+' · '+it.t+(it.by?' · '+it.by:''))}"><b>${esc(fmtD(it.d).slice(3,9))}</b> ${esc(it.t)}</div>`).join('')}</div>`; });
   const ti=targetInfo(p), pp=pipe(p), rest=pp.seq.slice(pp.li+1).filter(n=>!pp.flow.opt.includes(n));
-  return `<div class="card tl-card">
+  return tlModeSw('strahl')+`<div class="card tl-card">
     <div class="tl-top"><div class="tl-target"><label for="tgt_${p.id}">⚑ Geplanter Fertigstellungstermin</label><input type="date" id="tgt_${p.id}" class="inp" data-chg="projTarget" data-pid="${p.id}" value="${esc(p.target||'')}">${targetBadge(p,true)}</div>
       <div class="cal-sw sm">${Object.entries(TL_ZOOM).map(([k,v])=>`<button class="${k===z?'on':''}" data-act="tlZoom" data-v="${k}">${v.lbl}</button>`).join('')}</div>
       <div class="row" style="gap:6px"><button class="btn sm" data-act="tlToday">Heute</button><button class="btn sm" data-act="tlAddMs" data-pid="${p.id}">${ic('plus')}Meilenstein</button>${SAMPLE?`<button class="btn sm" data-act="aiNext" data-pid="${p.id}" title="Claude schlägt die nächsten sinnvollen Schritte vor">✨ Nächste Schritte</button>`:''}${SAMPLE?`<button class="btn sm" data-act="tlAI" data-pid="${p.id}" title="Claude fasst jede Notiz neu in 2–3 Überbegriffe zusammen">✨ ${TL_RUN[p.id]?'fasst zusammen …':'Neu zusammenfassen'}</button><button class="btn sun sm" data-act="tlPlan" data-pid="${p.id}">✨ Plan bis Fertigstellung</button>`:''}</div></div>
@@ -3506,6 +3553,141 @@ Antworte nur mit JSON: {"hinweis":"","todos":[{"title":"Imperativ, kurz","who":"
     if(!todos.length) return toast('Kein Plan vorgeschlagen.'); showSuggest(pid,[],todos,false); }
   catch(e){ toast(SAMPLE_ERR[e&&e.code]||'Plan konnte nicht erstellt werden.'); }
 }
+/* ========== Bauzeitenplan (Gantt) im Projekt-Reiter „Timeline“ ==========
+   Eigene Vorgänge: p.gantt = [{id,g(Phase),t,s,e,pct,who:'AS, MOJI',dep:[id],ms(Meilenstein)}]
+   Dazu automatisch (nur Anzeige, Klick öffnet den Vorgang): Material (Bestellungen), Baustelle & Team (Wochenplanung, Termine), Aufgaben (To-Dos mit Frist), Fertigstellungstermin. */
+const GT_COL=['#14A88E','#1FB3D9','#F0607E','#8B6CEF','#F29C38','#4C8DF6','#6FAE3B','#8D8D8D'], GT_MS='#F2C200';
+const GT_DW={tag:34,woche:15,monat:4.5}, GT_RH=36;
+const gtOk=()=>canEdit('projects')&&mayWrite('projects');
+const gtRows=p=>Array.isArray(p.gantt)?p.gantt:[];
+const gtIso=s=>/^\d{4}-\d{2}-\d{2}$/.test(s||'');
+const gtWho=w=>String(w||'').split(/[,;\s]+/).map(x=>x.trim()).filter(Boolean);
+const gtAvCol=k=>GT_COL[Math.abs(+strHash(String(k).toUpperCase()).replace(/\D/g,'').slice(0,6)||0)%GT_COL.length];
+const gtAv=ks=>ks.slice(0,3).map(k=>`<span class="gt-av" style="background:${gtAvCol(k)}" title="${esc(k)}">${esc(String(k).slice(0,3))}</span>`).join('')+(ks.length>3?`<span class="gt-av more">+${ks.length-3}</span>`:'');
+function gtAuto(p){ const t0=TODAY(), out=[], on=UI.gtAuto||{}, cut=addDays(t0,-120);
+  if(on.mat!==false) arr('orders').filter(o=>o.pid===p.id&&!orderState(o).draft&&orderState(o).k!=='storniert').forEach(o=>{ const st=orderState(o), rc=(o.receipts||[]).map(r=>r.date).filter(gtIso).sort(); const s=[o.ordered,String(o.at||'').slice(0,10),o.date].find(gtIso); if(!s) return; let e=st.open?([o.delivery].find(gtIso)||rc[rc.length-1]||s):(rc[rc.length-1]||o.delivery||s); if(e<s) e=s; if(e<cut) return;
+    out.push({auto:'mat',g:'Material & Lieferungen',t:(o.supplier||'Bestellung')+((o.items||[]).length?' · '+(o.items||[]).length+' Pos.':''),s,e,pct:st.open?(rc.length?50:0):100,who:o.orderedBy?[shortWho(o.orderedBy)]:o.by?[o.by]:[],act:'editOrder',id:o.id,sub:st.k}); });
+  if(on.team!==false){ arr('plan').forEach(w=>(w.entries||[]).forEach((x,i)=>{ if(x.pid!==p.id||!gtIso(x.d)||x.kind==='abw') return; const e=gtIso(x.end)&&x.end>=x.d?x.end:x.d; if(e<cut) return; out.push({auto:'team',g:'Baustelle & Team',t:x.t||'Einsatz',s:x.d,e,pct:e<t0?100:x.d<=t0?Math.round((dDiff(x.d,t0)+1)/(dDiff(x.d,e)+1)*100):0,who:evWhos(x).map(shortWho),act:'editPlan',id:w.id+'|'+i}); }));
+    arr('events').filter(e=>e.pid===p.id&&gtIso(e.date)).forEach(ev=>{ const e=gtIso(ev.end)&&ev.end>=ev.date?ev.end:ev.date; if(e<cut) return; out.push({auto:'team',g:'Baustelle & Team',t:ev.title||'Termin',s:ev.date,e,pct:e<t0?100:0,who:evWhos(ev).map(shortWho),act:'editEvent',id:ev.id,ms:e===ev.date&&!ev.time?false:false}); }); }
+  if(on.task!==false) arr('tasks').filter(t=>t.pid===p.id&&gtIso(t.due)&&!(t.private)).forEach(t=>{ if(t.done&&String(t.doneAt||'').slice(0,10)<cut) return; let s=[String(t.at||'').slice(0,10),String(t.created||'').slice(0,10)].find(gtIso)||t.due; if(s>t.due) s=t.due; if(dDiff(s,t.due)>45) s=addDays(t.due,-14);
+    out.push({auto:'task',g:'Aufgaben',t:t.title,s,e:t.due,pct:t.done?100:0,who:taskWhos(t).map(shortWho),act:'editTask',id:t.id,late:!t.done&&t.due<t0}); });
+  if(p.target&&gtIso(p.target)) out.push({auto:'ms',g:'Meilensteine',t:'Fertigstellung (geplant)',s:p.target,e:p.target,ms:true,pct:pipe(p).pct>=100?100:0,who:[]});
+  if(gtIso(p.start)) out.push({auto:'ms',g:'Meilensteine',t:'Baubeginn (geplant)',s:p.start,e:p.start,ms:true,pct:p.start<=t0?100:0,who:[]});
+  return out; }
+function projGantt(p){
+  const t0=TODAY(), z=GT_DW[UI.gtZoom]?UI.gtZoom:'woche', DW=GT_DW[z], ok=gtOk(), own=gtRows(p).filter(r=>gtIso(r.s));
+  const old=$('#gtScroll'); if(old&&old.dataset.pid===p.id){ UI.gtX=old.scrollLeft; UI.gtY=old.scrollTop; } else if(!old||old.dataset.pid!==p.id){ UI.gtX=null; UI.gtY=0; }
+  /* Phasen in Reihenfolge des ersten Auftretens, danach die automatischen */
+  const groups=[], gIdx={}; const addG=(name,auto)=>{ if(gIdx[name]==null){ gIdx[name]=groups.length; groups.push({name,auto,rows:[],col:auto==='ms'?GT_MS:GT_COL[groups.length%GT_COL.length]}); } return groups[gIdx[name]]; };
+  own.forEach(r=>{ const e=gtIso(r.e)&&r.e>=r.s?r.e:r.s; addG(r.g||'Vorgänge','').rows.push({...r,e,who:gtWho(r.who),own:1}); });
+  gtAuto(p).forEach(r=>addG(r.g,r.auto).rows.push(r));
+  groups.forEach(g=>{ g.rows.sort((a,b)=>a.own&&b.own?0:a.s.localeCompare(b.s)||a.e.localeCompare(b.e)); g.s=g.rows.reduce((m,r)=>r.s<m?r.s:m,'9999'); g.e=g.rows.reduce((m,r)=>r.e>m?r.e:m,'0000'); const days=g.rows.reduce((a,r)=>a+dDiff(r.s,r.e)+1,0)||1; g.pct=Math.round(g.rows.reduce((a,r)=>a+(+r.pct||0)*(dDiff(r.s,r.e)+1),0)/days); });
+  const all=groups.flatMap(g=>g.rows);
+  const top=`${tlModeSw('gantt')}<div class="card gt-card"><div class="gt-top">
+    <div class="cal-sw sm">${[['tag','Tage'],['woche','Wochen'],['monat','Monate']].map(([k,l])=>`<button class="${k===z?'on':''}" data-act="gtZoom" data-v="${k}">${l}</button>`).join('')}</div>
+    <div class="gt-auto">${[['team','Baustelle & Team'],['mat','Material'],['task','Aufgaben']].map(([k,l])=>`<label class="chip ${(UI.gtAuto||{})[k]===false?'':'on'}"><input type="checkbox" data-chg="gtAuto" data-v="${k}" ${(UI.gtAuto||{})[k]===false?'':'checked'} hidden>${l}</label>`).join('')}</div>
+    <span class="spacer"></span><button class="btn sm" data-act="gtToday">Heute</button>${ok?`<button class="btn sm" data-act="gtNew" data-pid="${p.id}">${ic('plus')}Vorgang</button>${SAMPLE?`<button class="btn sun sm" data-act="gtAI" data-pid="${p.id}" title="Claude erstellt einen Bauzeitenplan mit Phasen, Vorgängen und Abhängigkeiten aus Projektart, Notizen, Aufgaben und Terminen">✨ ${own.length?'Plan ergänzen':'Bauzeitenplan erstellen'}</button>`:''}`:''}</div>`;
+  if(!all.length) return top+`<div class="empty" style="padding:28px 16px"><b>Noch kein Bauzeitenplan</b>${ok?`Lege Vorgänge an (z. B. „Gerüst stellen“, „Unterkonstruktion“, „Module montieren“, „AC-Anschluss“) oder lass Claude einen Plan vorschlagen. Termine aus der Wochenplanung, Bestellungen und Aufgaben mit Frist erscheinen hier automatisch.`:'Sobald Termine, Bestellungen oder Aufgaben mit Frist eingetragen sind, erscheinen sie hier.'}</div></div>`;
+  /* Zeitraum */
+  const ds=all.flatMap(r=>[r.s,r.e]).concat([t0]).sort(); let a=addDays(ds[0],z==='monat'?-30:-7), b=addDays(ds[ds.length-1]>t0?ds[ds.length-1]:t0,z==='monat'?60:z==='woche'?28:10);
+  a=z==='monat'?a.slice(0,8)+'01':mondayOf(a); const nD=dDiff(a,b)+1, W=Math.ceil(nD*DW), X=d=>Math.round(dDiff(a,d)*DW);
+  /* Kopf: zwei Zeilen */
+  let h1='', h2='', bg='';
+  const monthStarts=[]; for(let d=a; d<=b; d=addDays(d,1)) if(d===a||d.slice(8)==='01') monthStarts.push(d);
+  if(z==='tag'){ for(let d=a; d<=b; d=addDays(d,7)) h1+=`<div class="gt-h1" style="left:${X(d)}px;width:${7*DW}px">KW ${kw(d)} <small>${new Date(d+'T12:00').toLocaleDateString('de-DE',{month:'short',year:'numeric'})}</small></div>`;
+    for(let d=a; d<=b; d=addDays(d,1)){ const wd=new Date(d+'T12:00').getDay(); h2+=`<div class="gt-h2 ${wd===0||wd===6?'we':''} ${d===t0?'td':''}" style="left:${X(d)}px;width:${DW}px"><small>${WD[wd].slice(0,1)}</small>${d.slice(8)}</div>`; } }
+  else { monthStarts.forEach((d,i)=>{ const nx=monthStarts[i+1]||addDays(b,1); h1+=`<div class="gt-h1" style="left:${X(d)}px;width:${X(nx)-X(d)}px">${new Date(d+'T12:00').toLocaleDateString('de-DE',{month:z==='monat'?'short':'long',year:'numeric'})}</div>`; });
+    for(let d=mondayOf(a); d<=b; d=addDays(d,7)){ const x=Math.max(0,X(d)); h2+=`<div class="gt-h2 ${d<=t0&&t0<addDays(d,7)?'td':''}" style="left:${x}px;width:${7*DW}px">${z==='monat'?kw(d):'KW '+kw(d)}</div>`; } }
+  if(z!=='monat') for(let d=a; d<=b; d=addDays(d,1)){ const wd=new Date(d+'T12:00').getDay(); if(wd===6) bg+=`<div class="gt-we" style="left:${X(d)}px;width:${2*DW}px"></div>`; }
+  if(z!=='tag') for(let d=mondayOf(a); d<=b; d=addDays(d,7)) bg+=`<div class="gt-vl" style="left:${X(d)}px"></div>`; else for(let d=a; d<=b; d=addDays(d,1)) bg+=`<div class="gt-vl lt" style="left:${X(d)}px"></div>`;
+  /* Zeilen */
+  const col=UI.gtCol||{}, rowsH=[], pos={}; let y=0;
+  const span=(s,e)=>dDiff(s,e)+1, lbl=r=>r.ms?fmtD(r.s).slice(3,9):fmtD(r.s).slice(3,9)+' – '+fmtD(r.e).slice(3,9);
+  groups.forEach(g=>{ const ck=p.id+'|'+g.name, closed=col[ck]===true; const gx=X(g.s), gw=Math.max(DW,X(addDays(g.e,1))-gx);
+    rowsH.push(`<div class="gt-r gt-g" style="--c:${g.col}"><div class="gt-l"><button type="button" class="gt-tg" data-act="gtTog" data-k="${esc(ck)}" aria-expanded="${!closed}">${closed?'▸':'▾'}</button><b class="gt-n">${esc(g.name)}</b><span class="gt-d">${esc(fmtD(g.s).slice(3,9)+' – '+fmtD(g.e).slice(3,9))}</span><span class="gt-w"></span><span class="gt-p">${g.pct}%</span></div>
+      <div class="gt-c" style="width:${W}px"><div class="gt-sum" style="left:${gx}px;width:${gw}px" title="${esc(g.name+': '+span(g.s,g.e)+' Tage, '+g.pct+' %')}"><i style="width:${g.pct}%"></i></div><span class="gt-sl" style="left:${gx}px">${span(g.s,g.e)} Tage, ${g.pct}%</span></div></div>`); y++;
+    if(closed) return;
+    g.rows.forEach(r=>{ const x=X(r.s), w=Math.max(DW,X(addDays(r.e,1))-x), key=r.own?r.id:'';
+      if(key) pos[key]={y,x,x2:x+w,ms:!!r.ms};
+      const clickL=r.own?(ok?`data-act="gtEdit" data-pid="${p.id}" data-id="${esc(r.id)}"`:''):r.act?`data-act="${r.act}" data-id="${esc(r.id)}"`:'';
+      const bar=r.ms?`<div class="gt-ms ${r.pct>=100?'done':''}" style="left:${x+DW/2-9}px;--c:${r.own?g.col:GT_MS}" ${clickL} title="${esc(r.t+' · '+fmtD(r.s))}"></div><span class="gt-ml" style="left:${x+DW/2+14}px">${esc(r.t)}</span>`
+        :`<div class="gt-b ${r.own&&ok?'man':''} ${r.late?'late':''} ${r.pct>=100?'done':''}" style="left:${x}px;width:${w}px;--c:${g.col}" ${r.own&&ok?`data-gt="${esc(r.id)}" data-pid="${p.id}"`:clickL} title="${esc(r.t+' · '+lbl(r)+' · '+(+r.pct||0)+' %'+(r.who.length?' · '+r.who.join(', '):'')+(r.sub?' · '+r.sub:''))}"><i style="width:${Math.min(100,+r.pct||0)}%"></i><span>${esc(r.t)}</span>${r.own&&ok?'<b class="gt-rz" aria-hidden="true"></b>':''}</div>`;
+      rowsH.push(`<div class="gt-r ${r.auto?'auto':''}" style="--c:${r.ms?GT_MS:g.col}"><div class="gt-l"><span class="gt-bar"></span><span class="gt-n" ${clickL} role="${clickL?'button':''}" tabindex="${clickL?0:-1}">${r.ms?'<i class="gt-dia"></i>':''}${esc(r.t)}${r.auto&&r.auto!=='ms'?'<small class="gt-src">auto</small>':''}</span><span class="gt-d">${esc(lbl(r))}</span><span class="gt-w">${gtAv(r.who||[])}</span><span class="gt-p">${r.ms&&!r.own?'':(+r.pct||0)+'%'}</span></div><div class="gt-c" style="width:${W}px">${bar}</div></div>`); y++; }); });
+  /* Abhängigkeiten als Pfeile */
+  let dep=''; groups.forEach(g=>{ if(col[p.id+'|'+g.name]===true) return; g.rows.forEach(r=>{ if(!r.own) return; (r.dep||[]).forEach(id=>{ const A=pos[id], B=pos[r.id]; if(!A||!B) return; const y1=A.y*GT_RH+GT_RH/2, y2=B.y*GT_RH+GT_RH/2, x1=A.ms?A.x+DW/2+9:A.x2, x2=B.ms?B.x+DW/2-9:B.x, mx=x1+8;
+    dep+=`<path d="M${x1} ${y1} H${mx} V${y2} H${x2-2}" class="${x2<mx?'bad':''}"/>`; }); }); });
+  const H=y*GT_RH;
+  return top+`<div class="gt-scroll" id="gtScroll" data-pid="${p.id}" data-x="${UI.gtX==null?X(t0):''}"><div class="gt-in" style="width:calc(var(--gt-lw) + ${W}px)">
+    <div class="gt-head"><div class="gt-l gt-lh"><span class="gt-n">Vorgang</span><span class="gt-d">Zeitraum</span><span class="gt-w">Wer</span><span class="gt-p">%</span></div><div class="gt-hc" style="width:${W}px">${h1}<div class="gt-h2r">${h2}</div></div></div>
+    <div class="gt-body"><div class="gt-bg" style="width:${W}px;height:${H}px">${bg}<div class="gt-now" style="left:${X(t0)+(z==='tag'?DW/2:0)}px"><span>Heute</span></div>${p.target&&p.target>=a&&p.target<=b?`<div class="gt-tgt" style="left:${X(p.target)+DW/2}px"></div>`:''}<svg class="gt-dep" width="${W}" height="${H}" aria-hidden="true"><defs><marker id="gtArr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z"/></marker></defs>${dep}</svg></div>
+    ${rowsH.join('')}</div></div></div>
+    <div class="small muted gt-foot">${ok?'Balken ziehen = verschieben, rechten Rand ziehen = Dauer ändern (Nachfolger rücken mit). Vorgang anklicken zum Bearbeiten. ':''}„auto“ = kommt aus Wochenplanung, Terminen, Bestellungen und Aufgaben – Klick öffnet den Eintrag dort. Dunkler Teil im Balken = Fortschritt.</div></div>`;
+}
+/* Nach dem Zeichnen: Scrollposition wiederherstellen bzw. zu „Heute“ springen */
+new MutationObserver(()=>{ const s=$('#gtScroll'); if(!s||s.dataset.done) return; s.dataset.done=1; if(s.dataset.x!=='') s.scrollLeft=Math.max(0,+s.dataset.x-s.clientWidth*0.35+parseInt(getComputedStyle(s).getPropertyValue('--gt-lw')||0)/2); else { s.scrollLeft=UI.gtX||0; s.scrollTop=UI.gtY||0; } }).observe(document.documentElement,{childList:true,subtree:true});
+function gtSave(pid,rows,msg){ const p=S.projects[pid]; if(!p||!gtOk()) return toast('Keine Berechtigung, den Bauzeitenplan zu ändern.'); const c=clone(p); c.gantt=rows; put('projects',c); if(msg) toast(msg); render(); }
+/* Nachfolger rücken mit, wenn ein Vorgang über ihren Start hinaus verlängert/verschoben wird */
+function gtPush(rows,id){ const by={}; rows.forEach(r=>by[r.id]=r); const seen=new Set(); const go=pid=>{ if(seen.has(pid)) return; seen.add(pid); const A=by[pid]; if(!A) return; const aEnd=A.ms?A.s:(A.e||A.s);
+    rows.filter(r=>(r.dep||[]).includes(pid)).forEach(r=>{ const need=A.ms?aEnd:addDays(aEnd,1); if(r.s<need){ const len=dDiff(r.s,r.e||r.s); r.s=need; r.e=addDays(need,len); go(r.id); } }); }; go(id); return rows; }
+function gtEdit(pid,id,pre){ const p=S.projects[pid]; if(!p||!gtOk()) return; const rows=clone(gtRows(p)), cur=id?rows.find(r=>r.id===id):null; if(id&&!cur) return toast('Vorgang nicht gefunden.');
+  const v=cur||{g:(pre&&pre.g)||(rows.length?rows[rows.length-1].g:'Montage'),t:'',s:TODAY(),e:addDays(TODAY(),2),pct:0,who:'',dep:[]};
+  const gs=[...new Set(rows.map(r=>r.g).filter(Boolean).concat(['Planung & Genehmigung','Material','Montage DC','Montage AC','Netzanschluss','Inbetriebnahme & Abnahme']))];
+  openSheet({title:cur?'Vorgang bearbeiten':'Neuer Vorgang',wide:1,html:`
+    <div class="fld full"><label for="gt_t">Bezeichnung</label><input id="gt_t" class="inp" value="${esc(v.t)}" placeholder="z. B. Unterkonstruktion montieren"></div>
+    <div class="fld"><label for="gt_g">Phase</label><input id="gt_g" class="inp" list="gtGl" value="${esc(v.g||'')}" placeholder="z. B. Montage DC"><datalist id="gtGl">${gs.map(g=>`<option value="${esc(g)}">`).join('')}</datalist></div>
+    <div class="fld"><label for="gt_k">Art</label><select id="gt_k" class="inp"><option value="">Vorgang (Balken)</option><option value="ms" ${v.ms?'selected':''}>Meilenstein (Raute)</option></select></div>
+    <div class="fld"><label for="gt_s">Start</label><input id="gt_s" type="date" class="inp" value="${esc(v.s)}"></div>
+    <div class="fld"><label for="gt_e">Ende</label><input id="gt_e" type="date" class="inp" value="${esc(v.e||v.s)}"></div>
+    <div class="fld"><label for="gt_p">Fortschritt: <b id="gt_pv">${+v.pct||0}</b> %</label><input id="gt_p" type="range" min="0" max="100" step="5" value="${+v.pct||0}" oninput="document.getElementById('gt_pv').textContent=this.value" style="width:100%"></div>
+    <div class="fld"><label for="gt_w">Wer (Kürzel, mit Komma)</label><input id="gt_w" class="inp" value="${esc(Array.isArray(v.who)?v.who.join(', '):v.who||'')}" placeholder="z. B. AS, MOJI" list="gtWl"><datalist id="gtWl">${staff().map(s=>`<option value="${esc(shortWho(s.name))}">${esc(s.name)}</option>`).join('')}</datalist></div>
+    <div class="fld full"><label>Startet nach (Abhängigkeit)</label><div class="gt-deps">${rows.filter(r=>!cur||r.id!==cur.id).map(r=>`<label class="mt-opt"><input type="checkbox" class="ck gt-dk" value="${esc(r.id)}" ${(v.dep||[]).includes(r.id)?'checked':''}><span>${esc(r.t)} <span class="small muted">· ${esc(r.g||'')} · bis ${esc(fmtD(r.e||r.s).slice(3,9))}</span></span></label>`).join('')||'<span class="small muted">Noch keine anderen Vorgänge.</span>'}</div></div>`,
+    saveLabel:cur?'Speichern':'Anlegen',onDelete:cur?()=>{ const rest=rows.filter(r=>r.id!==cur.id).map(r=>({...r,dep:(r.dep||[]).filter(d=>d!==cur.id)})); closeSheet(); gtSave(pid,rest,'Vorgang gelöscht.'); }:null,
+    onSave:()=>{ const t=$('#gt_t').value.trim(); if(!t){ toast('Bitte eine Bezeichnung eingeben.'); return false; } const s=$('#gt_s').value; if(!gtIso(s)){ toast('Bitte ein Startdatum wählen.'); return false; }
+      const ms=$('#gt_k').value==='ms'; let e=ms?s:$('#gt_e').value; if(!gtIso(e)||e<s) e=s;
+      const r={...(cur||{id:uid()}),t:t.slice(0,90),g:($('#gt_g').value.trim()||'Vorgänge').slice(0,50),s,e,ms,pct:+$('#gt_p').value||0,who:$('#gt_w').value.trim().slice(0,60),dep:[...document.querySelectorAll('.gt-dk:checked')].map(x=>x.value)}; if(!ms) delete r.ms;
+      const out=cur?rows.map(x=>x.id===cur.id?r:x):rows.concat([r]); gtPush(out,r.id); r.dep.forEach(d=>{ const A=out.find(x=>x.id===d); if(A&&(A.ms?A.s:A.e)>=r.s) gtPush(out,d); }); setTimeout(()=>gtSave(pid,out),0); }}); }
+/* Ziehen: Balken verschieben, rechten Rand = Dauer ändern */
+let GT_DRAG=null;
+document.addEventListener('pointerdown',e=>{ const b=e.target.closest&&e.target.closest('.gt-b.man[data-gt]'); if(!b||e.button>0) return; const z=GT_DW[UI.gtZoom]?UI.gtZoom:'woche';
+  GT_DRAG={b,id:b.dataset.gt,pid:b.dataset.pid,x0:e.clientX,rz:!!e.target.closest('.gt-rz'),l0:parseFloat(b.style.left),w0:parseFloat(b.style.width),DW:GT_DW[z],moved:false}; try{ b.setPointerCapture(e.pointerId); }catch(_){} });
+document.addEventListener('pointermove',e=>{ const g=GT_DRAG; if(!g) return; const dx=e.clientX-g.x0; if(!g.moved&&Math.abs(dx)<4) return; g.moved=true; const dd=Math.round(dx/g.DW);
+  if(g.rz) g.b.style.width=Math.max(g.DW,g.w0+dd*g.DW)+'px'; else g.b.style.left=(g.l0+dd*g.DW)+'px'; g.b.classList.add('drag'); g.dd=dd; });
+document.addEventListener('pointerup',()=>{ const g=GT_DRAG; GT_DRAG=null; if(!g) return; if(!g.moved){ gtEdit(g.pid,g.id); return; } if(!g.dd){ render(); return; }
+  const p=S.projects[g.pid]; if(!p) return; const rows=clone(gtRows(p)), r=rows.find(x=>x.id===g.id); if(!r) return;
+  if(g.rz){ let e=addDays(r.e||r.s,g.dd); if(e<r.s) e=r.s; r.e=e; } else { r.s=addDays(r.s,g.dd); r.e=addDays(r.e||r.s,g.dd); }
+  gtPush(rows,r.id); gtSave(g.pid,rows); });
+async function gtAI(pid){ const p=S.projects[pid]; if(!p||!SAMPLE||!gtOk()) return; const cur=gtRows(p);
+  toast('Claude erstellt den Bauzeitenplan … das dauert etwa eine halbe Minute.');
+  const ctx=[`Projekt „${p.name}“, Art: ${flowOf(p).n}${p.kwp?', '+p.kwp+' kWp':''}${p.kwh?', '+p.kwh+' kWh':''}${p.place?', Ort: '+String(p.place).replace(/\n/g,' '):''}`,
+    `Status: ${pipe(p).label||'-'}`, p.start?'Geplanter Baubeginn: '+p.start:'', p.target?'Geplante Fertigstellung: '+p.target:'',
+    'Letzte Notizen:\n'+(noteEntries(p).sort((a,b)=>b.d.localeCompare(a.d)).slice(0,14).map(n=>'- '+n.d+': '+n.t.slice(0,200)).join('\n')||'-'),
+    'Offene Aufgaben:\n'+(openTasks(p.id).slice(0,20).map(t=>'- '+t.title+(t.due?' bis '+t.due:'')+(t.who?' ('+shortWho(t.who)+')':'')).join('\n')||'-'),
+    'Eingeplante Einsätze:\n'+(gtAuto(p).filter(r=>r.auto==='team').slice(0,20).map(r=>'- '+r.s+(r.e!==r.s?' bis '+r.e:'')+': '+r.t+(r.who.length?' ('+r.who.join(', ')+')':'')).join('\n')||'-'),
+    'Bestellungen:\n'+(gtAuto(p).filter(r=>r.auto==='mat').map(r=>'- '+r.t+': '+r.s+' → '+r.e+' ('+r.sub+')').join('\n')||'-'),
+    cur.length?'Schon im Plan (nicht doppeln):\n'+cur.map(r=>'- '+r.g+': '+r.t+' '+r.s+' bis '+r.e).join('\n'):''].filter(Boolean).join('\n');
+  let r; try{ r=await SAMPLE.json(`Heute ist ${TODAY()}. Erstelle für ein Projekt eines Solar-Installationsbetriebs (PV, Speicher, Ladesäulen) einen realistischen Bauzeitenplan als Gantt-Plan.
+${ctx}
+Regeln:
+- 3 bis 6 Phasen (z. B. „Planung & Genehmigung“, „Material“, „Montage DC“, „Montage AC & Anschluss“, „Netzanschluss“, „Inbetriebnahme & Abnahme“), passend zur Projektart. Je Phase 2 bis 6 konkrete Vorgänge.
+- Bereits Erledigtes aus den Notizen mit echtem Datum und pct 100, Laufendes mit geschätztem Fortschritt, Kommendes ab heute. Arbeitstage Mo–Fr beachten. Eingeplante Einsätze und Liefertermine als feste Daten übernehmen.
+- Abhängigkeiten über "dep" = Nummern (n) der Vorgänger. Wichtige Wegmarken (z. B. Netzanschlusszusage, Zählersetzung, Inbetriebnahme) als Meilenstein ms:true mit s = e.
+- Wer: nur Kürzel aus den Einsätzen/Aufgaben, sonst leer. Nichts erfinden, was den Notizen widerspricht.${p.target?' Fertigstellung möglichst bis '+p.target+'; wenn unrealistisch, im Feld "hinweis" sagen.':''}
+Antworte nur mit JSON: {"hinweis":"","rows":[{"n":1,"g":"Phase","t":"Vorgang","s":"JJJJ-MM-TT","e":"JJJJ-MM-TT","pct":0,"who":"","dep":[],"ms":false}]}`,{modelTier:'complex'}); }catch(e){ return toast(SAMPLE_ERR[e&&e.code]||'Plan konnte nicht erstellt werden.'); }
+  const raw=(r&&Array.isArray(r.rows)?r.rows:[]).filter(x=>x&&x.t&&gtIso(x.s)).slice(0,45); if(!raw.length) return toast('Kein Plan vorgeschlagen.');
+  const idOf={}; raw.forEach(x=>idOf[x.n]=uid()); const neu=raw.map(x=>{ const s=x.s, e=x.ms?s:(gtIso(x.e)&&x.e>=s?x.e:s); const o={id:idOf[x.n],g:String(x.g||'Vorgänge').slice(0,50),t:String(x.t).slice(0,90),s,e,pct:Math.max(0,Math.min(100,+x.pct||0)),who:String(x.who||'').slice(0,60),dep:(Array.isArray(x.dep)?x.dep:[]).map(n=>idOf[n]).filter(Boolean)}; if(x.ms) o.ms=true; return o; });
+  const gl=[...new Set(neu.map(x=>x.g))];
+  openSheet({title:'Vorschlag: Bauzeitenplan',wide:1,html:`<div class="fld full">${r.hinweis?`<div class="hint" style="margin-bottom:10px">⚠️ ${esc(String(r.hinweis).slice(0,300))}</div>`:''}<div class="small muted" style="margin-bottom:8px">${neu.length} Vorgänge in ${gl.length} Phasen. Nach dem Übernehmen kannst du alles anklicken, verschieben und ändern.</div>
+    ${gl.map(g=>`<div class="sec-t" style="margin:10px 0 4px">${esc(g)}</div>${neu.filter(x=>x.g===g).map(x=>`<div class="small" style="padding:3px 0">${x.ms?'◆':'▬'} <b>${esc(x.t)}</b> <span class="muted">${esc(fmtD(x.s).slice(3,9)+(x.ms?'':' – '+fmtD(x.e).slice(3,9)))}${x.pct?' · '+x.pct+' %':''}${x.who?' · '+esc(x.who):''}</span></div>`).join('')}`).join('')}</div>`,
+    saveLabel:cur.length?'Ergänzen':'Übernehmen',extraBtn:cur.length?`<button type="button" class="btn" data-act="gtAIRepl">Bisherigen Plan ersetzen</button>`:'',
+    onSave:()=>{ setTimeout(()=>gtSave(pid,gtRows(S.projects[pid]).concat(neu),neu.length+' Vorgänge übernommen.'),0); }});
+  A.gtAIRepl=()=>confirmSheet('Den bisherigen Bauzeitenplan ('+cur.length+' Vorgänge) durch den Vorschlag ersetzen?',()=>gtSave(pid,neu,'Bauzeitenplan ersetzt.')); }
+queueMicrotask(()=>{ Object.assign(A,{
+  tlMode:d=>{ UI.tlMode=d.v; saveUI(); render(); },
+  gtZoom:d=>{ UI.gtZoom=d.v; UI.gtX=null; const s=$('#gtScroll'); if(s) s.dataset.pid=''; saveUI(); render(); },
+  gtToday:()=>{ const s=$('#gtScroll'), n=s&&s.querySelector('.gt-now'); if(s&&n) s.scrollLeft=Math.max(0,n.offsetLeft-s.clientWidth*0.35); },
+  gtTog:d=>{ UI.gtCol={...(UI.gtCol||{}),[d.k]:!(UI.gtCol||{})[d.k]}; render(); },
+  gtNew:d=>gtEdit(d.pid,null), gtEdit:d=>gtEdit(d.pid,d.id), gtAI:d=>gtAI(d.pid) });
+  Object.assign(CHG,{ gtAuto:(d,el)=>{ UI.gtAuto={...(UI.gtAuto||{}),[d.v]:el.checked}; saveUI(); render(); } }); });
 // Erinnerung an Fertigstellungstermine: einmal am Tag, wenn ≤ 21 Tage oder überfällig und noch Schritte offen
 let TGT_ASKED=false;
 function checkTargets(){
@@ -6057,7 +6239,8 @@ function vRights(){
   if(!isBaseAdmin()) return head('Rechte','')+'<div class="card"><div class="empty">Nur EP und AvE können Rechte verteilen.</div></div>';
   const st=staff();
   return head('Admin: Rechte','Wer sieht welche Rubrik – und wer darf alles bearbeiten und löschen',`<button class="btn sun" data-act="permPresetAll" title="AS (ABou), Moji = Monteur · HH, MK, JS, PR = Büro · JP = Buchhaltung · EP, AvE = Admin">Voreinstellungen übernehmen</button>`)+`<div class="card rt-presets"><div class="card-b">${Object.values(ROLE_PRESETS).map(r=>`<div><b>${esc(r.l)}</b> <span class="small muted">${esc(r.info)}</span></div>`).join('')}<div class="small muted" style="margin-top:6px">Rolle wählen setzt die Häkchen; danach kann man pro Person einzeln anpassen (dann steht dort individuell).</div></div></div>`+
-   `<div class="card"><div class="tbl-wrap"><table class="tbl rights"><thead><tr><th>Mitarbeiter</th><th>Rolle</th><th title="Alles bearbeiten und löschen (wie EP/AvE)">Admin</th>${AREAS.map(([k,l])=>`<th class="rt-h"><span>${esc(l)}</span></th>`).join('')}</tr></thead><tbody>
+   (()=>{ const o=$('#rtScroll'); if(o) UI.rtX=o.scrollLeft; const x=UI.rtX||0; if(x) setTimeout(()=>{ const s=$('#rtScroll'); if(s) s.scrollLeft=x; },0); return ''; })()+
+   `<div class="card"><div class="tbl-wrap" id="rtScroll"><table class="tbl rights"><thead><tr><th>Mitarbeiter</th><th>Rolle</th><th title="Alles bearbeiten und löschen (wie EP/AvE)">Admin</th>${AREAS.map(([k,l])=>`<th class="rt-h"><span>${esc(l)}</span></th>`).join('')}</tr></thead><tbody>
    ${st.map(s=>{ const base=ADMINS.includes(shortWho(s.name)), p=permEff(s.name)||{}, vs=viewsOf(s.name), es=editsOf(s.name), adm=base||p.admin;
      return `<tr><td><b>${esc(s.name)}</b><div class="small muted">${esc(ROLES[s.role]||s.role||'')}</div></td><td>${base?'<span class="pill sun">Admin</span>':`<select class="inp rt-role" data-chg="permRole" data-n="${esc(s.name)}" aria-label="Rolle: ${esc(s.name)}"><option value="">individuell</option>${Object.entries(ROLE_PRESETS).map(([k,r])=>`<option value="${k}" ${p.role===k?'selected':''}>${esc(r.l)}</option>`).join('')}</select>`}</td>
        <td class="c">${base?'<span class="pill sun">immer</span>':`<input type="checkbox" class="ck" data-chg="permAdmin" data-n="${esc(s.name)}" ${p.admin?'checked':''} aria-label="Admin: ${esc(s.name)}">`}</td>
