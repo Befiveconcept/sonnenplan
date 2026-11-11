@@ -652,6 +652,7 @@ body.kiosk .app{display:block}body.kiosk .main{padding:0}body.kiosk .wrap{max-wi
 .k-who{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.k-wb{display:flex;flex-direction:column;align-items:flex-start;padding:16px;border-radius:14px;border:2px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;cursor:pointer}.k-wb b{font-size:24px}.k-wb span{font-size:13px;color:var(--muted)}
 .ks-log{margin-top:22px;display:flex;flex-direction:column;gap:4px}
 /* Kunden-Ansicht */
+.kv-accs{border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin-bottom:12px;background:var(--sunken)}.kv-acc{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:3px 0}.kv-acc-m{font-weight:600;min-width:0;overflow-wrap:anywhere}
 .kv-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.kv-tabs .chip.on{background:#111;color:#F4DB02;border-color:#111}
 .kv-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(250px,1fr);gap:16px;align-items:start}@media(max-width:900px){.kv-grid{grid-template-columns:1fr}}
 .kvbox{background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px;color-scheme:light}
@@ -7929,6 +7930,22 @@ const KV3D=(()=>{
 .kv3d .k .t{fill:#FFEB55}.kv3d .k .l{fill:#F4DB02}.kv3d .k .r{fill:#D4BB00}.kv3d .k .w,.kv3d .k .w2{fill:#B79F00}
 .kv3d .k .ln,.kv3d .k .fin,.kv3d .k .fence{stroke:#7a6800}.kv3d .k .cab{stroke:#C9A900;stroke-width:2.6}
 .kv3d .kc{cursor:pointer;outline:none}.kv3d .kc:hover polygon,.kv3d .kc:focus polygon{filter:brightness(.92)}.kv3d .kc.sel polygon{stroke:#000;stroke-width:1.6}
+.kv3d .bd .pr{display:none}
+.kv3d.dk polygon{stroke:#3b4452;stroke-width:.6}.kv3d.dk .gnd{fill:rgba(255,255,255,.025);stroke:rgba(244,219,2,.12);stroke-width:.8}.kv3d.dk .pav{fill:rgba(255,255,255,.05)}
+.kv3d.dk .b.t{fill:#20252d}.kv3d.dk .b.l{fill:#181c22}.kv3d.dk .b.r{fill:#111419}.kv3d.dk .m.t{fill:#2c323b}.kv3d.dk .m.l{fill:#22272e}.kv3d.dk .m.r{fill:#1a1e24}
+.kv3d.dk .d.t{fill:#0f1216}.kv3d.dk .d.l{fill:#0b0d10}.kv3d.dk .d.r{fill:#08090b}.kv3d.dk .w{fill:#2a3442}.kv3d.dk .w2{fill:#1c2430}
+.kv3d.dk .ln{stroke:#4a5566}.kv3d.dk .ln2{stroke:rgba(255,255,255,.18)}.kv3d.dk .fin{stroke:#000}.kv3d.dk .cab{stroke:#4a5566}.kv3d.dk .cut{stroke:rgba(244,219,2,.35)}.kv3d.dk .fence{stroke:#55606f}
+.kv3d.dk .k polygon{stroke:#7a6a00}.kv3d.dk .k .t{fill:#FFE94A}.kv3d.dk .k .l{fill:#F4DB02}.kv3d.dk .k .r{fill:#C7AF00}.kv3d.dk .k .d.t{fill:#F4DB02}
+.kv3d.dk .kc.k{animation:kvGlow 3.2s ease-in-out infinite}.kv3d.dk .kc.k:nth-of-type(2n){animation-delay:-1.1s}.kv3d.dk .kc.k:nth-of-type(3n){animation-delay:-2.2s}
+.kv3d.dk .kc.k:hover,.kv3d.dk .kc.k:focus,.kv3d.dk .kc.sel{animation:none;filter:drop-shadow(0 0 10px rgba(244,219,2,1)) brightness(1.08)}
+.kv3d.dk .k .cab{stroke:#F4DB02;stroke-width:2.4;stroke-dasharray:7 7;animation:kvFlow 1s linear infinite}
+.kv3d.dk .bd circle{fill:#050608}.kv3d.dk .bd .pr{display:block;fill:none;stroke:#F4DB02;stroke-width:1.5;transform-box:fill-box;transform-origin:center;animation:kvPulse 2.6s ease-out infinite}
+.kv3d.dk .bd line{stroke:#F4DB02}
+.kv3d.dk{animation:kvRise 1s cubic-bezier(.2,.8,.2,1) both}
+@keyframes kvGlow{0%,100%{filter:drop-shadow(0 0 2px rgba(244,219,2,.45))}50%{filter:drop-shadow(0 0 9px rgba(244,219,2,.95))}}
+@keyframes kvFlow{to{stroke-dashoffset:-28}}@keyframes kvPulse{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(2.4)}}
+@keyframes kvRise{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.kv3d.dk,.kv3d.dk .kc.k,.kv3d.dk .k .cab,.kv3d.dk .bd .pr{animation:none}}
 .kv3d .bd circle{fill:#111;stroke:#F4DB02;stroke-width:2}.kv3d .bd text{fill:#F4DB02;font:700 12px/1 system-ui,sans-serif;text-anchor:middle;dominant-baseline:central}.kv3d .bd{cursor:pointer}
 .kv3d .kc.sel~.bd.sel circle,.kv3d .bd.sel circle{fill:#F4DB02;stroke:#111}.kv3d .bd.sel text{fill:#111}`;
   function svg(s,o){ o=o||{}; s=s||{}; const type=DRAW[s.type]?s.type:'haus', c=ctx({...s,type});
@@ -7937,10 +7954,10 @@ const KV3D=(()=>{
     // Nummern-Punkte: Größe passend zur Szene (große Szenen werden kleiner dargestellt)
     const bx=c.pts.map(p=>p[0]), by=c.pts.map(p=>p[1]), sc=Math.max(.8,Math.max(Math.max(...bx)-Math.min(...bx),Math.max(...by)-Math.min(...by))/520), R=10*sc;
     const badges=clickList({...s,type}).map(({k,n,label})=>{ const a=c.anch[k]; if(!a) return ''; const X=(a[0]-a[1])*CO*K, Y=((a[0]+a[1])*.5-a[2])*K-R*1.4; c.pts.push([X-R,Y-R-2],[X+R,Y+R]);
-      return `<g class="bd${o.sel===k?' sel':''}" data-c="${k}" role="button" tabindex="-1" aria-label="${escX(label)}"><line x1="${f1(X)}" y1="${f1(Y+R*.9)}" x2="${f1(X)}" y2="${f1(Y+R*1.4)}" stroke="#111" stroke-width="${f1(1.5*sc)}"/><circle cx="${f1(X)}" cy="${f1(Y)}" r="${f1(R)}" style="stroke-width:${f1(2*sc)}"/><text x="${f1(X)}" y="${f1(Y)}" style="font-size:${f1(12*sc)}px">${n}</text></g>`; }).join('');
+      return `<g class="bd${o.sel===k?' sel':''}" data-c="${k}" role="button" tabindex="-1" aria-label="${escX(label)}"><line x1="${f1(X)}" y1="${f1(Y+R*.9)}" x2="${f1(X)}" y2="${f1(Y+R*1.4)}" stroke="#111" stroke-width="${f1(1.5*sc)}"/><circle class="pr" cx="${f1(X)}" cy="${f1(Y)}" r="${f1(R)}" style="animation-delay:${(n*0.37%2.6).toFixed(2)}s"/><circle cx="${f1(X)}" cy="${f1(Y)}" r="${f1(R)}" style="stroke-width:${f1(2*sc)}"/><text x="${f1(X)}" y="${f1(Y)}" style="font-size:${f1(12*sc)}px">${n}</text></g>`; }).join('');
     if(o.sel) body=body.replace(`class="kc k" data-c="${o.sel}"`,`class="kc k sel" data-c="${o.sel}"`);
     const xs=c.pts.map(p=>p[0]), ys=c.pts.map(p=>p[1]), pad=14, x0=Math.min(...xs)-pad, y0=Math.min(...ys)-pad, w=Math.max(...xs)-x0+pad, h=Math.max(...ys)-y0+pad;
-    return `<svg class="kv3d" viewBox="${f1(x0)} ${f1(y0)} ${f1(w)} ${f1(h)}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escX(s.title||TYPES[type].l)}"><style>${CSS}</style>${body}${badges}</svg>`; }
+    return `<svg class="kv3d${o.theme==='dark'?' dk':''}" viewBox="${f1(x0)} ${f1(y0)} ${f1(w)} ${f1(h)}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escX(s.title||TYPES[type].l)}"><style>${CSS}</style>${body}${badges}</svg>`; }
   return {TYPES,svg,st,lab,clickList};
 })();
 /*KV3D-END*/
@@ -8063,7 +8080,8 @@ function kvAccessSheet(pid){ const kv=kvOf(pid), p=S.projects[pid]; if(!kv||!p||
     onSave:()=>{ const em=[...new Set(($('#kv_em').value||'').split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(Boolean))], bad=em.filter(x=>!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(x));
       if(bad.length){ toast('Bitte prüfen: '+bad.join(', ')); return false; }
       const ownDom=staff().map(s=>String(s.email||'').split('@')[1]).filter(Boolean); if(em.some(x=>ownDom.includes(x.split('@')[1]))&&!confirm('Eine Adresse gehört zu unserer Firma. Mitarbeiter brauchen keinen Kundenzugang. Trotzdem speichern?')) return false;
-      const k2=clone(kvOf(pid)); k2.emails=em; kvSave(k2); kvPublish(pid); }}); }
+      const k2=clone(kvOf(pid)), at={...(k2.emailsAt||{})}; em.forEach(e=>{ if(!at[e]) at[e]={d:new Date().toISOString(),by:meK()}; }); Object.keys(at).forEach(e=>{ if(!em.includes(e)) delete at[e]; });
+      k2.emails=em; k2.emailsAt=at; kvSave(k2); kvPublish(pid).then(()=>kvLoadAcc(true)); }}); }
 const KV_DSGVO='Datenschutzhinweis: Wenn Sie sich ein Konto bei uns anlegen und Ihr Projekt online live verfolgen, stimmen Sie damit automatisch zu, dass Ihre Daten mithilfe einer künstlichen Intelligenz (KI) verarbeitet werden. Die Infos auf Ihrer Projektseite werden mit Unterstützung einer KI erstellt und vor der Veröffentlichung von uns geprüft und freigegeben.';
 function kvInvite(pid){ const p=S.projects[pid], ems=(($('#kv_em')||{}).value||((kvOf(pid)||{}).emails||[]).join('\n')).split(/[\s,;]+/).map(x=>x.trim()).filter(Boolean), url=kvPortalUrl();
   if(!ems.length){ toast('Bitte zuerst die E-Mail-Adresse des Kunden eintragen.'); return; }
@@ -8085,19 +8103,45 @@ ${(ME||'').replace(/\s*\([^)]*\)$/,'')}
 nutz die Sonne GmbH`;
   location.href='mailto:'+encodeURIComponent(ems.join(','))+'?subject='+encodeURIComponent('Ihr Projekt „'+p.name+'“ online verfolgen')+'&body='+encodeURIComponent(body); }
 function kvPreview(pid){ const p=S.projects[pid], kv=kvOf(pid); if(!p||!kv) return; const d=kvPubData(p,kv);
-  openSheet({title:'Vorschau: so sieht es der Kunde',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Nur freigegebene Texte. ${kv.pubAt?'Zuletzt veröffentlicht '+esc(fmtD(kv.pubAt.slice(0,10)))+' ('+esc(kv.pubBy||'')+').':'Noch nicht veröffentlicht.'}</div>${d.scenes.map(s=>`<h3 style="margin:10px 0 4px">${esc(s.title)}</h3><div class="kvbox kv-prev">${KV3D.svg({type:s.type,n:s.n,comps:s.comps})}</div>${KV3D.clickList({type:s.type,comps:s.comps}).map(x=>{ const c=s.comps[x.k]||{}; return `<div class="kv-pv"><span class="kv-n">${x.n}</span><div><b>${esc(c.label||x.label)}</b><div class="small">${c.text?esc(c.text):'<span class="muted">– noch kein freigegebener Text –</span>'}</div></div></div>`; }).join('')}`).join('')}</div>`,saveLabel:'Schließen',onSave:()=>{}}); }
-function projKview(p){ const kv=kvOf(p.id), ed=kvEditOk(), fr=kfreiOk(), url=kvPortalUrl();
+  openSheet({title:'Vorschau: so sieht es der Kunde',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Nur freigegebene Texte. ${kv.pubAt?'Zuletzt veröffentlicht '+esc(fmtD(kv.pubAt.slice(0,10)))+' ('+esc(kv.pubBy||'')+').':'Noch nicht veröffentlicht.'}</div>${d.scenes.map(s=>`<h3 style="margin:10px 0 4px">${esc(s.title)}</h3><div class="kvbox kv-prev" style="background:#050608;border-color:#222">${KV3D.svg({type:s.type,n:s.n,comps:s.comps},{theme:'dark'})}</div>${KV3D.clickList({type:s.type,comps:s.comps}).map(x=>{ const c=s.comps[x.k]||{}; return `<div class="kv-pv"><span class="kv-n">${x.n}</span><div><b>${esc(c.label||x.label)}</b><div class="small">${c.text?esc(c.text):'<span class="muted">– noch kein freigegebener Text –</span>'}</div></div></div>`; }).join('')}`).join('')}</div>`,saveLabel:'Schließen',onSave:()=>{}}); }
+/* Registrierungsstatus der Kunden (aus Supabase, 10_kundenportal_status.sql) und tatsächlich veröffentlichte Freigaben (Tabelle portal) */
+let KV_ACC=null, KV_ACC_AT=0, KV_ACC_ERR='', KV_PORTAL=null, KV_ACC_RUN=false;
+async function kvLoadAcc(force){ if(!(MODE==='cloud'&&window.SB)||KV_ACC_RUN) return; if(!force&&Date.now()-KV_ACC_AT<60000) return; KV_ACC_AT=Date.now(); KV_ACC_RUN=true;
+  try{ const [a,p]=await Promise.all([window.SB.rpc('portal_accounts'),window.SB.from('portal').select('id,emails,updated_at')]);
+    if(a.error){ KV_ACC=null; KV_ACC_ERR=/portal_accounts|function|schema cache/i.test(a.error.message)?'sql':a.error.message; } else { KV_ACC_ERR=''; KV_ACC=Object.fromEntries((a.data||[]).map(r=>[String(r.email||'').toLowerCase(),r])); }
+    KV_PORTAL=p.error?null:Object.fromEntries((p.data||[]).map(r=>[r.id,r])); }
+  catch(e){ KV_ACC_ERR=String(e&&e.message||e); }
+  finally{ KV_ACC_RUN=false; } if(!SHEET) render(); }
+// Status einer Kunden-Adresse bei einem Projekt
+function kvAccSt(pid,email){ const e=String(email||'').toLowerCase(), pub=KV_PORTAL?((KV_PORTAL[pid]||{}).emails||[]).map(x=>String(x).toLowerCase()).includes(e):null;
+  if(pub===false) return {c:'warn',t:'noch nicht veröffentlicht',d:'Auf „Veröffentlichen“ klicken, sonst sieht der Kunde nichts.'};
+  if(!(MODE==='cloud'&&window.SB)) return {c:'',t:'Status nur in der Online-App',d:''};
+  if(!KV_ACC) return {c:'',t:KV_ACC_ERR==='sql'?'Status: SQL 10 fehlt':KV_ACC_ERR?'Status nicht abrufbar':'Status wird geladen …',d:KV_ACC_ERR==='sql'?'In Supabase einmal 10_kundenportal_status.sql ausführen.':KV_ACC_ERR};
+  const r=KV_ACC[e]; if(!r) return {c:'',t:'noch nicht registriert',d:'Einladung geschickt? Der Kunde muss auf der Kundenseite „Konto anlegen“ wählen.'};
+  if(!r.confirmed_at) return {c:'warn',t:'registriert – Bestätigung fehlt',d:'Registriert am '+fmtD(String(r.created_at).slice(0,10))+', der Bestätigungslink in der Mail wurde noch nicht angeklickt.'};
+  return {c:'ok',t:r.last_sign_in_at?'aktiv · zuletzt '+fmtD(String(r.last_sign_in_at).slice(0,10)):'aktiv · noch nie angemeldet',d:'Registriert am '+fmtD(String(r.created_at).slice(0,10))+(r.consent_at?' · Datenschutz zugestimmt am '+fmtD(String(r.consent_at).slice(0,10)):'')}; }
+function kvAccRows(pid,emails){ const at=(kvOf(pid)||{}).emailsAt||{};
+  return emails.map(e=>{ const s=kvAccSt(pid,e), a=at[e]; return `<div class="kv-acc"><span class="kv-acc-m">👤 ${esc(e)}</span><span class="pill ${s.c}" title="${esc(s.d)}">${esc(s.t)}</span>${a?`<span class="small muted">freigegeben ${esc(fmtD(String(a.d||'').slice(0,10)))}${a.by?' ('+esc(a.by)+')':''}</span>`:''}</div>`; }).join(''); }
+function kvOverview(){ kvLoadAcc(true).then(()=>{ if(SHEET&&SHEET.kvOv) kvOverviewOpen(); }); kvOverviewOpen(); }
+function kvOverviewOpen(){ const rows=[]; arr('kview').forEach(kv=>{ const p=S.projects[kv.pid]; if(!p) return; (kv.emails||[]).forEach(e=>rows.push({p,kv,e})); });
+  rows.sort((a,b)=>a.p.name.localeCompare(b.p.name,'de')||a.e.localeCompare(b.e));
+  const n=k=>rows.filter(r=>kvAccSt(r.p.id,r.e).c===k).length;
+  const html=`<div class="fld full"><div class="small muted" style="margin-bottom:8px">${rows.length} ${rows.length===1?'Kundenzugang':'Kundenzugänge'} bei ${new Set(rows.map(r=>r.p.id)).size} Projekt${new Set(rows.map(r=>r.p.id)).size===1?'':'en'} · ${n('ok')} aktiv · ${n('warn')} offen. Fährst du mit der Maus über den Status, siehst du Details.</div>
+    ${rows.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Projekt</th><th>Kunde (E-Mail)</th><th>Status</th><th>Freigegeben</th></tr></thead><tbody>${rows.map(r=>{ const s=kvAccSt(r.p.id,r.e), a=((r.kv.emailsAt||{})[r.e])||{}; return `<tr><td><button type="button" class="linkish" data-act="kvGo" data-id="${r.p.id}">${esc(r.p.name)}</button></td><td>${esc(r.e)}</td><td><span class="pill ${s.c}" title="${esc(s.d)}">${esc(s.t)}</span>${s.d?`<div class="small muted">${esc(s.d)}</div>`:''}</td><td class="small">${a.d?esc(fmtD(String(a.d).slice(0,10)))+(a.by?' · '+esc(a.by):''):r.kv.pubAt?'spätestens '+esc(fmtD(r.kv.pubAt.slice(0,10))):'–'}</td></tr>`; }).join('')}</tbody></table></div>`:'<div class="empty">Noch an keinen Kunden freigegeben. Im Projekt unter „Kunden-Ansicht“ → „👤 Kundenzugang“ eintragen.</div>'}</div>`;
+  if(SHEET&&SHEET.kvOv){ const b=document.querySelector('#sheetForm .sheet-b'); if(b) b.innerHTML=html; return; }
+  openSheet({title:'Alle Kundenfreigaben',wide:1,kvOv:true,html,saveLabel:'Schließen',onSave:()=>{}}); }
+function projKview(p){ const kv=kvOf(p.id), ed=kvEditOk(), fr=kfreiOk(), url=kvPortalUrl(); kvLoadAcc();
   const intro=`Eine 3-D-Skizze der Anlage, auf der der Kunde einzelne Teile anklickt und die freigegebenen Infos dazu sieht – auf einer eigenen Webseite mit eigenem Zugang, auf der er nur sein Projekt sieht.`;
   if(!kv||!(kv.scenes||[]).length) return `<div class="card"><div class="card-h"><h3>Kunden-Ansicht</h3></div><div class="card-b"><p style="margin:0 0 12px">${intro}</p>
-    ${ed?`<div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn sun" data-act="kvSuggest" data-pid="${p.id}">✨ Skizzen aus dem Projekt erstellen</button><button class="btn" data-act="kvPhoto" data-pid="${p.id}">📷 Aus Foto erstellen</button><button class="btn" data-act="kvAddScene" data-pid="${p.id}">${ic('plus')}Skizze von Hand wählen</button></div>`:'<div class="small muted">Noch keine Kunden-Ansicht angelegt.</div>'}</div></div><input type="file" id="kvPhotoIn" accept="image/*" hidden>`;
+    ${ed?`<div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn sun" data-act="kvSuggest" data-pid="${p.id}">✨ Skizzen aus dem Projekt erstellen</button><button class="btn" data-act="kvPhoto" data-pid="${p.id}">📷 Aus Foto erstellen</button><button class="btn" data-act="kvAddScene" data-pid="${p.id}">${ic('plus')}Skizze von Hand wählen</button></div>`:'<div class="small muted">Noch keine Kunden-Ansicht angelegt.</div>'}<div style="margin-top:12px"><button type="button" class="lnk small" data-act="kvOverview">📋 Alle Kundenfreigaben ansehen</button></div></div></div><input type="file" id="kvPhotoIn" accept="image/*" hidden>`;
   const sc=kv.scenes, i=Math.max(0,Math.min(UI.kvScene||0,sc.length-1)), s=sc[i], pend=kvPendList(kv), sel=UI.kvSel&&KV3D.st(s,UI.kvSel)==='klick'?UI.kvSel:'';
-  const em=kv.emails||[], status=`${em.length?`<span class="pill ok">👤 ${em.length} Kundenzugang${em.length>1?'e':''}</span>`:'<span class="pill">kein Kundenzugang</span>'} ${kv.pubAt?`<span class="small muted">veröffentlicht ${esc(fmtD(kv.pubAt.slice(0,10)))} (${esc(kv.pubBy||'')})</span>`:'<span class="small muted">noch nicht veröffentlicht</span>'} ${pend.length?`<span class="pill warn">⏳ ${pend.length} Text${pend.length>1?'e':''} warten auf Freigabe</span>`:''}`;
+  const em=kv.emails||[], status=`${em.length?`<span class="pill ok">👤 ${em.length} ${em.length>1?'Kundenzugänge':'Kundenzugang'}</span>`:'<span class="pill">kein Kundenzugang</span>'} ${kv.pubAt?`<span class="small muted">veröffentlicht ${esc(fmtD(kv.pubAt.slice(0,10)))} (${esc(kv.pubBy||'')})</span>`:'<span class="small muted">noch nicht veröffentlicht</span>'} ${pend.length?`<span class="pill warn">⏳ ${pend.length} Text${pend.length>1?'e':''} warten auf Freigabe</span>`:''}`;
   const rows=KV3D.TYPES[s.type].comps.map(([k,l])=>{ const c=(s.comps||{})[k]||{}, on=KV3D.st(s,k), num=(KV3D.clickList(s).find(x=>x.k===k)||{}).n;
     const stt=on!=='klick'?`<span class="small muted">${on==='aus'?'ausgeblendet':'nur grau'}</span>`:c.pend?'<span class="pill warn">⏳ Freigabe</span>':String(c.text||'').trim()?`<span class="pill ok" title="freigegeben ${esc(fmtD(c.tAt||''))} von ${esc(c.aBy||'')}">✓ frei</span>`:'<span class="small muted">kein Text</span>';
     return `<div class="kv-row ${k===sel?'on':''} ${on==='aus'?'off':''}" data-act="kvComp" data-pid="${p.id}" data-i="${i}" data-k="${k}"><span class="kv-n ${on==='klick'?'':'g'}">${num||'·'}</span><div class="kv-rt"><b>${esc(c.label||l)}</b>${on==='klick'?`<div class="small muted kv-tx">${esc(String(c.pend?c.draft||'':c.text||'').slice(0,110))||'–'}</div>`:''}</div>${stt}</div>`; }).join('');
   return `<div class="card"><div class="card-h" style="flex-wrap:wrap;gap:8px"><h3>Kunden-Ansicht</h3><div class="row" style="gap:6px;flex-wrap:wrap">${status}</div><span class="spacer"></span>
       <div class="row" style="gap:6px;flex-wrap:wrap">${fr&&pend.length?`<button class="btn sun sm" data-act="kvApproveAll" data-pid="${p.id}">✓ Texte prüfen & freigeben (${pend.length})</button>`:''}<button class="btn sm" data-act="kvPreview" data-pid="${p.id}">👁 Vorschau wie Kunde</button>${ed?`<button class="btn sm" data-act="kvAccess" data-pid="${p.id}">👤 Kundenzugang</button><button class="btn sm pri" data-act="kvPublish" data-pid="${p.id}">⤴ Veröffentlichen</button>`:''}</div></div>
-    <div class="card-b"><div class="kv-tabs">${sc.map((x,j)=>`<button class="chip ${j===i?'on':''}" data-act="kvScene" data-i="${j}">${esc(x.title||KV3D.TYPES[x.type].l)}</button>`).join('')}${ed?`<button class="chip" data-act="kvAddScene" data-pid="${p.id}">+ Skizze</button>`:''}</div>
+    <div class="card-b">${em.length?`<div class="kv-accs"><div class="row" style="gap:8px;margin-bottom:4px"><b class="small">Kundenzugänge</b><span class="spacer"></span><button type="button" class="lnk small" data-act="kvRefresh">↻ Status aktualisieren</button><button type="button" class="lnk small" data-act="kvOverview">📋 Alle Kundenfreigaben</button></div>${kvAccRows(p.id,em)}</div>`:`<div class="row" style="justify-content:flex-end;margin-bottom:6px"><button type="button" class="lnk small" data-act="kvOverview">📋 Alle Kundenfreigaben</button></div>`}<div class="kv-tabs">${sc.map((x,j)=>`<button class="chip ${j===i?'on':''}" data-act="kvScene" data-i="${j}">${esc(x.title||KV3D.TYPES[x.type].l)}</button>`).join('')}${ed?`<button class="chip" data-act="kvAddScene" data-pid="${p.id}">+ Skizze</button>`:''}</div>
       <div class="kv-grid"><div><div class="kvbox" data-pid="${p.id}" data-i="${i}">${KV3D.svg(s,{sel})}</div>
         ${ed?`<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn sm" data-act="kvEditScene" data-pid="${p.id}" data-i="${i}">${ic('edit')}Skizze</button><button class="btn sm" data-act="kvPhoto" data-pid="${p.id}" data-i="${i}">📷 Echtes Foto hochladen → Skizze</button><button class="btn sm" data-act="kvTexts" data-pid="${p.id}" data-i="${i}">✨ Texte aus Projekt-Updates vorschlagen</button><button class="btn sm ghost" data-act="kvSuggest" data-pid="${p.id}">✨ weitere Skizzen vorschlagen</button></div>`:''}
         ${s.photo?`<div class="small muted" style="margin-top:6px">Vorlage-Foto (nur intern): <a href="/_blob/${esc(s.photo)}" target="_blank" rel="noopener">ansehen</a></div>`:''}</div>
@@ -8122,7 +8166,10 @@ queueMicrotask(()=>Object.assign(A,{
   kvInvite:d=>kvInvite(d.pid),
   kvPublish:d=>kvPublish(d.pid),
   kvPreview:d=>kvPreview(d.pid),
-  kvApproveAll:d=>kvApproveSheet(d.pid)
+  kvApproveAll:d=>kvApproveSheet(d.pid),
+  kvOverview:()=>kvOverview(),
+  kvRefresh:()=>{ kvLoadAcc(true); toast('Status wird aktualisiert …'); },
+  kvGo:d=>{ closeSheet(); UI.ptab='kunde'; UI.kvScene=0; go('project',d.id); }
 }));
 /* ========== Lager-Tablet: Gerät zeigt nur noch Material & Lager (vom Admin eingerichtet, Verlassen nur mit PIN) ==========
    Einstellung liegt nur auf diesem Gerät (localStorage). Gebucht wird mit den Rechten der Person, die vor dem Buchen gewählt wird. */
