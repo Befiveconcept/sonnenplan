@@ -2313,7 +2313,7 @@ const ADMINS=['EP','AvE'];
 const isBaseAdmin=()=>ADMINS.includes(meK());
 const permOf=n=>(((S&&S.config)||{}).perms||{})[n]||null;
 const isAdmin=()=>isBaseAdmin()||!!(permOf(ME)||{}).admin;
-const AREAS=[['dash','Übersicht'],['projects','Projekte'],['todos','To-Dos'],['meetings','Meetings'],['private','Private To-Dos'],['chat','Chat'],['week','Kalender & Wochenplanung'],['orders','Bestellungen & Wareneingänge'],['stock','Lagerverwaltung'],['files','Datenablage'],['offers','Angebote'],['reports','Tagesrapporte'],['templates','Vorlagen'],['sales','Verkauf (Angebote, Rechnungen …)'],['fin','Finanzen (Bank, Ausgaben, Steuer, DATEV)'],['stamm','Stammdaten (Kunden, Lieferanten, Artikel)'],['hr','HR (Stempeluhr, Urlaub)'],['settings','Team & Einstellungen'],['activity','Aktivität'],['kview','Kunden-Ansicht'],['kfrei','Kunden-Ansicht: Texte freigeben']];
+const AREAS=[['dash','Übersicht'],['projects','Projekte'],['todos','To-Dos'],['meetings','Meetings'],['private','Private To-Dos'],['chat','Chat'],['notif','Mitteilungen & Benachrichtigungen'],['week','Kalender & Wochenplanung'],['orders','Bestellungen & Wareneingänge'],['stock','Lagerverwaltung'],['files','Datenablage'],['offers','Angebote'],['reports','Tagesrapporte'],['templates','Vorlagen'],['sales','Verkauf (Angebote, Rechnungen …)'],['fin','Finanzen (Bank, Ausgaben, Steuer, DATEV)'],['stamm','Stammdaten (Kunden, Lieferanten, Artikel)'],['hr','HR (Stempeluhr, Urlaub)'],['settings','Team & Einstellungen'],['activity','Aktivität'],['kview','Kunden-Ansicht'],['kfrei','Kunden-Ansicht: Texte freigeben']];
 const FIN_DEFAULT=['JP','AvE','EP']; /* Finanzen ohne eigene Einstellung: nur diese drei */
 /* „Kunden-Ansicht: Texte freigeben“: ohne Einstellung nur AvE (immer), weitere Personen per Häkchen in der Rechtevergabe */
 const defaultViews=n=>AREAS.map(a=>a[0]).filter(v=>(v!=='activity'||shortWho(n)==='EP')&&(v!=='fin'||FIN_DEFAULT.includes(shortWho(n)))&&v!=='kfrei');
@@ -2321,17 +2321,19 @@ const defaultViews=n=>AREAS.map(a=>a[0]).filter(v=>(v!=='activity'||shortWho(n)=
 const permV2=(n,p,list)=>{ if(!p||p.v2) return list; const o=list.slice(); if(o.includes('todos')&&!p.ownTodos&&!o.includes('meetings')) o.push('meetings'); if(FIN_DEFAULT.includes(shortWho(n))&&!o.includes('fin')) o.push('fin'); return o; };
 // Rollen-Voreinstellungen fuer die Rechteverteilung (danach pro Person anpassbar)
 const ROLE_PRESETS={
- monteur:{l:'Monteur',views:['dash','todos','private','week','orders','stock','hr'],ownTodos:true,admin:false,info:'Terminplan, eigene + allgemeine To-Dos, Material & Lager, eigene Stempeluhr'},
- buero:{l:'Büro',views:['dash','projects','todos','private','chat','week','files','offers','reports','orders','stock','sales','stamm','hr'],ownTodos:false,admin:false,info:'Projekte & Planung, Material & Lager, Verkauf, eigene HR-Seite'},
+ monteur:{l:'Monteur',views:['dash','projects','todos','private','notif','week','orders','stock','hr'],noEdit:['projects'],ownTodos:true,admin:false,info:'Projekte & Projekt-Timeline (nur ansehen), Terminplan, eigene + allgemeine To-Dos, Mitteilungen, Material & Lager, eigene Stempeluhr'},
+ buero:{l:'Büro',views:['dash','projects','todos','private','chat','notif','week','files','offers','reports','orders','stock','sales','stamm','hr'],ownTodos:false,admin:false,info:'Projekte & Planung, Material & Lager, Verkauf, eigene HR-Seite'},
  buchhaltung:{l:'Buchhaltung',views:AREAS.map(a=>a[0]).filter(v=>!['templates','settings','activity','kfrei'].includes(v)),ownTodos:false,admin:true,info:'alles außer Vorlagen, Team & Einstellungen, Aktivität und Rechte'},
  admin:{l:'Admin',views:AREAS.map(a=>a[0]).filter(v=>v!=='kfrei'),ownTodos:false,admin:true,info:'alles (Freigabe der Kunden-Texte nur per eigenem Häkchen)'}};
-const ROLE_DEFAULT_BY_K={as:'monteur',moji:'monteur',hh:'buero',mk:'buero',js:'buero',pr:'buero',jp:'buchhaltung',ep:'admin',ave:'admin'};
+const ROLE_DEFAULT_BY_K={as:'monteur',moji:'monteur',abou:'monteur',hh:'buero',mk:'buero',js:'buero',pr:'buero',jp:'buchhaltung',ep:'admin',ave:'admin'};
 const ownTodosOnly=()=>!isAdmin()&&!!(permOf(ME)||{}).ownTodos;
 // Rolle anwenden: Sehen + Bearbeiten wie die Voreinstellung, Admin-Häkchen, „nur eigene To-Dos“
 function rolePerm(role,old){ const R=ROLE_PRESETS[role]; if(!R) return {...(old||{}),role:''};
-  return {...(old||{}),role,v2:true,views:R.views.slice(),edit:R.views.filter(v=>!['dash','activity'].includes(v)),admin:!!R.admin,ownTodos:!!R.ownTodos}; }
+  return {...(old||{}),role,v2:true,nfSet:true,views:R.views.slice(),edit:R.views.filter(v=>!['dash','activity','notif',...(R.noEdit||[])].includes(v)),admin:!!R.admin,ownTodos:!!R.ownTodos}; }
 queueMicrotask(()=>{ A.permPresetAll=()=>CHG.permPresetAll(); }); /* Knopf „Voreinstellungen übernehmen“ (A wird weiter unten angelegt) */
-const viewsOf=n=>{ const p=permOf(n); return p&&Array.isArray(p.views)?permV2(n,p,p.views):defaultViews(n); };
+/* Mitteilungen: bei früher gespeicherten Rechten (vor dieser Spalte) eingeschaltet, bis jemand das Häkchen setzt/entfernt (nfSet) */
+const nfLegacy=(p,l)=>p.nfSet||l.includes('notif')?l:[...l,'notif'];
+const viewsOf=n=>{ const p=permOf(n); return p&&Array.isArray(p.views)?nfLegacy(p,permV2(n,p,p.views)):defaultViews(n); };
 const editsOf=n=>{ const p=permOf(n); return p&&Array.isArray(p.edit)?permV2(n,p,p.edit):viewsOf(n); };
 const canEdit=a=>isAdmin()||(!!ME&&editsOf(ME).includes(a)&&viewsOf(ME).includes(a));
 function canSee(v){ if(v==='rights') return isBaseAdmin(); if(v==='hr') return true; /* Stempeln und Urlaub: für alle */ if(String(v).startsWith('f:')) v='files'; if(String(v).startsWith('st:')) v='stamm'; if(v==='fin'||String(v).startsWith('fi:')) return finOk(); if(String(v).startsWith('vk:')) v='sales'; if(v==='dash') return true; if(!ME) return v!=='activity'; const vs=viewsOf(ME);
@@ -2877,7 +2879,10 @@ function nfApply(o){ const first=!NF_INIT, fresh=first?[]:Object.values(o).filte
 function nfClean(){ const old=addDays(TODAY(),-90), l=Object.values(NF).sort((a,b)=>String(b.at).localeCompare(String(a.at))); l.forEach((n,i)=>{ if(i>=300||(n.read&&String(n.at).slice(0,10)<old)) nfDrop(n.id); }); }
 function nfDrop(id){ delete NF[id]; if(MODE==='cloud'&&DB) try{ DB.collection(nfColl(NF_KEY)).doc(id).delete().catch(()=>{}); }catch(e){} else { const a=nfLocalAll(); if(a[nfColl(NF_KEY)]) delete a[nfColl(NF_KEY)][id]; lsSet('sonnenplan-nf',JSON.stringify(a)); } }
 // Sichtbar nur, was zum eigenen Konto gehört und wofür die aktuellen Rechte reichen (auch wenn sie sich inzwischen geändert haben)
-const nfVisible=n=>!!n&&!n.hidden&&n.to===NF_KEY&&(!n.pid||projVisId(n.pid))&&(n.c!=='projects'||projVisId(n.rid))&&!!NF_CAT[n.c]&&canSee(NF_CAT[n.c][1]);
+/* Recht „Mitteilungen & Benachrichtigungen“ (Rechtevergabe): eigene Mitteilungen sehen, auch zu Bereichen ohne eigenes Recht (z. B. Monteur ohne „Projekte“ wird als Projektleiter benachrichtigt). Öffnen des Vorgangs prüft weiter das Bereichsrecht (nfOpenOk). */
+const nfOn=()=>!!ME&&(isBaseAdmin()||canSee('notif'));
+const nfVisible=n=>!!n&&!n.hidden&&nfOn()&&n.to===NF_KEY&&(!n.pid||projVisId(n.pid))&&(n.c!=='projects'||projVisId(n.rid))&&!!NF_CAT[n.c];
+const nfOpenOk=n=>nfVisible(n)&&canSee(NF_CAT[n.c][1]);
 const nfList=()=>Object.values(NF).filter(nfVisible).sort((a,b)=>String(b.at).localeCompare(String(a.at)));
 const nfUnread=()=>nfList().filter(n=>!n.read).length;
 function nfWhen(at){ const d=new Date(at), m=Math.round((Date.now()-d)/60000), hm=d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}); if(m<1) return 'gerade eben'; if(m<60) return 'vor '+m+' Minute'+(m>1?'n':''); const dd=isoLocal(at).slice(0,10), t=TODAY(); if(dd===t) return 'heute, '+hm; if(dd===addDays(t,-1)) return 'gestern, '+hm; return fmtD(dd)+', '+hm; }
@@ -2885,9 +2890,9 @@ function nfWhen(at){ const d=new Date(at), m=Math.round((Date.now()-d)/60000), h
 function nfHide(id){ const n=NF[id]; if(!n||n.hidden) return; nfMark(id,true,{hidden:true}); }
 function nfMark(id,read,extra){ const n=NF[id]; if(!n||(!!n.read===read&&!extra)) return; const c={...n,read,readAt:read?(n.readAt||new Date().toISOString()):'',...(extra||{})}; NF[id]=c; if(MODE==='cloud'&&DB) try{ DB.collection(nfColl(NF_KEY)).doc(id).set(c).catch(()=>{}); }catch(e){} else { const a=nfLocalAll(), k=nfColl(NF_KEY); a[k]=a[k]||{}; a[k][id]=c; lsSet('sonnenplan-nf',JSON.stringify(a)); } }
 function nfRow(n,mini){ const ic0=NF_CAT[n.c][0]; return `<div class="nf-row ${n.read?'':'un'} p-${esc(n.prio)}"><button type="button" class="nf-main" data-act="nfGo" data-id="${esc(n.id)}" title="${esc(NF_CAT[n.c][2])}"><span class="nf-ic" aria-hidden="true">${ic0}</span><span class="nf-b"><span class="nf-t">${esc(n.title)}${NF_PRIO[n.prio]?`<span class="nf-pr">${NF_PRIO[n.prio]}</span>`:''}</span><span class="nf-x ${mini?'mini':''}">${esc(n.text)}</span><span class="nf-w">${esc(nfWhen(n.at))}</span></span></button><button type="button" class="nf-rd" data-act="nfRead" data-id="${esc(n.id)}" data-v="${n.read?0:1}" title="${n.read?'Als ungelesen markieren':'Als gelesen markieren'}" aria-label="${n.read?'Als ungelesen markieren':'Als gelesen markieren'}"><i></i></button><button type="button" class="nf-del" data-act="nfHide" data-id="${esc(n.id)}" title="Mitteilung entfernen" aria-label="Mitteilung entfernen: ${esc(n.title)}">✕</button></div>`; }
-function nfBellHtml(){ if(!ME||!NF_INIT) return ''; const c=nfUnread(); return `<button type="button" class="nf-bell ${c?'has':''} ${Date.now()-NF_PULSE<8000?'pulse':''}" data-act="nfOpen" aria-label="Mitteilungen${c?': '+c+' ungelesen':''}" title="Mitteilungen">🔔${c?`<span class="nf-c">${c>99?'99+':c}</span>`:''}</button>`; }
+function nfBellHtml(){ if(!ME||!NF_INIT||!nfOn()) return ''; const c=nfUnread(); return `<button type="button" class="nf-bell ${c?'has':''} ${Date.now()-NF_PULSE<8000?'pulse':''}" data-act="nfOpen" aria-label="Mitteilungen${c?': '+c+' ungelesen':''}" title="Mitteilungen">🔔${c?`<span class="nf-c">${c>99?'99+':c}</span>`:''}</button>`; }
 function nfPaint(){ const s=$('#nfStrip'); if(s) s.innerHTML=nfBellHtml(); }
-function nfCardHtml(){ if(!ME||!NF_INIT) return ''; const l=nfList(), c=l.filter(n=>!n.read).length;
+function nfCardHtml(){ if(!ME||!NF_INIT||!nfOn()) return ''; const l=nfList(), c=l.filter(n=>!n.read).length;
   return `<section class="card nf-card"><div class="card-h"><h2>Mitteilungen &amp; Benachrichtigungen ${c?`<span class="cnt-b">${c} neu</span>`:''}</h2>${c?'<button class="btn ghost sm" data-act="nfAll">Alle gelesen</button>':''}<button class="btn ghost sm" data-act="nfOpen">Alle anzeigen</button></div>
     ${l.length?`<div class="nf-list">${l.slice(0,6).map(n=>nfRow(n,true)).join('')}</div>`:'<div class="empty" style="padding:6px 16px 18px"><b>Alles ruhig</b>Hier erscheint, was für dich wichtig ist: neue Aufgaben, Freigaben und Änderungen an deinen Vorgängen.</div>'}</section>`; }
 function nfListHtml(){ const all=nfList(), l=NF_FLT==='neu'?all.filter(n=>!n.read):all, c=all.filter(n=>!n.read).length;
@@ -2902,7 +2907,7 @@ queueMicrotask(()=>Object.assign(A,{
   nfHide:d=>{ nfHide(d.id); scheduleRender(); nfListPaint(); nfPaint(); },
   nfAll:()=>{ nfList().filter(n=>!n.read).forEach(n=>nfMark(n.id,true)); scheduleRender(); nfListPaint(); },
   // Beim Öffnen gelten die aktuellen Rechte, und der Vorgang muss noch existieren
-  nfGo:d=>{ const n=NF[d.id]; if(!n) return; nfMark(n.id,true); scheduleRender(); nfListPaint(); if(!nfVisible(n)) return toast('Dafür hast du keinen Zugriff mehr.'); if(!S[n.c]||!S[n.c][n.rid]) return toast('Dieser Vorgang ist nicht mehr vorhanden.'); closeSheet(); A.openRec({c:n.c,id:n.rid}); }
+  nfGo:d=>{ const n=NF[d.id]; if(!n) return; nfMark(n.id,true); scheduleRender(); nfListPaint(); if(!nfVisible(n)) return toast('Dafür hast du keinen Zugriff mehr.'); if(!nfOpenOk(n)) return toast('Zum Öffnen fehlt dir das Recht für „'+((AREAS.find(a=>a[0]===NF_CAT[n.c][1])||[])[1]||'diesen Bereich')+'“. Die Mitteilung selbst bleibt sichtbar.'); if(!S[n.c]||!S[n.c][n.rid]) return toast('Dieser Vorgang ist nicht mehr vorhanden.'); closeSheet(); A.openRec({c:n.c,id:n.rid}); }
 }));
 /* ---------- 🧹 Doppelte aufräumen (Admin): gleiche offene To-Dos, gleiche Updates, gleiche Notizen ---------- */
 function dupScan(){ const groups={}, tk=[], up=[], nt=[];
@@ -6047,12 +6052,12 @@ document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target&&e.target.
 function vRights(){
   if(!isBaseAdmin()) return head('Rechte','')+'<div class="card"><div class="empty">Nur EP und AvE können Rechte verteilen.</div></div>';
   const st=staff();
-  return head('Admin: Rechte','Wer sieht welche Rubrik – und wer darf alles bearbeiten und löschen',`<button class="btn sun" data-act="permPresetAll" title="AS, Moji = Monteur · HH, MK, JS, PR = Büro · JP = Buchhaltung · EP, AvE = Admin">Voreinstellungen übernehmen</button>`)+`<div class="card rt-presets"><div class="card-b">${Object.values(ROLE_PRESETS).map(r=>`<div><b>${esc(r.l)}</b> <span class="small muted">${esc(r.info)}</span></div>`).join('')}<div class="small muted" style="margin-top:6px">Rolle wählen setzt die Häkchen; danach kann man pro Person einzeln anpassen (dann steht dort individuell).</div></div></div>`+
+  return head('Admin: Rechte','Wer sieht welche Rubrik – und wer darf alles bearbeiten und löschen',`<button class="btn sun" data-act="permPresetAll" title="AS, Moji, ABou = Monteur · HH, MK, JS, PR = Büro · JP = Buchhaltung · EP, AvE = Admin">Voreinstellungen übernehmen</button>`)+`<div class="card rt-presets"><div class="card-b">${Object.values(ROLE_PRESETS).map(r=>`<div><b>${esc(r.l)}</b> <span class="small muted">${esc(r.info)}</span></div>`).join('')}<div class="small muted" style="margin-top:6px">Rolle wählen setzt die Häkchen; danach kann man pro Person einzeln anpassen (dann steht dort individuell).</div></div></div>`+
    `<div class="card"><div class="tbl-wrap"><table class="tbl rights"><thead><tr><th>Mitarbeiter</th><th>Rolle</th><th title="Alles bearbeiten und löschen (wie EP/AvE)">Admin</th>${AREAS.map(([k,l])=>`<th class="rt-h"><span>${esc(l)}</span></th>`).join('')}</tr></thead><tbody>
    ${st.map(s=>{ const base=ADMINS.includes(shortWho(s.name)), p=permOf(s.name)||{}, vs=viewsOf(s.name), es=editsOf(s.name), adm=base||p.admin;
      return `<tr><td><b>${esc(s.name)}</b><div class="small muted">${esc(ROLES[s.role]||s.role||'')}</div></td><td>${base?'<span class="pill sun">Admin</span>':`<select class="inp rt-role" data-chg="permRole" data-n="${esc(s.name)}" aria-label="Rolle: ${esc(s.name)}"><option value="">individuell</option>${Object.entries(ROLE_PRESETS).map(([k,r])=>`<option value="${k}" ${p.role===k?'selected':''}>${esc(r.l)}</option>`).join('')}</select>`}</td>
        <td class="c">${base?'<span class="pill sun">immer</span>':`<input type="checkbox" class="ck" data-chg="permAdmin" data-n="${esc(s.name)}" ${p.admin?'checked':''} aria-label="Admin: ${esc(s.name)}">`}</td>
-       ${AREAS.map(([k,l])=>k==='dash'?'<td class="c"><span class="pm">👁 ✓</span></td>':k==='kfrei'?(shortWho(s.name)==='AvE'?'<td class="c"><span class="pill sun">immer</span></td>':`<td class="c"><label class="pm" title="darf Kunden-Texte freigeben"><input type="checkbox" class="ck" data-chg="permView" data-n="${esc(s.name)}" data-v="kfrei" ${vs.includes('kfrei')?'checked':''} aria-label="Kunden-Texte freigeben: ${esc(s.name)}">✓</label></td>`):`<td class="c"><label class="pm" title="sehen"><input type="checkbox" class="ck" data-chg="permView" data-n="${esc(s.name)}" data-v="${k}" ${vs.includes(k)?'checked':''} ${base?'disabled':''} aria-label="${esc(l)} sehen: ${esc(s.name)}">👁</label>${['private','activity','dash'].includes(k)?'':`<label class="pm" title="bearbeiten / löschen"><input type="checkbox" class="ck" data-chg="permEdit" data-n="${esc(s.name)}" data-v="${k}" ${adm||es.includes(k)?'checked':''} ${adm||!vs.includes(k)?'disabled':''} aria-label="${esc(l)} bearbeiten: ${esc(s.name)}">✎</label>`}</td>`).join('')}</tr>`; }).join('')}
+       ${AREAS.map(([k,l])=>k==='dash'?'<td class="c"><span class="pm">👁 ✓</span></td>':k==='kfrei'?(shortWho(s.name)==='AvE'?'<td class="c"><span class="pill sun">immer</span></td>':`<td class="c"><label class="pm" title="darf Kunden-Texte freigeben"><input type="checkbox" class="ck" data-chg="permView" data-n="${esc(s.name)}" data-v="kfrei" ${vs.includes('kfrei')?'checked':''} aria-label="Kunden-Texte freigeben: ${esc(s.name)}">✓</label></td>`):`<td class="c"><label class="pm" title="sehen"><input type="checkbox" class="ck" data-chg="permView" data-n="${esc(s.name)}" data-v="${k}" ${vs.includes(k)?'checked':''} ${base?'disabled':''} aria-label="${esc(l)} sehen: ${esc(s.name)}">👁</label>${['private','activity','dash','notif'].includes(k)?'':`<label class="pm" title="bearbeiten / löschen"><input type="checkbox" class="ck" data-chg="permEdit" data-n="${esc(s.name)}" data-v="${k}" ${adm||es.includes(k)?'checked':''} ${adm||!vs.includes(k)?'disabled':''} aria-label="${esc(l)} bearbeiten: ${esc(s.name)}">✎</label>`}</td>`).join('')}</tr>`; }).join('')}
    </tbody></table></div>
    <div class="card-b small muted">👁 = Rubrik sehen · ✎ = in der Rubrik anlegen, ändern und löschen. Admin = darf überall alles. Änderungen gelten sofort. Die Rechte-Seite sehen nur EP und AvE. Private To-Dos bleiben immer privat. „Kunden-Ansicht: Texte freigeben“ = darf Texte für die Kundenseite freigeben (AvE immer, weitere nur per Häkchen – auch Admins).</div></div>`;
 }
@@ -6211,7 +6216,34 @@ const stemOf=n=>String(n||'').replace(/\.[a-z0-9]{2,5}$/i,'');
 const STD_RX=/^(\d{8})_([^_]+)_(.+?)(\.[a-z0-9]{2,5})?$/i; // altes Schema Datum_Thema_Detail
 const STD2_RX=/^(\d{8})_([^_]+)_([^_]+)_([^_]+?)(?:_([^_]+?))?(\.[a-z0-9]{2,5})?$/i; // neues Schema Datum_Firma_Art_Titel[_Detail]
 const fileStdName=(r,list)=>{ const isMail=r.mime==='message/rfc822'||r.mime==='text/plain'; const pn=r.pid&&r.pid!==INTERN?projName(r.pid):'';
-  return stdName(r.date,r.kind,isMail?(r.subject||r.orig||r.name):stemOf(r.orig||r.name),isMail?'':extOf(r.orig||r.name),senderFirm(r,list),pn); };
+  const isImg=/^image\//i.test(r.mime||'')||/\.(jpe?g|png|gif|webp|heic|bmp|tiff?)$/i.test(r.orig||r.name||'');
+  return stdName(r.date,r.kind,r.aiTitle||(isMail?(r.subject||r.orig||r.name):stemOf(r.orig||r.name)),isMail?'':extOf(r.orig||r.name),r.aiFirm||senderFirm(r,list)||(isImg?FIRMS()[0]:''),pn); };
+// Hochgeladene Bilder: Claude schaut sich das Bild an und gibt einen sprechenden Namen (Inhalt, Absender/Hersteller, Art) statt „unbekannt_IMG_1234“
+const isImgRec=r=>/^image\//i.test(r.mime||'')||/\.(jpe?g|png|gif|webp|heic|bmp|tiff?)$/i.test(r.orig||r.name||'');
+async function aiImgName(id,file,o){ o=o||{}; if(!SAMPLE) return false; const cur0=S.files[id]; if(!cur0) return false;
+  let src=file; if(!src&&cur0.asset){ try{ const rs=await fetch('/_blob/'+cur0.asset); if(rs.ok) src=await rs.blob(); }catch(e){} } if(!src) return false;
+  let img; try{ img=new Blob([await mappeToJpg(src,1200)],{type:'image/jpeg'}); }catch(e){ return false; }
+  const plist=cur0.pid?'':arr('projects').filter(p=>['laufend','planung','onhold'].includes(catOf(p))).map(p=>`${p.id} | ${p.name} | ${p.nr||''} | ${String(p.place||'').replace(/\n/g,' ')} | ${p.customer||''}`).join('\n');
+  let r; try{ r=await SAMPLE.json(`Ein Solar-Installationsbetrieb (PV, Speicher, Ladesäulen) hat dieses Bild in seine Datenablage hochgeladen${cur0.pid&&cur0.pid!==INTERN?' (Projekt „'+projName(cur0.pid)+'“)':''}. Schau dir das Bild genau an und gib ihm einen sprechenden Dateinamen.
+- "title": 2–6 Wörter, was konkret zu sehen ist, z. B. „Wechselrichter Typenschild SMA STP 25“, „Dachfläche Süd vor Montage“, „Zählerschrank offen“, „Lieferschein Krannich 4711“, „Kabeltrasse Halle 2“. Keine Floskeln wie „Foto“ oder „Bild“.
+- "firm": Absender bei Dokumenten (Lieferant, Netzbetreiber …) bzw. Hersteller bei Typenschildern/Geräten; bei Baustellenfotos ohne erkennbaren Absender leer.
+- "kind": foto (Baustellen-/Anlagenfoto), lieferschein, rechnung, ab, angebot, bestellung, plan, vertrag oder sonst.
+- "seen": 1 Satz, was zu sehen ist. "text": wichtiger lesbarer Text auf dem Bild (Nummern, Typen, Seriennummern), kurz, sonst leer.
+${plist?'Falls Projektname, Nummer, Adresse oder Kunde eindeutig erkennbar sind, "projectId" aus dieser Liste (ID | Name | Nummer | Ort | Kunde), sonst leer:\n'+plist+'\n':''}Antworte nur mit JSON: {"title":"","firm":"","kind":"foto","seen":"","text":"","projectId":""}`,{modelTier:'quick',images:[img]}); }catch(e){ if(o.loud) toast(SAMPLE_ERR[e&&e.code]||'Claude nicht erreichbar.'); return false; }
+  const cur=S.files[id]; if(!cur||!r) return false; const nu=clone(cur), t=String(r.title||'').replace(/\b(foto|bild)\b/ig,'').replace(/\s+/g,' ').trim().slice(0,70); if(!t) return false;
+  nu.aiTitle=t; const fm=String(r.firm||'').trim().slice(0,40); if(fm) nu.aiFirm=fm; else delete nu.aiFirm;
+  if(FILE_KINDS[r.kind]&&['sonst','foto',''].includes(nu.kind||'')) nu.kind=r.kind;
+  const info=[r.seen?'Bildinhalt: '+String(r.seen).slice(0,240):'',r.text?'Text im Bild: '+String(r.text).slice(0,400):''].filter(Boolean).join('\n'); if(info&&!String(nu.text||'').includes(info)) nu.text=(info+(nu.text?'\n'+nu.text:'')).slice(0,6000);
+  if(!nu.pid&&r.projectId&&(S.projects[r.projectId]||r.projectId===INTERN)){ nu.pid=r.projectId; nu.why='Claude (Bild): '+String(r.seen||'').slice(0,100); nu.auto='claude'; }
+  if(!cur.autoName||cur.name===cur.autoName||o.force){ nu.name=fileStdName(nu); nu.autoName=nu.name; }
+  put('files',nu); return true; }
+async function aiImgNameAll(list,o){ let n=0; for(const [id,f] of list){ if(await aiImgName(id,f,o)) n++; } return n; }
+/* Bilder im Projekt, die noch keinen KI-Namen haben und nicht von Hand umbenannt wurden */
+const imgUnnamed=pid=>arr('files').filter(f=>f.pid===pid&&f.asset&&isImgRec(f)&&!f.aiTitle&&(!f.autoName||f.name===f.autoName));
+let IMG_NAMING=false;
+queueMicrotask(()=>Object.assign(A,{ imgNameAll:async d=>{ if(IMG_NAMING) return toast('Claude benennt gerade schon Bilder …'); if(!SAMPLE) return toast('Das Benennen braucht die KI – geht nur in der Online-App.'); if(!mayWrite('files')) return toast('Keine Berechtigung für die Datenablage.');
+  const l=imgUnnamed(d.pid).slice(0,40); if(!l.length) return toast('Alle Bilder haben schon einen Namen.'); IMG_NAMING=true; toast('Claude benennt '+l.length+' Bild'+(l.length===1?'':'er')+' … das dauert etwas.');
+  try{ const n=await aiImgNameAll(l.map(f=>[f.id,null]),{loud:1}); toast(n+' von '+l.length+' Bild'+(l.length===1?'':'ern')+' benannt.'); }finally{ IMG_NAMING=false; render(); } } }));
 const GEN_W=new Set(['gmbh','co.','kg','gbr','gebäude','halle','dach','projekt','solarpark','energie','strasse','straße','haus','anlage','park','der','die','das','und','für','von','eph1','geb.']);
 function matchProject(text){
   const T=String(text||'').toLowerCase(), tw=words(T), digits=T.replace(/[^0-9]/g,' ');
@@ -6266,14 +6298,14 @@ async function ingestFiles(files,text,pidHint){
   const dups=fl0.map((f,i)=>({f,name:f.name||'Datei',hit:findDup(fps[i],f.name,f.size)})).filter(x=>x.hit);
   if(!fl0.length&&text&&text.trim().length>20){ const h=findDup(await fileFp(text)); if(h){ const ch=await dupAsk([{name:'Eingefügter Text',hit:h}],1); if(ch!=='all') return; } }
   if(dups.length){ const ch=await dupAsk(dups,fl0.length); if(ch!=='all'){ files=fl0.filter(f=>!dups.some(d=>d.f===f)); if(!files.length) return; } }
-  const recs=[], mailImgs=[], stamp=new Date().toISOString();
+  const recs=[], mailImgs=[], imgQ=[], stamp=new Date().toISOString();
   const mk=(o)=>({id:uid(),date:TODAY(),at:stamp,...o});
   const upload=async f=>{ if(!ASSETS) return null; try{ const type=f.type||(/\.pdf$/i.test(f.name)?'application/pdf':''); const r=await ASSETS.upload(f,type?{type}:undefined); return {asset:r.id,mime:r.contentType}; }catch(e){ return {err:e&&e.code||'Fehler'}; } };
   const addFile=async(f,parent,ctx)=>{ const up=await upload(f); const isPdf=/pdf/.test(f.type)||/\.pdf$/i.test(f.name); const txt=isPdf?await pdfText(f):'';
     const rec=mk({name:f.name||'Datei',mime:f.type||'',size:f.size||0,text:txt.slice(0,6000),parent:parent||'',kind:guessKind(f.name||'',txt,false,f.type),fp:await fileFp(f)});
     if(parent){ const h=findDup(rec.fp,f.name,f.size); if(h) dupWarn('Anhang „'+(f.name||'Datei')+'“',h); }
     if(up&&up.asset){ rec.asset=up.asset; rec.mime=up.mime||rec.mime; } else if(up&&up.err) rec.note='Datei nicht hochgeladen ('+up.err+'), nur Eintrag';
-    const m=matchProject([f.name,txt,ctx].join('\n')); rec.pid=m.pid; rec.why=m.why; recs.push(rec); return rec; };
+    const m=matchProject([f.name,txt,ctx].join('\n')); rec.pid=m.pid; rec.why=m.why; recs.push(rec); if(isImgRec(rec)) imgQ.push([rec.id,f]); return rec; };
   for(const f of [...(files||[])]){ const n=(f.name||'').toLowerCase();
     if(n.endsWith('.eml')||n.endsWith('.msg')||f.type==='message/rfc822'){
       const ab=await f.arrayBuffer(); let m=null;
@@ -6308,9 +6340,12 @@ async function ingestFiles(files,text,pidHint){
   if(mailImgs.length) mailImgAsk(mailImgs,async sel=>{ const start=recs.length;
     for(const {a,mail,ctx} of sel){ const r=await addFile(new File([a.blob],a.name,{type:a.type}),mail.id,ctx); const pm=(S.files[mail.id]||mail).pid; if(pidHint){ r.pid=pidHint; r.why='in der Projektakte abgelegt'; } else if(!r.pid&&pm){ r.pid=pm; r.why='aus der Mail'; } }
     recs.slice(start).forEach(r=>{ if(!STD2_RX.test(r.name)){ r.orig=r.orig||r.name; r.name=fileStdName(r,recs); r.autoName=r.name; } r.auto=r.pid?'regel':''; put('files',r); });
-    toast(sel.length+' Bild'+(sel.length===1?'':'er')+' übernommen.'); });
+    toast(sel.length+' Bild'+(sel.length===1?'':'er')+' übernommen'+(SAMPLE?' · Claude benennt sie …':'.')); const q=imgQ.splice(0); if(SAMPLE&&q.length) aiImgNameAll(q.slice(0,20)); });
+  // Bilder: Claude schaut sie an und benennt sie (ordnet dabei auch das Projekt zu)
+  const imgs1=imgQ.splice(0); if(SAMPLE&&imgs1.length){ if(imgs1.length>1) toast(imgs1.length+' Bilder abgelegt · Claude benennt sie …'); aiImgNameAll(imgs1.slice(0,20)).then(n=>{ if(n&&imgs1.length>1) toast(n+' Bild'+(n===1?'':'er')+' benannt.'); }); }
+  const imgIds=new Set(SAMPLE?imgs1.map(x=>x[0]):[]);
   // Rest mit Claude zuordnen
-  for(const r of recs.filter(r=>!r.pid)){ const a=await aiClassify(r); if(!a) continue; const cur=S.files[r.id]; if(!cur||cur.pid) continue; const nu=clone(cur);
+  for(const r of recs.filter(r=>!r.pid&&!imgIds.has(r.id))){ const a=await aiClassify(r); if(!a) continue; const cur=S.files[r.id]; if(!cur||cur.pid) continue; const nu=clone(cur);
     if(a.projectId&&(S.projects[a.projectId]||a.projectId===INTERN)){ nu.pid=a.projectId; nu.why='Claude: '+String(a.why||'').slice(0,120); nu.auto='claude'; }
     if(FILE_KINDS[a.kind]&&nu.kind==='sonst') nu.kind=a.kind;
     if(cur.autoName&&cur.name===cur.autoName){ nu.name=fileStdName(nu); nu.autoName=nu.name; } // automatisch vergebener Name: Projekt/Art nachziehen
@@ -7093,7 +7128,7 @@ function msAsk(pid,list){ if(SHEET){ setTimeout(()=>msAsk(pid,list),1200); retur
   openSheet({title:'Status abhaken? · '+p.name,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Nach dem letzten Eintrag könnte dieser Schritt erreicht sein. Bitte kurz prüfen:</div>${open.map((s,i)=>`<div class="sug sug-st"><input type="checkbox" class="ck" id="msq_c${i}" checked aria-label="abhaken"><div style="min-width:0"><b>${esc(PIPE[s.n-1])}</b>${s.why?`<div class="small muted">„${esc(s.why)}“</div>`:''}</div><input class="inp" type="date" id="msq_d${i}" value="${esc(s.date)}" aria-label="Datum"></div>`).join('')}</div>`,saveLabel:'Abhaken',
     onSave:()=>{ const c=clone(S.projects[pid]); if(!c) return; let n=0; const msgs=[], no=msNoGet(); open.forEach((s,i)=>{ if($('#msq_c'+i).checked){ const m=applyMs(c,s.n,$('#msq_d'+i).value||TODAY()); if(m) msgs.push(m); n++; } else no[pid+'|'+s.n]=TODAY(); }); lsSet('sonnenplan-msno',JSON.stringify(no)); if(n){ put('projects',c); toast('Status: '+open.filter((s,i)=>$('#msq_c'+i).checked).map(s=>PIPE[s.n-1]).join(', ')+(msgs.length?' · '+msgs.join(' '):'')); } }}); }
 const CHG = {
- permView:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; const p={...(perms[d.n]||{}),role:''}; const vs=new Set(viewsOf(d.n)); if(!p.v2&&Array.isArray(p.edit)) p.edit=editsOf(d.n); p.v2=true; if(el.checked) vs.add(d.v); else vs.delete(d.v); p.views=[...vs]; perms[d.n]=p; putConfig({...(S.config||{}),perms}); },
+ permView:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; const p={...(perms[d.n]||{}),role:''}; const vs=new Set(viewsOf(d.n)); if(!p.v2&&Array.isArray(p.edit)) p.edit=editsOf(d.n); p.v2=true; p.nfSet=true; if(el.checked) vs.add(d.v); else vs.delete(d.v); p.views=[...vs]; perms[d.n]=p; putConfig({...(S.config||{}),perms}); },
  permEdit:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; const p={...(perms[d.n]||{}),views:viewsOf(d.n)}; const es=new Set(editsOf(d.n)); p.v2=true; if(el.checked) es.add(d.v); else es.delete(d.v); p.edit=[...es]; perms[d.n]=p; putConfig({...(S.config||{}),perms}); },
  permRole:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; perms[d.n]=rolePerm(el.value,perms[d.n]); putConfig({...(S.config||{}),perms}); toast(shortWho(d.n)+': '+(el.value?ROLE_PRESETS[el.value].l:'individuell')+'.'); },
  permPresetAll:()=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}, done=[]; staff().forEach(s=>{ const k=String(shortWho(s.name)).toLowerCase(), r=ROLE_DEFAULT_BY_K[k]; if(!r||ADMINS.includes(shortWho(s.name))) return; perms[s.name]=rolePerm(r,perms[s.name]); done.push(shortWho(s.name)+' = '+ROLE_PRESETS[r].l); }); putConfig({...(S.config||{}),perms}); toast(done.length?'Übernommen: '+done.join(', '):'Keine passenden Kürzel gefunden.'); },
@@ -7464,7 +7499,7 @@ function gsearchBox(p){
   return `<section class="gs-wrap ask-box smart-drop ${GS_VIEWS.includes(UI.view)||p?'gs-proj':''}" aria-label="Suchen, fragen oder Dateien ablegen"><div class="gs-in">${ic('search')}<input id="gSearch" type="search" autocomplete="off" enterkeyhint="go" placeholder="${p?(SAMPLE?'Im Projekt suchen oder fragen – z. B. „Was ist der letzte Stand?“':'Im Projekt suchen: Notizen, To-Dos, Bestellungen, Dateien …'):cx.key==='todos'?(SAMPLE?'Suchen oder fragen – z. B. „Welche To-Dos von HH sind überfällig?“':'To-Dos und alles andere durchsuchen …'):cx.key==='cal'?(SAMPLE?'Suchen oder fragen – z. B. „Wer ist nächste Woche auf welcher Baustelle?“':'Termine und alles andere durchsuchen …'):SAMPLE?'Suchen oder fragen – z. B. „Zeig mir das neueste Update zum Energiepark“':'Alles durchsuchen: Projekte, Notizen, To-Dos, Bestellungen, Dateien, Lager …'}" value="${esc(UI.gq||'')}" aria-label="Suchen oder fragen">${SRec?`<button type="button" class="gs-mic" data-act="gsVoice" title="Sprechen: suchen oder fragen" aria-label="Sprechen">🎙</button>`:''}<button type="button" class="gs-mic gs-cam" data-act="gsCam" title="Foto aufnehmen - z. B. Lieferschein, Rechnung, Notiz. Die App erkennt, was es ist." aria-label="Kamera">📷</button>${SAMPLE&&CAN_SPEAK?`<button type="button" class="gs-spk ${ASK_SPEAK?'on':''}" data-act="askSpkTog" title="${ASK_SPEAK?'Antworten werden vorgelesen – ausschalten':'Antworten laut vorlesen lassen'}" aria-label="Antworten vorlesen" aria-pressed="${ASK_SPEAK}">${ASK_SPEAK?'🔊':'🔈'}</button>`:''}<button type="button" class="btn sun sm ask-go" data-act="askGo">Los</button></div>
     <div class="ask-sub"><span>✨ Dateien, E-Mails (.msg/.eml), PDFs, Fotos oder Text hier reinziehen – die App erkennt, was es ist${p?' und ordnet es diesem Projekt zu':cx.key==='todos'?' – hier meist als To-Dos':cx.key==='cal'?' – hier meist als Termin':''}.</span><button type="button" class="lnk" data-act="smartPick">Datei wählen</button><button type="button" class="lnk" data-act="smartText">Text einfügen</button></div>
     <div id="askOut" class="ask-ans" role="status"></div>
-    <div id="gResults" class="gs-res" role="region" aria-live="polite">${gsResHtml(UI.gq)}</div></section><input type="file" id="smartIn" multiple hidden><input type="file" id="camIn" accept="image/*" capture="environment" hidden>`;
+    <div id="gResults" class="gs-res" role="region" aria-live="polite">${gsResHtml(UI.gq)}</div></section><input type="file" id="smartIn" multiple hidden><input type="file" id="camIn" accept="image/*" capture="environment" hidden><input type="file" id="camUpIn" accept="image/*" multiple hidden>`;
 }
 let gT; document.addEventListener('input',e=>{ if(e.target.id!=='gSearch') return; UI.gq=e.target.value; const o=$('#askOut'); if(o) o.innerHTML=''; clearTimeout(gT); gT=setTimeout(()=>{ const r=$('#gResults'); if(r) r.innerHTML=gsResHtml(UI.gq); },150); });
 document.addEventListener('keydown',e=>{ if(e.target&&e.target.id==='gSearch'&&e.key==='Enter'){ e.preventDefault(); askRun(e.target.value); } });
@@ -7778,7 +7813,8 @@ function pfMoveSheet(ids){ const fs=ids.map(id=>S.files[id]).filter(Boolean); if
 let PF_MOVE=[];
 function projFilesHtml(p){
   const fl=allFiles().filter(f=>f.pid===p.id), fo=pfOf(p.id);
-  const bar=`<div class="row pf-bar"><button type="button" class="btn sm" data-act="pfNew" data-pid="${p.id}">📂 + Ordner</button><span class="small muted">Eigene Ordner anlegen – Dateien hineinziehen oder markieren und „📂 In Ordner“ wählen.</span></div>`;
+  const unn=SAMPLE&&mayWrite('files')?imgUnnamed(p.id).length:0;
+  const bar=`<div class="row pf-bar"><button type="button" class="btn sm" data-act="pfNew" data-pid="${p.id}">📂 + Ordner</button>${unn?`<button type="button" class="btn sm" data-act="imgNameAll" data-pid="${p.id}" title="Claude schaut sich die Bilder an und benennt sie nach Inhalt. Selbst vergebene Namen bleiben.">✨ ${unn} Bild${unn===1?'':'er'} benennen</button>`:''}<span class="small muted">Eigene Ordner anlegen – Dateien hineinziehen oder markieren und „📂 In Ordner“ wählen.</span></div>`;
   const own=fo.map(o=>{ const g=fl.filter(f=>f.folder===o.id), k='f:'+o.id, open=UI.pfOpen&&UI.pfOpen[p.id+k]!==undefined?UI.pfOpen[p.id+k]:!o.std||g.length>0&&g.length<=8;
     return `<details class="card pf pf-own ${o.std?'pf-std':''}" ${open?'open':''} data-pf="${p.id+k}"><summary class="card-h" data-ffold-drop="${o.id}"><h3>📂 ${esc(o.name)}</h3><span class="cnt-b">${g.length}</span><span class="spacer"></span>${o.std?'':`<button type="button" class="icon-btn sm" data-act="pfRename" data-id="${o.id}" title="Umbenennen" aria-label="Ordner umbenennen">${ic('edit')}</button><button type="button" class="icon-btn sm" data-act="pfDel" data-id="${o.id}" title="Ordner löschen (Dateien bleiben erhalten)" aria-label="Ordner löschen">${ic('x')}</button>`}</summary>${g.length?filesTable(g,true):'<div class="empty small" style="padding:14px">Leer – Dateien hierher ziehen.</div>'}</details>`; }).join('');
   const rest=fl.filter(f=>!pfFolderOk(f));
@@ -8822,11 +8858,13 @@ function smartSheet(c){
 }
 Object.assign(A,{
  smartPick:()=>{ const f=$('#smartIn'); if(f){ f.value=''; f.click(); } },
- gsCam:()=>{ const f=$('#camIn'); if(f){ f.value=''; f.click(); } },
+ gsCam:()=>openSheet({title:'Foto',html:`<div class="fld full"><div class="pf-pick"><button type="button" class="k-row" data-act="gsCamShot">📷 <b>Foto aufnehmen</b> <span class="small muted">mit der Kamera</span></button><button type="button" class="k-row" data-act="gsCamPick">🖼 <b>Fotos hochladen</b> <span class="small muted">aus der Galerie oder vom Computer, auch mehrere</span></button></div><div class="small muted" style="margin-top:8px">Die App erkennt, was es ist (z. B. Lieferschein, Rechnung, Baustellenfoto), und benennt die Bilder passend.</div></div>`,saveLabel:'Schließen',onSave:()=>{}}),
+ gsCamShot:()=>{ closeSheet(); const f=$('#camIn'); if(f){ f.value=''; f.click(); } },
+ gsCamPick:()=>{ closeSheet(); const f=$('#camUpIn'); if(f){ f.value=''; f.click(); } },
  smartText:()=>openSheet({title:'Text einfügen',wide:1,html:`<div class="fld full"><textarea id="smartTxt" rows="10" class="inp" style="width:100%" placeholder="Mailtext, Aufgabenliste, Notiz, Bestelltext …"></textarea></div>`,saveLabel:'Erkennen',
    onSave:()=>{ const t=$('#smartTxt').value; if(t.trim().length<3){ toast('Bitte Text einfügen.'); return false; } setTimeout(()=>smartDrop([],t),50); }}),
 });
-document.addEventListener('change',e=>{ if(e.target.id==='camIn'){ const fl=[...(e.target.files||[])]; if(fl.length) smartDrop(fl.map((x,i)=>x.name&&!/^image\.(jpe?g|png|heic)$/i.test(x.name)?x:new File([x],'Foto_'+TODAY()+'_'+nowStamp().slice(9).replace(':','')+(i?'_'+i:'')+'.'+((x.type.split('/')[1]||'jpg').replace('jpeg','jpg')),{type:x.type})),''); return; } if(e.target.id==='smartIn'){ const fl=[...(e.target.files||[])]; if(fl.length) smartDrop(fl,''); } });
+document.addEventListener('change',e=>{ if(e.target.id==='camIn'||e.target.id==='camUpIn'){ const fl=[...(e.target.files||[])]; if(fl.length) smartDrop(fl.map((x,i)=>x.name&&!/^image\.(jpe?g|png|heic)$/i.test(x.name)?x:new File([x],'Foto_'+TODAY()+'_'+nowStamp().slice(9).replace(':','')+(i?'_'+i:'')+'.'+((x.type.split('/')[1]||'jpg').replace('jpeg','jpg')),{type:x.type})),''); return; } if(e.target.id==='smartIn'){ const fl=[...(e.target.files||[])]; if(fl.length) smartDrop(fl,''); } });
 document.addEventListener('drop',e=>{ const z=e.target.closest&&e.target.closest('.smart-drop'); if(!z) return; e.preventDefault(); e.stopImmediatePropagation(); z.classList.remove('over'); smartDrop(e.dataTransfer.files,e.dataTransfer.getData('text/plain')); },true);
 document.addEventListener('paste',e=>{ if(UI.view!=='dash'||SHEET) return; const tg=e.target; if(tg&&(tg.tagName==='TEXTAREA'||tg.tagName==='INPUT')) return;
   const files=[...(e.clipboardData.files||[])], text=e.clipboardData.getData('text/plain')||''; if(!files.length&&text.trim().length<3) return; e.preventDefault(); e.stopImmediatePropagation(); smartDrop(files,text); },true);
@@ -10740,14 +10778,7 @@ document.addEventListener('drop',e=>{ const z=e.target.closest&&e.target.closest
 document.addEventListener('paste',e=>{ if(UI.view!=='todos'||SHEET) return; const tg=e.target; if(tg&&(tg.tagName==='TEXTAREA'||tg.tagName==='INPUT')) return;
   const files=[...(e.clipboardData.files||[])], text=e.clipboardData.getData('text/plain')||''; if(!files.length&&text.trim().length<30) return; e.preventDefault(); e.stopImmediatePropagation(); mailToTodos(files,text); },true);
 
-// Handy: im Projekt nach links/rechts wischen = nächstes/voriges Projekt (wie die Pfeile am Desktop)
-(()=>{ let x0=0,y0=0,t0=0,ok=false; const NO='input,textarea,select,[contenteditable],.td-grip,.rail,.tbl-wrap,.chips,.sl-items,.dcols,.board,.hscroll,.sheet,#scrim,.aic,.side,.live-t,#toast,#kxUndo,.wv-strip';
-  document.addEventListener('touchstart',e=>{ ok=false; if(UI.view!=='project'||innerWidth>900||e.touches.length!==1||SHEET||document.body.classList.contains('nav-open')) return; if(e.target.closest&&e.target.closest(NO)) return;
-    const t=e.touches[0]; x0=t.clientX; y0=t.clientY; t0=Date.now(); ok=x0>16&&x0<innerWidth-16; },{passive:true}); // Ränder frei lassen (Zurück-Geste des Handys)
-  document.addEventListener('touchend',e=>{ if(!ok) return; ok=false; const t=e.changedTouches[0], dx=t.clientX-x0, dy=t.clientY-y0;
-    if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.8||Date.now()-t0>700) return;
-    const b=document.querySelector(dx<0?'.big-nav.r':'.big-nav.l'); if(!b||b.disabled||!b.dataset.id) return toast(dx<0?'Das ist das letzte Projekt.':'Das ist das erste Projekt.');
-    const v=$('#view'); if(v){ v.classList.add(dx<0?'swipe-out-l':'swipe-out-r'); setTimeout(()=>{ v.classList.remove('swipe-out-l','swipe-out-r'); b.click(); },150); } else b.click(); },{passive:true}); })();
+// Handy: Wischen zwischen Projekten ist abgeschaltet (auf Wunsch entfernt) – Projektwechsel über die Pfeile
 // Handy-Schublade: Seitenleiste ein-/ausblenden (Abdunklung dahinter schließt sie)
 function navDrawer(on){ let s=$('#navScrim'); if(!s){ s=document.createElement('div'); s.id='navScrim'; s.onclick=()=>navDrawer(false); document.body.appendChild(s); } document.body.classList.toggle('nav-open',!!on); if(on){ const c=document.querySelector('#side .nav-btn.on'); if(c) c.scrollIntoView({block:'center'}); } }
 // Datei von außen irgendwo im Plan abgelegt, nicht nur im Ablagefeld: wie „Alles hier reinziehen“ behandeln
