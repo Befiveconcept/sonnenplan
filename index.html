@@ -2366,7 +2366,9 @@ const ROLE_PRESETS={
  buchhaltung:{l:'Buchhaltung',views:AREAS.map(a=>a[0]).filter(v=>!['templates','settings','activity','kfrei'].includes(v)),ownTodos:false,admin:true,info:'alles außer Vorlagen, Team & Einstellungen, Aktivität und Rechte'},
  admin:{l:'Admin',views:AREAS.map(a=>a[0]).filter(v=>v!=='kfrei'),ownTodos:false,admin:true,info:'alles (Freigabe der Kunden-Texte nur per eigenem Häkchen)'}};
 const ROLE_DEFAULT_BY_K={as:'monteur',moji:'monteur',hh:'buero',mk:'buero',js:'buero',pr:'buero',jp:'buchhaltung',ep:'admin',ave:'admin'};
-const ownTodosOnly=()=>!isAdmin()&&!!(permEff(ME)||{}).ownTodos;
+const ownTodosOnly=()=>!!ME&&!isAdmin()&&(!!(permEff(ME)||{}).ownTodos||isMonteurDefault(ME));
+/* Monteure: nur eigene To-Dos + noch nicht vergebene allgemeine Aufgaben */
+const taskOk=t=>!!t&&(!ownTodosOnly()||taskHas(t,ME)||(!!t.pool&&!t.who));
 /* Startseite für Monteure (z. B. Moji, ABou): ohne Projekt-Kacheln und Projekt-Timeline */
 const dashMonteur=()=>!!ME&&!isAdmin()&&(ownTodosOnly()||(permEff(ME)||{}).role==='monteur');
 // Rolle anwenden: Sehen + Bearbeiten wie die Voreinstellung, Admin-Häkchen, „nur eigene To-Dos“
@@ -3050,7 +3052,7 @@ function projVis(p){ if(!projRestr(p)) return true; if(!ME) return false; const 
 const projLock=p=>{ if(!projRestr(p)) return ''; const o=projOwner(p), sh=p.vis==='me'?[]:(p.share||[]).map(shortWho); return `<span class="p-lock" title="${esc('Internes Projekt – sichtbar nur für '+[o,...sh].filter(Boolean).join(', '))}" aria-label="Internes Projekt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>`; };
 const projVisId=id=>{ const p=id&&S.projects[id]; return !p||projVis(p); };
 const PID_COLLS=new Set(['tasks','orders','events','offers','reports','sales','files','meetings','psum','pms']);
-const arr = c=>{ const v=Object.values(S[c]||{}); if(c==='projects') return v.filter(projVis); if(PID_COLLS.has(c)&&S.projects&&Object.values(S.projects).some(projRestr)) return v.filter(x=>!x||!x.pid||projVisId(x.pid)); return v; };
+const arr = c=>{ let v=Object.values(S[c]||{}); if(c==='tasks'&&ownTodosOnly()) v=v.filter(taskOk); if(c==='projects') return v.filter(projVis); if(PID_COLLS.has(c)&&S.projects&&Object.values(S.projects).some(projRestr)) return v.filter(x=>!x||!x.pid||projVisId(x.pid)); return v; };
 const INTERN='intern'; // Bestellungen ohne Kundenprojekt (Lager, Büro, Werkstatt)
 const projName = id=>{ if(id===INTERN) return 'Haus intern'; const p=S.projects[id]; return p&&projVis(p)? p.name : '' };
 // Austritt: s.exit = letzter Arbeitstag. Ab dem Tag danach ist die Person aus allen Auswahllisten raus (staff), bleibt aber für Einstellungen und Personalakte erhalten (staffAll).
@@ -7094,7 +7096,7 @@ const A = {
    ...(window.SB_LOGOUT?[['sbLogout','Abmelden','lock']]:[])]),
  newProject:()=>projectForm(), editProject:d=>projectForm(S.projects[d.id]),
  openProject:d=>{ if(!d.id) return; if(UI.pid!==d.id&&!d.keep) UI.ptab='status'; go('project',d.id); },
- newTask:d=>taskForm(null,{pid:d.pid||''}), editTask:d=>S.tasks[d.id]&&taskForm(S.tasks[d.id]),
+ newTask:d=>taskForm(null,{pid:d.pid||''}), editTask:d=>{ const t=S.tasks[d.id]; if(!t) return; if(!taskOk(t)) return toast('Dieses To-Do gehört einer anderen Person.'); taskForm(t); },
  newEvent:d=>eventForm(null,{pid:d.pid||'',date:d.date||TODAY()}), editEvent:d=>S.events[d.id]&&eventForm(S.events[d.id]),
  newOrder:d=>orderForm(null,{pid:d.pid||''}), editOrder:d=>S.orders[d.id]&&orderForm(S.orders[d.id]), receive:d=>{ closeSheet(); receiveForm(d.id); },
  newOffer:d=>offerForm(null,{pid:d.pid||''}), editOffer:d=>S.offers[d.id]&&offerForm(S.offers[d.id]),
