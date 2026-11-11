@@ -631,6 +631,34 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 @keyframes swOutL{to{transform:translateX(-40px);opacity:0}}@keyframes swOutR{to{transform:translateX(40px);opacity:0}}
 .swipe-hint{position:fixed;top:50%;transform:translateY(-50%);z-index:40;background:var(--night);color:var(--sun);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:22px;opacity:0;pointer-events:none;transition:opacity .1s}
 .ext-pill{background:#EDE6FA;color:#5a3596}
+/* Lager-Tablet */
+body.kiosk .side,body.kiosk #mtop,body.kiosk #nfStrip,body.kiosk .tabbar,body.kiosk .aic-fab,body.kiosk .aic,body.kiosk .big-nav{display:none!important}
+body.kiosk .app{display:block}body.kiosk .main{padding:0}body.kiosk .wrap{max-width:1100px;margin:0 auto}
+.ks{padding:14px 16px 30px}.ks-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}.ks-logo{height:44px;background:#fff;border-radius:8px;padding:2px 6px}.ks-t{font-size:22px}
+.ks-who{font:inherit;font-size:17px;font-weight:600;border:2px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:10px 18px;cursor:pointer}.ks-who.on{background:#111;color:#F4DB02;border-color:#111}
+.ks-x{font-size:22px;border:0;background:none;color:var(--muted);padding:8px 10px;cursor:pointer}
+.ks-search{display:flex;gap:10px}.ks-search .inp{flex:1;font-size:20px;padding:16px 18px;border-radius:14px}.ks-search .btn{font-size:18px;padding:0 22px;border-radius:14px}
+.ks-mode{margin:10px 2px 0;font-size:16px}
+.ks-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:16px}
+.k-tile{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-height:150px;padding:18px;border-radius:18px;border:2px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.k-tile i{font-style:normal;font-size:38px;line-height:1}.k-tile b{font-size:21px}.k-tile span{color:var(--muted);font-size:14px}.k-tile:active{transform:scale(.98)}
+.k-tile.in{border-color:#2E7D4A}.k-tile.out{border-color:#C9A900;background:#FFF9D6;color:#111}.k-tile.ai{background:#111;color:#fff;border-color:#111}.k-tile.ai span{color:#ddd}
+.ks-res{margin-top:14px;display:flex;flex-direction:column;gap:8px}.k-res{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 10px}
+.k-res-m{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:0;background:none;font:inherit;color:inherit;text-align:left;font-size:17px;cursor:pointer;padding:6px}.k-res-q{font-size:20px;font-weight:700;white-space:nowrap}
+.k-sm{width:58px;height:58px;border-radius:14px;border:0;font-size:24px;cursor:pointer;background:#E6F2EA;color:#1f5c35}.k-sm.out{background:#FFF3B0;color:#5c4d00}
+.k-row{display:flex;flex-direction:column;align-items:flex-start;width:100%;text-align:left;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;padding:12px;margin-bottom:8px;cursor:pointer}
+.k-qty{font-size:36px;font-weight:800;margin:6px 0}.k-qty span{font-size:18px;font-weight:500;color:var(--muted)}
+.k-acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px}.k-big{display:flex;flex-direction:column;align-items:flex-start;gap:2px;font:inherit;font-size:28px;padding:16px;border-radius:16px;border:2px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;text-align:left}.k-big b{font-size:20px}.k-big span{font-size:13px;color:var(--muted)}.k-big.in{border-color:#2E7D4A}.k-big.out{border-color:#C9A900;background:#FFF9D6;color:#111}
+.k-who{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.k-wb{display:flex;flex-direction:column;align-items:flex-start;padding:16px;border-radius:14px;border:2px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;cursor:pointer}.k-wb b{font-size:24px}.k-wb span{font-size:13px;color:var(--muted)}
+.ks-log{margin-top:22px;display:flex;flex-direction:column;gap:4px}
+/* Kunden-Ansicht */
+.kv-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.kv-tabs .chip.on{background:#111;color:#F4DB02;border-color:#111}
+.kv-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(250px,1fr);gap:16px;align-items:start}@media(max-width:900px){.kv-grid{grid-template-columns:1fr}}
+.kvbox{background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px;color-scheme:light}
+.kv-row{display:flex;gap:10px;align-items:center;padding:8px 6px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:8px}.kv-row:hover,.kv-row.on{background:var(--sunken)}.kv-row.off{opacity:.55}
+.kv-rt{flex:1;min-width:0}.kv-tx{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kv-n{flex:none;width:24px;height:24px;border-radius:50%;background:#111;color:#F4DB02;font-weight:700;font-size:12px;display:grid;place-items:center;border:2px solid #F4DB02}.kv-n.g{background:var(--sunken);color:var(--muted);border-color:var(--line)}
+.kv-pv{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--line)}.kv-ap{align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
 .firm-pill{background:var(--sunken);color:var(--ink);white-space:nowrap}
 /* Globale Suche */
 .gs-wrap{position:relative;margin:0 0 18px}
@@ -2257,8 +2285,8 @@ const ICONS = {download:'<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M
 const ic = (n,extra='')=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ${extra}>${ICONS[n]}</svg>`;
 
 /* ========== Datenhaltung (gemeinsame Datenbank, sonst lokal) ========== */
-const COLLS = ['projects','tasks','orders','offers','events','reports','plan','log','files','stock','picks','lager','inv','chat','meetings','hrtime','hrabs','hrstaff','hrdocs','sales','pins','psum','pms'];
-const S = {lager:{},inv:{},stock:{},picks:{},pins:{},projects:{},tasks:{},orders:{},offers:{},events:{},reports:{},plan:{},log:{},hrtime:{},hrabs:{},hrstaff:{},hrdocs:{},kunden:{},lieferanten:{},artikel:{},sales:{},fin:{},anlagen:{},config:{staff:[]}};
+const COLLS = ['projects','tasks','orders','offers','events','reports','plan','log','files','stock','picks','lager','inv','chat','meetings','hrtime','hrabs','hrstaff','hrdocs','sales','pins','psum','pms','kview'];
+const S = {kview:{},lager:{},inv:{},stock:{},picks:{},pins:{},projects:{},tasks:{},orders:{},offers:{},events:{},reports:{},plan:{},log:{},hrtime:{},hrabs:{},hrstaff:{},hrdocs:{},kunden:{},lieferanten:{},artikel:{},sales:{},fin:{},anlagen:{},config:{staff:[]}};
 let DB=null, MODE='init', READONLY=false;
 const LS_KEY='sonnenplan-v1';
 function lsGet(k){ try{ return localStorage.getItem(k) }catch(e){ return null } }
@@ -2281,17 +2309,18 @@ const ADMINS=['EP','AvE'];
 const isBaseAdmin=()=>ADMINS.includes(meK());
 const permOf=n=>(((S&&S.config)||{}).perms||{})[n]||null;
 const isAdmin=()=>isBaseAdmin()||!!(permOf(ME)||{}).admin;
-const AREAS=[['dash','Übersicht'],['projects','Projekte'],['todos','To-Dos'],['meetings','Meetings'],['private','Private To-Dos'],['chat','Chat'],['week','Kalender & Wochenplanung'],['orders','Bestellungen & Wareneingänge'],['stock','Lagerverwaltung'],['files','Datenablage'],['offers','Angebote'],['reports','Tagesrapporte'],['templates','Vorlagen'],['sales','Verkauf (Angebote, Rechnungen …)'],['fin','Finanzen (Bank, Ausgaben, Steuer, DATEV)'],['stamm','Stammdaten (Kunden, Lieferanten, Artikel)'],['hr','HR (Stempeluhr, Urlaub)'],['settings','Team & Einstellungen'],['activity','Aktivität']];
+const AREAS=[['dash','Übersicht'],['projects','Projekte'],['todos','To-Dos'],['meetings','Meetings'],['private','Private To-Dos'],['chat','Chat'],['week','Kalender & Wochenplanung'],['orders','Bestellungen & Wareneingänge'],['stock','Lagerverwaltung'],['files','Datenablage'],['offers','Angebote'],['reports','Tagesrapporte'],['templates','Vorlagen'],['sales','Verkauf (Angebote, Rechnungen …)'],['fin','Finanzen (Bank, Ausgaben, Steuer, DATEV)'],['stamm','Stammdaten (Kunden, Lieferanten, Artikel)'],['hr','HR (Stempeluhr, Urlaub)'],['settings','Team & Einstellungen'],['activity','Aktivität'],['kview','Kunden-Ansicht'],['kfrei','Kunden-Ansicht: Texte freigeben']];
 const FIN_DEFAULT=['JP','AvE','EP']; /* Finanzen ohne eigene Einstellung: nur diese drei */
-const defaultViews=n=>AREAS.map(a=>a[0]).filter(v=>(v!=='activity'||shortWho(n)==='EP')&&(v!=='fin'||FIN_DEFAULT.includes(shortWho(n))));
+/* „Kunden-Ansicht: Texte freigeben“: ohne Einstellung nur AvE (immer), weitere Personen per Häkchen in der Rechtevergabe */
+const defaultViews=n=>AREAS.map(a=>a[0]).filter(v=>(v!=='activity'||shortWho(n)==='EP')&&(v!=='fin'||FIN_DEFAULT.includes(shortWho(n)))&&v!=='kfrei');
 // Alte gespeicherte Rechte (vor den Spalten Meetings + Finanzen) so lesen, wie sie bisher wirkten
 const permV2=(n,p,list)=>{ if(!p||p.v2) return list; const o=list.slice(); if(o.includes('todos')&&!p.ownTodos&&!o.includes('meetings')) o.push('meetings'); if(FIN_DEFAULT.includes(shortWho(n))&&!o.includes('fin')) o.push('fin'); return o; };
 // Rollen-Voreinstellungen fuer die Rechteverteilung (danach pro Person anpassbar)
 const ROLE_PRESETS={
  monteur:{l:'Monteur',views:['dash','todos','private','week','orders','stock','hr'],ownTodos:true,admin:false,info:'Terminplan, eigene + allgemeine To-Dos, Material & Lager, eigene Stempeluhr'},
  buero:{l:'Büro',views:['dash','projects','todos','private','chat','week','files','offers','reports','orders','stock','sales','stamm','hr'],ownTodos:false,admin:false,info:'Projekte & Planung, Material & Lager, Verkauf, eigene HR-Seite'},
- buchhaltung:{l:'Buchhaltung',views:AREAS.map(a=>a[0]).filter(v=>!['templates','settings','activity'].includes(v)),ownTodos:false,admin:true,info:'alles außer Vorlagen, Team & Einstellungen, Aktivität und Rechte'},
- admin:{l:'Admin',views:AREAS.map(a=>a[0]),ownTodos:false,admin:true,info:'alles'}};
+ buchhaltung:{l:'Buchhaltung',views:AREAS.map(a=>a[0]).filter(v=>!['templates','settings','activity','kfrei'].includes(v)),ownTodos:false,admin:true,info:'alles außer Vorlagen, Team & Einstellungen, Aktivität und Rechte'},
+ admin:{l:'Admin',views:AREAS.map(a=>a[0]).filter(v=>v!=='kfrei'),ownTodos:false,admin:true,info:'alles (Freigabe der Kunden-Texte nur per eigenem Häkchen)'}};
 const ROLE_DEFAULT_BY_K={as:'monteur',moji:'monteur',hh:'buero',mk:'buero',js:'buero',pr:'buero',jp:'buchhaltung',ep:'admin',ave:'admin'};
 const ownTodosOnly=()=>!isAdmin()&&!!(permOf(ME)||{}).ownTodos;
 // Rolle anwenden: Sehen + Bearbeiten wie die Voreinstellung, Admin-Häkchen, „nur eigene To-Dos“
@@ -2302,6 +2331,7 @@ const viewsOf=n=>{ const p=permOf(n); return p&&Array.isArray(p.views)?permV2(n,
 const editsOf=n=>{ const p=permOf(n); return p&&Array.isArray(p.edit)?permV2(n,p,p.edit):viewsOf(n); };
 const canEdit=a=>isAdmin()||(!!ME&&editsOf(ME).includes(a)&&viewsOf(ME).includes(a));
 function canSee(v){ if(v==='rights') return isBaseAdmin(); if(v==='hr') return true; /* Stempeln und Urlaub: für alle */ if(String(v).startsWith('f:')) v='files'; if(String(v).startsWith('st:')) v='stamm'; if(v==='fin'||String(v).startsWith('fi:')) return finOk(); if(String(v).startsWith('vk:')) v='sales'; if(v==='dash') return true; if(!ME) return v!=='activity'; const vs=viewsOf(ME);
+  if(v==='kview') return isAdmin()||vs.includes('kview')||kfreiOk();
   if(v==='project') return vs.includes('projects'); if(v==='pool') return vs.includes('todos'); if(v==='meetings') return vs.includes('meetings'); if(v==='calendar') return vs.includes('week'); return vs.includes(v); }
 const canSeeActivity=()=>canSee('activity');
 const META=['upd','updBy','hist','at','by'];
@@ -2355,7 +2385,7 @@ function describeChange(coll,prev,o){
   return out.join(' · ');
 }
 // Schreibrecht je Rubrik (Admin-Bereich „Rechte“): ohne Häkchen „bearbeiten“ wird nichts gespeichert
-const COLL_AREA={projects:'projects',tasks:'todos',orders:'orders',offers:'offers',events:'week',plan:'week',reports:'reports',files:'files',stock:'stock',picks:'stock',lager:'stock',inv:'stock',chat:'chat',meetings:'meetings',hrtime:'hr',hrabs:'hr',hrstaff:'hr',hrdocs:'hr',kunden:'stamm',lieferanten:'stamm',artikel:'stamm',sales:'sales',fin:'fin',anlagen:'fin'};
+const COLL_AREA={projects:'projects',tasks:'todos',orders:'orders',offers:'offers',events:'week',plan:'week',reports:'reports',files:'files',stock:'stock',picks:'stock',lager:'stock',inv:'stock',chat:'chat',meetings:'meetings',hrtime:'hr',hrabs:'hr',hrstaff:'hr',hrdocs:'hr',kunden:'stamm',lieferanten:'stamm',artikel:'stamm',sales:'sales',fin:'fin',anlagen:'fin',kview:'kview'};
 const lagerOk=()=>isAdmin()||canEdit('stock');
 const stDelOk=k=>isAdmin()||(k==='artikel'&&lagerOk());
 function mayWrite(coll){ const a=COLL_AREA[coll]; if(a==='fin'&&ME) return finOk()&&(isAdmin()||editsOf(ME).includes('fin')); if(!a||!ME||isAdmin()) return true; if(coll==='artikel'&&canEdit('stock')) return true; if(a==='hr') return !['hrstaff','hrdocs'].includes(coll); return canEdit(a); }
@@ -3087,6 +3117,9 @@ function banner(){
 }
 function render(){ if(EXIT_LOCK) return;
   renderShell();
+  if(KIOSK_ON()){ document.body.classList.add('kiosk'); const f=document.activeElement&&document.activeElement.id==='kqIn', ss=f?document.activeElement.selectionStart:0;
+    $('#view').innerHTML=vKiosk(); const i=$('#kqIn'); if(i&&f){ try{ i.focus({preventScroll:true}); i.setSelectionRange(ss,ss); }catch(e){} } return; }
+  document.body.classList.remove('kiosk');
   const v = canSee(UI.view)?UI.view:'dash';
   const fn0 = {rights:vRights,dash:vDash,projects:vProjects,project:vProject,todos:vTodos,pool:vPool,meetings:vMeetings,hr:vHR,stamm:vStamm,sales:vSales,fin:vFin,week:vTeamWeek,calendar:vCalendar,activity:vActivity,files:vFiles,stock:vStock,chat:vChat,private:vPrivate,orders:vOrders,offers:vOffers,reports:vReports,templates:vTemplates,settings:vSettings}[v]||vDash;
   // Kalender und Wochenplanung Team: eine Rubrik mit Umschalter
@@ -3659,7 +3692,7 @@ function vProject(){
   const p=S.projects[UI.pid]&&projVis(S.projects[UI.pid])?S.projects[UI.pid]:null; if(!p) return head('Projekt nicht gefunden','')+'<div class="card"><div class="empty">Dieses Projekt existiert nicht mehr. <button class="btn" data-act="nav" data-v="projects">Zur Liste</button></div></div>';
   const pr=progress(p), tasks=arr('tasks').filter(t=>t.pid===p.id), orders=arr('orders').filter(o=>o.pid===p.id), evs=arr('events').filter(e=>e.pid===p.id), offers=arr('offers').filter(o=>o.pid===p.id), reps=arr('reports').filter(r=>r.pid===p.id);
   const pp=pipe(p), cat=catOf(p);
-  const tabs=[['status','Status',pp.work+'/'+pp.total],['timeline','Timeline',''],['ablauf','Checklisten',pr.done+'/'+pr.tot],['formulare','Formulare',''],['todos','To-Dos',tasks.filter(t=>!t.done).length],['termine','Termine',projAgenda(p,TODAY(),'9999').filter(i=>i.k!=='todo'&&i.k!=='lief'&&i.k!=='proj').length],['material','Material',orders.length],['rapporte','Tagesrapporte',reps.length],['dateien','Dateien',allFiles().filter(f=>f.pid===p.id).length],['verlauf','Verlauf',''],['infos','Infos','']];
+  const tabs=[['status','Status',pp.work+'/'+pp.total],['timeline','Timeline',''],['ablauf','Checklisten',pr.done+'/'+pr.tot],['formulare','Formulare',''],['todos','To-Dos',tasks.filter(t=>!t.done).length],['termine','Termine',projAgenda(p,TODAY(),'9999').filter(i=>i.k!=='todo'&&i.k!=='lief'&&i.k!=='proj').length],['material','Material',orders.length],['rapporte','Tagesrapporte',reps.length],['dateien','Dateien',allFiles().filter(f=>f.pid===p.id).length],...(canSee('kview')&&!isIntern(p)?[['kunde','Kunden-Ansicht',kvPendList(kvOf(p.id)).length?'⏳':'']]:[]),['verlauf','Verlauf',''],['infos','Infos','']];
   let body=''; if(UI.ptab==='angebote') UI.ptab='dateien';
   if(UI.ptab==='status') body=projStatus(p);
   else if(UI.ptab==='ablauf') body=`<div class="row ck-bar"><span class="small muted">Haken setzen und Bemerkungen eintragen wird sofort gespeichert. Drucken öffnet den Druckdialog, dort „Als PDF speichern“ wählen.</span><span class="spacer"></span><button class="btn sun sm" data-act="ckPrint" data-pid="${p.id}">${ic('report')}Alle Checklisten drucken / PDF</button></div>`+projPhaseNav(pr)+projAblauf(p,pr);
@@ -3671,6 +3704,7 @@ function vProject(){
   else if(UI.ptab==='angebote') body=`<div class="card"><div class="card-h"><h3>Angebote</h3><button class="btn sm" data-act="newOffer" data-pid="${p.id}">${ic('plus')}Angebot</button></div>${offersTable(offers)}</div>`;
   else if(UI.ptab==='rapporte') body=`<div class="card"><div class="card-h"><h3>Tagesrapporte</h3><button class="btn sm" data-act="newReport" data-pid="${p.id}">${ic('plus')}Rapport</button></div>${reportsTable(reps)}</div>`;
   else if(UI.ptab==='timeline') body=projTimeline(p);
+  else if(UI.ptab==='kunde'&&canSee('kview')&&!isIntern(p)) body=projKview(p);
   // Angebote haben keinen eigenen Reiter mehr: sie stehen unter „Dateien“ im Ordner Angebote
   else if(UI.ptab==='dateien') body=`<div class="row" style="justify-content:flex-end;margin-bottom:10px"><button class="btn sm" data-act="newOffer" data-pid="${p.id}">${ic('plus')}Angebot anlegen</button></div>`+fileDropHtml(p.id)+projFilesHtml(p);
   else if(UI.ptab==='verlauf') body=`<div class="card"><div class="card-h"><h3>Verlauf</h3><span class="small muted">Jede Änderung an Projekt, Aufgaben, Bestellungen, Terminen und Angeboten mit Kürzel und Zeitpunkt</span></div><div class="card-b">${histList(allHist().filter(h=>h.pid===p.id),true)}</div></div>`;
@@ -5819,7 +5853,7 @@ function invReview(id){ const x=S.inv[id]; if(!x) return; closeSheet(); const ca
       x2.status='gebucht'; x2.bookedBy=meK(); x2.bookedAt=new Date().toISOString(); put('inv',x2); toast(n?n+' Differenz'+(n===1?'':'en')+' gebucht.':'Inventur abgeschlossen, nichts zu buchen.'); }}); }
 
 /* ---------- Kopf, Tabs, Aktionen ---------- */
-const lgHeadBtns=()=>`<button class="btn" data-act="lgScan">${LG_SCAN_IC}Scannen</button>`;
+const lgHeadBtns=()=>`<button class="btn" data-act="lgScan">${LG_SCAN_IC}Scannen</button>${isAdmin()?`<button class="btn" data-act="kSetup" title="Dieses Gerät (z. B. Tablet im Lager) zeigt danach nur noch die Lagerverwaltung">📱 Als Lager-Tablet einrichten</button>`:''}`;
 const pickLocTxt=it=>{ if(it.from&&it.from.length) return 'entnommen von '+it.from.map(f=>(f.bin?lgCode(f.bin):'ohne Platz')+' '+qn(f.n)).join(', ');
   if(it.ok||it.src==='Lager') return ''; const s=stockFind(it.art,it.artNr); if(!s) return ''; const b=binsOf(s).sort((x,y)=>y[1]-x[1]); return b.length?'📍 liegt auf '+b.slice(0,3).map(([x,q])=>lgCode(x)+' ('+qn(+q)+')').join(', ')+(b.length>3?' …':''):''; };
 queueMicrotask(()=>{ Object.assign(A,{
@@ -5858,13 +5892,13 @@ queueMicrotask(()=>{ Object.assign(A,{
   lgMgrSet:(d,el)=>{ if(!isAdmin()) return; const l=new Set(((S.config||{}).lagerMgr||[])); if(el.checked) l.add(el.value); else l.delete(el.value); putConfig({...(S.config||{}),lagerMgr:[...l]}); toast(el.value+(el.checked?' darf jetzt Lagerorte verwalten.':' darf keine Lagerorte mehr verwalten.')); } }); });
 
 function stockForm(s,pre){ pre=pre||{};
-  const isNew=!s; s=s?clone(s):{id:uid(),unit:'Stk',qty:0,loc:'',min:0,firm:UI.sfirm||FIRMS()[0]}; if(!s.firm) s.firm=FIRMS()[0]; const on=LGON();
+  const isNew=!s; s=s?clone(s):{id:uid(),unit:'Stk',qty:0,loc:'',min:0,firm:UI.sfirm||FIRMS()[0],...(pre.init||{})}; if(!s.firm) s.firm=FIRMS()[0]; const on=LGON();
   openSheet({title:isNew?'Lagerartikel anlegen':'Lagerartikel bearbeiten',value:s,fields:[{k:'art',label:'Artikel',req:1,full:1},{k:'firm',label:'Ware gehört',type:'select',options:FIRMS().map(f=>[f,f])},{k:'artNr',label:'Art.-Nr. / EAN'},{k:'unit',label:'Einheit',type:'select',options:UNITS.map(u=>[u,u])},
     ...(isNew?[{k:'qty',label:'Anfangsbestand',type:'number',step:'any'},...(on?[{k:'binx',label:'Lagerplatz für den Anfangsbestand',type:'html',full:1,html:binPick('nb_bin',pre.bin||'',{allowNone:true,noneLabel:'– ohne Platz (nicht zugeordnet) –'})}]:[])]:isAdmin()?[{k:'qty',label:'Gesamtbestand (Korrektur, nur EP/AvE – besser über Inventur)',type:'number',step:'any'}]:[]),
     {k:'loc',label:on?'Alter Lagerort (Freitext, nur zur Info)':'Lagerort',list:'locList'},{k:'min',label:'Mindestbestand (Warnung)',type:'number',step:'any'},{k:'notes',label:'Notiz',type:'textarea'}],
     onSave:v=>{ const q=v.qty===''||v.qty==null?null:+v.qty, old=+s.qty||0, b=$('#nb_bin')?$('#nb_bin').value:''; delete v.qty; delete v.binx; if(b&&!lgUsable(lgNode(b))){ toast('Dieser Lagerplatz ist gesperrt oder stillgelegt.'); return false; } Object.assign(s,v);
       if(isNew){ s.qty=0; s.moves=[]; s.bins={}; if(q) stockMove(s,q,'Anfangsbestand','','',{t:'anfang',bin:b}); } else if(q!=null&&q!==old&&isAdmin()) stockMove(s,q-old,'Bestandskorrektur','','',{t:'korrektur'});
-      s.min=+s.min||0; put('stock',s); toast('Lagerartikel gespeichert.'); if(pre.bin) setTimeout(()=>lgBinSheet(pre.bin),80); },
+      s.min=+s.min||0; put('stock',s); toast('Lagerartikel gespeichert.'); if(pre.bin) setTimeout(()=>lgBinSheet(pre.bin),80); if(pre.after) setTimeout(()=>pre.after(s),80); },
     onDelete:isNew||!lagerOk()?null:()=>{ del('stock',s.id); closeSheet(); }});
 }
 function stockHist(id){ const s=S.stock[id]; if(!s) return; closeSheet(); const u=unassigned(s), b=binsOf(s).sort((x,y)=>y[1]-x[1]), w=mayWrite('stock'), on=LGON();
@@ -6002,9 +6036,9 @@ function vRights(){
    ${st.map(s=>{ const base=ADMINS.includes(shortWho(s.name)), p=permOf(s.name)||{}, vs=viewsOf(s.name), es=editsOf(s.name), adm=base||p.admin;
      return `<tr><td><b>${esc(s.name)}</b><div class="small muted">${esc(ROLES[s.role]||s.role||'')}</div></td><td>${base?'<span class="pill sun">Admin</span>':`<select class="inp rt-role" data-chg="permRole" data-n="${esc(s.name)}" aria-label="Rolle: ${esc(s.name)}"><option value="">individuell</option>${Object.entries(ROLE_PRESETS).map(([k,r])=>`<option value="${k}" ${p.role===k?'selected':''}>${esc(r.l)}</option>`).join('')}</select>`}</td>
        <td class="c">${base?'<span class="pill sun">immer</span>':`<input type="checkbox" class="ck" data-chg="permAdmin" data-n="${esc(s.name)}" ${p.admin?'checked':''} aria-label="Admin: ${esc(s.name)}">`}</td>
-       ${AREAS.map(([k,l])=>k==='dash'?'<td class="c"><span class="pm">👁 ✓</span></td>':`<td class="c"><label class="pm" title="sehen"><input type="checkbox" class="ck" data-chg="permView" data-n="${esc(s.name)}" data-v="${k}" ${vs.includes(k)?'checked':''} ${base?'disabled':''} aria-label="${esc(l)} sehen: ${esc(s.name)}">👁</label>${['private','activity','dash'].includes(k)?'':`<label class="pm" title="bearbeiten / löschen"><input type="checkbox" class="ck" data-chg="permEdit" data-n="${esc(s.name)}" data-v="${k}" ${adm||es.includes(k)?'checked':''} ${adm||!vs.includes(k)?'disabled':''} aria-label="${esc(l)} bearbeiten: ${esc(s.name)}">✎</label>`}</td>`).join('')}</tr>`; }).join('')}
+       ${AREAS.map(([k,l])=>k==='dash'?'<td class="c"><span class="pm">👁 ✓</span></td>':k==='kfrei'?(shortWho(s.name)==='AvE'?'<td class="c"><span class="pill sun">immer</span></td>':`<td class="c"><label class="pm" title="darf Kunden-Texte freigeben"><input type="checkbox" class="ck" data-chg="permView" data-n="${esc(s.name)}" data-v="kfrei" ${vs.includes('kfrei')?'checked':''} aria-label="Kunden-Texte freigeben: ${esc(s.name)}">✓</label></td>`):`<td class="c"><label class="pm" title="sehen"><input type="checkbox" class="ck" data-chg="permView" data-n="${esc(s.name)}" data-v="${k}" ${vs.includes(k)?'checked':''} ${base?'disabled':''} aria-label="${esc(l)} sehen: ${esc(s.name)}">👁</label>${['private','activity','dash'].includes(k)?'':`<label class="pm" title="bearbeiten / löschen"><input type="checkbox" class="ck" data-chg="permEdit" data-n="${esc(s.name)}" data-v="${k}" ${adm||es.includes(k)?'checked':''} ${adm||!vs.includes(k)?'disabled':''} aria-label="${esc(l)} bearbeiten: ${esc(s.name)}">✎</label>`}</td>`).join('')}</tr>`; }).join('')}
    </tbody></table></div>
-   <div class="card-b small muted">👁 = Rubrik sehen · ✎ = in der Rubrik anlegen, ändern und löschen. Admin = darf überall alles. Änderungen gelten sofort. Die Rechte-Seite sehen nur EP und AvE. Private To-Dos bleiben immer privat.</div></div>`;
+   <div class="card-b small muted">👁 = Rubrik sehen · ✎ = in der Rubrik anlegen, ändern und löschen. Admin = darf überall alles. Änderungen gelten sofort. Die Rechte-Seite sehen nur EP und AvE. Private To-Dos bleiben immer privat. „Kunden-Ansicht: Texte freigeben“ = darf Texte für die Kundenseite freigeben (AvE immer, weitere nur per Häkchen – auch Admins).</div></div>`;
 }
 
 /* ========== Chat: Team-Raum und Direktnachrichten ========== */
@@ -7757,7 +7791,429 @@ function mailTodoDropHtml(){
     <div class="dz-ic">${ic('chat')}</div><div><b>E-Mail hierher ziehen → To-Dos erkennen</b><div class="small muted">${SAMPLE?'Claude liest die Mail, ordnet sie einem Projekt zu und schlägt Aufgaben mit Zuständigem und Frist vor.':'Die App sucht Projekt und Aufgaben-Sätze in der Mail.'} Outlook-Mail erst auf den Desktop ziehen, dann die .msg hier ablegen – oder Mailtext kopieren, hier klicken, Strg+V.</div></div>
     <div class="dz-btns"><button type="button" class="btn sm" data-act="mtPick">Mail wählen</button><button type="button" class="btn sun sm" data-act="bulkTodo">Mehrere To-Dos einlesen</button></div></div><input type="file" id="mtIn" accept=".msg,.eml,message/rfc822,text/plain" hidden>`;
 }
-/* ========== Anrufzusammenfassungen vom IONOS KI-Telefonassistenten → automatisch ein To-Do ========== */
+/*KV3D-START*/
+/* ========== 3-D-Skizzen (isometrisch, im Anschnitt) für die Kunden-Ansicht ==========
+   Gleicher Code in der App und auf der Kunden-Seite (kunde.html, wird beim Build herauskopiert).
+   Szene = {type, n, comps:{key:{st:'klick'|'grau'|'aus', label}}}. Klickbare Teile gelb, alles andere schwarz-grau-weiß. */
+const KV3D=(()=>{
+  const CO=0.8660254, K=12, f1=v=>Math.round(v*10)/10;
+  const escX=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const TYPES={
+    haus:{l:'Einfamilienhaus mit PV',comps:[['module','PV-Module','klick'],['zaehler','Zählerschrank','klick'],['wr','Wechselrichter','klick'],['speicher','Batteriespeicher','klick'],['wallbox','Wallbox','aus'],['wp','Wärmepumpe','aus']]},
+    gewerbe:{l:'Gewerbedach / Halle',comps:[['module','PV-Module auf dem Dach','klick'],['hv','Hauptverteilung & Zähler','klick'],['wr','Wechselrichter','klick'],['speicher','Batteriespeicher','aus'],['lader','Ladepunkte','aus']]},
+    solarpark:{l:'Solarpark (Freifläche)',comps:[['module','Modultische','klick'],['wr','Wechselrichter','klick'],['kabel','Kabeltrasse','klick'],['zaun','Zaun & Zufahrt','grau'],['trafo','Trafostation','klick'],['uest','Übergabestation','klick']]},
+    trafo:{l:'Trafostation (Anschnitt)',comps:[['ms','Mittelspannungs-Schaltanlage','klick'],['trafo','Transformator','klick'],['ns','Niederspannungs-Verteilung','klick'],['lueft','Lüftung','grau'],['kabel','Kabelanschlüsse','klick']]},
+    uebergabe:{l:'Übergabestation (Anschnitt)',comps:[['msfeld','Mittelspannungs-Schaltfelder','klick'],['mess','Messfeld & Zähler','klick'],['schutz','Schutztechnik','klick'],['fernwirk','Fernwirkanlage','klick'],['kabel','Kabelanschluss Netz','grau']]},
+    bess:{l:'Batteriespeicher-Container (Anschnitt)',comps:[['racks','Batterie-Racks','klick'],['ems','Energiemanagement (EMS)','klick'],['brand','Brandschutz','grau'],['klima','Klimatisierung','grau'],['pcs','Wechselrichter (PCS)','klick'],['trafo','Transformator','klick']]},
+    ladepark:{l:'Ladepark',comps:[['lader','Ladesäulen','klick'],['verteiler','Unterverteilung','klick'],['netz','Netzanschluss & Zähler','klick'],['kabel','Kabelwege','grau']]}
+  };
+  const st=(s,k)=>{ const c=((s&&s.comps)||{})[k]; if(c&&c.st) return c.st; const d=(TYPES[s.type]||TYPES.haus).comps.find(x=>x[0]===k); return d?d[2]:'grau'; };
+  const lab=(s,k,pub)=>{ const c=((s&&s.comps)||{})[k]||{}, d=(TYPES[s.type]||TYPES.haus).comps.find(x=>x[0]===k); return (pub?c.label:(c.label||''))||(d?d[1]:k); };
+  // Reihenfolge der klickbaren Teile = Nummern in der Skizze
+  const clickList=s=>(TYPES[s.type]||TYPES.haus).comps.filter(([k])=>st(s,k)==='klick').map(([k],i)=>({k,n:i+1,label:lab(s,k)}));
+  function ctx(s){
+    const out=[], pts=[], anch={};
+    const pr=(x,y,z)=>{ const X=(x-y)*CO*K, Y=((x+y)*.5-z)*K; pts.push([X,Y]); return f1(X)+','+f1(Y); };
+    const c={
+      st:k=>st(s,k), on:k=>st(s,k)!=='aus',
+      poly(ps,cl){ out.push('<polygon class="'+cl+'" points="'+ps.map(p=>pr(p[0],p[1],p[2])).join(' ')+'"/>'); },
+      line(a,b,cl){ const A=pr(...a).split(','), B=pr(...b).split(','); out.push(`<line class="${cl||'ln'}" x1="${A[0]}" y1="${A[1]}" x2="${B[0]}" y2="${B[1]}"/>`); },
+      path(ps,cl){ out.push('<polyline class="'+(cl||'cab')+'" points="'+ps.map(p=>pr(p[0],p[1],p[2])).join(' ')+'"/>'); },
+      box(x,y,z,w,d,h,m){ m=m||'b'; c.poly([[x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h]],m+' t'); c.poly([[x,y+d,z],[x+w,y+d,z],[x+w,y+d,z+h],[x,y+d,z+h]],m+' l'); c.poly([[x+w,y,z],[x+w,y+d,z],[x+w,y+d,z+h],[x+w,y,z+h]],m+' r'); },
+      // Fläche (4 Ecken: hinten-links, hinten-rechts, vorne-rechts, vorne-links) in Module aufteilen
+      grid(a,b,cc,d,cols,rows,m,gap){ gap=gap==null?.07:gap; const L=(p,q,t)=>p.map((v,i)=>v+(q[i]-v)*t), at=(u,v)=>L(L(a,b,u),L(d,cc,u),v);
+        for(let i=0;i<cols;i++) for(let j=0;j<rows;j++){ const u0=(i+gap)/cols,u1=(i+1-gap)/cols,v0=(j+gap)/rows,v1=(j+1-gap)/rows; c.poly([at(u0,v0),at(u1,v0),at(u1,v1),at(u0,v1)],(m||'d')+' t'); } },
+      // Fläche auf der linken (y = const) bzw. rechten (x = const) Seite, z. B. Fenster, Display
+      fy(y,x0,x1,z0,z1,cl){ c.poly([[x0,y,z0],[x1,y,z0],[x1,y,z1],[x0,y,z1]],cl||'w'); },
+      fx(x,y0,y1,z0,z1,cl){ c.poly([[x,y0,z0],[x,y1,z0],[x,y1,z1],[x,y0,z1]],cl||'w'); },
+      g(k,fn){ if(k&&st(s,k)==='aus') return; const kl=k&&st(s,k)==='klick'; out.push(kl?`<g class="kc k" data-c="${k}" tabindex="0" role="button" aria-label="${escX(lab(s,k))}">`:'<g>'); fn(); out.push('</g>'); },
+      anchor(k,x,y,z){ if(!anch[k]) anch[k]=[x,y,z]; },
+      // offener Raum: Boden, Rück- und Seitenwand; vorne/rechts nur gestrichelte Schnittkante
+      room(x,y,w,d,h){ c.box(x,y,0,w,d,.25,'b'); c.box(x,y,.25,w,.25,h,'b'); c.box(x,y+.25,.25,.25,d-.25,h,'b');
+        c.path([[x+.25,y+d,.25+h],[x+w,y+d,.25+h],[x+w,y+.25,.25+h]],'cut'); c.line([x+w,y+d,.25],[x+w,y+d,.25+h],'cut'); },
+      out, pts, anch
+    };
+    return c;
+  }
+  const DRAW={
+    haus(c,s){ const n=Math.max(6,Math.min(24,+s.n||12)), cols=Math.max(3,Math.min(9,Math.round(n/2))), rows=n>18?3:2;
+      c.poly([[-3,-3,0],[25,-3,0],[25,14,0],[-3,14,0]],'gnd');
+      c.box(0,0,0,11,8,5,'b'); c.fy(8,1.3,2.9,1.6,3.4); c.fy(8,4.6,6,0,2.4,'w2'); c.fy(8,7.8,9.6,1.6,3.4); c.fx(11,1.5,3.1,1.6,3.4);
+      const rh=3.2, o=.6, zr=y=>5+rh-(y-4)*rh/4;
+      c.poly([[11,0,5],[11,8,5],[11,4,5+rh]],'b r');
+      c.poly([[-o,4,5+rh],[11+o,4,5+rh],[11+o,8+o,zr(8+o)],[-o,8+o,zr(8+o)]],'m t');
+      c.g('module',()=>{ const y0=4.45,y1=rows===3?7.75:7.5, l=.08; c.grid([.8,y0,zr(y0)+l],[10.2,y0,zr(y0)+l],[10.2,y1,zr(y1)+l],[.8,y1,zr(y1)+l],cols,rows,'d'); c.anchor('module',5.5,6,zr(6)+.3); });
+      c.g('wp',()=>{ c.box(1.6,8.8,0,2.4,1,1.5,'m'); c.fy(9.8,1.9,3.7,.25,1.25,'d l'); c.anchor('wp',2.8,9.3,1.8); });
+      // Technikraum im Anschnitt
+      c.room(11,2,6.4,6,3.1);
+      c.path([[12.4,2.75,1],[12.4,2.75,.25]],'ln'); c.path([[13.2,2.5,2.2],[14,2.5,2.2]],'ln'); c.path([[15.4,2.5,2.0],[15.9,2.5,2.0],[15.9,2.6,1.9]],'ln');
+      c.g('zaehler',()=>{ c.box(11.6,2.25,.9,1.6,.5,2.2,'m'); c.fy(2.75,11.8,13,2.3,2.9,'d l'); c.fy(2.75,11.8,13,1.2,2.1,'w'); c.anchor('zaehler',12.4,2.5,3.4); });
+      c.g('wr',()=>{ c.box(14,2.25,1.4,1.4,.4,1.5,'m'); c.fy(2.65,14.3,15.1,2.2,2.6,'d l'); c.anchor('wr',14.7,2.45,3.2); });
+      c.g('speicher',()=>{ c.box(15.7,2.4,.25,1.1,.8,2.4,'m'); c.fy(3.2,15.9,16.6,2.2,2.3,'d l'); c.fy(3.2,15.9,16.6,1.6,1.7,'d l'); c.anchor('speicher',16.25,2.8,2.9); });
+      c.poly([[18.2,1.5,.02],[24,1.5,.02],[24,13,.02],[18.2,13,.02]],'pav');
+      c.g('wallbox',()=>{ c.box(18.6,1.9,0,.3,.3,1.7,'b'); c.box(18.45,2.2,1.05,.6,.3,.75,'m'); c.fy(2.5,18.6,18.9,1.5,1.65,'d l'); c.path([[18.75,2.5,1.1],[19.3,4.2,.6]],'cab'); c.anchor('wallbox',18.75,2.3,2.2); });
+      c.box(19.3,4,.35,3,5.6,1.1,'m'); c.box(19.6,5.4,1.45,2.4,3,.85,'m'); c.fy(8.4,19.7,21.9,1.5,2.2,'d l');
+    },
+    gewerbe(c,s){
+      c.poly([[-3,-3,0],[32,-3,0],[32,23,0],[-3,23,0]],'gnd');
+      c.box(0,0,0,20,12,7,'b'); for(let i=0;i<6;i++) c.fy(12,1+i*3.2,3.2+i*3.2,4.4,5.6); c.fy(12,8,11,0,3.6,'w2'); c.fx(20,2,5,4.4,5.6);
+      c.g('module',()=>{ for(let r=0;r<4;r++){ const y=1+r*2.7; c.grid([1,y,7.85],[19,y,7.85],[19,y+1.8,7.25],[1,y+1.8,7.25],10,1,'d',.05); c.line([1.2,y+1.8,7.25],[1.2,y+1.8,7],'ln'); c.line([18.8,y,7.85],[18.8,y,7],'ln'); } c.anchor('module',10,6,8.2); });
+      c.room(20,4,9,8,3.6);
+      c.path([[21.4,4.75,1.2],[21.4,4.75,.25]],'ln'); c.path([[22.3,4.5,2.6],[23,4.5,2.6]],'ln'); c.path([[24.3,4.5,2.6],[24.7,4.5,2.6]],'ln');
+      c.g('hv',()=>{ c.box(20.6,4.25,.25,1.8,.6,3,'m'); c.fy(4.85,20.8,22.2,2.2,3,'d l'); c.fy(4.85,20.8,22.2,.6,2,'w'); c.anchor('hv',21.5,4.5,3.6); });
+      c.g('wr',()=>{ c.box(23,4.25,1.6,1.3,.4,1.4,'m'); c.box(24.7,4.25,1.6,1.3,.4,1.4,'m'); c.fy(4.65,23.3,24,2.4,2.7,'d l'); c.fy(4.65,25,25.7,2.4,2.7,'d l'); c.anchor('wr',24.3,4.45,3.3); });
+      c.g('speicher',()=>{ c.box(26.6,4.5,.25,1.8,1,2.6,'m'); c.fy(5.5,26.8,28.2,2.3,2.4,'d l'); c.fy(5.5,26.8,28.2,1.7,1.8,'d l'); c.anchor('speicher',27.5,5,3.2); });
+      c.poly([[0,13.5,.02],[22,13.5,.02],[22,22,.02],[0,22,.02]],'pav'); for(let i=0;i<=4;i++) c.line([2+i*4.5,15,.03],[2+i*4.5,21.5,.03],'ln2');
+      c.g('lader',()=>{ for(let i=0;i<3;i++){ const x=3.6+i*4.5; c.box(x,13.8,0,.6,.45,1.9,'m'); c.fy(14.25,x+.1,x+.5,1.2,1.6,'d l'); } c.anchor('lader',8.1,14,2.4); });
+      [0,1,2].forEach(i=>{ const x=2.8+i*4.5; c.box(x,15.6,.35,2.4,4.6,1,'m'); c.box(x+.25,16.7,1.35,1.9,2.4,.75,'m'); });
+    },
+    solarpark(c,s){ const rowsN=5;
+      c.poly([[-1,-1,0],[44,-1,0],[44,33,0],[-1,33,0]],'gnd');
+      c.g('zaun',()=>{ c.path([[40,.5,1.6],[.5,.5,1.6],[.5,28.5,1.6]],'fence'); for(let x=.5;x<=40;x+=4.9) c.line([x,.5,0],[x,.5,1.6],'ln'); for(let y=4.5;y<=28.5;y+=4) c.line([.5,y,0],[.5,y,1.6],'ln'); });
+      c.g('module',()=>{ for(let i=0;i<rowsN;i++){ const y=2.4+i*5.1; for(let x=3;x<=31;x+=4) { c.line([x,y+.3,0],[x,y+.3,2.45],'ln'); c.line([x,y+2.9,0],[x,y+2.9,1.1],'ln'); }
+        c.grid([2.5,y,2.6],[31.5,y,2.6],[31.5,y+3.2,1.05],[2.5,y+3.2,1.05],18,2,'d',.06); } c.anchor('module',17,12.5,2.6); });
+      c.g('wr',()=>{ for(let i=0;i<rowsN;i++){ const y=2.4+i*5.1+3.4; c.box(32.6,y,0,1,.6,1.3,'m'); c.fy(y+.6,32.8,33.4,.8,1.1,'d l'); } c.anchor('wr',33.1,13.9,1.9); });
+      c.g('kabel',()=>{ for(let i=0;i<rowsN;i++){ const y=2.4+i*5.1+3.7; c.path([[33.6,y,.04],[35.8,y,.04]],'cab'); } c.path([[35.8,5.8,.04],[35.8,22.4,.04],[36.5,22.4,.04]],'cab'); c.path([[37.6,23.8,.04],[37.6,25.6,.04]],'cab'); c.anchor('kabel',35.8,14,.4); });
+      c.g('trafo',()=>{ c.box(36,20.4,0,3.4,2.6,2.7,'m'); c.box(35.85,20.25,2.7,3.7,2.9,.25,'b'); c.fy(23,36.5,37.5,.2,2.1,'d l'); c.fx(39.4,21,22.2,1.8,2.3,'d r'); c.anchor('trafo',37.7,21.7,3.4); });
+      c.g('uest',()=>{ c.box(36,25.6,0,3.4,2.4,2.7,'m'); c.box(35.85,25.45,2.7,3.7,2.7,.25,'b'); c.fy(28,36.5,37.5,.2,2.1,'d l'); c.fx(39.4,26.2,27.4,1.8,2.3,'d r'); c.anchor('uest',37.7,26.8,3.4); });
+      c.g('zaun',()=>{ c.path([[.5,28.5,1.6],[33,28.5,1.6]],'fence'); c.path([[40,.5,1.6],[40,24,1.6]],'fence'); for(let x=4.5;x<=33;x+=4) c.line([x,28.5,0],[x,28.5,1.6],'ln'); for(let y=4.5;y<=24;y+=4) c.line([40,y,0],[40,y,1.6],'ln');
+        c.poly([[-1,29.6,.02],[44,29.6,.02],[44,32.6,.02],[-1,32.6,.02]],'pav'); c.anchor('zaun',20,28.5,1.9); });
+    },
+    trafo(c,s){
+      c.poly([[-2,-2,0],[12,-2,0],[12,8,0],[-2,8,0]],'gnd');
+      c.box(-.6,-.6,-1.4,9.2,5.2,1.4,'b'); c.room(0,0,8.4,4.2,3);
+      c.g('lueft',()=>{ c.fx(.25,2.2,3.6,2.2,3,'w'); for(let z=2.3;z<3;z+=.15) c.line([.26,2.25,z],[.26,3.55,z],'ln'); c.anchor('lueft',.3,2.9,3.4); });
+      c.g('kabel',()=>{ [[1.5,1.3],[4.3,2.5],[6.9,1.1]].forEach(([x,y])=>c.path([[x,y,.6],[x,y+.8,.26],[x,4.2,.26],[x,4.6,-1.3]],'cab')); c.anchor('kabel',4.3,4.2,.2); });
+      c.g('ms',()=>{ c.box(.6,.25,.25,2,1,2.3,'m'); for(let i=0;i<3;i++) c.fy(1.25,.75+i*.62,1.25+i*.62,1.6,2.2,'d l'); c.fy(1.25,.75,2.45,.5,1.4,'w'); c.anchor('ms',1.6,.75,2.9); });
+      c.g('trafo',()=>{ c.box(3.1,1,.25,2.6,1.6,1.8,'d'); for(let x=3.3;x<5.7;x+=.22) c.line([x,2.6,.4],[x,2.6,1.9],'fin'); for(let i=0;i<3;i++) c.box(3.5+i*.75,1.6,2.05,.22,.22,.55,'m'); c.box(3.3,1.1,2.05,2.2,.4,.4,'m'); c.anchor('trafo',4.4,1.8,2.9); });
+      c.g('ns',()=>{ c.box(6.2,.25,.25,1.7,.85,2.1,'m'); for(let i=0;i<4;i++) c.line([6.4,1.1,.6+i*.38],[7.7,1.1,.6+i*.38],'ln'); c.anchor('ns',7,.65,2.7); });
+    },
+    uebergabe(c,s){
+      c.poly([[-2,-2,0],[13,-2,0],[13,8,0],[-2,8,0]],'gnd');
+      c.box(-.6,-.6,-1.4,10.2,5.2,1.4,'b'); c.room(0,0,9.4,4.2,3);
+      c.g('kabel',()=>{ [1.1,2.3].forEach(x=>c.path([[x,1.25,.26],[x,4.2,.26],[x,4.6,-1.3]],'cab')); c.anchor('kabel',1.7,4.2,.2); });
+      c.g('fernwirk',()=>{ c.box(.25,2.6,1.2,.45,1,1.3,'m'); c.fx(.7,2.75,3.45,1.9,2.3,'d r'); c.anchor('fernwirk',.5,3.1,2.8); });
+      c.g('msfeld',()=>{ for(let i=0;i<4;i++){ const x=.9+i*1.15; c.box(x,.25,.25,1.05,1,2.4,'m'); c.fy(1.25,x+.15,x+.9,1.7,2.3,'d l'); c.fy(1.25,x+.15,x+.9,.5,1.5,'w'); } c.anchor('msfeld',3.2,.75,3); });
+      c.g('mess',()=>{ c.box(5.7,.25,.25,1.1,.9,2.3,'m'); c.fy(1.15,5.85,6.65,1.4,2.1,'d l'); c.anchor('mess',6.25,.7,2.9); });
+      c.g('schutz',()=>{ c.box(7.1,.25,.25,1.3,.8,2.2,'m'); for(let i=0;i<3;i++) c.fy(1.05,7.25,8.25,.7+i*.5,1+i*.5,'d l'); c.anchor('schutz',7.75,.65,2.8); });
+    },
+    bess(c,s){
+      c.poly([[-2,-2,0],[22,-2,0],[22,6,0],[-2,6,0]],'gnd');
+      c.box(-.3,-.3,0,12.6,3.2,.25,'b'); c.room(0,0,12,2.6,2.6);
+      c.g('racks',()=>{ for(let i=0;i<6;i++){ const x=.6+i*1.55; c.box(x,.25,.25,1.25,.85,2.25,'d'); for(let z=.5;z<2.4;z+=.35) c.line([x+.08,1.1,z],[x+1.17,1.1,z],'fin'); } c.anchor('racks',4.5,.7,2.8); });
+      c.g('brand',()=>{ c.box(.5,1.7,.25,.5,.5,1.1,'m'); c.anchor('brand',.75,1.95,1.6); });
+      c.g('ems',()=>{ c.box(10.1,.25,.25,1.2,.7,2,'m'); c.fy(.95,10.3,11.1,1.4,1.9,'d l'); c.anchor('ems',10.7,.6,2.6); });
+      c.g('klima',()=>{ c.box(12,.5,1.3,.55,1.5,1.1,'m'); c.fx(12.55,.7,1.8,1.45,2.25,'d r'); c.anchor('klima',12.3,1.25,2.7); });
+      c.g('pcs',()=>{ c.box(13.8,.1,0,2.2,1.5,2.3,'m'); c.fy(1.6,14.1,15.7,1.4,2,'d l'); c.anchor('pcs',14.9,.85,2.8); });
+      c.g('trafo',()=>{ c.box(17.4,.1,0,2.6,1.9,2.1,'d'); for(let x=17.6;x<19.9;x+=.25) c.line([x,2,.2],[x,2,2],'fin'); c.anchor('trafo',18.7,1,2.6); });
+      c.path([[12.6,2.9,.05],[13.8,2.9,.05],[13.8,1.6,.05]],'cab'); c.path([[16,1.4,.05],[17.4,1.4,.05]],'cab');
+    },
+    ladepark(c,s){
+      c.poly([[-2,-2,0],[24,-2,0],[24,13,0],[-2,13,0]],'gnd'); c.poly([[0,0,.02],[21,0,.02],[21,11,.02],[0,11,.02]],'pav');
+      for(let i=0;i<=4;i++) c.line([.5+i*4,2.6,.03],[.5+i*4,9.5,.03],'ln2');
+      c.g('kabel',()=>{ c.path([[2.4,.9,.04],[17.4,.9,.04]],'cab'); c.path([[18.6,.9,.04],[19.5,.9,.04]],'cab'); c.anchor('kabel',10,.9,.3); });
+      c.g('netz',()=>{ c.box(19,.2,0,1.3,.7,1.9,'m'); c.fy(.9,19.2,20.1,1.2,1.7,'d l'); c.anchor('netz',19.65,.55,2.4); });
+      c.g('verteiler',()=>{ c.box(17.2,.2,0,1.2,.6,1.5,'m'); c.fy(.8,17.4,18.2,.8,1.3,'w'); c.anchor('verteiler',17.8,.5,2); });
+      c.g('lader',()=>{ for(let i=0;i<4;i++){ const x=2.2+i*4; c.box(x,.5,0,.6,.45,1.9,'m'); c.fy(.95,x+.1,x+.5,1.2,1.6,'d l'); } c.anchor('lader',8.5,.7,2.4); });
+      [0,1,3].forEach(i=>{ const x=1.3+i*4; c.box(x,3,.35,2.4,4.8,1,'m'); c.box(x+.25,4.1,1.35,1.9,2.6,.75,'m'); });
+    }
+  };
+  const CSS=`.kv3d{width:100%;height:auto;display:block}.kv3d polygon{stroke:#2a2a2a;stroke-width:.7;stroke-linejoin:round}
+.kv3d .gnd{fill:#f1f1ef;stroke:none}.kv3d .pav{fill:#e2e2e0;stroke:none}
+.kv3d .b.t{fill:#fdfdfd}.kv3d .b.l{fill:#e7e7e7}.kv3d .b.r{fill:#cfcfcf}
+.kv3d .m.t{fill:#dedede}.kv3d .m.l{fill:#bfbfbf}.kv3d .m.r{fill:#a5a5a5}
+.kv3d .d.t{fill:#5d5d5d}.kv3d .d.l{fill:#454545}.kv3d .d.r{fill:#353535}
+.kv3d .w{fill:#a9adb1}.kv3d .w2{fill:#8a8a8a}
+.kv3d line,.kv3d polyline{fill:none;stroke-linecap:round}.kv3d .ln{stroke:#4a4a4a;stroke-width:1}.kv3d .ln2{stroke:#fff;stroke-width:1.4}.kv3d .fin{stroke:#2a2a2a;stroke-width:.8}
+.kv3d .cab{stroke:#3a3a3a;stroke-width:1.6;stroke-dasharray:5 3}.kv3d .cut{stroke:#9a9a9a;stroke-width:1;stroke-dasharray:3 3}.kv3d .fence{stroke:#6a6a6a;stroke-width:1.1}
+.kv3d .k .t{fill:#FFEB55}.kv3d .k .l{fill:#F4DB02}.kv3d .k .r{fill:#D4BB00}.kv3d .k .w,.kv3d .k .w2{fill:#B79F00}
+.kv3d .k .ln,.kv3d .k .fin,.kv3d .k .fence{stroke:#7a6800}.kv3d .k .cab{stroke:#C9A900;stroke-width:2.6}
+.kv3d .kc{cursor:pointer;outline:none}.kv3d .kc:hover polygon,.kv3d .kc:focus polygon{filter:brightness(.92)}.kv3d .kc.sel polygon{stroke:#000;stroke-width:1.6}
+.kv3d .bd circle{fill:#111;stroke:#F4DB02;stroke-width:2}.kv3d .bd text{fill:#F4DB02;font:700 12px/1 system-ui,sans-serif;text-anchor:middle;dominant-baseline:central}.kv3d .bd{cursor:pointer}
+.kv3d .kc.sel~.bd.sel circle,.kv3d .bd.sel circle{fill:#F4DB02;stroke:#111}.kv3d .bd.sel text{fill:#111}`;
+  function svg(s,o){ o=o||{}; s=s||{}; const type=DRAW[s.type]?s.type:'haus', c=ctx({...s,type});
+    DRAW[type](c,{...s,type});
+    let body=c.out.join('');
+    // Nummern-Punkte: Größe passend zur Szene (große Szenen werden kleiner dargestellt)
+    const bx=c.pts.map(p=>p[0]), by=c.pts.map(p=>p[1]), sc=Math.max(.8,Math.max(Math.max(...bx)-Math.min(...bx),Math.max(...by)-Math.min(...by))/520), R=10*sc;
+    const badges=clickList({...s,type}).map(({k,n,label})=>{ const a=c.anch[k]; if(!a) return ''; const X=(a[0]-a[1])*CO*K, Y=((a[0]+a[1])*.5-a[2])*K-R*1.4; c.pts.push([X-R,Y-R-2],[X+R,Y+R]);
+      return `<g class="bd${o.sel===k?' sel':''}" data-c="${k}" role="button" tabindex="-1" aria-label="${escX(label)}"><line x1="${f1(X)}" y1="${f1(Y+R*.9)}" x2="${f1(X)}" y2="${f1(Y+R*1.4)}" stroke="#111" stroke-width="${f1(1.5*sc)}"/><circle cx="${f1(X)}" cy="${f1(Y)}" r="${f1(R)}" style="stroke-width:${f1(2*sc)}"/><text x="${f1(X)}" y="${f1(Y)}" style="font-size:${f1(12*sc)}px">${n}</text></g>`; }).join('');
+    if(o.sel) body=body.replace(`class="kc k" data-c="${o.sel}"`,`class="kc k sel" data-c="${o.sel}"`);
+    const xs=c.pts.map(p=>p[0]), ys=c.pts.map(p=>p[1]), pad=14, x0=Math.min(...xs)-pad, y0=Math.min(...ys)-pad, w=Math.max(...xs)-x0+pad, h=Math.max(...ys)-y0+pad;
+    return `<svg class="kv3d" viewBox="${f1(x0)} ${f1(y0)} ${f1(w)} ${f1(h)}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escX(s.title||TYPES[type].l)}"><style>${CSS}</style>${body}${badges}</svg>`; }
+  return {TYPES,svg,st,lab,clickList};
+})();
+/*KV3D-END*/
+/* ========== Kunden-Ansicht je Projekt: Skizzen, Texte, Freigabe, Kundenzugang ==========
+   S.kview[pid] = {id,pid,scenes:[{id,type,title,n,photo,comps:{key:{st,label,draft,pend,text,aLabel,tAt,aBy,dBy,dAt}}}],emails:[],pubAt,pubBy}
+   Der Kunde sieht nur, was in der Tabelle „portal“ steht: freigegebene Texte, nichts sonst (09_kundenportal.sql). */
+const kvOf=pid=>(S.kview||{})[pid]||null;
+const KV_ST={klick:'klickbar (gelb)',grau:'nur sichtbar (grau)',aus:'ausblenden'};
+const kfreiOk=()=>!!ME&&(meK()==='AvE'||viewsOf(ME).includes('kfrei'));
+const kvEditOk=()=>canEdit('kview');
+const kvApprovers=()=>staff().map(s=>s.name).filter(n=>shortWho(n)==='AvE'||viewsOf(n).includes('kfrei')).map(shortWho);
+const kvPendList=kv=>{ const out=[]; ((kv&&kv.scenes)||[]).forEach((s,i)=>Object.entries(s.comps||{}).forEach(([k,c])=>{ if(c&&c.pend&&KV3D.st(s,k)!=='aus') out.push({i,k,s,c}); })); return out; };
+const kvPortalUrl=()=>{ const c=(S.config||{}).portalUrl; if(c) return c; try{ return MODE==='cloud'&&window.SB?new URL('kunde.html',location.href).href:''; }catch(e){ return ''; } };
+function kvSave(kv,msg){ kv.id=kv.pid; put('kview',kv); if(msg) toast(msg); }
+function kvPubData(p,kv){
+  return {name:p.name,place:String(p.place||'').split('\n')[0].slice(0,120),stand:TODAY(),
+    scenes:(kv.scenes||[]).map(s=>({id:s.id,type:s.type,title:s.title||KV3D.TYPES[s.type].l,n:+s.n||0,
+      comps:Object.fromEntries(KV3D.TYPES[s.type].comps.filter(([k])=>KV3D.st(s,k)!=='aus').map(([k,l])=>{ const c=(s.comps||{})[k]||{}, on=KV3D.st(s,k);
+        return [k,{st:on,label:c.aLabel||l,...(on==='klick'&&String(c.text||'').trim()?{text:String(c.text).trim(),at:c.tAt||''}:{})}]; }))}))};
+}
+async function kvPublish(pid,quiet){ const kv=kvOf(pid), p=S.projects[pid]; if(!kv||!p) return false;
+  if(!kvEditOk()&&!kfreiOk()){ toast('Keine Berechtigung für die Kunden-Ansicht.'); return false; }
+  if(!(MODE==='cloud'&&window.SB)){ if(!quiet) toast('Veröffentlichen geht nur in der Online-App.'); return false; }
+  const emails=[...new Set((kv.emails||[]).map(e=>String(e).trim().toLowerCase()).filter(Boolean))];
+  const {error}=await window.SB.from('portal').upsert({id:pid,emails,data:kvPubData(p,kv),updated_at:new Date().toISOString()});
+  if(error){ toast(/portal|relation|schema cache|does not exist/i.test(error.message)?'Die Kundenseite ist in der Datenbank noch nicht eingerichtet (09_kundenportal.sql ausführen).':'Veröffentlichen fehlgeschlagen: '+error.message); return false; }
+  const n=clone(kvOf(pid)); n.pubAt=new Date().toISOString(); n.pubBy=meK(); kvSave(n); if(!quiet) toast('Für den Kunden veröffentlicht'+(emails.length?' ('+emails.length+' Zugang'+(emails.length>1?'e':'')+').':' – noch kein Kundenzugang eingetragen.')); return true; }
+async function kvUnpublish(pid){ if(MODE==='cloud'&&window.SB){ try{ await window.SB.from('portal').delete().eq('id',pid); }catch(e){} } }
+// Ohne KI: Skizzen aus Projekttyp und Stichworten
+function kvGuess(p){ const t=[p.name,p.scope,p.notes,p.updates,TYPES[p.type]].join(' ').toLowerCase(), out=[];
+  const big=p.type==='ffa'||/energiepark|solarpark|freifl|ffa\b/.test(t);
+  if(big){ out.push({type:'solarpark'},{type:'trafo'},{type:'uebergabe'}); if(/speicher|bess|batterie/.test(t)) out.push({type:'bess'}); }
+  else if(p.type==='bess') out.push({type:'bess'},{type:'trafo'});
+  else if(p.type==='lade') out.push({type:'ladepark'});
+  else { const gw=/halle|gewerbe|firma|lager|logistik|flachdach|kwp/.test(t)&&!/einfamilien|efh\b|wohnhaus/.test(t); const s={type:gw?'gewerbe':'haus',comps:{}};
+    if(!gw){ if(/wallbox|lades/.test(t)) s.comps.wallbox={st:'klick'}; if(/wärmepumpe|waermepumpe/.test(t)) s.comps.wp={st:'klick'}; if(!/speicher|batterie/.test(t)) s.comps.speicher={st:'aus'}; }
+    else if(/speicher|batterie/.test(t)) s.comps.speicher={st:'klick'}; if(gw&&/lade|wallbox/.test(t)) s.comps.lader={st:'klick'}; out.push(s); }
+  return out; }
+const kvNewScene=o=>({id:uid(),type:KV3D.TYPES[o.type]?o.type:'haus',title:String(o.title||'').slice(0,60),n:+o.n||0,comps:o.comps||{}});
+const kvTypeList=()=>Object.entries(KV3D.TYPES).map(([k,t])=>`- "${k}": ${t.l} – Teile: ${t.comps.map(c=>c[0]+' ('+c[1]+')').join(', ')}`).join('\n');
+function kvProjCtx(p){ const ords=arr('orders').filter(o=>o.pid===p.id).flatMap(o=>(o.items||[]).map(i=>i.art)).filter(Boolean).slice(0,60);
+  const tks=arr('tasks').filter(t=>t.pid===p.id).slice(-60).map(t=>(t.done?'✓ ':'')+t.title);
+  return `Projekt: ${p.name}${p.nr?' ('+p.nr+')':''} · Typ: ${TYPES[p.type]||p.type||'-'} · Ort: ${String(p.place||'').replace(/\n/g,' ')} · Größe: ${sizeLbl(p)||'-'}
+Leistungsumfang: ${String(p.scope||'').slice(0,1500)}
+Status: ${(()=>{ try{ return pipe(p).label||''; }catch(e){ return ''; } })()}
+Notizen/Updates (neueste zuletzt): ${String(p.updates||'').slice(-2500)}\n${String(p.notes||'').slice(-1200)}
+Material: ${ords.join('; ')||'-'}
+To-Dos: ${tks.join('; ')||'-'}`; }
+async function kvSuggest(pid){ const p=S.projects[pid]; if(!p||!kvEditOk()) return;
+  let scenes=kvGuess(p), why='aus Projekttyp und Stichworten';
+  if(SAMPLE){ toast('Claude schaut sich das Projekt an …');
+    try{ const r=await SAMPLE.json(`Wir (nutz die Sonne GmbH; PV, Speicher, Ladesäulen) bauen für Kunden eine interaktive 3-D-Skizze ihrer Anlage. Wähle passende Skizzen für dieses Projekt.
+${kvProjCtx(p)}
+Skizzen-Typen und ihre Teile:\n${kvTypeList()}
+Regeln: 1 bis 4 Skizzen. Großer Solarpark/Energiepark: "solarpark" + "trafo" + "uebergabe" (+ "bess", wenn ein Speicher dazugehört). Einfamilienhaus: "haus". Halle/Gewerbedach: "gewerbe". Batteriespeicher: "bess". Ladepark: "ladepark".
+Für jedes Teil: "klick" = gehört zum Projekt und ist für den Kunden interessant, "grau" = vorhanden, aber nebensächlich, "aus" = gehört nicht dazu. n = ungefähre Zahl der PV-Module, falls bekannt, sonst 0. title = kurze Überschrift für den Kunden (z. B. „Solarpark“, „Trafostation“).
+Antworte nur mit JSON: {"scenes":[{"type":"","title":"","n":0,"comps":{"teil":"klick|grau|aus"}}],"why":"kurz"}`,{modelTier:'default'});
+      if(r&&Array.isArray(r.scenes)&&r.scenes.length){ scenes=r.scenes.filter(s=>KV3D.TYPES[s.type]).slice(0,5).map(s=>({type:s.type,title:s.title,n:s.n,comps:Object.fromEntries(Object.entries(s.comps||{}).filter(([k,v])=>KV3D.TYPES[s.type].comps.some(c=>c[0]===k)&&KV_ST[v]).map(([k,v])=>[k,{st:v}]))})); why='Claude: '+String(r.why||'').slice(0,140); } }
+    catch(e){ if(e&&e.code&&e.code!=='cancelled') toast(SAMPLE_ERR[e.code]||'Claude nicht erreichbar – einfache Erkennung.'); } }
+  const old=kvOf(pid), kv=old?clone(old):{pid,scenes:[],emails:[]};
+  kv.scenes=(kv.scenes||[]).concat(scenes.map(kvNewScene)); UI.kvScene=(old&&old.scenes||[]).length; kvSave(kv,scenes.length+' Skizze'+(scenes.length>1?'n':'')+' angelegt ('+why+'). Texte für den Kunden: „✨ Texte vorschlagen“.'); render(); }
+async function kvFromPhoto(pid,file,idx){ const p=S.projects[pid]; if(!p||!file||!kvEditOk()) return;
+  if(!SAMPLE){ toast('Foto auswerten braucht die KI – geht nur in der Online-App. Bitte die Skizze von Hand wählen.'); return; }
+  toast('Claude schaut sich das Foto an …'); let img; try{ img=new Blob([await mappeToJpg(file,1400)],{type:'image/jpeg'}); }catch(e){ toast('Foto konnte nicht gelesen werden.'); return; }
+  let r=null; try{ r=await SAMPLE.json(`Foto einer Anlage aus dem Projekt „${p.name}“ (${TYPES[p.type]||''}). Wir zeichnen daraus eine schematische 3-D-Skizze aus festen Bausteinen.
+Skizzen-Typen und ihre Teile:\n${kvTypeList()}
+Welcher Typ passt am besten zum Foto? Welche Teile sind zu sehen oder gehören erkennbar dazu ("klick"), welche sind nebensächlich ("grau"), welche fehlen ("aus")? n = sichtbare/geschätzte Zahl PV-Module (0, wenn keine).
+Antworte nur mit JSON: {"type":"","title":"kurz","n":0,"comps":{"teil":"klick|grau|aus"},"seen":"1 Satz, was zu sehen ist"}`,{modelTier:'default',images:[img]}); }
+  catch(e){ toast(SAMPLE_ERR[e&&e.code]||'Claude nicht erreichbar.'); return; }
+  if(!r||!KV3D.TYPES[r.type]){ toast('Auf dem Foto wurde keine passende Anlage erkannt.'); return; }
+  let photo=''; if(ASSETS){ try{ photo=(await ASSETS.upload(file,{type:file.type||'image/jpeg'})).id; }catch(e){} }
+  const sc=kvNewScene({type:r.type,title:r.title,n:r.n,comps:Object.fromEntries(Object.entries(r.comps||{}).filter(([k,v])=>KV3D.TYPES[r.type].comps.some(c=>c[0]===k)&&KV_ST[v]).map(([k,v])=>[k,{st:v}]))}); if(photo) sc.photo=photo;
+  const old=kvOf(pid), kv=old?clone(old):{pid,scenes:[],emails:[]};
+  if(idx!=null&&kv.scenes[idx]){ const o=kv.scenes[idx]; sc.id=o.id; Object.entries(o.comps||{}).forEach(([k,c])=>{ if(KV3D.TYPES[sc.type].comps.some(x=>x[0]===k)) sc.comps[k]={...c,st:(sc.comps[k]||{}).st||c.st}; }); kv.scenes[idx]=sc; UI.kvScene=idx; }
+  else { kv.scenes.push(sc); UI.kvScene=kv.scenes.length-1; }
+  kvSave(kv,'Skizze aus dem Foto erstellt: '+String(r.seen||KV3D.TYPES[sc.type].l).slice(0,120)); render(); }
+async function kvTexts(pid,idx){ const p=S.projects[pid], kv=kvOf(pid); if(!p||!kv||!kvEditOk()) return; const s=kv.scenes[idx]; if(!s) return;
+  if(!SAMPLE){ toast('Texte vorschlagen braucht die KI – geht nur in der Online-App. Texte bitte von Hand eintragen.'); return; }
+  const list=KV3D.clickList(s); if(!list.length){ toast('In dieser Skizze ist nichts klickbar.'); return; }
+  toast('Claude schreibt Texte für den Kunden …'); let r=null;
+  try{ r=await SAMPLE.json(`Heute ist ${TODAY()}. Unser Kunde kann auf einer Webseite eine 3-D-Skizze seiner Anlage sehen und einzelne Teile anklicken. Schreibe für jedes Teil einen kurzen Text (1–3 Sätze, Sie-Form, freundlich, verständlich für Laien): was das Teil macht und – nur wenn aus den Projektdaten klar – der aktuelle Stand dazu (z. B. geliefert, montiert, in Betrieb, Termin).
+STRENG: keine Preise, keine internen Probleme, keine Schuldzuweisungen, keine Namen von Mitarbeitern oder Lieferanten, keine Kürzel, nichts Vertrauliches. Lieber allgemein als falsch.
+${kvProjCtx(p)}
+Skizze: ${s.title||KV3D.TYPES[s.type].l}
+Teile: ${list.map(x=>x.k+' = '+x.label).join(', ')}
+Antworte nur mit JSON: {"texts":{"teil":"Text"}}`,{modelTier:'default'}); }
+  catch(e){ toast(SAMPLE_ERR[e&&e.code]||'Claude nicht erreichbar.'); return; }
+  const tx=(r&&r.texts)||{}, kv2=clone(kvOf(pid)), s2=kv2.scenes[idx]; let n=0;
+  list.forEach(({k})=>{ const t=String(tx[k]||'').trim(); if(!t) return; const c=s2.comps[k]=s2.comps[k]||{}; if(String(c.text||'').trim()===t) return; c.draft=t.slice(0,800); c.pend=true; c.dBy='Claude/'+meK(); c.dAt=new Date().toISOString(); n++; });
+  kvSave(kv2,n?n+' Textvorschl'+(n>1?'äge':'ag')+' gespeichert – sichtbar für den Kunden erst nach Freigabe.':'Keine neuen Texte.'); if(n) kvNotify(p,n); render(); }
+function kvNotify(p,n){ kvApprovers().forEach(k=>nfSend(k,{type:'kview_pend',c:'projects',rid:p.id,pid:p.id,prio:'action',stamp:TODAY()+'|'+n,title:'Kunden-Ansicht: Freigabe nötig',text:n+' Text'+(n>1?'e':'')+' für die Kunden-Ansicht von „'+p.name+'“ warten auf deine Freigabe.'})); }
+function kvApprove(pid,items){ if(!kfreiOk()){ toast('Freigeben darf nur, wer das Recht „Kunden-Ansicht freigeben“ hat.'); return; }
+  const kv=clone(kvOf(pid)); let n=0; items.forEach(({i,k})=>{ const c=((kv.scenes[i]||{}).comps||{})[k]; if(!c||!c.pend) return; c.text=String(c.draft==null?c.text||'':c.draft).trim(); c.aLabel=c.label||''; c.tAt=TODAY(); c.aBy=meK(); c.pend=false; delete c.draft; n++; });
+  kvSave(kv,n+' Text'+(n>1?'e':'')+' freigegeben.'); if(n&&kv.pubAt) kvPublish(pid,true).then(ok=>ok&&toast(n+' Text'+(n>1?'e':'')+' freigegeben und für den Kunden veröffentlicht.')); render(); }
+function kvCompSheet(pid,i,k){ const kv=kvOf(pid); if(!kv) return; const s=kv.scenes[i]; if(!s) return; const d=KV3D.TYPES[s.type].comps.find(x=>x[0]===k); if(!d) return; const c=(s.comps||{})[k]||{}, ed=kvEditOk(), fr=kfreiOk();
+  const cur=String(c.draft!=null?c.draft:c.text||'');
+  openSheet({title:(c.label||d[1])+' · '+(s.title||KV3D.TYPES[s.type].l),wide:1,html:`<div class="fld"><label for="kv_l">Bezeichnung für den Kunden</label><input id="kv_l" class="inp" value="${esc(c.label||'')}" placeholder="${esc(d[1])}" ${ed?'':'disabled'}></div>
+    <div class="fld"><label for="kv_s">In der Skizze</label><select id="kv_s" class="inp" ${ed?'':'disabled'}>${Object.entries(KV_ST).map(([v,l])=>`<option value="${v}" ${KV3D.st(s,k)===v?'selected':''}>${l}</option>`).join('')}</select></div>
+    <div class="fld full"><label for="kv_t">Text im Fenster, wenn der Kunde draufklickt</label><textarea id="kv_t" class="inp" rows="5" maxlength="800" ${ed||fr?'':'disabled'} placeholder="z. B. Hier wandelt der Wechselrichter den Gleichstrom der Module in Wechselstrom für Ihr Haus um. Montiert am 12.11.">${esc(cur)}</textarea>
+      <div class="small muted" style="margin-top:4px">${c.pend?`⏳ Geänderter Text wartet auf Freigabe${c.dBy?' (von '+esc(c.dBy)+')':''}. `:''}${String(c.text||'').trim()?`Der Kunde sieht zurzeit: „${esc(String(c.text).slice(0,200))}“ (freigegeben ${esc(fmtD(c.tAt||''))} von ${esc(c.aBy||'?')}).`:'Der Kunde sieht noch keinen Text.'} Neue oder geänderte Texte und Bezeichnungen erscheinen erst nach der Freigabe${fr?'':' durch AvE'}.</div></div>`,
+    saveLabel:ed?'Speichern':'Schließen',
+    extraBtn:fr?`<button type="button" class="btn sun" data-act="kvSaveApprove" data-pid="${pid}" data-i="${i}" data-k="${k}">✓ Speichern & freigeben</button>`:'',
+    onSave:()=>{ if(!ed&&!fr) return; kvCompStore(pid,i,k,false); }}); }
+function kvCompStore(pid,i,k,approve){ const kv=clone(kvOf(pid)), s=kv.scenes[i]; s.comps=s.comps||{}; const c=s.comps[k]=s.comps[k]||{}, ed=kvEditOk();
+  const t=($('#kv_t').value||'').trim(), l=ed?($('#kv_l').value||'').trim():c.label||''; if(ed){ const st=$('#kv_s').value; if(KV_ST[st]) c.st=st; }
+  const chT=t!==String(c.text||'').trim(), chL=l!==(c.aLabel||''); c.label=l;
+  if(chT||chL){ c.draft=t; c.pend=true; c.dBy=meK(); c.dAt=new Date().toISOString(); } else { delete c.draft; c.pend=false; }
+  kvSave(kv); if(approve) kvApprove(pid,[{i,k}]); else if(c.pend){ toast('Gespeichert – der Kunde sieht den Text nach der Freigabe.'); kvNotify(S.projects[pid],1); } else toast('Gespeichert.'); render(); }
+function kvSceneSheet(pid,i){ const kv=kvOf(pid), isNew=i==null, s=isNew?{type:'haus',title:'',n:0}:kv.scenes[i]; if(!kvEditOk()) return;
+  openSheet({title:isNew?'Skizze hinzufügen':'Skizze bearbeiten',fields:[{k:'type',label:'Art der Skizze',type:'select',options:Object.entries(KV3D.TYPES).map(([k,t])=>[k,t.l])},{k:'title',label:'Überschrift für den Kunden',ph:'z. B. Solarpark, Trafostation, Ihr Haus'},{k:'n',label:'Ungefähre Zahl PV-Module (nur Haus)',type:'number'}],value:{type:s.type,title:s.title||'',n:s.n||''},saveLabel:isNew?'Hinzufügen':'Speichern',
+    onSave:v=>{ const k2=kvOf(pid)?clone(kvOf(pid)):{pid,scenes:[],emails:[]}; if(isNew){ k2.scenes.push(kvNewScene(v)); UI.kvScene=k2.scenes.length-1; } else { const o=k2.scenes[i]; o.title=String(v.title||'').slice(0,60); o.n=+v.n||0; if(o.type!==v.type){ o.type=v.type; o.comps={}; } } kvSave(k2,'Gespeichert.'); render(); },
+    onDelete:isNew?null:()=>{ confirmSheet('Skizze „'+(s.title||KV3D.TYPES[s.type].l)+'“ löschen? Die Texte dazu gehen verloren.',()=>{ const k2=clone(kvOf(pid)); k2.scenes.splice(i,1); UI.kvScene=0; kvSave(k2,'Skizze gelöscht.'+(k2.pubAt?' Bitte erneut veröffentlichen.':'')); render(); }); },deleteLabel:'Skizze löschen'}); }
+function kvAccessSheet(pid){ const kv=kvOf(pid), p=S.projects[pid]; if(!kv||!p||!kvEditOk()) return; const url=kvPortalUrl();
+  openSheet({title:'Kundenzugang · '+p.name,wide:1,html:`<div class="fld full"><div class="small muted">Wer hier eingetragen ist, sieht nach Anmeldung auf der Kundenseite <b>nur dieses Projekt</b> (und andere, für die er ebenfalls eingetragen ist) – nur die Skizzen und die freigegebenen Texte, sonst nichts. Der Kunde legt sein Passwort selbst an; niemand bei uns kennt es.</div></div>
+    <div class="fld full"><label for="kv_em">E-Mail-Adressen des Kunden (eine pro Zeile)</label><textarea id="kv_em" class="inp" rows="3" placeholder="kunde@beispiel.de">${esc((kv.emails||[]).join('\n'))}</textarea></div>
+    <div class="fld full"><div class="sec-t" style="margin:4px 0">Einladung</div>${url?`<div class="small">Link zur Kundenseite: <a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a></div>`:'<div class="small warn-t">Die Kundenseite gibt es nur in der Online-App.</div>'}
+      <div class="small muted" style="margin-top:4px">„Einladung schreiben“ öffnet eine fertige E-Mail mit Anleitung und Datenschutzhinweis in deinem Mailprogramm – du prüfst sie und schickst sie selbst ab.</div></div>`,
+    saveLabel:'Speichern & veröffentlichen',
+    extraBtn:`<button type="button" class="btn" data-act="kvInvite" data-pid="${pid}">✉ Einladung schreiben</button>`,
+    onSave:()=>{ const em=[...new Set(($('#kv_em').value||'').split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(Boolean))], bad=em.filter(x=>!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(x));
+      if(bad.length){ toast('Bitte prüfen: '+bad.join(', ')); return false; }
+      const ownDom=staff().map(s=>String(s.email||'').split('@')[1]).filter(Boolean); if(em.some(x=>ownDom.includes(x.split('@')[1]))&&!confirm('Eine Adresse gehört zu unserer Firma. Mitarbeiter brauchen keinen Kundenzugang. Trotzdem speichern?')) return false;
+      const k2=clone(kvOf(pid)); k2.emails=em; kvSave(k2); kvPublish(pid); }}); }
+const KV_DSGVO='Datenschutzhinweis: Wenn Sie sich ein Konto bei uns anlegen und Ihr Projekt online live verfolgen, stimmen Sie damit automatisch zu, dass Ihre Daten mithilfe einer künstlichen Intelligenz (KI) verarbeitet werden. Die Infos auf Ihrer Projektseite werden mit Unterstützung einer KI erstellt und vor der Veröffentlichung von uns geprüft und freigegeben.';
+function kvInvite(pid){ const p=S.projects[pid], ems=(($('#kv_em')||{}).value||((kvOf(pid)||{}).emails||[]).join('\n')).split(/[\s,;]+/).map(x=>x.trim()).filter(Boolean), url=kvPortalUrl();
+  if(!ems.length){ toast('Bitte zuerst die E-Mail-Adresse des Kunden eintragen.'); return; }
+  const body=`Guten Tag,
+
+ab sofort können Sie Ihr Projekt „${p.name}“ online verfolgen – mit einer 3-D-Skizze Ihrer Anlage. Klicken Sie einfach auf die gelb markierten Teile, dann sehen Sie, was sie tun und wie der aktuelle Stand ist.
+
+So geht's:
+1. Diese Seite öffnen: ${url||'(Link folgt)'}
+2. „Konto anlegen“ wählen, diese E-Mail-Adresse eintragen (${ems[0]}) und ein eigenes Passwort festlegen.
+3. Den Bestätigungslink in der E-Mail anklicken, die Sie danach bekommen – fertig.
+
+${KV_DSGVO}
+
+Bei Fragen melden Sie sich gern.
+
+Viele Grüße
+${(ME||'').replace(/\s*\([^)]*\)$/,'')}
+nutz die Sonne GmbH`;
+  location.href='mailto:'+encodeURIComponent(ems.join(','))+'?subject='+encodeURIComponent('Ihr Projekt „'+p.name+'“ online verfolgen')+'&body='+encodeURIComponent(body); }
+function kvPreview(pid){ const p=S.projects[pid], kv=kvOf(pid); if(!p||!kv) return; const d=kvPubData(p,kv);
+  openSheet({title:'Vorschau: so sieht es der Kunde',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Nur freigegebene Texte. ${kv.pubAt?'Zuletzt veröffentlicht '+esc(fmtD(kv.pubAt.slice(0,10)))+' ('+esc(kv.pubBy||'')+').':'Noch nicht veröffentlicht.'}</div>${d.scenes.map(s=>`<h3 style="margin:10px 0 4px">${esc(s.title)}</h3><div class="kvbox kv-prev">${KV3D.svg({type:s.type,n:s.n,comps:s.comps})}</div>${KV3D.clickList({type:s.type,comps:s.comps}).map(x=>{ const c=s.comps[x.k]||{}; return `<div class="kv-pv"><span class="kv-n">${x.n}</span><div><b>${esc(c.label||x.label)}</b><div class="small">${c.text?esc(c.text):'<span class="muted">– noch kein freigegebener Text –</span>'}</div></div></div>`; }).join('')}`).join('')}</div>`,saveLabel:'Schließen',onSave:()=>{}}); }
+function projKview(p){ const kv=kvOf(p.id), ed=kvEditOk(), fr=kfreiOk(), url=kvPortalUrl();
+  const intro=`Eine 3-D-Skizze der Anlage, auf der der Kunde einzelne Teile anklickt und die freigegebenen Infos dazu sieht – auf einer eigenen Webseite mit eigenem Zugang, auf der er nur sein Projekt sieht.`;
+  if(!kv||!(kv.scenes||[]).length) return `<div class="card"><div class="card-h"><h3>Kunden-Ansicht</h3></div><div class="card-b"><p style="margin:0 0 12px">${intro}</p>
+    ${ed?`<div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn sun" data-act="kvSuggest" data-pid="${p.id}">✨ Skizzen aus dem Projekt erstellen</button><button class="btn" data-act="kvPhoto" data-pid="${p.id}">📷 Aus Foto erstellen</button><button class="btn" data-act="kvAddScene" data-pid="${p.id}">${ic('plus')}Skizze von Hand wählen</button></div>`:'<div class="small muted">Noch keine Kunden-Ansicht angelegt.</div>'}</div></div><input type="file" id="kvPhotoIn" accept="image/*" hidden>`;
+  const sc=kv.scenes, i=Math.max(0,Math.min(UI.kvScene||0,sc.length-1)), s=sc[i], pend=kvPendList(kv), sel=UI.kvSel&&KV3D.st(s,UI.kvSel)==='klick'?UI.kvSel:'';
+  const em=kv.emails||[], status=`${em.length?`<span class="pill ok">👤 ${em.length} Kundenzugang${em.length>1?'e':''}</span>`:'<span class="pill">kein Kundenzugang</span>'} ${kv.pubAt?`<span class="small muted">veröffentlicht ${esc(fmtD(kv.pubAt.slice(0,10)))} (${esc(kv.pubBy||'')})</span>`:'<span class="small muted">noch nicht veröffentlicht</span>'} ${pend.length?`<span class="pill warn">⏳ ${pend.length} Text${pend.length>1?'e':''} warten auf Freigabe</span>`:''}`;
+  const rows=KV3D.TYPES[s.type].comps.map(([k,l])=>{ const c=(s.comps||{})[k]||{}, on=KV3D.st(s,k), num=(KV3D.clickList(s).find(x=>x.k===k)||{}).n;
+    const stt=on!=='klick'?`<span class="small muted">${on==='aus'?'ausgeblendet':'nur grau'}</span>`:c.pend?'<span class="pill warn">⏳ Freigabe</span>':String(c.text||'').trim()?`<span class="pill ok" title="freigegeben ${esc(fmtD(c.tAt||''))} von ${esc(c.aBy||'')}">✓ frei</span>`:'<span class="small muted">kein Text</span>';
+    return `<div class="kv-row ${k===sel?'on':''} ${on==='aus'?'off':''}" data-act="kvComp" data-pid="${p.id}" data-i="${i}" data-k="${k}"><span class="kv-n ${on==='klick'?'':'g'}">${num||'·'}</span><div class="kv-rt"><b>${esc(c.label||l)}</b>${on==='klick'?`<div class="small muted kv-tx">${esc(String(c.pend?c.draft||'':c.text||'').slice(0,110))||'–'}</div>`:''}</div>${stt}</div>`; }).join('');
+  return `<div class="card"><div class="card-h" style="flex-wrap:wrap;gap:8px"><h3>Kunden-Ansicht</h3><div class="row" style="gap:6px;flex-wrap:wrap">${status}</div><span class="spacer"></span>
+      <div class="row" style="gap:6px;flex-wrap:wrap">${fr&&pend.length?`<button class="btn sun sm" data-act="kvApproveAll" data-pid="${p.id}">✓ Texte prüfen & freigeben (${pend.length})</button>`:''}<button class="btn sm" data-act="kvPreview" data-pid="${p.id}">👁 Vorschau wie Kunde</button>${ed?`<button class="btn sm" data-act="kvAccess" data-pid="${p.id}">👤 Kundenzugang</button><button class="btn sm pri" data-act="kvPublish" data-pid="${p.id}">⤴ Veröffentlichen</button>`:''}</div></div>
+    <div class="card-b"><div class="kv-tabs">${sc.map((x,j)=>`<button class="chip ${j===i?'on':''}" data-act="kvScene" data-i="${j}">${esc(x.title||KV3D.TYPES[x.type].l)}</button>`).join('')}${ed?`<button class="chip" data-act="kvAddScene" data-pid="${p.id}">+ Skizze</button>`:''}</div>
+      <div class="kv-grid"><div><div class="kvbox" data-pid="${p.id}" data-i="${i}">${KV3D.svg(s,{sel})}</div>
+        ${ed?`<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn sm" data-act="kvEditScene" data-pid="${p.id}" data-i="${i}">${ic('edit')}Skizze</button><button class="btn sm" data-act="kvPhoto" data-pid="${p.id}" data-i="${i}">📷 Echtes Foto hochladen → Skizze</button><button class="btn sm" data-act="kvTexts" data-pid="${p.id}" data-i="${i}">✨ Texte aus Projekt-Updates vorschlagen</button><button class="btn sm ghost" data-act="kvSuggest" data-pid="${p.id}">✨ weitere Skizzen vorschlagen</button></div>`:''}
+        ${s.photo?`<div class="small muted" style="margin-top:6px">Vorlage-Foto (nur intern): <a href="/_blob/${esc(s.photo)}" target="_blank" rel="noopener">ansehen</a></div>`:''}</div>
+        <div class="kv-list"><div class="small muted" style="margin-bottom:6px">Gelbe Teile mit Nummer kann der Kunde anklicken. Anklicken zum Bearbeiten.</div>${rows}</div></div>
+      <div class="small muted" style="margin-top:10px">Texte und Bezeichnungen sieht der Kunde erst nach Freigabe${fr?'':' durch AvE'} und nach „Veröffentlichen“ (danach werden Freigaben automatisch übernommen).${url?` Kundenseite: <a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a>`:''}</div></div></div><input type="file" id="kvPhotoIn" accept="image/*" hidden>`; }
+function kvApproveSheet(pid){ const kv=kvOf(pid), pend=kvPendList(kv); if(!pend.length||!kfreiOk()) return;
+  openSheet({title:'Texte für den Kunden freigeben',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Bitte lesen: Diese Texte sieht der Kunde nach der Freigabe auf seiner Projektseite.</div>${pend.map((x,j)=>{ const d=KV3D.TYPES[x.s.type].comps.find(c=>c[0]===x.k); return `<label class="mt-opt kv-ap"><input type="checkbox" class="ck kv-apc" data-j="${j}" checked><span><b>${esc(x.c.label||d[1])}</b> <span class="small muted">· ${esc(x.s.title||KV3D.TYPES[x.s.type].l)}${x.c.dBy?' · von '+esc(x.c.dBy):''}</span><div>${x.c.draft?esc(x.c.draft):'<i class="muted">(Text entfernen)</i>'}</div>${String(x.c.text||'').trim()&&x.c.text!==x.c.draft?`<div class="small muted">bisher: ${esc(x.c.text)}</div>`:''}</span></label>`; }).join('')}</div>`,saveLabel:'Markierte freigeben',
+    onSave:()=>{ const sel=[...document.querySelectorAll('.kv-apc:checked')].map(c=>pend[+c.dataset.j]).map(x=>({i:x.i,k:x.k})); if(!sel.length){ toast('Nichts markiert.'); return false; } kvApprove(pid,sel); }}); }
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('.kvbox:not(.kv-prev) [data-c]'); if(!b) return; const box=b.closest('.kvbox'); UI.kvSel=b.dataset.c; kvCompSheet(box.dataset.pid,+box.dataset.i,b.dataset.c); });
+document.addEventListener('keydown',e=>{ if(e.key!=='Enter'&&e.key!==' ') return; const b=e.target.closest&&e.target.closest('.kvbox:not(.kv-prev) .kc'); if(!b) return; e.preventDefault(); b.dispatchEvent(new MouseEvent('click',{bubbles:true})); });
+document.addEventListener('change',e=>{ if(e.target.id!=='kvPhotoIn') return; const f=(e.target.files||[])[0], pid=e.target.dataset.pid, i=e.target.dataset.i; if(f&&pid) kvFromPhoto(pid,f,i===''||i==null?null:+i); });
+queueMicrotask(()=>Object.assign(A,{
+  kvSuggest:d=>kvSuggest(d.pid),
+  kvAddScene:d=>kvSceneSheet(d.pid||UI.pid,null),
+  kvEditScene:d=>kvSceneSheet(d.pid,+d.i),
+  kvScene:d=>{ UI.kvScene=+d.i; UI.kvSel=''; render(); },
+  kvComp:d=>{ UI.kvSel=d.k; kvCompSheet(d.pid,+d.i,d.k); },
+  kvSaveApprove:d=>{ kvCompStore(d.pid,+d.i,d.k,true); closeSheet(); },
+  kvTexts:d=>kvTexts(d.pid,+d.i),
+  kvPhoto:d=>{ const f=$('#kvPhotoIn'); if(!f) return; f.dataset.pid=d.pid; f.dataset.i=d.i==null?'':d.i; f.value=''; f.click(); },
+  kvAccess:d=>kvAccessSheet(d.pid),
+  kvInvite:d=>kvInvite(d.pid),
+  kvPublish:d=>kvPublish(d.pid),
+  kvPreview:d=>kvPreview(d.pid),
+  kvApproveAll:d=>kvApproveSheet(d.pid)
+}));
+/* ========== Lager-Tablet: Gerät zeigt nur noch Material & Lager (vom Admin eingerichtet, Verlassen nur mit PIN) ==========
+   Einstellung liegt nur auf diesem Gerät (localStorage). Gebucht wird mit den Rechten der Person, die vor dem Buchen gewählt wird. */
+const KIOSK_K='sonnenplan-kiosk';
+const kioskCfg=()=>{ try{ return JSON.parse(lsGet(KIOSK_K)||'null'); }catch(e){ return null; } };
+const KIOSK_ON=()=>{ const c=kioskCfg(); return !!(c&&c.on); };
+let KQ='', KWHO='', KIDLE=Date.now(), KMODE='';
+const kBase=()=>(kioskCfg()||{}).base||ME;
+const KM_L={in:'Einbuchen',out:'Entnehmen',shift:'Umlagern'};
+function kioskSetup(){ if(!isAdmin()) return toast('Nur Admins können ein Lager-Tablet einrichten.');
+  openSheet({title:'Dieses Gerät als Lager-Tablet einrichten',html:`<div class="fld full"><div class="small">Danach zeigt <b>dieses Gerät</b> nur noch die Lagerverwaltung mit großen Knöpfen: Suchen, Scannen, Artikelschild fotografieren, Einbuchen, Entnehmen (auch für Projekte), Umlagern und neue Artikel anlegen. Alles andere (Projekte, Finanzen, Chat …) ist auf diesem Gerät ausgeblendet. Andere Geräte ändern sich nicht.</div></div>
+    <div class="fld"><label for="kp1">PIN zum Beenden (4–8 Ziffern)</label><input id="kp1" type="password" inputmode="numeric" autocomplete="new-password" maxlength="8"></div>
+    <div class="fld"><label for="kp2">PIN wiederholen</label><input id="kp2" type="password" inputmode="numeric" autocomplete="new-password" maxlength="8"></div>
+    <div class="fld full"><label class="tog-sw"><input type="checkbox" id="kask" checked> Vor dem Buchen fragen „Wer bucht?“ (Kürzel antippen; nach 3 Minuten ohne Eingabe wieder abgemeldet)</label></div>
+    <div class="fld full"><div class="small muted">Tipp: Am Tablet die App über „Zum Startbildschirm hinzufügen“ als Vollbild öffnen. Ein Handscanner (USB/Bluetooth) funktioniert direkt im Suchfeld.</div></div>`,saveLabel:'Tablet-Modus starten',
+    onSave:()=>{ const a=$('#kp1').value.trim(), b=$('#kp2').value.trim(); if(!/^\d{4,8}$/.test(a)){ toast('Bitte eine PIN aus 4–8 Ziffern.'); return false; } if(a!==b){ toast('Die PINs stimmen nicht überein.'); return false; }
+      lsSet(KIOSK_K,JSON.stringify({on:true,pin:strHash('kiosk|'+a),askWho:$('#kask').checked,by:meK(),base:ME,at:new Date().toISOString()})); KQ=''; KWHO=''; KMODE=''; setTimeout(()=>{ render(); toast('Lager-Tablet ist eingerichtet.'); },50); }}); }
+function kioskExit(){ openSheet({title:'Tablet-Modus beenden',html:`<div class="fld full"><label for="kpx">PIN</label><input id="kpx" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></div>`,saveLabel:'Beenden',
+  onSave:()=>{ const c=kioskCfg(); if(!c||strHash('kiosk|'+$('#kpx').value.trim())!==c.pin){ toast('PIN falsch.'); return false; } ME=c.base||ME; lsSet(KIOSK_K,''); KWHO=''; document.body.classList.remove('kiosk'); setTimeout(render,30); toast('Tablet-Modus beendet.'); }}); setTimeout(()=>{ const i=$('#kpx'); if(i) i.focus(); },60); }
+function kioskLogout(msg){ KWHO=''; ME=kBase(); KMODE=''; KQ=''; closeSheet(); lgCamClose(); render(); if(msg) toast(msg); }
+// Wer bucht? Danach mit dessen Rechten (Lager bearbeiten nötig)
+function kioskWho(then){ const c=kioskCfg()||{}; if(!c.askWho){ then(); return; } if(KWHO){ then(); return; }
+  const list=staff().filter(s=>!(s.exit&&s.exit<TODAY())); if(!list.length){ then(); return; }
+  openSheet({title:'Wer bucht?',wide:1,html:`<div class="fld full"><div class="k-who">${list.map(s=>`<button type="button" class="k-wb" data-n="${esc(s.name)}"><b>${esc(shortWho(s.name))}</b><span>${esc(s.name.replace(/\s*\([^)]*\)$/,''))}</span></button>`).join('')}</div></div>`,saveLabel:'Abbrechen',onSave:()=>{}});
+  document.querySelectorAll('.k-wb').forEach(b=>b.onclick=()=>{ const n=b.dataset.n; ME=n; KWHO=n; KIDLE=Date.now(); if(!mayWrite('stock')){ ME=kBase(); KWHO=''; toast(shortWho(n)+' hat keine Berechtigung für Lagerbuchungen.'); return; } closeSheet(); render(); then(); }); }
+function kioskAct(sid,act){ const s=S.stock[sid]; if(!s) return; kioskWho(()=>{ if(act==='in') stockInSheet(sid); else if(act==='out') stockTakeSheet(sid); else if(act==='shift') stockShiftSheet(sid); else stockHist(sid); }); }
+function kioskArticle(sid,head){ const s=S.stock[sid]; if(!s) return; if(KMODE&&KMODE!=='info'){ const m=KMODE; KMODE=''; return kioskAct(sid,m); }
+  const b=binsOf(s).sort((x,y)=>y[1]-x[1]), on=LGON();
+  openSheet({title:s.art,wide:1,html:`<div class="fld full">${head?`<div class="hint" style="margin-bottom:8px">${head}</div>`:''}<div class="small muted">${esc([s.artNr,firmShort(firmOf(s))].filter(Boolean).join(' · '))}</div><div class="k-qty">${qn(s.qty)} <span>${esc(s.unit||'Stk')}</span></div>
+    ${on&&b.length?`<div class="small">Liegt auf: ${b.slice(0,6).map(([x,q])=>`<span class="lg-chip">${esc(lgCode(x))} <b>${qn(+q)}</b></span>`).join(' ')}</div>`:s.loc?`<div class="small">Lagerort: ${esc(s.loc)}</div>`:''}
+    <div class="k-acts"><button type="button" class="k-big in" data-act="kAct" data-id="${s.id}" data-m="in">⬇<b>Einbuchen</b><span>Zugang ins Lager</span></button><button type="button" class="k-big out" data-act="kAct" data-id="${s.id}" data-m="out">⬆<b>Entnehmen</b><span>für Projekt / Baustelle</span></button>${on?`<button type="button" class="k-big" data-act="kAct" data-id="${s.id}" data-m="shift">⇄<b>Umlagern</b><span>anderer Lagerplatz</span></button>`:''}</div></div>`,saveLabel:'Schließen',onSave:()=>{}}); }
+function kioskCode(code){ code=String(code||'').trim(); if(!code) return; KIDLE=Date.now();
+  const n=lgResolve(code); if(n){ if(lgIsBin(n)) return kioskWho(()=>lgBinSheet(n.id)); toast(LG_KINDS[n.kind]+': '+lgFullName(n.id)); return; }
+  const nr=normNr(code), hits=arr('stock').filter(x=>nr&&normNr(x.artNr)===nr);
+  if(hits.length===1) return kioskArticle(hits[0].id);
+  if(hits.length>1){ KQ=code; render(); return; }
+  openSheet({title:'Code nicht gefunden',html:`<div class="fld full">Kein Lagerplatz und kein Artikel mit dem Code <b class="mono">${esc(code.slice(0,60))}</b>.</div>`,saveLabel:'Schließen',onSave:()=>{},
+    extraBtn:`<button type="button" class="btn sun" data-act="kNew" data-code="${esc(code.slice(0,60))}">+ Als neuen Artikel anlegen</button>`}); }
+function kioskNew(init){ kioskWho(()=>stockForm(null,{init:init||{}})); }
+// Foto vom Artikelschild: Claude liest es und sucht den Artikel in unserem Lager
+async function kioskPhoto(file){ if(!file) return; if(!SAMPLE) return toast('Die Foto-Erkennung braucht die KI – geht nur in der Online-App.');
+  toast('Claude liest das Artikelschild …'); let img; try{ img=new Blob([await mappeToJpg(file,1600)],{type:'image/jpeg'}); }catch(e){ return toast('Foto konnte nicht gelesen werden.'); }
+  const list=arr('stock').slice(0,800).map(s=>`${s.id} | ${s.art} | ${s.artNr||''}`).join('\n');
+  let r=null; try{ r=await SAMPLE.json(`Foto eines Artikelschilds, Typenschilds oder Etiketts aus unserem Lager (PV-Module, Wechselrichter, Speicher, Elektro- und Montagematerial). Lies Hersteller, Bezeichnung/Typ, Artikel- bzw. Typnummer, EAN/GTIN und die Einheit.
+Prüfe dann, ob der Artikel schon in unserer Liste der Lagerartikel steht (ID | Artikel | Art.-Nr./EAN). "match" = ID nur bei eindeutiger Übereinstimmung (gleiche Art.-Nr./EAN oder gleicher Hersteller + Typ), sonst "". Ähnliche, unsichere Treffer als "cands" (höchstens 3 IDs).
+Lagerartikel:\n${list||'-'}
+Antworte nur mit JSON: {"match":"","cands":[],"read":{"art":"Hersteller + Bezeichnung + Typ, kurz","artNr":"Art.-Nr. oder Typnummer","ean":"","unit":"Stk|m|Rolle|Karton|Pal"},"seen":"1 kurzer Satz, was auf dem Schild steht"}`,{modelTier:'default',images:[img]}); }
+  catch(e){ return toast(SAMPLE_ERR[e&&e.code]||'Claude nicht erreichbar.'); }
+  const rd=(r&&r.read)||{}; let id=r&&r.match&&S.stock[r.match]?r.match:'';
+  if(!id){ const ns=[rd.ean,rd.artNr].map(normNr).filter(Boolean), h=arr('stock').find(s=>ns.includes(normNr(s.artNr))); if(h) id=h.id; }
+  const cands=((r&&r.cands)||[]).filter(x=>S.stock[x]&&x!==id).slice(0,3);
+  if(id) return kioskArticle(id,'📷 Erkannt: '+esc(rd.art||S.stock[id].art)+' – ist schon im Lager erfasst.');
+  const init={art:String(rd.art||'').slice(0,120),artNr:String(rd.ean||rd.artNr||'').slice(0,60),unit:UNITS.includes(rd.unit)?rd.unit:'Stk'};
+  K_NEW=init;
+  openSheet({title:'Noch nicht im Lager erfasst',wide:1,html:`<div class="fld full"><div class="hint">📷 Gelesen: <b>${esc(rd.art||'?')}</b>${rd.artNr?' · Art.-Nr. '+esc(rd.artNr):''}${rd.ean?' · EAN '+esc(rd.ean):''}</div>
+    ${cands.length?`<div class="sec-t" style="margin:10px 0 6px">Ist es vielleicht einer davon?</div>${cands.map(x=>`<button type="button" class="k-row" data-act="kOpen" data-id="${x}"><b>${esc(S.stock[x].art)}</b><span class="small muted">${esc(S.stock[x].artNr||'')} · ${qn(S.stock[x].qty)} ${esc(S.stock[x].unit||'')}</span></button>`).join('')}`:''}
+    <div class="small muted" style="margin-top:10px">„Neu anlegen“ öffnet das Formular mit den gelesenen Angaben – bitte kurz prüfen, Menge als Anfangsbestand und den Lagerplatz eintragen.</div></div>`,saveLabel:'Schließen',onSave:()=>{},
+    extraBtn:`<button type="button" class="btn sun" data-act="kNewRead">+ Neu anlegen & einbuchen</button>`}); }
+let K_NEW=null;
+function vKiosk(){ const q=KQ.trim().toLowerCase(), c=kioskCfg()||{};
+  const list=q?arr('stock').filter(s=>[s.art,s.artNr,firmOf(s),stockBinsTxt(s)].join(' ').toLowerCase().includes(q)).sort((a,b)=>String(a.art).localeCompare(String(b.art),'de')).slice(0,40):[];
+  const moves=arr('stock').flatMap(s=>(s.moves||[]).filter(m=>String(m.at||'').slice(0,10)===TODAY()).map(m=>({...m,art:s.art}))).sort((a,b)=>String(b.at).localeCompare(String(a.at))).slice(0,8);
+  return `<div class="ks"><div class="ks-top"><img src="${NDS_LOGO}" alt="nutz die Sonne" class="ks-logo"><b class="ks-t">Lager-Tablet</b><span class="spacer"></span>
+      ${c.askWho?`<button type="button" class="ks-who ${KWHO?'on':''}" data-act="kWho">👤 ${KWHO?esc(shortWho(KWHO))+' <small>· abmelden</small>':'Wer bucht?'}</button>`:''}<button type="button" class="ks-x" data-act="kExit" title="Tablet-Modus beenden" aria-label="Tablet-Modus beenden">⎋</button></div>
+    <div class="ks-search"><input id="kqIn" class="inp" value="${esc(KQ)}" placeholder="${KMODE?esc(KM_L[KMODE])+': Artikel suchen, scannen oder Schild fotografieren …':'Artikel suchen oder Code scannen …'}" autocomplete="off" autocapitalize="off" enterkeyhint="search"><button type="button" class="btn sun" data-act="kScan">📷 Scannen</button></div>
+    ${KMODE?`<div class="ks-mode">Modus: <b>${esc(KM_L[KMODE])}</b> – wähle den Artikel <button type="button" class="lnk" data-act="kMode" data-m="">abbrechen</button></div>`:''}
+    ${q?`<div class="ks-res">${list.length?list.map(s=>`<div class="k-res"><button type="button" class="k-res-m" data-act="kOpen" data-id="${s.id}"><b>${esc(s.art)}</b><span class="small muted">${esc([s.artNr,firmShort(firmOf(s)),LGON()?binsOf(s).slice(0,3).map(([x])=>lgCode(x)).join(', '):s.loc].filter(Boolean).join(' · '))}</span></button><span class="k-res-q">${qn(s.qty)} <small>${esc(s.unit||'')}</small></span><button type="button" class="k-sm in" data-act="kAct" data-id="${s.id}" data-m="in" aria-label="Einbuchen">⬇</button><button type="button" class="k-sm out" data-act="kAct" data-id="${s.id}" data-m="out" aria-label="Entnehmen">⬆</button></div>`).join(''):`<div class="empty">Nichts gefunden zu „${esc(KQ)}“. <button type="button" class="btn sm" data-act="kNew" data-code="">+ Neuen Artikel anlegen</button></div>`}</div>`:
+    `<div class="ks-tiles"><button type="button" class="k-tile" data-act="kScan"><i>📷</i><b>Scannen</b><span>QR-Code am Lagerplatz oder Barcode</span></button>
+      <button type="button" class="k-tile ai" data-act="kPhoto"><i>🏷️</i><b>Artikelschild fotografieren</b><span>KI prüft, ob der Artikel schon erfasst ist</span></button>
+      <button type="button" class="k-tile in" data-act="kMode" data-m="in"><i>⬇</i><b>Einbuchen</b><span>Ware ins Lager</span></button>
+      <button type="button" class="k-tile out" data-act="kMode" data-m="out"><i>⬆</i><b>Entnehmen</b><span>für ein Projekt / eine Baustelle</span></button>
+      ${LGON()?'<button type="button" class="k-tile" data-act="kMode" data-m="shift"><i>⇄</i><b>Umlagern</b><span>auf einen anderen Platz</span></button>':''}
+      <button type="button" class="k-tile" data-act="kNew" data-code=""><i>＋</i><b>Neuer Artikel</b><span>im Lager anlegen</span></button></div>`}
+    <div class="ks-log"><div class="sec-t">Heute gebucht</div>${moves.length?moves.map(m=>`<div class="small"><span class="mono">${esc(new Date(m.at).toTimeString().slice(0,5))}</span> · <b>${esc(m.by||'')}</b> · ${m.d>0?'+':''}${qn(m.d)} ${esc(m.u||'')} ${esc(m.art)}${m.pid?' → '+esc(projName(m.pid)):''}</div>`).join(''):'<div class="small muted">Noch keine Buchungen heute.</div>'}</div>
+    <input type="file" id="kPhotoIn" accept="image/*" capture="environment" hidden></div>`; }
+document.addEventListener('input',e=>{ if(e.target.id!=='kqIn') return; KQ=e.target.value; KIDLE=Date.now(); clearTimeout(window.__kqT); window.__kqT=setTimeout(render,180); });
+document.addEventListener('keydown',e=>{ if(e.target.id==='kqIn'&&e.key==='Enter'){ e.preventDefault(); const v=e.target.value.trim(); if(!v) return; const nr=normNr(v); if(lgResolve(v)||(nr&&arr('stock').some(x=>normNr(x.artNr)===nr))){ KQ=''; kioskCode(v); render(); } else { KQ=v; render(); } } });
+document.addEventListener('change',e=>{ if(e.target.id==='kPhotoIn'){ const f=(e.target.files||[])[0]; if(f) kioskPhoto(f); } });
+['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,()=>{ KIDLE=Date.now(); },true));
+setInterval(()=>{ if(KIOSK_ON()&&KWHO&&Date.now()-KIDLE>180000) kioskLogout('Abgemeldet – 3 Minuten keine Eingabe.'); },15000);
+queueMicrotask(()=>Object.assign(A,{
+  kSetup:()=>kioskSetup(), kExit:()=>kioskExit(),
+  kWho:()=>{ if(KWHO) kioskLogout('Abgemeldet.'); else kioskWho(()=>{}); },
+  kScan:()=>lgCamOpen(code=>kioskCode(code)),
+  kPhoto:()=>{ const f=$('#kPhotoIn'); if(f){ f.value=''; f.click(); } },
+  kMode:d=>{ KMODE=d.m||''; render(); const i=$('#kqIn'); if(i&&KMODE) i.focus(); },
+  kOpen:d=>{ closeSheet(); kioskArticle(d.id); },
+  kAct:d=>{ closeSheet(); kioskAct(d.id,d.m); },
+  kNew:d=>{ closeSheet(); kioskNew(d.code?{artNr:d.code}:{}); },
+  kNewRead:()=>{ closeSheet(); kioskNew(K_NEW||{}); }
+}));
 const isKiTel=m=>!!m&&(/ki-telefonassistent/i.test(m.from||'')||/^\s*Anrufzusammenfassung f(ü|ue)r/i.test(m.subject||'')||(/KI-Telefonassistent/i.test(m.text||'')&&/Anrufzusammenfassung|Details zur Kundenanfrage/i.test(m.text||'')));
 function kiTelParse(m){
   const t=String(m.text||'').replace(/\r/g,'').replace(/<https?:[^>]*>/g,'').replace(/[ \t ]+/g,' ');
