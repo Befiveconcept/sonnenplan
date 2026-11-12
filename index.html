@@ -878,6 +878,9 @@ body.kiosk .app{display:block}body.kiosk .main{padding:0}body.kiosk .wrap{max-wi
 .spk-ctl{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}.spk-rate{display:inline-flex;align-items:center;gap:4px;font-size:13px;padding:0 4px}.spk-rate input{width:110px;accent-color:#F4DB02}
 .pt-past{border-top:1px solid var(--line)}.pt-past>summary{cursor:pointer;padding:10px 16px;font-weight:600;color:var(--muted)}
 .brief{line-height:1.55}.brief-hi{font-size:16px;font-weight:600;margin-bottom:4px}.brief-top{background:#FFF9C4;border-radius:10px;padding:8px 12px;margin:10px 0;color:#1E1E1E}.brief-top ol{margin:4px 0 0 18px;padding:0}.brief-top li{margin:3px 0}
+.brief-me{background:#FFF3A3;border-left:5px solid #F4DB02}.brief-me ul{margin:4px 0 0 18px;padding:0}.brief-me li.overdue{color:#B3261E;font-weight:600}
+.brief-my{background:#FFF9C4;border-left:4px solid #F4DB02;border-radius:8px;padding:6px 10px;margin:8px 0 4px;color:#1E1E1E}.brief-my ul{margin:4px 0 0 18px;padding:0}.brief-my li.overdue,.brief-my li.overdue .lnk{color:#B3261E;font-weight:600}
+.brief li.brief-mine{background:#FFF3A3;color:#1E1E1E;border-radius:4px;padding:0 4px;font-weight:600}
 .brief-h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;opacity:.7;margin-top:6px}.brief-g{margin:16px 0 6px;font-size:15px}
 .brief-p{border:1px solid var(--line);border-left:4px solid #7CB342;border-radius:10px;padding:9px 12px;margin-bottom:8px}.brief-p.a-gelb{border-left-color:#F4DB02}.brief-p.a-rot{border-left-color:#E53935}
 .brief-ph{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.brief-ph b{font-size:15px}.brief-pct{flex:0 0 70px;height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-left:auto}.brief-pct i{display:block;height:100%;background:#F4DB02}
@@ -2723,10 +2726,47 @@ setInterval(()=>{ try{ seenSub(); }catch(e){} },5000); // auch nach Personenwech
 /* ---------- ☀️ Morgen-Briefing: einmal am Tag alle laufenden und geplanten Projekte in einfacher Sprache ---------- */
 // Standard nur für EP; im Profil kann jede Person es für sich ein- oder ausschalten (config.briefWho).
 // Ergebnis je Person in der Sammlung brief ({d,at,seen,data}) – Handy und Laptop teilen es, die KI läuft nur einmal am Tag.
-const briefOn=()=>!!ME&&(((S.config||{}).briefWho)||['EP']).includes(meK());
+/* Für ALLE Mitarbeiter an (jede Person kann es im Profil für sich ausschalten: config.briefOff). Nicht für Tablet-Konten.
+   Inhalt individuell: Admins (EP, AvE …) = Gesamtüberblick über alle Projekte; alle anderen = „Dein Tag“ + nur die eigenen Projekte. */
+// Ausdrücklich ohne Briefing (Wunsch EP, 12.11.2026): Moji und ABou (Kürzel AS) – weder automatisch noch per Knopf
+const BRIEF_NONE_K=['moji','as'];
+const briefAllowed=()=>!!ME&&ME!==TAB_ME&&!isTabletAcc()&&!BRIEF_NONE_K.includes(String(meK()).toLowerCase())&&!/\b(moji|abou|abow)\b/i.test(String(ME));
+const briefOn=()=>briefAllowed()&&!(((S.config||{}).briefOff)||[]).includes(meK());
 var BRIEF=null, BRIEF_RUN=false, BRIEF_REGEN=null;
 const briefKey=()=>'sonnenplan-brief-'+meK();
-function briefProjects(){ return arr('projects').filter(p=>p&&!p.example&&!isIntern(p)&&['laufend','planung'].includes(catOf(p))).sort((a,b)=>(catOf(a)==='laufend'?0:1)-(catOf(b)==='laufend'?0:1)||String(a.name).localeCompare(String(b.name))); }
+const briefIsMe=n=>{ if(!n||!ME) return false; const k=String(meK()).toLowerCase(); return n===ME||whoCanon(n)===whoCanon(ME)||String(shortWho(n)).toLowerCase()===k||String(n).trim().toLowerCase()===k; };
+const briefTunMine=s=>{ const k=String(meK()||''); return !!k&&new RegExp('(^|[^A-Za-zÄÖÜäöü])'+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'([^A-Za-zÄÖÜäöü]|$)').test(String(s||'')); };
+const briefAll=()=>true;   // Alle (außer Moji/ABou, s. briefAllowed) bekommen den Gesamtüberblick; die eigenen To-dos werden hervorgehoben
+const briefMonteur=()=>!isAdmin()&&(ownTodosOnly()||(permEff(ME)||{}).role==='monteur');
+// Projekte, die die Person betreffen: Projektleitung, eigene offene Aufgaben, eigene Einsätze/Termine in den nächsten 14 Tagen
+function briefMyPids(){ const t=TODAY(), t14=addDays(t,14), s=new Set();
+  arr('projects').forEach(p=>{ if(p&&p.pl&&briefIsMe(p.pl)) s.add(p.id); });
+  arr('tasks').forEach(x=>{ if(x.pid&&!x.done&&taskHas(x,ME)) s.add(x.pid); });
+  arr('plan').forEach(w=>(w.entries||[]).forEach(e=>{ if(e.pid&&e.d&&e.d<=t14&&(e.end||e.d)>=t&&evWhos(e).some(briefIsMe)) s.add(e.pid); }));
+  arr('events').forEach(e=>{ if(e.pid&&e.date&&e.date<=t14&&(e.end||e.date)>=t&&evWhos(e).some(briefIsMe)) s.add(e.pid); });
+  return s; }
+function briefProjects(){ const mine=briefAll()?null:briefMyPids();
+  return arr('projects').filter(p=>p&&!p.example&&!isIntern(p)&&['laufend','planung'].includes(catOf(p))&&(!mine||mine.has(p.id))).sort((a,b)=>(catOf(a)==='laufend'?0:1)-(catOf(b)==='laufend'?0:1)||String(a.name).localeCompare(String(b.name))); }
+// „Dein Tag“: feste, nachprüfbare Liste (nicht von der KI): Einsätze, Termine, eigene Aufgaben, Lieferungen zu eigenen Projekten
+function briefMine(){ const t=TODAY(), t2=addDays(t,1), t3=addDays(t,3), on=(a,b,d)=>a&&a<=d&&(b||a)>=d, pids=briefMyPids();
+  const day=d=>d===t?'heute':d===t2?'morgen':fmtD(d);
+  const einsatz=[]; arr('plan').forEach(w=>(w.entries||[]).forEach(e=>{ if(!evWhos(e).some(briefIsMe)) return; [t,t2].forEach(d=>{ if(on(e.d,e.end,d)) einsatz.push({d,txt:(e.kind==='abw'?'Abwesend: ':e.kind==='ho'?'Homeoffice: ':'')+(e.t||'Einsatz')+(e.time?' ab '+e.time:''),proj:e.pid?projName(e.pid):''}); }); }));
+  const termine=[]; arr('events').forEach(e=>{ if(!evWhos(e).some(briefIsMe)) return; [t,t2].forEach(d=>{ if(on(e.date,e.end,d)) termine.push({d,txt:(e.time?e.time+' ':'')+(e.title||'Termin')+(e.place?' · '+e.place:''),proj:e.pid?projName(e.pid):''}); }); });
+  const aufgaben=arr('tasks').filter(x=>!x.done&&taskHas(x,ME)&&x.due&&x.due<=t3).sort((a,b)=>String(a.due).localeCompare(String(b.due))).slice(0,12).map(x=>({d:x.due,txt:x.title,proj:projName(x.pid),late:x.due<t,id:x.id}));
+  const ohne=arr('tasks').filter(x=>!x.done&&taskHas(x,ME)&&!x.due).length;
+  const lief=arr('orders').filter(o=>o.delivery&&(o.delivery===t||o.delivery===t2)&&orderState(o).open&&(briefAll()||pids.has(o.pid))).map(o=>({d:o.delivery,txt:'Lieferung von '+(o.supplier||'Lieferant')+' ('+(o.items||[]).length+' Pos.)',proj:projName(o.pid)}));
+  const srt=a=>a.sort((x,y)=>String(x.d).localeCompare(String(y.d)));
+  return {einsatz:srt(einsatz).slice(0,10),termine:srt(termine).slice(0,10),aufgaben,ohne,lief:srt(lief).slice(0,8),day:Object.fromEntries([...einsatz,...termine,...aufgaben,...lief].map(x=>[x.d,day(x.d)]))}; }
+function briefMineTxt(m){ const L=(h,a,f)=>a.length?h+':\n'+a.map(f).join('\n'):'', dd=d=>m.day[d]||fmtD(d);
+  return [L('Eigene Einsätze laut Wochenplanung',m.einsatz,x=>'- '+dd(x.d)+': '+x.txt+(x.proj?' ('+x.proj+')':'')),
+    L('Eigene Termine',m.termine,x=>'- '+dd(x.d)+': '+x.txt+(x.proj?' ('+x.proj+')':'')),
+    L('Eigene Aufgaben mit Frist bis übermorgen',m.aufgaben,x=>'- '+(x.late?'ÜBERFÄLLIG seit '+x.d:'fällig '+dd(x.d))+': '+x.txt+(x.proj?' ('+x.proj+')':'')),
+    m.ohne?'Außerdem '+m.ohne+' eigene offene Aufgabe(n) ohne Frist.':'',
+    L('Lieferungen heute/morgen',m.lief,x=>'- '+dd(x.d)+': '+x.txt+(x.proj?' ('+x.proj+')':''))].filter(Boolean).join('\n')||'Für heute und morgen ist für dich nichts Persönliches eingetragen.'; }
+// Wie geschrieben wird – je nach Person
+function briefAud(){ if(meK()==='EP') return 'Die Leserin ist keine Technikerin. Schreibe in einfacher, klarer Alltagssprache, kurze Sätze, kein Fachjargon. Wenn ein Fachbegriff nötig ist, erkläre ihn kurz in Klammern (z. B. „Netzanmeldung (Anmeldung der Anlage beim Stromnetzbetreiber)“, „kWp (Größe der Solaranlage)“).';
+  if(briefMonteur()) return 'Die Person arbeitet als Monteur auf den Baustellen. Fachbegriffe sind in Ordnung. Schreibe kurz und praktisch: wo, wann, was ist zu tun, was ist mitzunehmen oder zu beachten.';
+  return 'Schreibe klar und knapp, kurze Sätze. Übliche Fachbegriffe sind in Ordnung.'; }
 function briefFacts(p,t){ const pp=pipe(p), ot=openTasks(p.id), wk=addDays(t,-14), nw=nowOf(p);
   const notes=['notes','updates'].flatMap(k=>noteBlocks(p[k])).slice(-4).map(b=>b.replace(/\s+/g,' ').slice(0,280));
   const upd=arr('tasks').filter(x=>x.pid===p.id).flatMap(x=>(x.upd2||[]).filter(u=>String(u.d||u.at||'').slice(0,10)>=wk).map(u=>String(u.d||u.at||'').slice(0,10)+' '+(u.by||'')+' zu „'+x.title+'“: '+String(u.t||'').replace(/\s+/g,' ').slice(0,200))).slice(-6);
@@ -2739,9 +2779,10 @@ function briefFacts(p,t){ const pp=pipe(p), ot=openTasks(p.id), wk=addDays(t,-14
     ot.length?'Offene Aufgaben: '+ot.slice(0,10).map(x=>'„'+x.title+'“ ('+(x.ext?'extern: '+x.ext:x.who?shortWho(x.who):'niemand zugeteilt')+(x.due?', fällig '+x.due+(x.due<t?' – ÜBERFÄLLIG':''):'')+')').join('; ')+(ot.length>10?' und '+(ot.length-10)+' weitere':''):'Keine offenen Aufgaben.',
     done.length?'In den letzten 14 Tagen erledigt: '+done.join('; '):'',
     upd.length?'Updates der letzten 14 Tage: '+upd.join(' | '):''].filter(Boolean).join('\n'); }
-async function briefMake(){ const t=TODAY(), ps=briefProjects(); if(!ps.length) return {d:t,at:new Date().toISOString(),data:{gruss:'Zurzeit gibt es keine laufenden oder geplanten Projekte.',top:[],p:[]}};
-  const ask=chunk=>SAMPLE.json(`Du schreibst das tägliche Morgen-Briefing für ${ME.replace(/\s*\([^)]*\)$/,'')} bei „nutz die Sonne“ (Solar-Installationsbetrieb: PV-Anlagen, Speicher, Ladeparks). Heute ist ${fmtD(t)} (${t}).
-Die Leserin ist keine Technikerin. Schreibe in einfacher, klarer Alltagssprache, kurze Sätze, kein Fachjargon. Wenn ein Fachbegriff nötig ist, erkläre ihn kurz in Klammern (z. B. „Netzanmeldung (Anmeldung der Anlage beim Stromnetzbetreiber)“, „kWp (Größe der Solaranlage)“).
+async function briefMake(){ const t=TODAY(), ps=briefProjects(), mine=briefMine(), mineTxt=briefMineTxt(mine), nm=ME.replace(/\s*\([^)]*\)$/,'');
+  const ask=chunk=>SAMPLE.json(`Du schreibst das tägliche Morgen-Briefing für ${nm} bei „nutz die Sonne“ (Solar-Installationsbetrieb: PV-Anlagen, Speicher, Ladeparks). Heute ist ${fmtD(t)} (${t}).
+${briefAud()}
+Aufgaben, für die ${nm} selbst zuständig ist (Kürzel ${meK()}), stehen in "tun" immer zuerst und tragen das Kürzel ${meK()}.
 Erfinde nichts: nutze nur die Angaben unten. Fehlt etwas, sag das ehrlich (z. B. „Seit Wochen kein neuer Stand notiert“). Kürzel (z. B. MK, HH) so lassen.
 Für jedes Projekt:
 - "stand": 1 bis 3 Sätze: Wo steht das Projekt gerade, was ist zuletzt passiert?
@@ -2750,18 +2791,22 @@ Für jedes Projekt:
 ${chunk.map((p,i)=>`### ${i+1}. ${p.name}\n${briefFacts(p,t)}`).join('\n\n')}
 Antworte nur mit JSON: {"p":[{"i":1,"ampel":"gruen","stand":"…","tun":["…"]}]}`,{modelTier:'default'});
   const parts=[]; for(let i=0;i<ps.length;i+=10) parts.push(ps.slice(i,i+10));
-  const res=await Promise.all(parts.map(c=>ask(c).catch(()=>null)));
+  const res=parts.length?await Promise.all(parts.map(c=>ask(c).catch(()=>null))):[];
   const out=[]; res.forEach((r,k)=>{ (r&&Array.isArray(r.p)?r.p:[]).forEach(x=>{ const p=parts[k][(+x.i||0)-1]; if(p) out.push({id:p.id,ampel:['gruen','gelb','rot'].includes(x.ampel)?x.ampel:'gelb',stand:String(x.stand||'').slice(0,600),tun:(Array.isArray(x.tun)?x.tun:[]).map(s=>String(s).slice(0,240)).slice(0,5)}); }); });
-  if(!out.length) throw new Error('Die KI hat keine Antwort geliefert.');
-  const funkP=briefFunkMake(out).catch(()=>null);
-  let top={}; try{ top=await SAMPLE.json(`Hier sind kurze Zusammenfassungen von Solar-Projekten (Ampel, Stand, To-dos):\n${out.map(x=>'- '+(S.projects[x.id]||{}).name+' ['+x.ampel+']: '+x.stand+' To-do: '+x.tun.join('; ')).join('\n')}\nSchreibe für ${ME.replace(/\s*\([^)]*\)$/,'')} (keine Technikerin) einen freundlichen Satz Begrüßung mit Gesamtbild ("gruss") und die 3 wichtigsten Dinge für heute ("top", je ein kurzer, verständlicher Satz mit Projektname). Erfinde nichts. Nur JSON: {"gruss":"…","top":["…","…","…"]}`,{modelTier:'quick'})||{}; }catch(e){}
+  if(ps.length&&!out.length) throw new Error('Die KI hat keine Antwort geliefert.');
+  const funkP=briefFunkMake(out,mineTxt).catch(()=>null);
+  let top={}; try{ top=await SAMPLE.json(`${out.length?`Hier sind kurze Zusammenfassungen ${briefAll()?'aller laufenden und geplanten':'der eigenen'} Solar-Projekte von ${nm} (Ampel, Stand, To-dos):\n${out.map(x=>'- '+(S.projects[x.id]||{}).name+' ['+x.ampel+']: '+x.stand+' To-do: '+x.tun.join('; ')).join('\n')}\n`:'Es gibt keine eigenen laufenden oder geplanten Projekte.\n'}Persönlich für ${nm} (heute ${fmtD(t)}):\n${mineTxt}\n${briefAud()}\nSchreibe für ${nm} einen freundlichen Satz Begrüßung mit Gesamtbild ("gruss") und die 3 wichtigsten Dinge für heute ("top", je ein kurzer, verständlicher Satz; eigene Einsätze, Termine und überfällige eigene Aufgaben zuerst). Erfinde nichts. Nur JSON: {"gruss":"…","top":["…","…","…"]}`,{modelTier:'quick'})||{}; }catch(e){}
   const funk=await funkP;
-  return {d:t,at:new Date().toISOString(),data:{gruss:String(top.gruss||'').slice(0,400),top:(Array.isArray(top.top)?top.top:[]).map(s=>String(s).slice(0,240)).slice(0,3),p:out,funk}}; }
+  return {d:t,at:new Date().toISOString(),data:{gruss:String(top.gruss||'').slice(0,400),top:(Array.isArray(top.top)?top.top:[]).map(s=>String(s).slice(0,240)).slice(0,3),p:out,funk,mine,all:briefAll()}}; }
 // 🎙 Hörfassung: dieselben Fakten, aber als gesprochene Sendung geschrieben – fließender Text statt Listen, Namen statt Kürzel
 const briefOrder=p=>(p||[]).filter(x=>S.projects[x.id]).map(x=>({x,c:catOf(S.projects[x.id])})).filter(o=>['laufend','planung'].includes(o.c)).sort((a,b)=>(a.c===b.c?0:a.c==='laufend'?-1:1)||({rot:0,gelb:1,gruen:2}[a.x.ampel]-{rot:0,gelb:1,gruen:2}[b.x.ampel])).map(o=>o.x);
-async function briefFunkMake(list){ const xs=briefOrder(list); if(!xs.length) return null; const first=String(ME||'').replace(/\s*\([^)]*\)$/,'').split(' ')[0], t=TODAY();
+async function briefFunkMake(list,mineTxt){ const xs=briefOrder(list); if(!xs.length&&!mineTxt) return null; const first=String(ME||'').replace(/\s*\([^)]*\)$/,'').split(' ')[0], t=TODAY();
   const names=staffUniq().map(s=>shortWho(s.name)+' = '+s.name.replace(/\s*\([^)]*\)$/,'')).join(', ');
-  const r=await SAMPLE.json(`Du bist Nachrichtensprecherin der internen Morgensendung von „nutz die Sonne“ (Solar-Installationsbetrieb). Deine einzige Hörerin ist ${first}. Heute ist ${fmtD(t)} (${t}). Schreibe das Manuskript zum Anhören, wie gute Radionachrichten: ruhig, klar, warm, in Du-Form, ohne Übertreibung und ohne Show.
+  const r=await SAMPLE.json(`Du bist Nachrichtensprecherin der internen Morgensendung von „nutz die Sonne“ (Solar-Installationsbetrieb). Die Sendung ist nur für ${first}. Heute ist ${fmtD(t)} (${t}). Schreibe das Manuskript zum Anhören, wie gute Radionachrichten: ruhig, klar, warm, in Du-Form, ohne Übertreibung und ohne Show.
+${briefMonteur()?first+' arbeitet als Monteur auf den Baustellen: praktisch und konkret – wo, wann, was ist zu tun.':''}
+Hebe bei jedem Projekt deutlich hervor, wenn ${first} selbst etwas zu tun hat (Kürzel ${meK()}), z. B. „Und das ist deine Aufgabe: …“.
+Persönlich für ${first} (eigene Einsätze, Termine, Aufgaben, Lieferungen):
+${mineTxt||'nichts eingetragen'}
 So klingt es richtig:
 - Nur ganze, gut sprechbare Sätze. Keine Listen, keine Klammern, keine Doppelpunkte, keine Symbole, keine Prozentangaben als Aufzählung.
 - Das Wichtigste zuerst, dann der Hintergrund. Sag bei jedem Projekt, wie es steht und wer als Nächstes dran ist, eingebaut in den Satz.
@@ -2774,12 +2819,13 @@ ${xs.map((x,i)=>{ const p=S.projects[x.id]; return `${i+1}. ${p.name} (${CATS[ca
 Liefere:
 - "hallo": Begrüßung mit ${first}s Namen und Wochentag und Datum, ein Satz.
 - "themen": die 3 wichtigsten Schlagzeilen des Tages, je ein kurzer Satz.
-- "p": je Projekt genau ein Eintrag mit "i" (Nummer) und "text" (der gesprochene Beitrag, der den Projektnamen nennt).
+- "tag": der persönliche Teil „Dein Tag“ in 2 bis 5 gesprochenen Sätzen: eigene Einsätze, Termine, überfällige und fällige eigene Aufgaben, Lieferungen. Steht dort nichts, ein kurzer Satz dazu.
+- "p": je Projekt genau ein Eintrag mit "i" (Nummer) und "text" (der gesprochene Beitrag, der den Projektnamen nennt).${xs.length?'':' Es gibt keine Projekte: "p" leer lassen.'}
 - "schluss": ein kurzer, freundlicher Abschluss, der das Wichtigste für heute noch einmal in einem Satz nennt.
-Antworte nur mit JSON: {"hallo":"…","themen":["…"],"p":[{"i":1,"text":"…"}],"schluss":"…"}`,{modelTier:'default',bg:true});
+Antworte nur mit JSON: {"hallo":"…","themen":["…"],"tag":"…","p":[{"i":1,"text":"…"}],"schluss":"…"}`,{modelTier:'default',bg:true});
   const p={}; (r&&Array.isArray(r.p)?r.p:[]).forEach(e=>{ const x=xs[(+e.i||0)-1], s=String(e.text||'').trim(); if(x&&s) p[x.id]=s.slice(0,1400); });
-  if(!Object.keys(p).length) return null;
-  return {hallo:String(r.hallo||'').slice(0,300),themen:(Array.isArray(r.themen)?r.themen:[]).map(s=>String(s).slice(0,240)).slice(0,3),p,schluss:String(r.schluss||'').slice(0,400)}; }
+  if(!Object.keys(p).length&&!String(r&&r.tag||'').trim()) return null;
+  return {hallo:String(r.hallo||'').slice(0,300),themen:(Array.isArray(r.themen)?r.themen:[]).map(s=>String(s).slice(0,240)).slice(0,3),tag:String(r.tag||'').slice(0,1400),p,schluss:String(r.schluss||'').slice(0,400)}; }
 // Das Briefing von heute ist noch ohne Hörfassung (z. B. vor dem Update erstellt): einmal nachholen
 var BRIEF_FUNK_RUN=null;
 function briefFunkEnsure(){ if(!SAMPLE||!BRIEF||BRIEF.d!==TODAY()||!BRIEF.data||BRIEF.data.funk||!(BRIEF.data.p||[]).length) return Promise.resolve(); if(BRIEF_FUNK_RUN) return BRIEF_FUNK_RUN; const b=BRIEF;
@@ -2788,19 +2834,24 @@ function briefHtml(b){ if(!b) return `<div class="brief-wait">☀️ Dein Briefi
   const d=b.data||{}, AMP={gruen:['🟢','läuft'],gelb:['🟡','beobachten'],rot:['🔴','dringend']};
   const card=x=>{ const p=S.projects[x.id]; if(!p) return ''; const pp=pipe(p);
     return `<div class="brief-p a-${x.ampel}"><div class="brief-ph"><span title="${AMP[x.ampel][1]}">${AMP[x.ampel][0]}</span><b>${esc(p.name)}</b><span class="small muted">${esc([CATS[catOf(p)],p.customer,p.place].filter(Boolean).join(' · '))}</span><span class="brief-pct" title="Fortschritt laut Statusschritten"><i style="width:${pp.pct}%"></i></span><span class="mono small">${pp.pct} %</span></div>
-      <div class="brief-st">${esc(x.stand)}</div>${x.tun.length?`<div class="brief-h">Was jetzt zu tun ist</div><ul>${x.tun.map(s=>`<li>${esc(s)}</li>`).join('')}</ul>`:''}
+      <div class="brief-st">${esc(x.stand)}</div>${x.tun.length?`<div class="brief-h">Was jetzt zu tun ist</div><ul>${x.tun.map(s=>`<li${briefTunMine(s)?' class="brief-mine"':''}>${esc(s)}</li>`).join('')}</ul>`:''}
+      ${(()=>{ const my=arr('tasks').filter(t=>t.pid===p.id&&!t.done&&taskHas(t,ME)).sort(byDue); return my.length?`<div class="brief-my"><div class="brief-h">⭐ Deine To-dos hier</div><ul>${my.slice(0,8).map(t=>`<li${t.due&&t.due<TODAY()?' class="overdue"':''}><button type="button" class="lnk" data-act="editTask" data-id="${esc(t.id)}">${esc(t.title)}</button>${t.due?` <span class="small muted">· ${t.due<TODAY()?'überfällig seit ':'fällig '}${esc(fmtD(t.due))}</span>`:''}</li>`).join('')}</ul></div>`:''; })()}
       <button type="button" class="lnk small" data-act="openAt" data-id="${esc(p.id)}" data-at="todos">Projekt öffnen ↗</button></div>`; };
   const grp=c=>d.p.filter(x=>S.projects[x.id]&&catOf(S.projects[x.id])===c).sort((a,b)=>({rot:0,gelb:1,gruen:2}[a.ampel]-{rot:0,gelb:1,gruen:2}[b.ampel]));
   const cnt=a=>['rot','gelb','gruen'].map(k=>{ const n=d.p.filter(x=>x.ampel===k).length; return n?AMP[k][0]+' '+n+' '+AMP[k][1]:''; }).filter(Boolean).join(' · ');
   return `<div class="brief">${d.gruss?`<div class="brief-hi">${esc(d.gruss)}</div>`:''}<div class="small muted">${esc(cnt())} · erstellt ${esc(new Date(b.at).toLocaleString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}))}</div>
     ${d.top&&d.top.length?`<div class="brief-top"><div class="brief-h">Heute am wichtigsten</div><ol>${d.top.map(s=>`<li>${esc(s)}</li>`).join('')}</ol></div>`:''}
+    ${d.mine?(()=>{ const m=d.mine, dd=x=>(m.day&&m.day[x.d])||fmtD(x.d), li=(x,pre)=>`<li${x.late?' class="overdue"':''}>${pre?`<b>${esc(pre)}</b> `:''}${esc(x.txt)}${x.proj?` <span class="small muted">· ${esc(x.proj)}</span>`:''}</li>`;
+      const rows=[...m.einsatz.map(x=>li(x,'Einsatz '+dd(x)+':')),...m.termine.map(x=>li(x,'Termin '+dd(x)+':')),...m.aufgaben.map(x=>li(x,x.late?'Überfällig:':'Fällig '+dd(x)+':')),...m.lief.map(x=>li(x,dd(x)+':'))];
+      return `<div class="brief-top brief-me"><div class="brief-h">Dein Tag</div>${rows.length?`<ul>${rows.join('')}</ul>`:'<div class="small muted">Für heute und morgen ist für dich nichts Persönliches eingetragen.</div>'}${m.ohne?`<div class="small muted">Dazu ${m.ohne} eigene offene Aufgabe(n) ohne Frist.</div>`:''}</div>`; })():''}
+    ${d.mine&&!d.all&&!(d.p||[]).length?'<div class="small muted">Keine eigenen laufenden oder geplanten Projekte.</div>':''}
     ${[['laufend','Laufende Projekte'],['planung','In Planung']].map(([c,l])=>{ const xs=grp(c); return xs.length?`<h3 class="brief-g">${l} <span class="cnt-b">${xs.length}</span></h3>${xs.map(card).join('')}`:''; }).join('')}
     <div class="small muted" style="margin-top:10px">Automatisch von der KI aus Status, Notizen, To-Dos und Updates zusammengefasst – bitte im Zweifel im Projekt nachsehen.</div></div>`; }
 function briefSave(b){ BRIEF=b; lsSet(briefKey(),JSON.stringify(b)); if(MODE==='cloud'&&DB) try{ DB.collection('brief').doc(meK()).set(b).catch(()=>{}); }catch(e){} }
 async function briefLoad(){ let b=null; try{ b=JSON.parse(lsGet(briefKey())||'null'); }catch(e){}
   if(MODE==='cloud'&&DB) try{ const s=await DB.collection('brief').doc(meK()).get(); const r=s&&s.exists?s.data():null; if(r&&(!b||String(r.at||'')>=String(b.at||''))) b=r; }catch(e){}
   return b; }
-function briefShow(fresh){ if(!ME) return; if(!SAMPLE&&(fresh||!BRIEF||BRIEF.d!==TODAY())) return toast('Das Briefing braucht die KI – geht nur in der veröffentlichten App.');
+function briefShow(fresh){ if(!ME||!briefAllowed()) return; if(!SAMPLE&&(fresh||!BRIEF||BRIEF.d!==TODAY())) return toast('Das Briefing braucht die KI – geht nur in der veröffentlichten App.');
   const regen=()=>{ if(BRIEF_RUN) return; BRIEF_RUN=true; const box=()=>$('#briefBox'); if(box()) box().innerHTML=briefHtml(null);
     briefMake().then(b=>{ b.seen=true; briefSave(b); if(box()) box().innerHTML=briefHtml(b); }).catch(e=>{ if(box()) box().innerHTML=`<div class="empty">Briefing konnte nicht erstellt werden: ${esc(e&&e.message||e)}</div>`; }).finally(()=>{ BRIEF_RUN=false; }); };
   const ok=BRIEF&&BRIEF.d===TODAY()&&!fresh;
@@ -2817,6 +2868,9 @@ function briefScript(b){ const d=(b&&b.data)||{}, f=d.funk||null, out=[], first=
   const datum=new Date().toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});
   out.push({title:'Begrüßung',gong:1,text:(f&&f.hallo)||('Guten Morgen'+(first?', '+first:'')+'. Heute ist '+datum+'.')+(!f&&d.gruss?' '+d.gruss:'')});
   const th=(f&&f.themen&&f.themen.length?f.themen:d.top)||[]; if(th.length) out.push({title:'Die Themen heute',text:'Die Themen heute. '+th.join(' ')});
+  if(f&&f.tag) out.push({title:'Dein Tag',gong:1,text:f.tag});
+  else if(d.mine){ const m=d.mine, dd=x=>(m.day&&m.day[x.d])||fmtD(x.d), s=[...m.einsatz.map(x=>dd(x)+' bist du eingeteilt: '+x.txt+(x.proj?' bei '+x.proj:'')+'.'),...m.termine.map(x=>dd(x)+' hast du den Termin '+x.txt+'.'),...m.aufgaben.map(x=>(x.late?'Überfällig: ':'Fällig '+dd(x)+': ')+x.txt+'.')];
+    out.push({title:'Dein Tag',gong:1,text:s.length?'Dein Tag. '+s.join(' '):'Für heute und morgen ist für dich nichts Persönliches eingetragen.'}); }
   const xs=briefOrder(d.p); let cat='';
   xs.forEach(x=>{ const p=S.projects[x.id], c=catOf(p); if(c!==cat){ cat=c; out.push({title:c==='laufend'?'Laufende Projekte':'Projekte in Planung',gong:1,text:c==='laufend'?'Zuerst die laufenden Projekte.':'Und nun zu den Projekten in Planung.',lead:1}); }
     const s=f&&f.p&&f.p[x.id]; out.push({title:p.name,text:s||(p.name+'. '+(AMP[x.ampel]||'')+' '+(x.stand||'')+(x.tun&&x.tun.length?' Als Nächstes: '+x.tun.join('. ')+'.':''))}); });
@@ -3099,7 +3153,7 @@ function dupClean(){ if(!isAdmin()) return toast('Nur für Admins.'); const r=du
       if(ck('dc_u')) r.up.forEach(x=>{ const t=clone(S.tasks[x.t.id]); if(!t) return; const seen=[]; t.upd2=(t.upd2||[]).filter(u=>{ const b=dupBody(u.t); if(b&&seen.some(s=>s.b===b&&(b.length>=15||s.d===(u.d||'')))){ a++; return false; } seen.push({b,d:u.d||''}); return true; }); t._dupOk=1; put('tasks',t); });
       if(ck('dc_n')) r.nt.forEach(x=>{ const p=clone(S.projects[x.p.id]); if(!p) return; const have=new Set(); p[x.k]=noteBlocks(p[x.k]).filter(b=>{ const d=dupBody(b); if(d&&d.length>=8&&have.has(d)){ a++; return false; } if(d) have.add(d); return true; }).join('\n'); p._dupOk=1; put('projects',p); });
       toast(a+' Doppelte entfernt.'); }}); }
-queueMicrotask(()=>Object.assign(A,{ dupClean:()=>dupClean(), briefShow:()=>briefShow(), briefSpeak:()=>briefSpeak(), briefStop:()=>briefStop(), briefRegen:()=>{ if(BRIEF_REGEN) BRIEF_REGEN(); },briefToggle:()=>{ const me=meK(), cur=[...(((S.config||{}).briefWho)||['EP'])], on=cur.includes(me); putConfig({...(S.config||{}),briefWho:on?cur.filter(k=>k!==me):[...cur,me]}); toast(on?'Morgen-Briefing ausgeschaltet.':'Morgen-Briefing eingeschaltet – ab morgen früh beim ersten Öffnen.'); closeSheet(); setTimeout(meProfile,50); } }));
+queueMicrotask(()=>Object.assign(A,{ dupClean:()=>dupClean(), briefShow:()=>briefShow(), briefSpeak:()=>briefSpeak(), briefStop:()=>briefStop(), briefRegen:()=>{ if(BRIEF_REGEN) BRIEF_REGEN(); },briefToggle:()=>{ const me=meK(), cur=[...(((S.config||{}).briefOff)||[])], on=!cur.includes(me); putConfig({...(S.config||{}),briefOff:on?[...cur,me]:cur.filter(k=>k!==me)}); toast(on?'Morgen-Briefing ausgeschaltet.':'Morgen-Briefing eingeschaltet – ab morgen früh beim ersten Öffnen.'); closeSheet(); setTimeout(meProfile,50); } }));
 /* ---------- Mein Profil (unten in der Seitenleiste): Kürzel-Farbe, Passwort, Person wechseln ---------- */
 const K_COLS=['#F4DB02','#FFB74D','#FF8A65','#E57373','#F06292','#BA68C8','#9575CD','#7986CB','#64B5F6','#4FC3F7','#4DD0E1','#4DB6AC','#81C784','#AED581','#DCE775','#A1887F','#90A4AE','#1E1E1E'];
 const kCols=()=>((S.config||{}).kColors||{});
@@ -3118,7 +3172,7 @@ function meProfile(){ if(!ME){ askMe(true); return; } const k=meK(), cur=kCols()
   openSheet({title:'Mein Profil',html:`<div class="fld full"><div class="me-prof"><span class="who-chip me-big" id="me_prev" style="${cur?`background:${cur};color:${inkOn(cur)}`:''}">${esc(k)}</span><div><b>${esc(ME.replace(/\s*\([^)]*\)$/,''))}</b>${USER_EMAIL?`<div class="small muted">${esc(USER_EMAIL)}</div>`:''}</div></div>
     <label>Farbe für mein Kürzel <span class="small muted">(sehen alle im Team)</span></label><div class="me-cols">${K_COLS.map(h=>`<button type="button" class="me-col ${h===cur?'on':''}" style="background:${h}" data-act="meCol" data-v="${h}" aria-label="Farbe ${h}"></button>`).join('')}<input type="color" id="me_colc" value="${cur||'#F4DB02'}" title="Eigene Farbe" aria-label="Eigene Farbe"><button type="button" class="lnk" data-act="meCol" data-v="">Standard</button></div>
     ${window.SB_SETPW?`<label>Passwort ändern</label><div class="sl-2"><input class="inp" type="password" id="me_pw1" autocomplete="new-password" placeholder="Neues Passwort (mind. 8 Zeichen)"><input class="inp" type="password" id="me_pw2" autocomplete="new-password" placeholder="Wiederholen"></div><button type="button" class="btn sm" data-act="mePw" style="margin-top:6px">Passwort speichern</button><div class="small" id="me_pwmsg" role="status"></div>`:''}
-    <label style="margin-top:14px">☀️ Morgen-Briefing</label><div class="row" style="gap:6px;align-items:center"><button type="button" class="btn sm" data-act="briefShow">Briefing öffnen</button><button type="button" class="btn ghost sm" data-act="briefToggle">${briefOn()?'Jeden Morgen automatisch: an – ausschalten':'Jeden Morgen automatisch zeigen'}</button></div><div class="small muted">Einmal am Tag beim ersten Öffnen: alle laufenden und geplanten Projekte in einfacher Sprache – Stand, was zu tun ist, wer dran ist.</div>
+    ${briefAllowed()?`<label style="margin-top:14px">☀️ Morgen-Briefing</label><div class="row" style="gap:6px;align-items:center"><button type="button" class="btn sm" data-act="briefShow">Briefing öffnen</button><button type="button" class="btn ghost sm" data-act="briefToggle">${briefOn()?'Jeden Morgen automatisch: an – ausschalten':'Jeden Morgen automatisch zeigen'}</button></div><div class="small muted">Einmal am Tag beim ersten Öffnen, auch zum Anhören: ${briefAll()?'alle laufenden und geplanten Projekte – Stand, was zu tun ist, wer dran ist – plus dein eigener Tag':'dein Tag (Einsätze, Termine, eigene Aufgaben, Lieferungen) und deine Projekte'}.</div>`:''}
     <div class="row" style="margin-top:14px"><button type="button" class="btn ghost sm" data-act="sinceShow">Was ist neu seit meinem letzten Besuch?</button>${isAdmin()?'<button type="button" class="btn ghost sm" data-act="dupClean">🧹 Doppelte To-Dos/Updates aufräumen</button>':''}<button type="button" class="btn ghost sm" data-act="askMe">Andere Person / Kürzel wählen</button></div></div>`,saveLabel:'Schließen',onSave:()=>{}});
   const cc=$('#me_colc'); if(cc) cc.addEventListener('change',()=>A.meCol({v:cc.value})); }
 queueMicrotask(()=>Object.assign(A,{ meProfile:()=>meProfile(), sinceShow:()=>{ closeSheet(); sinceShow(true,SINCE_FROM||seenGet()); }, /* A wird weiter unten angelegt */
@@ -3333,7 +3387,7 @@ function dashHero(t){
   const mine=ME?arr('tasks').filter(x=>!x.done&&taskHas(x,ME)).length:0;
   return `<section class="hero hero-sm"><div class="hero-in">
     <div class="hero-t"><div class="hero-ey">${esc(fmtDL(t))}</div><h1>Guten Tag${first?', <span>'+esc(first)+'</span>':''}.</h1>${ME?`<div class="hero-sub">Du hast <b>${mine}</b> offene Aufgabe${mine===1?'':'n'}.</div>`:''}</div>
-    <div class="hero-a"><button class="btn sun" data-act="newMenu">${ic('plus')}Neu</button>${ME&&mine?`<button class="btn ghost-l" data-act="myTasks">Meine Aufgaben</button>`:''}</div>
+    <div class="hero-a"><button class="btn sun" data-act="newMenu">${ic('plus')}Neu</button>${briefAllowed()?`<button class="btn ghost-l hero-brief" data-act="briefShow" title="Dein persönliches Morgen-Briefing lesen oder anhören">☀️ Morgen-Briefing</button>`:''}${ME&&mine?`<button class="btn ghost-l" data-act="myTasks">Meine Aufgaben</button>`:''}</div>
   </div></section>`;
 }
 // Noch zu bestellen: eigener Bedarf je Projekt + „zusätzlich benötigtes Material“ aus Tagesrapporten
