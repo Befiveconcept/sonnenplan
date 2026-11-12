@@ -6480,16 +6480,73 @@ function l3Room(root,q){ L3_FRONT=true; const W={links:0,hinten:1,rechts:2}, rac
   items.push({k:-99,b:[0,0,0,X,3.2,0],svg:`<polygon class="l3-floor" points="${l3pts([[0,0,0],[X,0,0],[X,3.2,0],[0,3.2,0]])}"/>`});
   items.push(l3Box(0,-.2,0,X,.2,H,'l3-wall brick'));
   return l3Svg(items,lab); }
+/* Vorlagen je Bereich (aus den Fotos geschätzt). Werden leer angezeigt, solange nichts angelegt ist – gespeichert wird erst mit „Struktur anlegen“. */
+const L3_TPL0={
+  hrl:{kind:'regal',racks:[{wall:'',k:'hochregal',name:'Hochregal links',seg:'R01',f:8,e:3,p:2,lt:'palette'}]},
+  hrr:{kind:'regal',racks:[{wall:'',k:'hochregal',name:'Hochregal rechts',seg:'R02',f:5,e:3,p:2,lt:'palette'}]},
+  klein:{kind:'bereich',name:'Kleinteilelager',seg:'KT',st:'raum',racks:[{wall:'links',k:'regal',name:'Wandregal',seg:'R01',f:3,e:4,p:3,lt:'fach'},{wall:'hinten',k:'schrank',name:'Schrank',seg:'S01',f:0,e:6,p:2,lt:'klein'},{wall:'rechts',k:'schrank',name:'Schrank',seg:'S02',f:0,e:5,p:2,lt:'klein'},{wall:'rechts',k:'schrank',name:'Schrank',seg:'S03',f:0,e:5,p:2,lt:'klein'}]},
+  werkzeug:{kind:'bereich',name:'Werkzeug-Raum',seg:'WZ',st:'raum',racks:[{wall:'links',k:'regal',name:'Steckregal',seg:'R01',f:0,e:4,p:1,lt:'fach'},{wall:'links',k:'regal',name:'Steckregal',seg:'R02',f:0,e:4,p:1,lt:'fach'},{wall:'hinten',k:'regal',name:'Fachregal grau',seg:'R03',f:0,e:5,p:2,lt:'fach'},{wall:'hinten',k:'schrank',name:'Schrank blau',seg:'S01',f:0,e:5,p:1,lt:'fach'},{wall:'hinten',k:'schrank',name:'Schrank blau',seg:'S02',f:0,e:5,p:1,lt:'fach'},{wall:'hinten',k:'schrank',name:'Schrank blau',seg:'S03',f:0,e:5,p:1,lt:'fach'},{wall:'hinten',k:'schrank',name:'Schrank blau',seg:'S04',f:0,e:5,p:1,lt:'fach'},{wall:'rechts',k:'regal',name:'Regalschrank',seg:'R04',f:0,e:4,p:2,lt:'fach'}]},
+  keller:{kind:'bereich',name:'Keller',seg:'KE',st:'keller',l:6,r:6,p:4,lt:'boden'}};
+const l3Tpl=k=>clone((UI.l3Tpl||{})[k]||L3_TPL0[k]);
+function l3Build(key,t,parent,idf){ const out=[]; let n=0; const pad=(i,m)=>String(i).padStart(m>99?3:2,'0');
+  const mk=(kind,par,name,seg,extra)=>{ const x=lgCleanNode({id:idf(n++),parent:par,kind,name:name||'',seg:seg||'',...(extra||{})}); out.push(x); return x; };
+  const rack=(r,par)=>{ const st=['hochregal','schrank','regal'].includes(r.k)?r.k:'regal', R=mk('regal',par,r.name,r.seg,{stype:st,...(r.wall?{wall:r.wall}:{})}), f=Math.max(0,+r.f||0), e=Math.max(1,+r.e||1), p=Math.max(1,+r.p||1);
+    const F=f>0?Array.from({length:f},(_,i)=>mk('feld',R.id,'','F'+pad(i+1,f),{stype:'feld'})):[R];
+    F.forEach(fd=>{ for(let i=1;i<=e;i++){ const E=mk('ebene',fd.id,'','E'+pad(i,e),{stype:st==='schrank'?'boden':'ebene'}); for(let j=1;j<=p;j++) mk('platz',E.id,'','P'+pad(j,p),{ltype:LG_TYPES[r.lt]?r.lt:'fach'}); } }); return R; };
+  let root;
+  if(t.kind==='regal') root=rack(t.racks[0],parent);
+  else { root=mk('bereich',parent,t.name,t.seg,{stype:t.st});
+    if(key==='keller') [['L',+t.l||0,'links'],['R',+t.r||0,'rechts']].forEach(([s,c,w])=>{ for(let i=1;i<=c;i++){ const Z=mk('regal',root.id,'Nische '+w+' '+i,s+pad(i,c),{stype:'palzone',side:s}); for(let j=1;j<=(+t.p||1);j++) mk('platz',Z.id,'','P'+pad(j,+t.p||1),{ltype:LG_TYPES[t.lt]?t.lt:'boden'}); } });
+    else (t.racks||[]).forEach(r=>rack(r,root.id)); }
+  root.v3d=key; return {out,root}; }
+// Vorlage zeichnen: Knoten nur für die Dauer des Zeichnens einblenden, danach wieder weg
+function l3Virtual(key){ const t=l3Tpl(key), {out,root}=l3Build(key,t,'',i=>'v3_'+key+'_'+i), orig=S.lager; S.lager={...(orig||{})}; out.forEach(x=>{ S.lager[x.id]=x; });
+  try{ return key==='keller'?l3Keller(root,''):t.kind==='regal'?l3Regal(root,''):l3Room(root,''); } finally{ S.lager=orig; } }
+// Vorlage anpassen und (auf Wunsch) als echte Lagerplätze anlegen
+function l3TplSheet(key){ const t=l3Tpl(key), A0=L3_AREAS.find(a=>a[0]===key), mg=lgMgr(), hosts=lgAll().filter(n=>t.kind==='regal'?(n.kind==='standort'||n.kind==='bereich'):n.kind==='standort').sort((a,b)=>lgPlain(a.id).localeCompare(lgPlain(b.id),'de'));
+  const num=(id,l,v,mx)=>`<div class="fld"><label for="${id}">${l}</label><input id="${id}" class="inp" type="number" min="0" max="${mx||99}" value="${esc(v)}"></div>`;
+  const lt=(id,v)=>`<select id="${id}" class="inp">${Object.entries(LG_TYPES).map(([k,l])=>`<option value="${k}" ${k===v?'selected':''}>${esc(l)}</option>`).join('')}</select>`;
+  const row=(r,i)=>`<tr data-r="${i}"><td><select class="inp tr-w">${['','links','hinten','rechts'].map(w=>`<option value="${w}" ${(r.wall||'')===w?'selected':''}>${w||'–'}</option>`).join('')}</select></td><td><select class="inp tr-k">${[['regal','Regal'],['schrank','Schrank'],['hochregal','Hochregal']].map(([k,l])=>`<option value="${k}" ${r.k===k?'selected':''}>${l}</option>`).join('')}</select></td><td><input class="inp tr-n" value="${esc(r.name||'')}"></td><td><input class="inp tr-s" value="${esc(r.seg||'')}" style="width:60px"></td><td><input class="inp tr-f" type="number" min="0" max="50" value="${+r.f||0}" style="width:56px"></td><td><input class="inp tr-e" type="number" min="1" max="30" value="${+r.e||1}" style="width:56px"></td><td><input class="inp tr-p" type="number" min="1" max="30" value="${+r.p||1}" style="width:56px"></td><td>${lt('',r.lt).replace('<select id=""','<select').replace('class="inp"','class="inp tr-t"')}</td><td><button type="button" class="icon-btn sm" data-act="l3TplRowDel" data-i="${i}" aria-label="Zeile entfernen">✕</button></td></tr>`;
+  const body=t.kind==='regal'?(()=>{ const r=t.racks[0]; return `<div class="fld"><label for="tp_n">Name</label><input id="tp_n" class="inp" value="${esc(r.name)}"></div><div class="fld"><label for="tp_s">Kürzel</label><input id="tp_s" class="inp" value="${esc(r.seg)}"></div>${num('tp_f','Felder (nebeneinander)',r.f,50)}${num('tp_e','Ebenen (inkl. Boden)',r.e,20)}${num('tp_p','Plätze je Ebene und Feld',r.p,20)}<div class="fld"><label for="tp_t">Platztyp</label>${lt('tp_t',r.lt)}</div>`; })()
+    :key==='keller'?`${num('tp_l','Nischen links',t.l,40)}${num('tp_r','Nischen rechts',t.r,40)}${num('tp_p','Bodenstellplätze je Nische',t.p,40)}<div class="fld"><label for="tp_t">Platztyp</label>${lt('tp_t',t.lt)}</div>`
+    :`<div class="fld"><label for="tp_bn">Name des Bereichs</label><input id="tp_bn" class="inp" value="${esc(t.name)}"></div><div class="fld"><label for="tp_bs">Kürzel</label><input id="tp_bs" class="inp" value="${esc(t.seg)}"></div>
+      <div class="fld full"><div class="tbl-wrap"><table class="tbl l3-tpl"><thead><tr><th>Wand</th><th>Art</th><th>Name</th><th>Kürzel</th><th>Felder</th><th>Ebenen/Böden</th><th>Plätze je Ebene</th><th>Platztyp</th><th></th></tr></thead><tbody>${(t.racks||[]).map(row).join('')}</tbody></table></div><button type="button" class="btn sm" data-act="l3TplRowAdd" style="margin-top:6px">+ Regal / Schrank</button></div>`;
+  const hostF=hosts.length?`<div class="fld full"><label for="tp_h">Anlegen unter</label><select id="tp_h" class="inp">${hosts.map(h=>`<option value="${esc(h.id)}">${esc(lgPlain(h.id))}</option>`).join('')}</select></div>`:`<div class="fld"><label for="tp_hn">Neuer Lagerstandort</label><input id="tp_hn" class="inp" value="Lager" placeholder="z. B. Bornheim"></div><div class="fld"><label for="tp_hs">Kürzel Standort</label><input id="tp_hs" class="inp" value="LG"></div>`;
+  openSheet({title:A0[1]+' – Vorlage anpassen',wide:1,html:`<div class="fld full small muted">Die Werte sind aus den Fotos geschätzt. „Ansicht aktualisieren“ zeigt die geänderte leere Skizze, ohne etwas zu speichern. „Struktur anlegen“ legt die Lagerplätze wirklich an (alles auf einmal); danach lässt sich alles weiter über den Assistenten und unter „Lagerorte & Plätze“ ändern.</div>${body}${mg?hostF:''}`,
+    saveLabel:mg?'Struktur anlegen':'Schließen',extraBtn:`<button type="button" class="btn" data-act="l3TplApply" data-v="${key}">Ansicht aktualisieren</button>`,
+    onSave:()=>{ if(!mg) return; const t2=l3TplRead(key); if(!t2) return false; return l3TplCreate(key,t2); }});
+  L3_TPL_EDIT={key,racks:clone(t.racks||[])}; }
+var L3_TPL_EDIT=null;
+function l3TplRead(key){ const t=l3Tpl(key), v=id=>($('#'+id)||{}).value, n=(id,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(+v(id)||0)));
+  if(t.kind==='regal'){ const r=t.racks[0]; Object.assign(r,{name:String(v('tp_n')||'').trim()||r.name,seg:String(v('tp_s')||'').trim().replace(/\s+/g,'')||r.seg,f:n('tp_f',0,50),e:n('tp_e',1,20),p:n('tp_p',1,20),lt:v('tp_t')||r.lt}); }
+  else if(key==='keller') Object.assign(t,{l:n('tp_l',0,40),r:n('tp_r',0,40),p:n('tp_p',1,40),lt:v('tp_t')||t.lt});
+  else { t.name=String(v('tp_bn')||'').trim()||t.name; t.seg=String(v('tp_bs')||'').trim().replace(/\s+/g,'')||t.seg;
+    t.racks=[...document.querySelectorAll('.l3-tpl tbody tr')].map(tr=>({wall:tr.querySelector('.tr-w').value,k:tr.querySelector('.tr-k').value,name:tr.querySelector('.tr-n').value.trim(),seg:tr.querySelector('.tr-s').value.trim().replace(/\s+/g,''),f:+tr.querySelector('.tr-f').value||0,e:Math.max(1,+tr.querySelector('.tr-e').value||1),p:Math.max(1,+tr.querySelector('.tr-p').value||1),lt:tr.querySelector('.tr-t').value})).filter(r=>r.seg);
+    const segs=t.racks.map(r=>r.seg.toLowerCase()); if(new Set(segs).size!==segs.length){ toast('Jedes Regal/jeder Schrank braucht ein eigenes Kürzel.'); return null; } }
+  const okSeg=s=>/^[0-9A-Za-zÄÖÜäöü]+$/.test(s); if(![t.seg,...(t.racks||[]).map(r=>r.seg)].filter(Boolean).every(okSeg)){ toast('Kürzel bitte nur aus Buchstaben und Ziffern.'); return null; }
+  return t; }
+function l3TplCreate(key,t){ if(!lgMgr()) return false; const pre=[], now=new Date().toISOString(); let host=($('#tp_h')||{}).value||'';
+  if(!host){ const hn=String(($('#tp_hn')||{}).value||'').trim(), hs=String(($('#tp_hs')||{}).value||'').trim().replace(/\s+/g,''); if(!hn||!/^[0-9A-Za-zÄÖÜäöü]+$/.test(hs)){ toast('Bitte Name und Kürzel des Standorts angeben.'); return false; }
+    const H=lgCleanNode({id:uid()+'h',parent:'',kind:'standort',name:hn,seg:hs}); pre.push(H); host=H.id; }
+  const rootSeg=t.kind==='regal'?t.racks[0].seg:t.seg, rootKind=t.kind==='regal'?'regal':'bereich';
+  if(lgKids(host).some(x=>x.kind===rootKind&&String(x.seg||'').toLowerCase()===String(rootSeg).toLowerCase())){ toast('„'+rootSeg+'“ gibt es dort schon. Bitte ein anderes Kürzel – oder das vorhandene unten verknüpfen.'); return false; }
+  let s=0; const {out,root}=l3Build(key,t,host,()=>uid()+(s++).toString(36)); const all=[...pre,...out]; all.forEach(x=>{ x.by=meK(); x.at=now; });
+  const M={...(S.lager||{})}; all.forEach(x=>M[x.id]=x); const dup=lgDupBin(M); if(dup){ toast('Der Lagerplatzcode „'+dup+'“ gäbe es doppelt.'); return false; }
+  const old=lgAll().filter(n=>n.v3d===key).map(n=>{ const x={...n}; delete x.v3d; return x; });
+  const bins=out.filter(x=>x.kind==='platz').length;
+  lgWriteMany([...all,...old]).then(ok=>{ if(ok){ if(UI.l3Tpl) delete UI.l3Tpl[key]; toast(bins+' Lagerplätze angelegt – alle leer.'); render(); } }); }
 function vLg3d(sw){ const sel=L3_AREAS.find(a=>a[0]===UI.l3Area)?UI.l3Area:'keller', q=String(UI.l3q||'').trim().toLowerCase(), mg=lgMgr();
   const tiles=`<div class="l3-tiles">${L3_AREAS.map(([k,l])=>{ const n=l3Node(k), bins=n?lgSub(n.id).filter(lgIsBin):[], full=bins.filter(b=>binStock(b.id).length).length;
-    return `<button type="button" class="l3-tile ${k===sel?'on':''}" data-act="l3Area" data-v="${k}"><b>${esc(l)}</b><span class="small muted">${n?bins.length+' Plätze · '+full+' belegt':'noch nicht eingerichtet'}</span></button>`; }).join('')}</div>`;
+    return `<button type="button" class="l3-tile ${k===sel?'on':''}" data-act="l3Area" data-v="${k}"><b>${esc(l)}</b><span class="small muted">${n?bins.length+' Plätze · '+full+' belegt':'Vorlage (leer, noch nicht angelegt)'}</span></button>`; }).join('')}</div>`;
   const A=L3_AREAS.find(a=>a[0]===sel), node=l3Node(sel);
   let body;
   if(!node){ const cand=lgAll().filter(n=>A[2]==='regal'?n.kind==='regal':(n.kind==='bereich'||n.kind==='standort')).sort((a,b)=>lgPlain(a.id).localeCompare(lgPlain(b.id),'de'));
-    body=`<div class="card"><div class="lg-empty"><b>${esc(A[1])} ist noch nicht eingerichtet.</b>
-      <div class="small muted">${sel==='keller'?'Der Keller wird als Halle mit Mittelgang gezeichnet: links und rechts Nischen mit Bodenstellplätzen. Lege die Nischen und Stellplätze mit dem Assistenten an – oder verknüpfe einen vorhandenen Bereich.':A[2]==='regal'?'Das Hochregal wird aus seinen Lagerplätzen gezeichnet (Felder × Ebenen × Plätze). Lege es unter „Lagerorte & Plätze“ mit dem Assistenten an – oder verknüpfe ein vorhandenes Regal.':'Der Raum wird aus seinen Regalen und Schränken gezeichnet (Wand links, hinten, rechts). Verknüpfe den Bereich unter „Lagerorte & Plätze“ – Regale und Schränke legst du danach hier mit dem Assistenten an.'}</div>
-      ${mg?`<div class="row" style="gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px">${sel==='keller'?`<button class="btn sun" data-act="l3KellerWiz">Keller-Stellplätze anlegen</button>`:A[2]==='regal'?`<button class="btn sun" data-act="lgWiz">Regal mit Assistent anlegen</button>`:''}
-        ${cand.length?`<select class="inp" id="l3_link" style="max-width:320px"><option value="">– vorhandenes ${A[2]==='regal'?'Regal':'Bereich'} wählen –</option>${cand.map(n=>`<option value="${esc(n.id)}">${esc(lgPlain(n.id))}</option>`).join('')}</select><button class="btn" data-act="l3Link" data-v="${sel}">Verknüpfen</button>`:''}</div>`:'<div class="small muted" style="margin-top:8px">Einrichten dürfen Admins und alle mit „Lagerverwaltung – Bearbeiten“.</div>'}</div></div>`; }
+    // Noch nichts angelegt: leere Vorlage nach den Fotos zeigen (nur Ansicht, nichts gespeichert)
+    body=`<div class="card l3-card"><div class="card-h"><h3>${esc(A[1])} <span class="pill">Vorlage – noch nicht angelegt</span></h3><span class="row" style="gap:6px">
+        <button class="btn sm" data-act="l3TplOpen" data-v="${sel}">${mg?'Vorlage anpassen':'Werte ansehen'}</button>${mg?`<button class="btn sun sm" data-act="l3TplOpen" data-v="${sel}">Struktur anlegen</button>`:''}</span></div>
+      <div class="small muted" style="padding:0 16px 8px">Leere Ansicht nach den Fotos. Mit „Struktur anlegen“ werden daraus echte, leere Lagerplätze, die ihr dann nach und nach befüllt. Später lässt sich alles über den Assistenten und unter „Lagerorte & Plätze“ ändern.</div>
+      <div class="l3-wrap l3-virt">${l3Virtual(sel)}</div>
+      ${mg&&cand.length?`<div class="row small" style="gap:8px;flex-wrap:wrap;padding:0 16px 14px"><span class="muted">Schon angelegt?</span><select class="inp" id="l3_link" style="max-width:320px"><option value="">– vorhandenes ${A[2]==='regal'?'Regal':'Bereich'} wählen –</option>${cand.map(n=>`<option value="${esc(n.id)}">${esc(lgPlain(n.id))}</option>`).join('')}</select><button class="btn sm" data-act="l3Link" data-v="${sel}">Verknüpfen</button></div>`:''}</div>`; }
   else { const bins=lgSub(node.id).filter(lgIsBin);
     const room=sel==='klein'||sel==='werkzeug', racks=room?lgKids(node.id).filter(n=>n.kind==='regal'):[];
     const svg=!bins.length?`<div class="empty">Hier sind noch keine Lagerplätze angelegt.${mg&&node.kind!=='regal'?`<div style="margin-top:8px"><button class="btn sun sm" data-act="lgWiz" data-parent="${esc(node.id)}">Regal / Schrank mit Assistent anlegen</button></div>`:''}</div>`:node.kind==='regal'?l3Regal(node,q):sel==='keller'?l3Keller(node,q):l3Room(node,q);
@@ -6521,7 +6578,11 @@ function l3KellerWiz(){ if(!lgMgr()) return toast('Einrichten dürfen Admins und
         onSave:()=>{ lgWriteMany(out).then(ok=>{ if(ok){ UI.l3Area='keller'; toast(bins+' Bodenstellplätze im Keller angelegt.'); render(); } }); }}),60); }}); }
 queueMicrotask(()=>{ Object.assign(A,{
   l3Area:d=>{ UI.l3Area=d.v; render(); },
-  lg3dBin:d=>lgBinSheet(d.id),
+  lg3dBin:d=>{ const m=String(d.id||'').match(/^v3_([a-z]+)_/); if(m){ if(lgMgr()) return l3TplSheet(m[1]); return toast('Dieser Bereich ist noch eine Vorlage – EP/AvE bzw. die Lagerverwaltung legt die Plätze an.'); } lgBinSheet(d.id); },
+  l3TplOpen:d=>l3TplSheet(d.v),
+  l3TplApply:d=>{ const t=l3TplRead(d.v); if(!t) return; UI.l3Tpl={...(UI.l3Tpl||{}),[d.v]:t}; closeSheet(); render(); toast('Ansicht aktualisiert (noch nichts gespeichert).'); },
+  l3TplRowAdd:()=>{ const k=L3_TPL_EDIT&&L3_TPL_EDIT.key; if(!k) return; const t=l3TplRead(k); if(!t) return; const used=new Set((t.racks||[]).map(r=>String(r.seg).toUpperCase())); let n=1; while(used.has('R'+String(n).padStart(2,'0'))) n++; t.racks.push({wall:'hinten',k:'regal',name:'Regal',seg:'R'+String(n).padStart(2,'0'),f:0,e:4,p:2,lt:'fach'}); UI.l3Tpl={...(UI.l3Tpl||{}),[k]:t}; closeSheet(); l3TplSheet(k); },
+  l3TplRowDel:d=>{ const k=L3_TPL_EDIT&&L3_TPL_EDIT.key; if(!k) return; const t=l3TplRead(k); if(!t) return; t.racks.splice(+d.i,1); UI.l3Tpl={...(UI.l3Tpl||{}),[k]:t}; closeSheet(); l3TplSheet(k); },
   l3KellerWiz:()=>l3KellerWiz(),
   l3Link:d=>{ if(!lgMgr()) return; const id=($('#l3_link')||{}).value; if(!id) return toast('Bitte auswählen.'); const old=lgAll().filter(n=>n.v3d===d.v&&n.id!==id).map(n=>{ const x={...n}; delete x.v3d; return x; }); const n={...lgNode(id),v3d:d.v};
     lgWriteMany([...old,n]).then(ok=>{ if(ok) toast('Verknüpft.'); }); },
