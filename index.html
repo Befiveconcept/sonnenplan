@@ -20,6 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <!-- Schriften NICHT blockierend laden: Ein Stylesheet vor den Skripten hält sonst den ganzen App-Start an, solange Google Fonts nicht antwortet -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'">
+<script>/* Design: Hell (Standard, wie bisher) oder Dunkel (Effekt-Look) – per Schieberegler auf der Startseite, je Gerät gemerkt */try{document.documentElement.setAttribute('data-theme',['dark','future'].includes(localStorage.getItem('sonnenplan-theme'))?localStorage.getItem('sonnenplan-theme'):'light');}catch(e){document.documentElement.setAttribute('data-theme','light');}</script>
 <style>
 /* Layout: schwarze Seitenleiste (Desktop) bzw. Tab-Leiste unten (Handy); Gestaltung nach nutz-die-sonne.de: Schwarz + Sonnengelb, Work Sans + Inter */
 :root{
@@ -257,7 +258,7 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .pcard:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(0,0,0,.10);border-color:var(--cc,var(--muted))}
 .c-laufend{--cc:var(--sun)} .c-planung{--cc:#1A1A1A} .c-onhold{--cc:var(--warn)} .c-erledigt{--cc:var(--ok)} .c-abgesagt{--cc:var(--bad)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .c-planung{--cc:#BDBDBD}}
-:root[data-theme="dark"] .c-planung{--cc:#BDBDBD}
+:root[data-theme="dark"] .c-planung,:root[data-theme="future"] .c-planung{--cc:#BDBDBD}
 .done-by{font-size:11.5px;color:var(--ok);background:var(--ok-soft);border-radius:999px;padding:0 8px}
 .done-by b{font-weight:700}
 .done-list{margin-top:6px;opacity:.85}
@@ -864,7 +865,13 @@ body.kiosk .app{display:block}body.kiosk .main{padding:0}body.kiosk .wrap{max-wi
 .pin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;padding:4px 16px 16px}
 .pin{position:relative;background:#FFF6B3;color:#1E1E1E;border-radius:4px 4px 14px 4px;padding:16px 14px 10px;box-shadow:0 2px 6px rgba(0,0,0,.12);transform:rotate(-.6deg);display:flex;flex-direction:column;gap:6px;min-width:0}
 .pin:nth-child(2n){transform:rotate(.7deg);background:#FFF0C2}.pin:nth-child(3n){transform:rotate(-.2deg);background:#FDF5D0}
-.pin.top{background:#FFE1DC;outline:2px solid #E53935;padding-top:26px}.pin-n{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:18px}
+.pin.top{background:#FFE1DC;outline:2px solid #E53935;padding-top:26px}
+.pin-hide{position:absolute;top:4px;right:4px;width:22px;height:22px;border:0;border-radius:50%;background:rgba(0,0,0,.06);color:#555;cursor:pointer;font-size:12px;line-height:22px;padding:0;opacity:.45}
+.pin:hover .pin-hide,.pin-hide:focus{opacity:1}
+.pin.old{background:#eeeeea!important;color:#666;filter:grayscale(.6);transform:none!important}
+.pin-oldl{position:absolute;top:6px;left:8px;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#777}
+.pin.old h3{margin-top:6px}
+.pin-oldbox{border-top:1px dashed var(--line);margin-top:8px;padding-top:4px}.pin-n{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:18px}
 .pin h3{margin:0;font-size:15px;line-height:1.3;overflow-wrap:anywhere}.pin-tx{font-size:13.5px;line-height:1.5;overflow-wrap:anywhere}.pin-tx a{color:#0B57D0}
 .pin-img{width:100%;max-height:180px;object-fit:cover;border-radius:6px}.pin-f{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:11.5px;opacity:.8;margin-top:auto;padding-top:4px}.pin-f .lnk{margin-left:auto;color:#1E1E1E}
 .pin-new,.pin-imp{position:absolute;top:6px;right:8px;font-size:10px;font-weight:700;letter-spacing:.05em;padding:1px 6px;border-radius:8px;background:#1E1E1E;color:#F4DB02}.pin-imp{right:auto;left:8px;background:#E53935;color:#fff}
@@ -1159,7 +1166,7 @@ body.kiosk .app{display:block}body.kiosk .main{padding:0}body.kiosk .wrap{max-wi
 .link-pill{background:var(--sunken,#eeede6);color:var(--ink);cursor:pointer}
 .proj-link{border:0;background:none;padding:0;font:inherit;font-size:inherit;color:#7a6200;font-weight:600;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(122,98,0,.35);text-underline-offset:2px}
 .proj-link:hover{color:var(--ink);text-decoration-color:var(--sun)}
-[data-theme=dark] .proj-link{color:var(--sun)}
+[data-theme=dark] .proj-link,[data-theme=future] .proj-link{color:var(--sun)}
 #tu_list{display:flex;flex-direction:column;gap:4px;max-height:220px;overflow:auto}
 .tu{font-size:13px;line-height:1.4;white-space:pre-wrap}
 .tu-new{display:grid;grid-template-columns:150px 110px minmax(0,1fr) auto;gap:6px}
@@ -1652,6 +1659,126 @@ button.link-ms:hover{color:var(--ink)}
 .cal .ev.cont{margin-left:-6px;border-left:0;border-top-left-radius:0;border-bottom-left-radius:0;padding-left:7px}
 .cal .ev.mspan{margin-right:-6px;border-top-right-radius:0;border-bottom-right-radius:0}
 .cal .dc .dn{height:18px;line-height:18px;flex:none}
+/* ===================== Future-Look „Solar Night“ (nur bei data-theme="future"; Hell und Dunkel bleiben unverändert) ===================== */
+:root[data-theme="future"]{color-scheme:dark; --primary-ink:#111111; --sun-ink:#111111; --night-ink:#FFFFFF; --t-ffa:#8CC36A; --t-dach:#E6E6E6; --t-bess:#B49AE0; --t-lade:#7AA8F0;
+  --bg:#06080B; --surface:rgba(17,21,27,.78); --sunken:rgba(255,255,255,.045); --line:rgba(255,255,255,.085); --ink:#ECF1F6; --muted:#8B96A3;
+  --primary:#F4DB02; --sun:#FFE01A; --sun-soft:rgba(244,219,2,.14); --night:#030405; --night-2:#0C0F13;
+  --ok:#3DDC97; --ok-soft:rgba(61,220,151,.13); --warn:#FFB547; --warn-soft:rgba(255,181,71,.13); --bad:#FF6B5B; --bad-soft:rgba(255,107,91,.13);
+  --glow:0 0 0 1px rgba(244,219,2,.28),0 0 22px rgba(244,219,2,.22); --glass:blur(16px) saturate(140%);
+  --shadow:0 1px 0 rgba(255,255,255,.04) inset,0 12px 32px rgba(0,0,0,.5); --r:14px}
+[data-theme="future"] body{background:
+  radial-gradient(1100px 620px at 88% -8%,rgba(244,219,2,.13),transparent 62%),
+  radial-gradient(900px 520px at -8% 105%,rgba(61,220,151,.07),transparent 60%),
+  radial-gradient(700px 500px at 50% 50%,rgba(64,120,255,.04),transparent 70%),#06080B;background-attachment:fixed}
+/* feines Solarzellen-Raster im Hintergrund */
+[data-theme="future"] body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;
+  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:44px 44px;
+  -webkit-mask-image:radial-gradient(ellipse at 70% 20%,#000 0%,transparent 75%);mask-image:radial-gradient(ellipse at 70% 20%,#000 0%,transparent 75%)}
+[data-theme="future"] .app{position:relative;z-index:1}
+/* Seitenleiste: Glas mit leuchtender Kante */
+[data-theme="future"] .side{background:linear-gradient(180deg,rgba(10,12,16,.92),rgba(4,5,7,.96));border-right:1px solid rgba(244,219,2,.12);box-shadow:1px 0 0 rgba(244,219,2,.05),8px 0 40px rgba(0,0,0,.5)}
+[data-theme="future"] .nav-btn{transition:background .2s,color .2s,box-shadow .2s}
+[data-theme="future"] .nav-btn:hover{background:rgba(244,219,2,.07);color:#fff}
+[data-theme="future"] .nav-btn.on{background:linear-gradient(135deg,#FFE84D,#F4DB02 55%,#E0C400);color:#111;box-shadow:var(--glow)}
+[data-theme="future"] .wordmark .y{text-shadow:0 0 14px rgba(244,219,2,.55)}
+/* Karten: Glas, feine Lichtkante, Leuchten beim Überfahren */
+[data-theme="future"] .card,[data-theme="future"] .kpis{background:linear-gradient(180deg,rgba(24,29,37,.72),rgba(13,16,21,.78));-webkit-backdrop-filter:var(--glass);backdrop-filter:var(--glass);border:1px solid var(--line);box-shadow:var(--shadow);transition:border-color .25s,box-shadow .25s,transform .25s}
+[data-theme="future"] .card:hover{border-color:rgba(244,219,2,.22);box-shadow:var(--shadow),0 0 0 1px rgba(244,219,2,.08),0 0 30px rgba(244,219,2,.06)}
+[data-theme="future"] .kpi{background:transparent}
+[data-theme="future"] .kpi:hover{background:rgba(244,219,2,.05)}
+[data-theme="future"] .kpi .v,[data-theme="future"] .hk .hv{text-shadow:0 0 18px rgba(244,219,2,.25)}
+[data-theme="future"] h1,[data-theme="future"] h2{letter-spacing:-.025em}
+[data-theme="future"] .eyebrow{color:var(--sun);font-family:var(--f-mono);letter-spacing:.14em;text-shadow:0 0 10px rgba(244,219,2,.35)}
+/* Knöpfe: Sonnen-Knopf leuchtet */
+[data-theme="future"] .btn{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12);transition:border-color .2s,box-shadow .2s,background .2s}
+[data-theme="future"] .btn:hover{border-color:rgba(244,219,2,.45);background:rgba(244,219,2,.06)}
+[data-theme="future"] .btn.sun{background:linear-gradient(135deg,#FFE84D,#F4DB02 55%,#E3C700);border-color:transparent;color:#111;box-shadow:0 0 0 1px rgba(244,219,2,.4),0 0 20px rgba(244,219,2,.35)}
+[data-theme="future"] .btn.sun:hover{filter:none;box-shadow:0 0 0 1px rgba(244,219,2,.6),0 0 32px rgba(244,219,2,.55)}
+[data-theme="future"] .btn.pri{background:#F4DB02;color:#111;border-color:transparent;box-shadow:0 0 18px rgba(244,219,2,.3)}
+[data-theme="future"] .chip{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1)}
+[data-theme="future"] .chip.on{background:rgba(244,219,2,.16);border-color:rgba(244,219,2,.55);color:#FFE84D;box-shadow:0 0 14px rgba(244,219,2,.2)}
+[data-theme="future"] .pill{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06)}
+/* Eingaben: dunkles Glas, Fokus mit Sonnen-Leuchten */
+[data-theme="future"] .inp,[data-theme="future"] .search,[data-theme="future"] input,[data-theme="future"] select,[data-theme="future"] textarea{background-color:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12);color:var(--ink)}
+[data-theme="future"] .inp:focus,[data-theme="future"] .search:focus,[data-theme="future"] input:focus,[data-theme="future"] select:focus,[data-theme="future"] textarea:focus{outline:none;border-color:rgba(244,219,2,.6);box-shadow:0 0 0 3px rgba(244,219,2,.15),0 0 18px rgba(244,219,2,.15)}
+[data-theme="future"] select option{background:#11151B;color:#ECF1F6}
+/* Begrüßung oben: animiertes Sonnenlicht und Lichtkante */
+[data-theme="future"] .hero{background:radial-gradient(600px 300px at 85% 0%,rgba(244,219,2,.28),transparent 60%),radial-gradient(500px 260px at 0% 100%,rgba(61,220,151,.10),transparent 60%),linear-gradient(135deg,#0B0E13,#050608);border:1px solid rgba(244,219,2,.18);box-shadow:0 0 0 1px rgba(255,255,255,.03) inset,0 20px 60px rgba(0,0,0,.6),0 0 60px rgba(244,219,2,.06)}
+[data-theme="future"] .hero::after{content:"";position:absolute;inset:-40%;z-index:-1;pointer-events:none;background:conic-gradient(from 0deg at 75% 30%,transparent 0deg,rgba(244,219,2,.10) 40deg,transparent 90deg,rgba(255,255,255,.04) 160deg,transparent 220deg);animation:snSpin 26s linear infinite}
+[data-theme="future"] .hero h1 span,[data-theme="future"] .hero h1 .y{background:linear-gradient(90deg,#FFF6A8,#F4DB02 45%,#FFB547);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 0 12px rgba(244,219,2,.35))}
+[data-theme="future"] .hk{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1);transition:border-color .2s,box-shadow .2s}
+[data-theme="future"] .hk:hover{border-color:rgba(244,219,2,.45);box-shadow:0 0 20px rgba(244,219,2,.15)}
+@keyframes snSpin{to{transform:rotate(360deg)}}
+/* Tabellen und Listen */
+[data-theme="future"] .tbl th{font-family:var(--f-mono);letter-spacing:.1em;color:#7F8A97;border-bottom-color:rgba(244,219,2,.18)}
+[data-theme="future"] .tbl tr.clickable:hover td,[data-theme="future"] .li:hover{background:linear-gradient(90deg,rgba(244,219,2,.07),transparent 70%)}
+[data-theme="future"] .tbl tr.low td{background:rgba(255,107,91,.08)}
+/* Fenster, Overlays, Meldungen */
+[data-theme="future"] .scrim{background:rgba(2,3,5,.62);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+[data-theme="future"] .sheet{background:linear-gradient(180deg,#121720,#0B0E13);border:1px solid rgba(244,219,2,.18);box-shadow:0 30px 80px rgba(0,0,0,.7),0 0 50px rgba(244,219,2,.07)}
+[data-theme="future"] .toast{background:rgba(16,20,26,.92);color:#ECF1F6;border:1px solid rgba(244,219,2,.3);box-shadow:0 0 24px rgba(244,219,2,.15);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+/* Handy-Leisten */
+[data-theme="future"] .tabbar,[data-theme="future"] .mobile-top{background:rgba(6,8,11,.82)!important;-webkit-backdrop-filter:var(--glass);backdrop-filter:var(--glass);border-color:rgba(244,219,2,.14)!important}
+[data-theme="future"] .tabbar button.on{color:#FFE84D;text-shadow:0 0 12px rgba(244,219,2,.6)}
+/* 3D-Lager im Dunkeln */
+[data-theme="future"] .l3-wrap{background:radial-gradient(600px 300px at 70% 0%,rgba(244,219,2,.08),transparent 70%),#0A0D11}
+[data-theme="future"] .l3-floor{fill:#151A21}[data-theme="future"] .l3-aisle{fill:#1B212A}
+[data-theme="future"] .l3-wall .f-t,[data-theme="future"] .l3-wall .f-l,[data-theme="future"] .l3-wall .f-r{fill:#202731}
+[data-theme="future"] .l3-svg polygon{stroke:#56606C}
+[data-theme="future"] .l3-t{fill:#C9D2DC}[data-theme="future"] .l3-t.zl{fill:#FFE84D}
+[data-theme="future"] .l3-slot.l3-pad .f-t,[data-theme="future"] .l3-fach polygon{fill:rgba(244,219,2,.04);stroke:rgba(244,219,2,.35)}
+[data-theme="future"] .l3-cab .f-t,[data-theme="future"] .l3-cab .f-l,[data-theme="future"] .l3-cab .f-r,[data-theme="future"] .l3-board .f-t{fill:#2A313B}
+/* Scrollleisten */
+[data-theme="future"] ::-webkit-scrollbar{width:10px;height:10px}[data-theme="future"] ::-webkit-scrollbar-thumb{background:rgba(244,219,2,.18);border-radius:10px;border:2px solid transparent;background-clip:padding-box}
+[data-theme="future"] ::-webkit-scrollbar-thumb:hover{background:rgba(244,219,2,.4);background-clip:padding-box}
+[data-theme="future"] ::-webkit-scrollbar-track{background:transparent}
+[data-theme="future"] ::selection{background:rgba(244,219,2,.35);color:#fff}
+/* --- Future: mehr Effekte --- */
+@property --sn-a{syntax:'<angle>';inherits:false;initial-value:0deg}
+[data-theme="future"] body{background:
+  radial-gradient(1000px 640px at 92% -12%,rgba(244,219,2,.24),transparent 60%),
+  radial-gradient(800px 560px at -10% 110%,rgba(61,220,151,.12),transparent 60%),
+  radial-gradient(900px 600px at 45% 55%,rgba(80,110,255,.07),transparent 70%),#05070A;background-attachment:fixed}
+[data-theme="future"] body::before{opacity:1;background-image:linear-gradient(rgba(244,219,2,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(244,219,2,.045) 1px,transparent 1px);background-size:38px 38px;animation:snGrid 40s linear infinite}
+[data-theme="future"] body::after{content:"";position:fixed;right:-140px;top:-160px;width:420px;height:420px;border-radius:50%;pointer-events:none;z-index:0;background:radial-gradient(circle,rgba(255,232,77,.35),rgba(244,219,2,.12) 40%,transparent 70%);filter:blur(10px);animation:snPulse 7s ease-in-out infinite}
+@keyframes snGrid{to{background-position:38px 38px,38px 38px}}
+@keyframes snPulse{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+/* Begrüßungsfeld: umlaufende Lichtkante */
+[data-theme="future"] .hero{border:1.5px solid transparent;background:radial-gradient(600px 300px at 85% 0%,rgba(244,219,2,.32),transparent 60%) padding-box,radial-gradient(500px 260px at 0% 100%,rgba(61,220,151,.14),transparent 60%) padding-box,linear-gradient(135deg,#0B0E13,#040506) padding-box,conic-gradient(from var(--sn-a),rgba(244,219,2,.05),#FFE84D 10%,rgba(244,219,2,.05) 25%,rgba(61,220,151,.5) 50%,rgba(244,219,2,.05) 70%,#FFE84D 88%,rgba(244,219,2,.05)) border-box;animation:snEdge 6s linear infinite;box-shadow:0 0 50px rgba(244,219,2,.12),0 30px 80px rgba(0,0,0,.6)}
+@keyframes snEdge{to{--sn-a:360deg}}
+[data-theme="future"] .hero h1{text-shadow:0 0 30px rgba(255,255,255,.12)}
+[data-theme="future"] .hero .hero-ey,[data-theme="future"] .hero-ey{font-family:var(--f-mono);letter-spacing:.18em;color:#FFE84D;text-shadow:0 0 12px rgba(244,219,2,.6)}
+/* Karten: gelbe Lichtkante oben, Schimmer beim Überfahren */
+[data-theme="future"] .card{box-shadow:inset 0 1px 0 rgba(244,219,2,.22),0 12px 34px rgba(0,0,0,.55);position:relative}
+[data-theme="future"] .card:hover{transform:translateY(-1px);border-color:rgba(244,219,2,.32);box-shadow:inset 0 1px 0 rgba(244,219,2,.45),0 0 0 1px rgba(244,219,2,.1),0 0 36px rgba(244,219,2,.12),0 16px 40px rgba(0,0,0,.6)}
+[data-theme="future"] .card-h h2,[data-theme="future"] .card-h h3{text-shadow:0 0 16px rgba(244,219,2,.18)}
+[data-theme="future"] .cnt-b{box-shadow:0 0 12px rgba(244,219,2,.55)}
+[data-theme="future"] .hk.hi{background:linear-gradient(135deg,#FFE84D,#F4DB02 55%,#E3C700);border-color:transparent;color:#111;box-shadow:0 0 0 1px rgba(244,219,2,.5),0 0 26px rgba(244,219,2,.4)}
+[data-theme="future"] .hk.hi .hv{text-shadow:none}
+[data-theme="future"] .btn.sun{position:relative;overflow:hidden}
+[data-theme="future"] .btn.sun::after{content:"";position:absolute;top:0;bottom:0;left:-60%;width:40%;transform:skewX(-20deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);transition:left .6s}
+[data-theme="future"] .btn.sun:hover::after{left:130%}
+[data-theme="future"] .nav-btn.on{box-shadow:0 0 0 1px rgba(244,219,2,.5),0 0 26px rgba(244,219,2,.45)}
+[data-theme="future"] .nav-btn:not(.on):hover{box-shadow:inset 2px 0 0 #F4DB02}
+[data-theme="future"] .side{border-right-color:rgba(244,219,2,.25)}
+[data-theme="future"] .li{transition:background .2s}
+[data-theme="future"] .pill.bad,[data-theme="future"] .overdue{text-shadow:0 0 10px rgba(255,107,91,.45)}
+@media (prefers-reduced-motion:reduce){[data-theme="future"] .hero::after,[data-theme="future"] .hero,[data-theme="future"] body::before,[data-theme="future"] body::after{animation:none}}
+/* Schieberegler Hell/Dunkel (Startseite) */
+.hero-sm .hero-a:has(.theme-sw3){display:flex!important}
+.theme-sw3{position:relative;display:inline-grid;grid-template-columns:repeat(3,1fr);align-items:center;padding:3px;border-radius:99px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);isolation:isolate}
+.theme-sw3 button{position:relative;z-index:1;border:0;background:none;color:rgba(255,255,255,.75);font-size:12px;font-weight:600;padding:5px 11px;border-radius:99px;cursor:pointer;white-space:nowrap;transition:color .25s}
+.theme-sw3 button.on{color:#111}
+.theme-sw3 .ts3-knob{position:absolute;z-index:0;top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/3);border-radius:99px;background:#F4DB02;transform:translateX(calc(var(--i,0)*100%));transition:transform .35s cubic-bezier(.5,1.5,.4,1),box-shadow .3s}
+[data-theme="future"] .theme-sw3{background:rgba(255,255,255,.05);border-color:rgba(244,219,2,.35);box-shadow:0 0 18px rgba(244,219,2,.15)}
+[data-theme="future"] .theme-sw3 .ts3-knob{background:linear-gradient(135deg,#FFE84D,#F4DB02 55%,#E3C700);box-shadow:0 0 16px rgba(244,219,2,.6)}
+.theme-sw{display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-size:12.5px;color:rgba(255,255,255,.8)}
+.theme-sw input{position:absolute;opacity:0;width:1px;height:1px}
+.theme-sw .ts-track{position:relative;width:52px;height:28px;border-radius:99px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);transition:background .3s,box-shadow .3s}
+.theme-sw .ts-knob{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:#F4DB02;display:flex;align-items:center;justify-content:center;font-size:12px;transition:transform .35s cubic-bezier(.5,1.6,.4,1),background .3s,box-shadow .3s;box-shadow:0 0 10px rgba(244,219,2,.6)}
+.theme-sw input:checked+.ts-track{background:rgba(244,219,2,.18);border-color:rgba(244,219,2,.55);box-shadow:0 0 16px rgba(244,219,2,.3)}
+.theme-sw input:checked+.ts-track .ts-knob{transform:translateX(24px);background:#0B0E13;color:#FFE84D;box-shadow:0 0 0 1px rgba(244,219,2,.6),0 0 14px rgba(244,219,2,.6)}
+.theme-sw input:focus-visible+.ts-track{outline:2px solid var(--sun);outline-offset:2px}
 /* 3D-Lager */
 .l3-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin:0 0 12px}
 .l3-tile{display:flex;flex-direction:column;gap:2px;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;font:inherit;color:var(--ink)}
@@ -2546,6 +2673,14 @@ const permEff=n=>n===TAB_ME?TAB_PERM:permOf(n)||(n&&isMonteurDefault(n)?rolePerm
 const viewsOf=n=>{ const p=permEff(n); return p&&Array.isArray(p.views)?nfLegacy(p,permV2(n,p,p.views)):defaultViews(n); };
 const editsOf=n=>{ const p=permEff(n); return p&&Array.isArray(p.edit)?permV2(n,p,p.edit):viewsOf(n); };
 const canEdit=a=>isAdmin()||(!!ME&&editsOf(ME).includes(a)&&viewsOf(ME).includes(a));
+/* Hell/Dunkel: Schieberegler auf der Startseite, je Gerät gemerkt (Hell = bisheriger Look) */
+/* Drei Designs: Hell (wie bisher), Dunkel (wie bisher, nur dunkel), Future (neuer Effekt-Look). Regler mit 3 Stufen auf der Startseite, je Gerät gemerkt. */
+const THEMES=[['light','Hell','☀'],['dark','Dunkel','☾'],['future','Future','✦']];
+const themeCur=()=>{ const t=document.documentElement.getAttribute('data-theme'); return THEMES.some(x=>x[0]===t)?t:'light'; };
+const themeSwHtml=()=>{ const c=themeCur(), i=THEMES.findIndex(x=>x[0]===c);
+  return `<div class="theme-sw3" role="radiogroup" aria-label="Design" style="--i:${i}"><span class="ts3-knob" aria-hidden="true"></span>${THEMES.map(([k,l,s])=>`<button type="button" role="radio" aria-checked="${k===c}" class="${k===c?'on':''}" data-act="themeSet" data-v="${k}" title="Design: ${l}"><span aria-hidden="true">${s}</span> ${l}</button>`).join('')}</div>`; };
+queueMicrotask(()=>Object.assign(A,{ themeSet:d=>{ const t=THEMES.some(x=>x[0]===d.v)?d.v:'light'; const sw=document.querySelector('.theme-sw3'); if(sw) sw.style.setProperty('--i',THEMES.findIndex(x=>x[0]===t));
+  setTimeout(()=>{ document.documentElement.setAttribute('data-theme',t); lsSet('sonnenplan-theme',t); render(); },180); } }));
 /* Moji und ABou (Kürzel AS) sehen GAR NICHTS von Projekten (Wunsch EP, 12.11.2026) – unabhängig von gespeicherten Rechten:
    keine Projektseiten, keine Projektlisten/Suche/KI-Projektdaten, kein „Seit deinem letzten Besuch“, keine Projekt-Mitteilungen.
    Auf ihren eigenen Einsätzen und To-Dos bleibt nur der Name der Baustelle stehen, damit sie wissen, wohin. */
@@ -3046,10 +3181,18 @@ async function briefAuto(){ if(!briefOn()||!SAMPLE||BRIEF_RUN||CAR.on) return; i
 // Sammlung pins: {id,title,text,img,until,top,by,at}. Jeder darf anheften; bearbeiten/abnehmen nur, wer es angeheftet hat, oder Admins.
 // „Angeheftet bis“ (optional): danach verschwindet der Zettel von selbst von der Startseite.
 const pinCan=p=>isAdmin()||(!!ME&&(p.by||'')===meK());
-const pinsActive=()=>{ const t=TODAY(); return arr('pins').filter(p=>p&&!(p.until&&p.until<t)).sort((a,b)=>(!!b.top-!!a.top)||String(b.at||'').localeCompare(String(a.at||''))); };
+/* Alte Zettel: abgelaufen („bis“-Datum vorbei) oder von dieser Person ausgeblendet. Standard: nicht sichtbar; „Alte einblenden“ zeigt sie grau an.
+   Ausblenden gilt nur für die eigene Ansicht (pro Person, auf diesem Gerät) – für alle anderen bleibt der Zettel. */
+const pinHideKey=()=>'sonnenplan-pinhide-'+meK();
+const pinHidden=()=>{ try{ return new Set(JSON.parse(lsGet(pinHideKey())||'[]')); }catch(e){ return new Set(); } };
+const pinSetHidden=(id,on)=>{ const s=pinHidden(); if(on) s.add(id); else s.delete(id); lsSet(pinHideKey(),JSON.stringify([...s].slice(-500))); };
+const pinIsOld=(p,h)=>!!p&&((p.until&&p.until<TODAY())||(h||pinHidden()).has(p.id));
+const pinSort=(a,b)=>(!!b.top-!!a.top)||String(b.at||'').localeCompare(String(a.at||''));
+const pinsActive=()=>{ const h=pinHidden(); return arr('pins').filter(p=>p&&!pinIsOld(p,h)).sort(pinSort); };
+const pinsOld=()=>{ const h=pinHidden(); return arr('pins').filter(p=>pinIsOld(p,h)).sort((a,b)=>String(b.at||'').localeCompare(String(a.at||''))); };
 const pinText=s=>esc(String(s||'')).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>');
-function pinCard(p){ const neu=(p.by||'')!==meK()&&String(p.at||'')>(PIN_NEW_FROM!==null?PIN_NEW_FROM:lastRead('#pins'));
-  return `<article class="pin ${p.top?'top':''}"><span class="pin-n" aria-hidden="true">📌</span>${neu?'<span class="pin-new">NEU</span>':''}${p.top?'<span class="pin-imp">Wichtig</span>':''}
+function pinCard(p){ const old=pinIsOld(p), hid=pinHidden().has(p.id), exp=!!(p.until&&p.until<TODAY()), neu=!old&&(p.by||'')!==meK()&&String(p.at||'')>(PIN_NEW_FROM!==null?PIN_NEW_FROM:lastRead('#pins'));
+  return `<article class="pin ${p.top&&!old?'top':''} ${old?'old':''}">${old?`<span class="pin-oldl">${exp?'abgelaufen':'ausgeblendet'}</span>`:''}<button type="button" class="pin-hide" data-act="pinHide" data-id="${esc(p.id)}" data-v="${hid?'0':'1'}" title="${hid?'Wieder einblenden':'Für mich ausblenden'}" aria-label="${hid?'Wieder einblenden':'Für mich ausblenden'}">${hid?'↺':'✕'}</button><span class="pin-n" aria-hidden="true">📌</span>${neu?'<span class="pin-new">NEU</span>':''}${p.top?'<span class="pin-imp">Wichtig</span>':''}
     <h3>${esc(p.title||'')}</h3>${p.img?`<img data-blob="${esc(p.img)}" alt="" class="pin-img">`:''}${p.text?`<div class="pin-tx">${pinText(p.text)}</div>`:''}
     <div class="pin-f"><span class="who-chip">${esc(p.by||'?')}</span><span>${esc(fmtD(String(p.at||'').slice(0,10)))}</span>${p.until?`<span title="Verschwindet danach automatisch">bis ${esc(fmtD(p.until).slice(3))}</span>`:''}${pinCan(p)?`<button type="button" class="lnk" data-act="pinEdit" data-id="${esc(p.id)}">Bearbeiten</button>`:''}</div></article>`; }
 // Am Handy eingeklappt (nur Kopfzeile mit Anzahl und „neu“), per Antippen ausklappbar; am Laptop immer offen
@@ -3063,15 +3206,17 @@ function pinReadCheck(){ if(!ME||document.visibilityState!=='visible'||UI.view!=
   if(el.id==='pinDet'&&!el.open) return; const r=el.getBoundingClientRect(), vh=innerHeight||document.documentElement.clientHeight||800; if(r.bottom<60||r.top>vh-60) return; // nur wenn wirklich im Blick
   if(PIN_NEW_FROM===null) PIN_NEW_FROM=lastRead('#pins'); markRead('#pins'); seenPush(true); scheduleRender(); }
 document.addEventListener('scroll',()=>{ clearTimeout(window.PIN_SC); window.PIN_SC=setTimeout(pinReadCheck,1500); },true);
-function pinboardHtml(){ const ps=pinsActive(), show=UI.pinAll?ps:ps.slice(0,6), mob=window.matchMedia&&matchMedia('(max-width:900px)').matches;
+function pinboardHtml(){ const ps=pinsActive(), show=UI.pinAll?ps:ps.slice(0,6), mob=window.matchMedia&&matchMedia('(max-width:900px)').matches, olds=pinsOld();
+  const oldBtn=olds.length?`<button class="btn ghost sm" data-act="pinOld" aria-pressed="${!!UI.pinOld}">🕘 ${UI.pinOld?'Alte ausblenden':'Alte einblenden ('+olds.length+')'}</button>`:'';
+  const oldBox=UI.pinOld&&olds.length?`<div class="pin-oldbox"><div class="small muted" style="margin:4px 16px">Alte Zettel (abgelaufen oder von dir ausgeblendet) – ↺ holt einen zurück.</div><div class="pin-grid">${olds.map(pinCard).join('')}</div></div>`:'';
   const unr=pinUnread().length, nTop=ps.filter(p=>p.top).length; if(unr) setTimeout(pinReadCheck,2500);
   if(mob) return `<details class="card pinb pin-mob" id="pinDet" ${PIN_OPEN?'open':''}><summary class="card-h"><h2 class="pin-mob-h"><span class="tu-ar" aria-hidden="true">▸</span> 📌 Pinnwand ${unr?`<span class="cnt-b" title="ungelesen">${unr}</span><span class="pin-new pin-new-i">NEU</span>`:''}${nTop?`<span class="pin-imp pin-new-i">${nTop} wichtig</span>`:''}</h2></summary>
-    <div class="pin-mob-b"><button class="btn sun sm" data-act="pinNew">${ic('plus')}Anheften</button></div>
-    ${show.length?`<div class="pin-grid">${show.map(pinCard).join('')}</div>`:'<div class="empty" style="padding:6px 16px 16px">Noch nichts angeheftet.</div>'}
-    ${ps.length>6?`<button class="btn ghost sm more-b" data-act="pinAll">${UI.pinAll?'Weniger anzeigen':'+ '+(ps.length-6)+' weitere anzeigen'}</button>`:''}</details>`;
-  return `<section class="card pinb"><div class="card-h"><h2>📌 Pinnwand ${unr?`<span class="cnt-b" title="ungelesen">${unr}</span>`:''}</h2><span class="small muted pinb-sub">News für alle · keine Aufgaben</span><button class="btn sun sm" data-act="pinNew">${ic('plus')}Anheften</button></div>
-    ${show.length?`<div class="pin-grid">${show.map(pinCard).join('')}</div>`:'<div class="empty" style="padding:6px 16px 16px">Noch nichts angeheftet. Hier kommen Neuigkeiten für alle hin – z. B. Betriebsurlaub, neue Kollegin, Info vom Lieferanten, Firmenfeier.</div>'}
-    ${ps.length>6?`<button class="btn ghost sm more-b" data-act="pinAll">${UI.pinAll?'Weniger anzeigen':'+ '+(ps.length-6)+' weitere anzeigen'}</button>`:''}</section>`; }
+    <div class="pin-mob-b"><button class="btn sun sm" data-act="pinNew">${ic('plus')}Anheften</button>${oldBtn}</div>
+    ${show.length?`<div class="pin-grid">${show.map(pinCard).join('')}</div>`:'<div class="empty" style="padding:6px 16px 16px">Keine aktuellen Zettel.</div>'}
+    ${ps.length>6?`<button class="btn ghost sm more-b" data-act="pinAll">${UI.pinAll?'Weniger anzeigen':'+ '+(ps.length-6)+' weitere anzeigen'}</button>`:''}${oldBox}</details>`;
+  return `<section class="card pinb"><div class="card-h"><h2>📌 Pinnwand ${unr?`<span class="cnt-b" title="ungelesen">${unr}</span>`:''}</h2><span class="small muted pinb-sub">News für alle · keine Aufgaben</span>${oldBtn}<button class="btn sun sm" data-act="pinNew">${ic('plus')}Anheften</button></div>
+    ${show.length?`<div class="pin-grid">${show.map(pinCard).join('')}</div>`:`<div class="empty" style="padding:6px 16px 16px">${olds.length?'Keine aktuellen Zettel.':'Noch nichts angeheftet. Hier kommen Neuigkeiten für alle hin – z. B. Betriebsurlaub, neue Kollegin, Info vom Lieferanten, Firmenfeier.'}</div>`}
+    ${ps.length>6?`<button class="btn ghost sm more-b" data-act="pinAll">${UI.pinAll?'Weniger anzeigen':'+ '+(ps.length-6)+' weitere anzeigen'}</button>`:''}${oldBox}</section>`; }
 var PIN_FILE=null;
 function pinForm(p0){ const isNew=!p0, p=p0?clone(p0):{id:uid(),title:'',text:'',until:'',top:''}; PIN_FILE=null;
   openSheet({title:isNew?'📌 An die Pinnwand heften':'Pinnwand-Zettel bearbeiten',value:{...p,top:p.top?'1':''},fields:[
@@ -3086,7 +3231,9 @@ function pinForm(p0){ const isNew=!p0, p=p0?clone(p0):{id:uid(),title:'',text:''
       const f=PIN_FILE; if(f&&ASSETS) (async()=>{ try{ const up=/gif/i.test(f.type)?f:new File([await mappeToJpg(f,1600)],'pin.jpg',{type:'image/jpeg'}); const r=await ASSETS.upload(up,{type:up.type}); const c=clone(S.pins[x.id]); if(c){ c.img=r.id; put('pins',c); } }catch(e){ toast('Bild konnte nicht hochgeladen werden.'); } })(); },
     onDelete:!isNew&&pinCan(p)?()=>{ if(!confirm('Diesen Zettel von der Pinnwand nehmen?')) return; del('pins',p.id); closeSheet(); toast('Von der Pinnwand genommen.'); }:null,deleteLabel:'Abnehmen'}); }
 document.addEventListener('change',e=>{ if(e.target.id==='pin_img') PIN_FILE=e.target.files&&e.target.files[0]||null; });
-queueMicrotask(()=>Object.assign(A,{ pinNew:()=>pinForm(), pinEdit:d=>{ const p=S.pins[d.id]; if(p&&pinCan(p)) pinForm(p); }, pinAll:()=>{ UI.pinAll=!UI.pinAll; render(); } }));
+queueMicrotask(()=>Object.assign(A,{ pinNew:()=>pinForm(), pinEdit:d=>{ const p=S.pins[d.id]; if(p&&pinCan(p)) pinForm(p); }, pinAll:()=>{ UI.pinAll=!UI.pinAll; render(); },
+  pinOld:()=>{ UI.pinOld=!UI.pinOld; render(); },
+  pinHide:d=>{ const on=d.v==='1'; pinSetHidden(d.id,on); render(); toast(on?'Für dich ausgeblendet – unter „Alte einblenden“ wieder zu finden.':'Wieder eingeblendet.'); } }));
 /* ---------- 🔔 Mitteilungen: Glocke und Dashboard-Feld lesen dieselbe Liste ---------- */
 // Jede Person hat einen eigenen Bereich in der Datenbank (Sammlung notif:<kürzel>). Geladen wird nur der eigene; mit 07_benachrichtigungen_schutz.sql erzwingt das auch der Server.
 // put()/del() melden Änderungen an nfWatch: Dort wird entschieden, wer betroffen ist. Eigene Aktionen erzeugen nichts. Die Kennung ergibt sich aus dem Ereignis, doppelt anlegen geht nicht.
@@ -3455,7 +3602,7 @@ function dashHero(t){
   const mine=ME?arr('tasks').filter(x=>!x.done&&taskHas(x,ME)).length:0;
   return `<section class="hero hero-sm"><div class="hero-in">
     <div class="hero-t"><div class="hero-ey">${esc(fmtDL(t))}</div><h1>Guten Tag${first?', <span>'+esc(first)+'</span>':''}.</h1>${ME?`<div class="hero-sub">Du hast <b>${mine}</b> offene Aufgabe${mine===1?'':'n'}.</div>`:''}</div>
-    <div class="hero-a"><button class="btn sun" data-act="newMenu">${ic('plus')}Neu</button>${briefAllowed()?`<button class="btn ghost-l hero-brief" data-act="briefShow" title="Dein persönliches Morgen-Briefing lesen oder anhören">☀️ Morgen-Briefing</button>`:''}${ME&&mine?`<button class="btn ghost-l" data-act="myTasks">Meine Aufgaben</button>`:''}</div>
+    <div class="hero-a">${themeSwHtml()}<button class="btn sun" data-act="newMenu">${ic('plus')}Neu</button>${briefAllowed()?`<button class="btn ghost-l hero-brief" data-act="briefShow" title="Dein persönliches Morgen-Briefing lesen oder anhören">☀️ Morgen-Briefing</button>`:''}${ME&&mine?`<button class="btn ghost-l" data-act="myTasks">Meine Aufgaben</button>`:''}</div>
   </div></section>`;
 }
 // Noch zu bestellen: eigener Bedarf je Projekt + „zusätzlich benötigtes Material“ aus Tagesrapporten
@@ -5795,7 +5942,7 @@ async function ordersFromDrop(files,text,pid){
 }
 function dropZoneHtml(pid){
   return `<div class="dropz" data-dropz="${esc(pid||'')}" tabindex="0" aria-label="Bestellung per Drag and Drop anlegen">
-    <div class="dz-ic">${ic('box')}</div><div><b>E-Mail, Rechnung oder AB hierher ziehen</b><div class="small muted">Outlook-Mail: öffnen, <b>Strg+A</b>, <b>Strg+C</b>, dann <b>hier einmal reinklicken</b> und <b>Strg+V</b> – oder „E-Mail-Text einfügen“. Oder .msg/.eml-Datei, PDF, Foto ablegen. Claude liest Positionen, Preise, Liefertermin und ordnet das Projekt zu.</div></div>
+    <div class="dz-ic">${ic('box')}</div><div><b>E-Mail, Rechnung oder AB hierher ziehen</b></div>
     <div class="dz-btns"><button type="button" class="btn sm" data-act="dzPick" data-pid="${esc(pid||'')}">Datei wählen</button><button type="button" class="btn sm" data-act="dzPaste" data-pid="${esc(pid||'')}">E-Mail-Text einfügen</button></div></div>`;
 }
 /* Neues Outlook: Beim Ziehen direkt in den Browser kommt oft gar kein Inhalt an, höchstens interne Daten von Outlook. Dann nicht still scheitern, sondern den Weg erklären. */
@@ -7358,7 +7505,7 @@ queueMicrotask(()=>{ Object.assign(A,{ /* A wird weiter unten angelegt */
   Object.assign(CHG,{ fileSel:(d,el)=>{ el.checked?FSEL.add(d.id):FSEL.delete(d.id); const r=el.closest('.fl'); if(r) r.classList.toggle('sel',el.checked); fselBar(); } }); });
 function fileDropHtml(pid){
   return `<div class="dropz fdrop" data-fdrop="${esc(pid||'')}" tabindex="0" aria-label="Dateien ablegen">
-    <div class="dz-ic">${ic('files')}</div><div><b>Dateien & E-Mails hierher ziehen</b><div class="small muted">Angebote, Rechnungen, Lieferscheine, Pläne, Fotos, Outlook-Mails (.msg) mit Anhängen. ${pid?'Alles landet in diesem Projekt.':'Art und Projekt werden automatisch erkannt und lassen sich ändern.'} Kopierten Mailtext: hier klicken und Strg+V.</div></div>
+    <div class="dz-ic">${ic('files')}</div><div><b>Dateien & E-Mails hierher ziehen</b></div>
     <div class="dz-btns"><button type="button" class="btn sm" data-act="fdPick" data-pid="${esc(pid||'')}">Dateien wählen</button></div></div>`;
 }
 // Einmalige Umstellung: abgelegte Dateien mit altem Namen ins neue Schema Datum_Firma_Art_Titel_Detail
@@ -8324,7 +8471,7 @@ function gsResHtml(q){ const p=gsProj(); if(!p||String(q||'').trim().length<2) r
 function gsearchBox(p){
   const cx=gsCtx(), key=cx.key; if((UI.gqPid||'')!==key){ UI.gq=''; UI.gqPid=key; } // Suchtext gilt nur für die Seite, auf der er getippt wurde
   return `<section class="gs-wrap ask-box smart-drop ${GS_VIEWS.includes(UI.view)||p?'gs-proj':''}" aria-label="Suchen, fragen oder Dateien ablegen"><div class="gs-in">${ic('search')}<input id="gSearch" type="search" autocomplete="off" enterkeyhint="go" placeholder="${p?(SAMPLE?'Im Projekt suchen oder fragen – z. B. „Was ist der letzte Stand?“':'Im Projekt suchen: Notizen, To-Dos, Bestellungen, Dateien …'):cx.key==='todos'?(SAMPLE?'Suchen oder fragen – z. B. „Welche To-Dos von HH sind überfällig?“':'To-Dos und alles andere durchsuchen …'):cx.key==='cal'?(SAMPLE?'Suchen oder fragen – z. B. „Wer ist nächste Woche auf welcher Baustelle?“':'Termine und alles andere durchsuchen …'):SAMPLE?'Suchen oder fragen – z. B. „Zeig mir das neueste Update zum Energiepark“':'Alles durchsuchen: Projekte, Notizen, To-Dos, Bestellungen, Dateien, Lager …'}" value="${esc(UI.gq||'')}" aria-label="Suchen oder fragen">${SRec?`<button type="button" class="gs-mic" data-act="gsVoice" title="Sprechen: suchen oder fragen" aria-label="Sprechen">🎙</button>`:''}<button type="button" class="gs-mic gs-cam" data-act="gsCam" title="Foto aufnehmen - z. B. Lieferschein, Rechnung, Notiz. Die App erkennt, was es ist." aria-label="Kamera">📷</button>${SAMPLE&&CAN_SPEAK?`<button type="button" class="gs-spk ${ASK_SPEAK?'on':''}" data-act="askSpkTog" title="${ASK_SPEAK?'Antworten werden vorgelesen – ausschalten':'Antworten laut vorlesen lassen'}" aria-label="Antworten vorlesen" aria-pressed="${ASK_SPEAK}">${ASK_SPEAK?'🔊':'🔈'}</button>`:''}<button type="button" class="btn sun sm ask-go" data-act="askGo">Los</button></div>
-    <div class="ask-sub"><span>✨ Dateien, E-Mails (.msg/.eml), PDFs, Fotos oder Text hier reinziehen – die App erkennt, was es ist${p?' und ordnet es diesem Projekt zu':cx.key==='todos'?' – hier meist als To-Dos':cx.key==='cal'?' – hier meist als Termin':''}.</span><button type="button" class="lnk" data-act="smartPick">Datei wählen</button><button type="button" class="lnk" data-act="smartText">Text einfügen</button></div>
+
     <div id="askOut" class="ask-ans" role="status"></div>
     <div id="gResults" class="gs-res" role="region" aria-live="polite">${gsResHtml(UI.gq)}</div></section><input type="file" id="smartIn" multiple hidden><input type="file" id="camIn" accept="image/*" capture="environment" hidden><input type="file" id="camUpIn" accept="image/*" multiple hidden>`;
 }
@@ -8737,7 +8884,7 @@ document.addEventListener('toggle',e=>{ const d=e.target; if(d&&d.dataset&&d.dat
 /* ========== To-Dos aus E-Mails: Mail ablegen → KI erkennt Projekt, Aufgaben und Zuständige ========== */
 function mailTodoDropHtml(){
   return `<div class="dropz mtdrop" tabindex="0" aria-label="E-Mail ablegen, To-Dos erkennen">
-    <div class="dz-ic">${ic('chat')}</div><div><b>E-Mail hierher ziehen → To-Dos erkennen</b><div class="small muted">${SAMPLE?'Claude liest die Mail, ordnet sie einem Projekt zu und schlägt Aufgaben mit Zuständigem und Frist vor.':'Die App sucht Projekt und Aufgaben-Sätze in der Mail.'} Outlook-Mail erst auf den Desktop ziehen, dann die .msg hier ablegen – oder Mailtext kopieren, hier klicken, Strg+V.</div></div>
+    <div class="dz-ic">${ic('chat')}</div><div><b>E-Mail hierher ziehen → To-Dos erkennen</b></div>
     <div class="dz-btns"><button type="button" class="btn sm" data-act="mtPick">Mail wählen</button><button type="button" class="btn sun sm" data-act="bulkTodo">Mehrere To-Dos einlesen</button></div></div><input type="file" id="mtIn" accept=".msg,.eml,message/rfc822,text/plain" hidden>`;
 }
 /*KV3D-START*/
@@ -9629,7 +9776,7 @@ const SMART_TYPES={bestellung:'Bestellung',ab:'Auftragsbestätigung',rechnung:'R
 const SMART_MAP={bestellung:'order',ab:'order',rechnung:'order',lieferschein:'delivery',todos:'todos',termin:'event',notiz:'note',korrespondenz:'todos',angebot:'file',plan:'file',foto:'file',vertrag:'file',sonst:'file'};
 function smartDropHtml(){
   return `<div class="dropz smart-drop" tabindex="0" aria-label="Alles hier ablegen – Claude erkennt, was es ist">
-    <div class="dz-ic">✨</div><div><b>Alles hier reinziehen – ${SAMPLE?'Claude erkennt, was es ist':'die App erkennt, was es ist'}</b><div class="small muted">E-Mails (.msg/.eml), PDFs, Fotos, Lieferscheine, Rechnungen, Aufgabenlisten oder kopierter Text (hier klicken, Strg+V). Danach schlägt die App den passenden Weg vor: Bestellung, Wareneingang, To-Dos, Projekt-Notiz oder Datenablage.</div></div>
+    <div class="dz-ic">✨</div><div><b>Alles hier reinziehen – ${SAMPLE?'Claude erkennt, was es ist':'die App erkennt, was es ist'}</b></div>
     <div class="dz-btns"><button type="button" class="btn sm" data-act="smartPick">Datei wählen</button><button type="button" class="btn sm" data-act="smartText">Text einfügen</button>${SRec?`<button type="button" class="btn sun sm" data-act="smartVoice">🎙 Sprechen</button>`:''}</div></div><input type="file" id="smartIn" multiple hidden>`;
 }
 async function smartDrop(files,text){
