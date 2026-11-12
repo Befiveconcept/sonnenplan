@@ -2485,7 +2485,13 @@ queueMicrotask(()=>{ A.permPresetAll=()=>CHG.permPresetAll(); }); /* Knopf „Vo
 const nfLegacy=(p,l)=>p.nfSet||l.includes('notif')?l:[...l,'notif'];
 /* Ohne gespeicherte Rechte sah bisher jeder alles. Monteure (Kürzel aus der Voreinstellung, Rolle „Montage“ in Team & Einstellungen oder Name Moji/ABou) bekommen dann automatisch die Monteur-Rechte. */
 const isMonteurDefault=n=>{ const k=String(shortWho(n)||'').toLowerCase(); if(ADMINS.map(x=>x.toLowerCase()).includes(k)) return false; if(ROLE_DEFAULT_BY_K[k]) return ROLE_DEFAULT_BY_K[k]==='monteur'; let st=null; try{ st=staff().find(s=>s.name===n||String(shortWho(s.name)).toLowerCase()===k); }catch(e){} return !!(st&&st.role==='Monteur')||/\b(moji|abou|abow)\b/i.test(String(n||'')); };
-const permEff=n=>permOf(n)||(n&&isMonteurDefault(n)?rolePerm('monteur'):null);
+/* Lager-Tablet-Konto: eigene Anmeldung nur fürs Tablet (keine Person). Sieht nur die Lagerverwaltung, darf selbst NICHTS buchen –
+   gebucht wird immer erst nach „Wer bucht?“ mit Kürzel und Rechten der gewählten Person. Welche E-Mails Tablet-Konten sind, legen EP/AvE fest. */
+const TAB_ME='Lager-Tablet (TAB)';
+const TAB_PERM={views:['stock'],edit:[],admin:false,ownTodos:true,role:'tablet',v2:true,nfSet:true};
+const tabletEmails=()=>((S.config||{}).tabletAccounts||[]).map(e=>String(e||'').trim().toLowerCase()).filter(Boolean);
+const isTabletAcc=()=>MODE==='cloud'&&!!USER_EMAIL&&tabletEmails().includes(String(USER_EMAIL).trim().toLowerCase());
+const permEff=n=>n===TAB_ME?TAB_PERM:permOf(n)||(n&&isMonteurDefault(n)?rolePerm('monteur'):null);
 const viewsOf=n=>{ const p=permEff(n); return p&&Array.isArray(p.views)?nfLegacy(p,permV2(n,p,p.views)):defaultViews(n); };
 const editsOf=n=>{ const p=permEff(n); return p&&Array.isArray(p.edit)?permV2(n,p,p.edit):viewsOf(n); };
 const canEdit=a=>isAdmin()||(!!ME&&editsOf(ME).includes(a)&&viewsOf(ME).includes(a));
@@ -2640,6 +2646,7 @@ function setMe(name){
     if(map[USER_ID]!==name){ map[USER_ID]=name; putConfig({...(S.config||{}),userMap:map}); } }
   ME=name; lsSet('sonnenplan-me',name); toast('Angemeldet als '+shortWho(name)+'.'); scheduleRender(); }
 function applyUserMap(){ if(MODE!=='cloud'||!USER_ID) return;
+  if(USER_EMAIL&&S.config&&isTabletAcc()){ const base=KWHO&&KIOSK_ON()?KWHO:TAB_ME; if(ME!==base){ ME=base; scheduleRender(); } setTimeout(kioskTabletEnsure,400); return; }
   if(USER_EMAIL){ if(!S.config) return; { const g=staffGoneByEmail(USER_EMAIL); if(g) return exitLock(g); } const n=staffByEmail(USER_EMAIL); if(n!==ME){ ME=n; if(n) lsSet('sonnenplan-me',n); scheduleRender(); }
     if(!n&&!NOMATCH_SHOWN&&staff().length){ NOMATCH_SHOWN=true; setTimeout(()=>openSheet({title:'Konto keinem Mitarbeiter zugeordnet',html:`<div class="fld full">Die Anmeldung <b>${esc(USER_EMAIL)}</b> passt zu keinem Mitarbeiter: Das Kürzel vor dem @ stimmt mit keinem Kürzel überein.<div class="small muted" style="margin-top:8px">EP oder AvE tragen die E-Mail unter „Team & Einstellungen“ beim Mitarbeiter ein. Bis dahin werden Änderungen ohne Kürzel gespeichert.</div></div>`,saveLabel:'OK',onSave:()=>{}}),600); }
     return; }
@@ -6240,7 +6247,7 @@ function invReview(id){ const x=S.inv[id]; if(!x) return; closeSheet(); const ca
       x2.status='gebucht'; x2.bookedBy=meK(); x2.bookedAt=new Date().toISOString(); put('inv',x2); toast(n?n+' Differenz'+(n===1?'':'en')+' gebucht.':'Inventur abgeschlossen, nichts zu buchen.'); }}); }
 
 /* ---------- Kopf, Tabs, Aktionen ---------- */
-const lgHeadBtns=()=>`<button class="btn" data-act="lgScan">${LG_SCAN_IC}Scannen</button>${lagerOk()?`<button class="btn" data-act="kSetup" title="Dieses Gerät (z. B. Tablet im Lager) zeigt danach nur noch die Lagerverwaltung">📱 Als Lager-Tablet einrichten</button>`:''}`;
+const lgHeadBtns=()=>`<button class="btn" data-act="lgScan">${LG_SCAN_IC}Scannen</button>${lagerOk()?`<button class="btn" data-act="kSetup" title="Dieses Gerät (z. B. Tablet im Lager) zeigt danach nur noch die Lagerverwaltung">📱 Als Lager-Tablet einrichten</button>`:''}${isBaseAdmin()?`<button class="btn" data-act="kTabAcc" title="Eigene Anmeldung nur fürs Lager-Tablet (statt eines persönlichen Kontos)">🔑 Tablet-Konten</button>`:''}`;
 const pickLocTxt=it=>{ if(it.from&&it.from.length) return 'entnommen von '+it.from.map(f=>(f.bin?lgCode(f.bin):'ohne Platz')+' '+qn(f.n)).join(', ');
   if(it.ok||it.src==='Lager') return ''; const s=stockFind(it.art,it.artNr); if(!s) return ''; const b=binsOf(s).sort((x,y)=>y[1]-x[1]); return b.length?'📍 liegt auf '+b.slice(0,3).map(([x,q])=>lgCode(x)+' ('+qn(+q)+')').join(', ')+(b.length>3?' …':''):''; };
 queueMicrotask(()=>{ Object.assign(A,{
@@ -8844,7 +8851,25 @@ const KIOSK_K='sonnenplan-kiosk';
 const kioskCfg=()=>{ try{ return JSON.parse(lsGet(KIOSK_K)||'null'); }catch(e){ return null; } };
 const KIOSK_ON=()=>{ const c=kioskCfg(); return !!(c&&c.on); };
 let KQ='', KWHO='', KIDLE=Date.now(), KMODE='';
-const kBase=()=>(kioskCfg()||{}).base||ME;
+const kBase=()=>isTabletAcc()?TAB_ME:(kioskCfg()||{}).base||ME;
+/* Tablet-Konto: Beim ersten Anmelden auf dem Gerät MUSS der Tablet-Modus eingerichtet werden (PIN festlegen). „Wer bucht?“ ist immer an. */
+let K_TAB_ASK=false;
+setInterval(()=>{ if(isTabletAcc()&&!KIOSK_ON()) kioskTabletEnsure(); },3000); // weggeklickt? → erscheint wieder
+function kioskTabletEnsure(){ if(!isTabletAcc()||KIOSK_ON()||(SHEET&&SHEET.title==='Lager-Tablet einrichten')) return; if(SHEET) closeSheet(); K_TAB_ASK=true;
+  openSheet({title:'Lager-Tablet einrichten',html:`<div class="fld full"><div class="small">Dieses Gerät ist mit dem <b>Tablet-Konto</b> angemeldet. Es zeigt nur die Lagerverwaltung. Vor jeder Buchung tippt man das eigene Kürzel an („Wer bucht?“) – gebucht wird mit den Rechten dieser Person.</div></div>
+    <div class="fld"><label for="ktp1">PIN zum Beenden des Tablet-Modus (4–8 Ziffern)</label><input id="ktp1" type="password" inputmode="numeric" autocomplete="new-password" maxlength="8"></div>
+    <div class="fld"><label for="ktp2">PIN wiederholen</label><input id="ktp2" type="password" inputmode="numeric" autocomplete="new-password" maxlength="8"></div>`,saveLabel:'Tablet-Modus starten',
+    onSave:()=>{ const a=$('#ktp1').value.trim(), b=$('#ktp2').value.trim(); if(!/^\d{4,8}$/.test(a)){ toast('Bitte eine PIN aus 4–8 Ziffern.'); return false; } if(a!==b){ toast('Die PINs stimmen nicht überein.'); return false; }
+      lsSet(KIOSK_K,JSON.stringify({on:true,pin:strHash('kiosk|'+a),askWho:true,by:'TAB',base:TAB_ME,tablet:true,at:new Date().toISOString()})); K_TAB_ASK=false; KQ=''; KWHO=''; KMODE=''; setTimeout(()=>{ render(); toast('Lager-Tablet ist eingerichtet.'); },50); }});
+  setTimeout(()=>{ document.querySelectorAll('.sheet [data-act="closeSheet"], #scrim [data-act="closeSheet"], .scrim [data-act="closeSheet"]').forEach(x=>x.remove()); },30); }
+// EP/AvE: welche Anmelde-E-Mails sind Tablet-Konten?
+function tabletAccSheet(){ if(!isBaseAdmin()) return toast('Tablet-Konten verwalten nur EP und AvE.'); const cur=tabletEmails();
+  openSheet({title:'🔑 Tablet-Konten',wide:1,html:`<div class="fld full"><div class="small">Ein Tablet-Konto ist eine eigene Anmeldung nur fürs Lager-Tablet, keine Person. Es sieht nur die Lagerverwaltung und bucht nichts selbst: Vor jeder Buchung wählt man am Tablet sein Kürzel.</div></div>
+    <div class="fld full"><label for="tab_em">Anmelde-E-Mails der Tablet-Konten (eine pro Zeile)</label><textarea id="tab_em" class="inp" rows="3" placeholder="z. B. lager@eure-firmendomain.de">${esc(cur.join('\n'))}</textarea>
+    <div class="small muted" style="margin-top:4px">Die Adresse muss zu eurer Firmen-Domain gehören (wie eure Mitarbeiter-Konten). Ein echtes Postfach braucht sie nicht. Das Konto selbst legst du in Supabase an – Anleitung: Doku „Lager-Tablet-Konto“.</div></div>`,saveLabel:'Speichern',
+    onSave:()=>{ const list=[...new Set(String($('#tab_em').value||'').split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(x=>/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(x)))];
+      if(list.some(e=>staffByEmail(e))){ toast('Eine der Adressen gehört zu einem Mitarbeiter – bitte eine eigene Adresse nur fürs Tablet nehmen.'); return false; }
+      const cfg=clone(S.config||{}); cfg.tabletAccounts=list; putConfig(cfg); toast(list.length?list.length+' Tablet-Konto/Konten gespeichert.':'Keine Tablet-Konten mehr.'); }}); }
 const KM_L={in:'Einbuchen',out:'Entnehmen',shift:'Umlagern'};
 function kioskSetup(){ if(!lagerOk()) return toast('Ein Lager-Tablet einrichten darf, wer das Recht „Lagerverwaltung“ (bearbeiten) hat.');
   openSheet({title:'Dieses Gerät als Lager-Tablet einrichten',html:`<div class="fld full"><div class="small">Danach zeigt <b>dieses Gerät</b> nur noch die Lagerverwaltung mit großen Knöpfen: Suchen, Scannen, Artikelschild fotografieren, Einbuchen, Entnehmen (auch für Projekte), Umlagern und neue Artikel anlegen. Alles andere (Projekte, Finanzen, Chat …) ist auf diesem Gerät ausgeblendet. Andere Geräte ändern sich nicht.</div></div>
@@ -8858,7 +8883,7 @@ function kioskExit(){ openSheet({title:'Tablet-Modus beenden',html:`<div class="
   onSave:()=>{ const c=kioskCfg(); if(!c||strHash('kiosk|'+$('#kpx').value.trim())!==c.pin){ toast('PIN falsch.'); return false; } ME=c.base||ME; lsSet(KIOSK_K,''); KWHO=''; document.body.classList.remove('kiosk'); setTimeout(render,30); toast('Tablet-Modus beendet.'); }}); setTimeout(()=>{ const i=$('#kpx'); if(i) i.focus(); },60); }
 function kioskLogout(msg){ KWHO=''; ME=kBase(); KMODE=''; KQ=''; closeSheet(); lgCamClose(); render(); if(msg) toast(msg); }
 // Wer bucht? Danach mit dessen Rechten (Lager bearbeiten nötig)
-function kioskWho(then){ const c=kioskCfg()||{}; if(!c.askWho){ then(); return; } if(KWHO){ then(); return; }
+function kioskWho(then){ const c=kioskCfg()||{}; if(!c.askWho&&!isTabletAcc()){ then(); return; } if(KWHO){ then(); return; }
   const list=staff().filter(s=>!(s.exit&&s.exit<TODAY())); if(!list.length){ then(); return; }
   openSheet({title:'Wer bucht?',wide:1,html:`<div class="fld full"><div class="k-who">${list.map(s=>`<button type="button" class="k-wb" data-n="${esc(s.name)}"><b>${esc(shortWho(s.name))}</b><span>${esc(s.name.replace(/\s*\([^)]*\)$/,''))}</span></button>`).join('')}</div></div>`,saveLabel:'Abbrechen',onSave:()=>{}});
   document.querySelectorAll('.k-wb').forEach(b=>b.onclick=()=>{ const n=b.dataset.n; ME=n; KWHO=n; KIDLE=Date.now(); if(!mayWrite('stock')){ ME=kBase(); KWHO=''; toast(shortWho(n)+' hat keine Berechtigung für Lagerbuchungen.'); return; } closeSheet(); render(); then(); }); }
@@ -8918,7 +8943,7 @@ document.addEventListener('change',e=>{ if(e.target.id==='kPhotoIn'){ const f=(e
 ['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,()=>{ KIDLE=Date.now(); },true));
 setInterval(()=>{ if(KIOSK_ON()&&KWHO&&Date.now()-KIDLE>180000) kioskLogout('Abgemeldet – 3 Minuten keine Eingabe.'); },15000);
 queueMicrotask(()=>Object.assign(A,{
-  kSetup:()=>kioskSetup(), kExit:()=>kioskExit(),
+  kSetup:()=>kioskSetup(), kExit:()=>kioskExit(), kTabAcc:()=>tabletAccSheet(),
   kWho:()=>{ if(KWHO) kioskLogout('Abgemeldet.'); else kioskWho(()=>{}); },
   kScan:()=>lgCamOpen(code=>kioskCode(code)),
   kPhoto:()=>{ const f=$('#kPhotoIn'); if(f){ f.value=''; f.click(); } },
