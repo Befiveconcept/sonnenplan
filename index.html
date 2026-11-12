@@ -1686,6 +1686,9 @@ button.link-ms:hover{color:var(--ink)}
 .l3-leg{display:flex;gap:14px;flex-wrap:wrap;align-items:center;padding:0 16px 14px}
 .l3-leg i{display:inline-block;width:14px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
 .l3-leg .lg-e{border:1px dashed #888;background:#fff}.l3-leg .lg-f{background:#c89b62}.l3-leg .lg-h{background:#F4DB02}
+.l3-tb{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:0 16px 8px}
+.l3-grab{cursor:grab;touch-action:none}.l3-grab polygon{fill:rgba(244,219,2,.16);stroke:#c9a400;stroke-width:1;stroke-dasharray:none}
+.l3-grab:hover polygon{fill:rgba(244,219,2,.4);stroke:#111}.l3-grab:active{cursor:grabbing}
 .l3-take{display:flex;flex-direction:column;gap:10px;margin:0 16px 12px;padding:12px 14px;border:1px dashed var(--sun);border-radius:10px;background:color-mix(in srgb,var(--sun) 8%,var(--surface))}
 .l3-tk{display:flex;flex-wrap:wrap;gap:6px 16px}
 .l3-walls{margin:0 16px 8px}.l3-wl{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-top:6px}.l3-wl label{display:flex;flex-direction:column;gap:2px}
@@ -6493,7 +6496,7 @@ function l3Regal(rg,q){ L3_FRONT=true; const items=[], lab=[], Y=.6, r=l3Rack(rg
   items.push({k:-99,b:[0,0,0,r.w,Y+r.d+2.2,0],svg:`<polygon class="l3-floor" points="${l3pts([[0,0,0],[r.w,0,0],[r.w,Y+r.d+2.2,0],[0,Y+r.d+2.2,0]])}"/>`});
   items.push(l3Box(0,-.25,0,r.w,.25,r.h+.6,'l3-wall brick')); return l3Svg(items,lab); }
 // Raum in 3D (Draufsicht wie Keller): Regale/Schränke an Wand hinten (Rückwand), links (Stirnwand) und rechts (vorne, offen gezeichnet)
-function l3Room(root,q){ L3_FRONT=false; const racks=lgKids(root.id).filter(n=>n.kind==='regal').sort((a,b)=>String(a.seg).localeCompare(String(b.seg),'de',{numeric:true}));
+function l3Room(root,q,edit){ L3_FRONT=false; const racks=lgKids(root.id).filter(n=>n.kind==='regal').sort((a,b)=>String(a.seg).localeCompare(String(b.seg),'de',{numeric:true}));
   const wallOf=r=>['links','hinten','rechts'].includes(r.wall)?r.wall:'hinten', items=[], lab=[];
   const dims=r=>{ const fields=lgKids(r.id).filter(n=>n.kind==='feld'), F=fields.length?fields:[r], pal=r.stype==='hochregal';
     const lev=f=>{ const es=lgKids(f.id).filter(n=>n.kind==='ebene'); return es.length?es.map(e=>({e,bins:lgKids(e.id).filter(lgIsBin)})):[{e:f,bins:lgKids(f.id).filter(lgIsBin)}]; };
@@ -6502,29 +6505,104 @@ function l3Room(root,q){ L3_FRONT=false; const racks=lgKids(root.id).filter(n=>n
   const groups={links:[],hinten:[],rechts:[]}; racks.forEach(r=>groups[wallOf(r)].push({r,m:dims(r)}));
   const sum=g=>g.reduce((a,x)=>a+x.m.L+.3,0), maxD=g=>Math.max(0,...g.map(x=>x.m.D));
   const dL=maxD(groups.links), dB=maxD(groups.hinten), dR=maxD(groups.rechts);
-  const X=Math.max(3,dL+.5+Math.max(sum(groups.hinten),sum(groups.rechts))+.3), Y=Math.max(3,dB+.5+sum(groups.links)+.4+dR+1.2);
+  let X=Math.max(3,dL+.5+Math.max(sum(groups.hinten),sum(groups.rechts))+.3), Y=Math.max(3,dB+.5+sum(groups.links)+.4+dR+1.2);
+  const room=root.room&&+root.room.w&&+root.room.d?root.room:null; if(room){ X=+room.w; Y=+room.d; }
+  // Standard-Position je Wand (wie bisher); eigene Position (pos = {x,y,o}) oder gerade gezogene (UI.l3Drag) hat Vorrang
+  // o = Ausrichtung: back = Rückseite an der hinteren Wand, left = an der linken Wand, front = an der vorderen Wand, right = an der rechten Wand
+  const P=[]; let u=0; groups.hinten.forEach(g=>{ P.push({...g,x:dL+.5+u,y:0,o:'back'}); u+=g.m.L+.3; });
+  u=dB+.5; groups.links.forEach(g=>{ P.push({...g,x:0,y:u,o:'left'}); u+=g.m.L+.3; });
+  u=Math.max(0,X-dL-.8-sum(groups.rechts)); groups.rechts.forEach(g=>{ P.push({...g,x:dL+.5+u,y:Y,o:'front'}); u+=g.m.L+.3; });
+  P.forEach(p=>{ const d=UI.l3Drag&&UI.l3Drag.id===p.r.id?UI.l3Drag:p.r.pos; if(d&&isFinite(+d.x)&&isFinite(+d.y)){ p.x=+d.x; p.y=+d.y; if(['back','left','front','right'].includes(d.o)) p.o=d.o; } });
+  const foot=p=>{ const {L,D}=p.m; return p.o==='back'?[p.x,p.y,L,D]:p.o==='front'?[p.x,p.y-D,L,D]:p.o==='left'?[p.x,p.y,D,L]:[p.x-D,p.y,D,L]; };
+  if(!room) P.forEach(p=>{ const f=foot(p); X=Math.max(X,f[0]+f[2]+.3); Y=Math.max(Y,f[1]+f[3]+.3); });
+  L3_ROOM={X,Y,id:root.id};
   items.push({k:-99,b:[0,0,0,X,Y,0],svg:`<polygon class="l3-floor" points="${l3pts([[0,0,0],[X,0,0],[X,Y,0],[0,Y,0]])}"/>`});
   items.push({...l3Box(0,-.2,0,X,.2,2.6,'l3-wall brick'),k:-98}); items.push({...l3Box(-.2,-.2,0,.2,Y+.2,2.6,'l3-wall'),k:-98});
-  // Ein Regal/Schrank in lokalen Koordinaten (u = entlang der Wand, v = Abstand zur Wand) zeichnen und in den Raum drehen
-  const place=(x,m,wall,u0)=>{ const map=(u,v,z,lw,ld,h,cl,ex)=>wall==='links'?l3Box(v,u0+u,z,ld,lw,h,cl,ex):wall==='rechts'?l3Box(dL+.5+u0+u,Y-v-ld,z,lw,ld,h,cl,ex):l3Box(dL+.5+u0+u,v,z,lw,ld,h,cl,ex);
-    const slot=(b,u,v,z,lw,ld,big)=>wall==='links'?l3Slot(b,v,u0+u,z,ld,lw,q,big):wall==='rechts'?l3Slot(b,dL+.5+u0+u,Y-v-ld,z,lw,ld,q,big):l3Slot(b,dL+.5+u0+u,v,z,lw,ld,q,big);
-    const txt=(u,v,z,t,cl)=>wall==='links'?l3Txt(v,u0+u,z,t,cl):wall==='rechts'?l3Txt(dL+.5+u0+u,Y-v,z,t,cl):l3Txt(dL+.5+u0+u,v,z,t,cl);
-    const {F,lev,FW,D,LH,H,L,pal}=m, open=wall==='rechts';
+  // Ein Regal/Schrank in lokalen Koordinaten (u = entlang der Rückseite, v = Abstand zur Rückseite) zeichnen und in den Raum drehen
+  const place=p=>{ const {r:x,m,o}=p, ox=p.x, oy=p.y;
+    const map=(u,v,z,lw,ld,h,cl,ex)=>o==='left'?l3Box(ox+v,oy+u,z,ld,lw,h,cl,ex):o==='right'?l3Box(ox-v-ld,oy+u,z,ld,lw,h,cl,ex):o==='front'?l3Box(ox+u,oy-v-ld,z,lw,ld,h,cl,ex):l3Box(ox+u,oy+v,z,lw,ld,h,cl,ex);
+    const slot=(b,u,v,z,lw,ld,big)=>o==='left'?l3Slot(b,ox+v,oy+u,z,ld,lw,q,big):o==='right'?l3Slot(b,ox-v-ld,oy+u,z,ld,lw,q,big):o==='front'?l3Slot(b,ox+u,oy-v-ld,z,lw,ld,q,big):l3Slot(b,ox+u,oy+v,z,lw,ld,q,big);
+    const txt=(u,v,z,t,cl)=>o==='left'?l3Txt(ox+v,oy+u,z,t,cl):o==='right'?l3Txt(ox-v,oy+u,z,t,cl):o==='front'?l3Txt(ox+u,oy-v,z,t,cl):l3Txt(ox+u,oy+v,z,t,cl);
+    const {F,lev,FW,D,LH,H,L,pal}=m, open=o==='front'||o==='right';
     if(!open) items.push(map(0,0,0,L,.04,H,'l3-cab back'));
     F.forEach((f,i)=>{ const fu=i*FW; lev(f).forEach((lv,e)=>{ const z=e*LH+.04, k=Math.max(1,lv.bins.length), sw=(FW-.1)/k;
         items.push(map(fu+.03,.04,z-.03,FW-.06,D-.04,.03,pal?'l3-beam':'l3-board'));
         lv.bins.forEach((b,j)=>{ items.push(...slot(b,fu+.05+j*sw,.06,z,sw-.04,D-.1,LH-.08)); }); }); });
     [0,L].forEach(u=>{ items.push(map(u-.03,0,0,.06,.06,H,pal?'l3-up':'l3-cab')); items.push(map(u-.03,D-.06,0,.06,.06,H,pal?'l3-up':'l3-cab')); });
     items.push(map(0,0,H,L,D,.03,'l3-cab'));
-    lab.push(txt(L/2,D+.35,0,x.seg||x.name||'','l3-t zl')); };
-  let u=0; groups.hinten.forEach(g=>{ place(g.r,g.m,'hinten',u); u+=g.m.L+.3; });
-  u=dB+.5; groups.links.forEach(g=>{ place(g.r,g.m,'links',u); u+=g.m.L+.3; });
-  const r0=Math.max(0,X-dL-.8-sum(groups.rechts)); u=r0; groups.rechts.forEach(g=>{ place(g.r,g.m,'rechts',u); u+=g.m.L+.3; }); // rechts an die vordere rechte Ecke, damit nichts verdeckt wird
-  if(groups.hinten.length) lab.push(l3Txt(dL+.5+sum(groups.hinten)/2,-.3,2.9,'Wand hinten','l3-t wl'));
-  if(groups.links.length) lab.push(l3Txt(-.3,dB+.5+sum(groups.links)/2,2.9,'Wand links','l3-t wl'));
-  if(groups.rechts.length) lab.push(l3Txt(dL+.5+r0+sum(groups.rechts)/2,Y+1,0,'Wand rechts','l3-t wl'));
+    lab.push(txt(L/2,D+.35,0,x.seg||x.name||'','l3-t zl'));
+    // Anordnen-Modus: ganzer Schrank ist Griff (ziehen = verschieben, Klick = bearbeiten)
+    if(edit){ const f=foot(p), g=l3Box(f[0],f[1],0,f[2],f[3],H+.05,'l3-grab',` data-rack="${esc(x.id)}" data-seg="${esc(x.seg||'')}" role="button" tabindex="0" aria-label="${esc((x.name||'')+' '+(x.seg||''))} verschieben oder bearbeiten"`); g.svg=g.svg.replace('>',`><title>${esc((x.name||'')+' '+(x.seg||''))} – ziehen zum Verschieben, klicken zum Bearbeiten</title>`); items.push({...g,k:1e6}); } };
+  P.forEach(p=>{ L3_POS[p.r.id]={x:p.x,y:p.y,o:p.o,L:p.m.L,D:p.m.D}; }); P.forEach(place);
+  if(!edit){ if(groups.hinten.length&&!groups.hinten.some(g=>g.r.pos)) lab.push(l3Txt(dL+.5+sum(groups.hinten)/2,-.3,2.9,'Wand hinten','l3-t wl'));
+    if(groups.links.length&&!groups.links.some(g=>g.r.pos)) lab.push(l3Txt(-.3,dB+.5+sum(groups.links)/2,2.9,'Wand links','l3-t wl')); }
   const loose=lgKids(root.id).filter(lgIsBin); loose.forEach((b,j)=>{ items.push(...l3Slot(b,dL+.8+j*1.1,dB+1,0,1,1,q)); lab.push(l3Txt(dL+1.3+j*1.1,dB+1.5,.02,String(b.seg||''),'l3-t sm')); });
+  if(edit) lab.push(l3Txt(X/2,Y+.8,0,'Raum '+nf(X,1)+' × '+nf(Y,1)+' m','l3-t big'));
   return l3Svg(items,lab); }
+var L3_ROOM={X:0,Y:0,id:''}, L3_POS={};
+/* ---------- Anordnen: Schränke ziehen, drehen, anlegen, entfernen; Raumgröße ---------- */
+const L3_ORI=[['back','Rückseite an Wand hinten'],['left','Rückseite an Wand links'],['front','Rückseite an Wand vorne'],['right','Rückseite an Wand rechts']];
+const l3IsVirt=key=>!l3Node(key);
+const l3RoomArea=k=>k==='klein'||k==='werkzeug';
+function l3AreaSvg(){ const key=UI.l3Area, n=l3Node(key), ed=!!UI.l3Edit&&lgMgr()&&l3RoomArea(key); return n?l3Room(n,String(UI.l3q||'').trim().toLowerCase(),ed):l3Virtual(key,ed); }
+function l3Redraw(){ const w=document.querySelector('.l3-card .l3-wrap'); if(w) w.innerHTML=l3AreaSvg(); }
+// Fußabdruck je Ausrichtung → im Raum halten
+function l3Clamp(p){ const {X,Y}=L3_ROOM, f=p.o==='back'?[0,0,p.L,p.D]:p.o==='front'?[0,-p.D,p.L,p.D]:p.o==='left'?[0,0,p.D,p.L]:[-p.D,0,p.D,p.L];
+  const x=Math.max(-f[0],Math.min(X-f[0]-f[2],p.x)), y=Math.max(-f[1],Math.min(Y-f[1]-f[3],p.y)); return {x:Math.round(x*10)/10,y:Math.round(y*10)/10,o:p.o}; }
+function l3SaveRack(key,id,seg,patch,msg){ if(!lgMgr()) return;
+  if(l3IsVirt(key)){ const t=l3Tpl(key), r=(t.racks||[]).find(r=>r.seg===seg); if(!r) return; Object.assign(r,patch); UI.l3Tpl={...(UI.l3Tpl||{}),[key]:t}; render(); if(msg) toast(msg+' (Vorlage – noch nicht gespeichert)'); return; }
+  const n=lgNode(id); if(!n) return; const x={...n,...patch}; lgWriteMany([x]).then(ok=>{ if(ok&&msg) toast(msg); }); }
+function l3Floor(svg,cx,cy){ const pt=svg.createSVGPoint(); pt.x=cx; pt.y=cy; const p=pt.matrixTransform(svg.getScreenCTM().inverse()), a=p.x/(l3c*L3S), b=p.y/(.5*L3S); return {x:(a+b)/2,y:(b-a)/2}; }
+let L3D=null;
+document.addEventListener('pointerdown',e=>{ const g=e.target.closest&&e.target.closest('.l3-grab'); if(!g||!UI.l3Edit||e.button) return; const svg=g.closest('svg'), p0=L3_POS[g.dataset.rack]; if(!svg||!p0) return; e.preventDefault();
+  L3D={id:g.dataset.rack,seg:g.dataset.seg,key:UI.l3Area,f0:l3Floor(svg,e.clientX,e.clientY),p0:{...p0},moved:false}; },true);
+document.addEventListener('pointermove',e=>{ if(!L3D) return; const svg=document.querySelector('.l3-card .l3-wrap svg'); if(!svg) return; const f=l3Floor(svg,e.clientX,e.clientY), dx=f.x-L3D.f0.x, dy=f.y-L3D.f0.y;
+  if(!L3D.moved&&Math.hypot(dx,dy)<.15) return; L3D.moved=true; UI.l3Drag={id:L3D.id,...l3Clamp({...L3D.p0,x:L3D.p0.x+dx,y:L3D.p0.y+dy})};
+  if(!L3D.raf) L3D.raf=requestAnimationFrame(()=>{ if(L3D) L3D.raf=0; l3Redraw(); }); });
+document.addEventListener('pointerup',()=>{ if(!L3D) return; const d=L3D; L3D=null;
+  if(d.moved&&UI.l3Drag){ const p={x:UI.l3Drag.x,y:UI.l3Drag.y,o:UI.l3Drag.o}; l3SaveRack(d.key,d.id,d.seg,{pos:p}); setTimeout(()=>{ UI.l3Drag=null; },400); }
+  else { UI.l3Drag=null; setTimeout(()=>l3RackSheet(d.key,d.id,d.seg),60); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.closest&&e.target.closest('.l3-grab')){ e.preventDefault(); const g=e.target.closest('.l3-grab'); l3RackSheet(UI.l3Area,g.dataset.rack,g.dataset.seg); } });
+// Regal/Schrank bearbeiten (Vorlage: alles; angelegt: Name, Ausrichtung, Position – Ebenen/Plätze über „Lagerorte & Plätze“)
+function l3RackSheet(key,id,seg){ if(!lgMgr()) return; const virt=l3IsVirt(key), t=virt?l3Tpl(key):null, r=virt?(t.racks||[]).find(r=>r.seg===seg):null, n=virt?null:lgNode(id), p=L3_POS[id]||{x:0,y:0,o:'back'};
+  if(!r&&!n) return; const name=r?r.name:n.name, sg=r?r.seg:n.seg, bins=n?lgSub(n.id).filter(lgIsBin):[], full=bins.filter(b=>binStock(b.id).length).length;
+  openSheet({title:(name||'Regal')+' '+(sg||''),wide:1,html:`<div class="fld"><label for="rk_n">Name</label><input id="rk_n" class="inp" value="${esc(name||'')}"></div>
+    <div class="fld"><label for="rk_s">Kürzel</label><input id="rk_s" class="inp" value="${esc(sg||'')}" ${virt?'':'disabled title="Kürzel ändern unter Lagerorte & Plätze (wegen der Etiketten)"'}></div>
+    <div class="fld full"><label for="rk_o">Ausrichtung</label><select id="rk_o" class="inp">${L3_ORI.map(([k,l])=>`<option value="${k}" ${p.o===k?'selected':''}>${l}</option>`).join('')}</select></div>
+    <div class="fld"><label for="rk_x">Position von links (m)</label><input id="rk_x" class="inp" type="number" step="0.1" value="${p.x}"></div><div class="fld"><label for="rk_y">Position von hinten (m)</label><input id="rk_y" class="inp" type="number" step="0.1" value="${p.y}"></div>
+    ${virt?`<div class="fld"><label for="rk_k">Art</label><select id="rk_k" class="inp">${[['regal','Regal'],['schrank','Schrank'],['hochregal','Hochregal']].map(([k,l])=>`<option value="${k}" ${r.k===k?'selected':''}>${l}</option>`).join('')}</select></div>
+      <div class="fld"><label for="rk_f">Felder nebeneinander (0 = eins)</label><input id="rk_f" class="inp" type="number" min="0" max="20" value="${+r.f||0}"></div><div class="fld"><label for="rk_e">Ebenen / Böden</label><input id="rk_e" class="inp" type="number" min="1" max="20" value="${+r.e||1}"></div><div class="fld"><label for="rk_p">Plätze je Ebene</label><input id="rk_p" class="inp" type="number" min="1" max="20" value="${+r.p||1}"></div>`
+      :`<div class="fld full small muted">${bins.length} Lagerplätze, davon ${full} belegt. Ebenen und Plätze änderst du unter „Lagerorte & Plätze“.</div>`}`,
+    saveLabel:'Speichern',extraBtn:`<button type="button" class="btn" data-act="l3RackTurn" data-id="${esc(id)}" data-seg="${esc(sg||'')}">↻ Drehen</button><button type="button" class="btn danger" data-act="l3RackDel" data-id="${esc(id)}" data-seg="${esc(sg||'')}">Entfernen</button>`,
+    onSave:()=>{ const pos={x:+$('#rk_x').value||0,y:+$('#rk_y').value||0,o:$('#rk_o').value}, nm=String($('#rk_n').value||'').trim();
+      if(virt){ const s2=String($('#rk_s').value||'').trim().replace(/\s+/g,''); if(!/^[0-9A-Za-zÄÖÜäöü]+$/.test(s2)){ toast('Kürzel bitte nur aus Buchstaben und Ziffern.'); return false; } if(s2!==seg&&(t.racks||[]).some(x=>x.seg.toLowerCase()===s2.toLowerCase())){ toast('Das Kürzel gibt es schon.'); return false; }
+        l3SaveRack(key,id,seg,{name:nm||r.name,seg:s2,pos:l3Clamp({...p,...pos}),k:$('#rk_k').value,f:Math.max(0,+$('#rk_f').value||0),e:Math.max(1,+$('#rk_e').value||1),p:Math.max(1,+$('#rk_p').value||1)},'Gespeichert'); }
+      else l3SaveRack(key,id,seg,{name:nm||n.name,pos:l3Clamp({...p,...pos})},'Gespeichert.'); }}); }
+function l3RackNew(key){ if(!lgMgr()) return; const virt=l3IsVirt(key), root=l3Node(key), t=l3Tpl(key), segs=new Set(virt?(t.racks||[]).map(r=>String(r.seg).toUpperCase()):lgKids(root.id).map(x=>String(x.seg||'').toUpperCase()));
+  const next=pre=>{ let i=1; while(segs.has(pre+String(i).padStart(2,'0'))) i++; return pre+String(i).padStart(2,'0'); };
+  openSheet({title:'Neuer Schrank / neues Regal',wide:1,html:`<div class="fld"><label for="rn_k">Art</label><select id="rn_k" class="inp"><option value="schrank">Schrank</option><option value="regal">Regal</option><option value="hochregal">Hochregal</option></select></div>
+    <div class="fld"><label for="rn_n">Name</label><input id="rn_n" class="inp" value="Schrank" placeholder="z. B. Schrank blau"></div><div class="fld"><label for="rn_s">Kürzel</label><input id="rn_s" class="inp" value="${next('S')}"></div>
+    <div class="fld"><label for="rn_f">Felder nebeneinander (0 = eins)</label><input id="rn_f" class="inp" type="number" min="0" max="20" value="0"></div><div class="fld"><label for="rn_e">Ebenen / Böden</label><input id="rn_e" class="inp" type="number" min="1" max="20" value="5"></div><div class="fld"><label for="rn_p">Plätze je Ebene</label><input id="rn_p" class="inp" type="number" min="1" max="20" value="2"></div>
+    <div class="fld"><label for="rn_t">Platztyp</label><select id="rn_t" class="inp">${Object.entries(LG_TYPES).map(([k,l])=>`<option value="${k}" ${k==='fach'?'selected':''}>${esc(l)}</option>`).join('')}</select></div>
+    <div class="fld full"><label for="rn_o">Ausrichtung</label><select id="rn_o" class="inp">${L3_ORI.map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select></div>
+    <div class="fld full small muted">Er erscheint in der Mitte des Raums – danach im Anordnen-Modus an seinen Platz ziehen.${virt?' (Vorlage – gespeichert wird erst mit „Struktur anlegen“.)':' Die Lagerplätze werden sofort angelegt, alle leer.'}</div>`,saveLabel:'Hinzufügen',
+    onSave:()=>{ const r={k:$('#rn_k').value,name:String($('#rn_n').value||'').trim()||'Schrank',seg:String($('#rn_s').value||'').trim().replace(/\s+/g,''),f:Math.max(0,+$('#rn_f').value||0),e:Math.max(1,+$('#rn_e').value||1),p:Math.max(1,+$('#rn_p').value||1),lt:$('#rn_t').value,wall:''};
+      if(!/^[0-9A-Za-zÄÖÜäöü]+$/.test(r.seg)){ toast('Kürzel bitte nur aus Buchstaben und Ziffern.'); return false; } if(segs.has(r.seg.toUpperCase())){ toast('Das Kürzel „'+r.seg+'“ gibt es in diesem Bereich schon.'); return false; }
+      const L=(r.f||1)*(r.k==='hochregal'?2.4:1.1), D=r.k==='hochregal'?1:.55; r.pos=l3Clamp({x:L3_ROOM.X/2-L/2,y:L3_ROOM.Y/2,o:$('#rn_o').value,L,D});
+      if(virt){ t.racks=[...(t.racks||[]),r]; UI.l3Tpl={...(UI.l3Tpl||{}),[key]:t}; UI.l3Edit=true; render(); toast('Hinzugefügt – jetzt an seinen Platz ziehen.'); return; }
+      let s=0; const out=[], now=new Date().toISOString(); l3RackInto(r,root.id,()=>uid()+(s++).toString(36),out); out.forEach(x=>{ x.by=meK(); x.at=now; });
+      const M={...(S.lager||{})}; out.forEach(x=>M[x.id]=x); const dup=lgDupBin(M); if(dup){ toast('Der Lagerplatzcode „'+dup+'“ gäbe es doppelt.'); return false; }
+      lgWriteMany(out).then(ok=>{ if(ok){ UI.l3Edit=true; toast(out.filter(x=>x.kind==='platz').length+' leere Plätze angelegt – jetzt an seinen Platz ziehen.'); render(); } }); }}); }
+// ein Regal/Schrank als Lagerknoten (wie in der Vorlage)
+function l3RackInto(r,par,idf,out){ const pad=(i,m)=>String(i).padStart(m>99?3:2,'0'), mk=(kind,parent,name,seg,extra)=>{ const x=lgCleanNode({id:idf(),parent,kind,name:name||'',seg:seg||'',...(extra||{})}); out.push(x); return x; };
+  const st=['hochregal','schrank','regal'].includes(r.k)?r.k:'regal', R=mk('regal',par,r.name,r.seg,{stype:st,...(r.wall?{wall:r.wall}:{}),...(r.pos?{pos:r.pos}:{})}), f=Math.max(0,+r.f||0), e=Math.max(1,+r.e||1), p=Math.max(1,+r.p||1);
+  const F=f>0?Array.from({length:f},(_,i)=>mk('feld',R.id,'','F'+pad(i+1,f),{stype:'feld'})):[R];
+  F.forEach(fd=>{ for(let i=1;i<=e;i++){ const E=mk('ebene',fd.id,'','E'+pad(i,e),{stype:st==='schrank'?'boden':'ebene'}); for(let j=1;j<=p;j++) mk('platz',E.id,'','P'+pad(j,p),{ltype:LG_TYPES[r.lt]?r.lt:'fach'}); } }); return R; }
+function l3RoomSheet(key){ if(!lgMgr()) return; const virt=l3IsVirt(key), root=l3Node(key), t=l3Tpl(key), cur=(virt?t.room:root.room)||null;
+  openSheet({title:'Raumgröße',html:`<div class="fld"><label for="rm_w">Breite (m, von links nach rechts)</label><input id="rm_w" class="inp" type="number" step="0.1" min="2" max="60" value="${cur?cur.w:nf(L3_ROOM.X,1).replace(',','.')}"></div><div class="fld"><label for="rm_d">Tiefe (m, von hinten nach vorne)</label><input id="rm_d" class="inp" type="number" step="0.1" min="2" max="60" value="${cur?cur.d:nf(L3_ROOM.Y,1).replace(',','.')}"></div>
+    <div class="fld full small muted">Leer lassen bzw. „Automatisch“ = so groß, dass alle Schränke hineinpassen.</div>`,saveLabel:'Übernehmen',extraBtn:`<button type="button" class="btn" data-act="l3RoomAuto" data-v="${key}">Automatisch</button>`,
+    onSave:()=>{ const w=+$('#rm_w').value, d=+$('#rm_d').value; if(!(w>=2&&d>=2)){ toast('Bitte Breite und Tiefe ab 2 m.'); return false; } const room={w:Math.round(w*10)/10,d:Math.round(d*10)/10};
+      if(virt){ t.room=room; UI.l3Tpl={...(UI.l3Tpl||{}),[key]:t}; render(); } else lgWriteMany([{...root,room}]); }}); }
 // Frontansicht (alte Darstellung, für Regale mit vielen Fächern weiter verfügbar)
 function l3RoomFront(root,q){ L3_FRONT=true; const W={links:0,hinten:1,rechts:2}, racks=lgKids(root.id).filter(n=>n.kind==='regal').sort((a,b)=>(W[a.wall]??1)-(W[b.wall]??1)||String(a.seg).localeCompare(String(b.seg),'de',{numeric:true}));
   const loose=lgKids(root.id).filter(lgIsBin), items=[], lab=[], Y=.35; let x=0, lastW=null;
@@ -6545,18 +6623,18 @@ const L3_TPL0={
 const l3Tpl=k=>clone((UI.l3Tpl||{})[k]||L3_TPL0[k]);
 function l3Build(key,t,parent,idf){ const out=[]; let n=0; const pad=(i,m)=>String(i).padStart(m>99?3:2,'0');
   const mk=(kind,par,name,seg,extra)=>{ const x=lgCleanNode({id:idf(n++),parent:par,kind,name:name||'',seg:seg||'',...(extra||{})}); out.push(x); return x; };
-  const rack=(r,par)=>{ const st=['hochregal','schrank','regal'].includes(r.k)?r.k:'regal', R=mk('regal',par,r.name,r.seg,{stype:st,...(r.wall?{wall:r.wall}:{})}), f=Math.max(0,+r.f||0), e=Math.max(1,+r.e||1), p=Math.max(1,+r.p||1);
+  const rack=(r,par)=>{ const st=['hochregal','schrank','regal'].includes(r.k)?r.k:'regal', R=mk('regal',par,r.name,r.seg,{stype:st,...(r.wall?{wall:r.wall}:{}),...(r.pos?{pos:r.pos}:{})}), f=Math.max(0,+r.f||0), e=Math.max(1,+r.e||1), p=Math.max(1,+r.p||1);
     const F=f>0?Array.from({length:f},(_,i)=>mk('feld',R.id,'','F'+pad(i+1,f),{stype:'feld'})):[R];
     F.forEach(fd=>{ for(let i=1;i<=e;i++){ const E=mk('ebene',fd.id,'','E'+pad(i,e),{stype:st==='schrank'?'boden':'ebene'}); for(let j=1;j<=p;j++) mk('platz',E.id,'','P'+pad(j,p),{ltype:LG_TYPES[r.lt]?r.lt:'fach'}); } }); return R; };
   let root;
   if(t.kind==='regal') root=rack(t.racks[0],parent);
-  else { root=mk('bereich',parent,t.name,t.seg,{stype:t.st});
+  else { root=mk('bereich',parent,t.name,t.seg,{stype:t.st,...(t.room?{room:t.room}:{})});
     if(key==='keller') [['L',+t.l||0,'links'],['R',+t.r||0,'rechts']].forEach(([s,c,w])=>{ for(let i=1;i<=c;i++){ const Z=mk('regal',root.id,'Nische '+w+' '+i,s+pad(i,c),{stype:'palzone',side:s}); for(let j=1;j<=(+t.p||1);j++) mk('platz',Z.id,'','P'+pad(j,+t.p||1),{ltype:LG_TYPES[t.lt]?t.lt:'boden'}); } });
     else (t.racks||[]).forEach(r=>rack(r,root.id)); }
   root.v3d=key; return {out,root}; }
 // Vorlage zeichnen: Knoten nur für die Dauer des Zeichnens einblenden, danach wieder weg
-function l3Virtual(key){ const t=l3Tpl(key), {out,root}=l3Build(key,t,'',i=>'v3_'+key+'_'+i), orig=S.lager; S.lager={...(orig||{})}; out.forEach(x=>{ S.lager[x.id]=x; });
-  try{ return key==='keller'?l3Keller(root,''):t.kind==='regal'?l3Regal(root,''):l3Room(root,''); } finally{ S.lager=orig; } }
+function l3Virtual(key,edit){ const t=l3Tpl(key), {out,root}=l3Build(key,t,'',i=>'v3_'+key+'_'+i), orig=S.lager; S.lager={...(orig||{})}; out.forEach(x=>{ S.lager[x.id]=x; });
+  try{ return key==='keller'?l3Keller(root,''):t.kind==='regal'?l3Regal(root,''):l3Room(root,'',edit); } finally{ S.lager=orig; } }
 /* „Lagerorte & Plätze“: Baum genau wie in der 3D-Skizze anlegen (mehrere Bereiche auf einmal, alle Plätze leer) */
 const l3TplBins=k=>l3Build(k,l3Tpl(k),'',i=>'c'+i).out.filter(x=>x.kind==='platz').length;
 function l3TakeBox(){ if(!lgMgr()) return ''; const open=L3_AREAS.filter(a=>!l3Node(a[0])); if(!open.length) return ''; const hosts=lgAll().filter(n=>n.kind==='standort');
@@ -6600,7 +6678,8 @@ function l3TplRead(key){ const t=l3Tpl(key), v=id=>($('#'+id)||{}).value, n=(id,
   if(t.kind==='regal'){ const r=t.racks[0]; Object.assign(r,{name:String(v('tp_n')||'').trim()||r.name,seg:String(v('tp_s')||'').trim().replace(/\s+/g,'')||r.seg,f:n('tp_f',0,50),e:n('tp_e',1,20),p:n('tp_p',1,20),lt:v('tp_t')||r.lt}); }
   else if(key==='keller') Object.assign(t,{l:n('tp_l',0,40),r:n('tp_r',0,40),p:n('tp_p',1,40),lt:v('tp_t')||t.lt});
   else { t.name=String(v('tp_bn')||'').trim()||t.name; t.seg=String(v('tp_bs')||'').trim().replace(/\s+/g,'')||t.seg;
-    t.racks=[...document.querySelectorAll('.l3-tpl tbody tr')].map(tr=>({wall:tr.querySelector('.tr-w').value,k:tr.querySelector('.tr-k').value,name:tr.querySelector('.tr-n').value.trim(),seg:tr.querySelector('.tr-s').value.trim().replace(/\s+/g,''),f:+tr.querySelector('.tr-f').value||0,e:Math.max(1,+tr.querySelector('.tr-e').value||1),p:Math.max(1,+tr.querySelector('.tr-p').value||1),lt:tr.querySelector('.tr-t').value})).filter(r=>r.seg);
+    const oldR=t.racks||[];
+    t.racks=[...document.querySelectorAll('.l3-tpl tbody tr')].map(tr=>({...((oldR.find(o=>o.seg===tr.querySelector('.tr-s').value.trim().replace(/\s+/g,''))||{}).pos?{pos:oldR.find(o=>o.seg===tr.querySelector('.tr-s').value.trim().replace(/\s+/g,'')).pos}:{}),wall:tr.querySelector('.tr-w').value,k:tr.querySelector('.tr-k').value,name:tr.querySelector('.tr-n').value.trim(),seg:tr.querySelector('.tr-s').value.trim().replace(/\s+/g,''),f:+tr.querySelector('.tr-f').value||0,e:Math.max(1,+tr.querySelector('.tr-e').value||1),p:Math.max(1,+tr.querySelector('.tr-p').value||1),lt:tr.querySelector('.tr-t').value})).filter(r=>r.seg);
     const segs=t.racks.map(r=>r.seg.toLowerCase()); if(new Set(segs).size!==segs.length){ toast('Jedes Regal/jeder Schrank braucht ein eigenes Kürzel.'); return null; } }
   const okSeg=s=>/^[0-9A-Za-zÄÖÜäöü]+$/.test(s); if(![t.seg,...(t.racks||[]).map(r=>r.seg)].filter(Boolean).every(okSeg)){ toast('Kürzel bitte nur aus Buchstaben und Ziffern.'); return null; }
   return t; }
@@ -6624,16 +6703,18 @@ function vLg3d(sw){ const sel=L3_AREAS.find(a=>a[0]===UI.l3Area)?UI.l3Area:'kell
     body=`<div class="card l3-card"><div class="card-h"><h3>${esc(A[1])} <span class="pill">Vorlage – noch nicht angelegt</span></h3><span class="row" style="gap:6px">
         <button class="btn sm" data-act="l3TplOpen" data-v="${sel}">${mg?'Vorlage anpassen':'Werte ansehen'}</button>${mg?`<button class="btn sun sm" data-act="l3TplOpen" data-v="${sel}">Struktur anlegen</button>`:''}</span></div>
       <div class="small muted" style="padding:0 16px 8px">Leere Ansicht nach den Fotos. Mit „Struktur anlegen“ werden daraus echte, leere Lagerplätze, die ihr dann nach und nach befüllt. Später lässt sich alles über den Assistenten und unter „Lagerorte & Plätze“ ändern.</div>
-      <div class="l3-wrap l3-virt">${l3Virtual(sel)}</div>
+      ${mg&&l3RoomArea(sel)?`<div class="l3-tb"><button class="btn sm ${UI.l3Edit?'sun':''}" data-act="l3EditTog" aria-pressed="${!!UI.l3Edit}">✋ ${UI.l3Edit?'Anordnen beenden':'Anordnen'}</button><button class="btn sm" data-act="l3RackAdd">${ic('plus')}Schrank / Regal</button><button class="btn sm" data-act="l3Room">Raumgröße</button>${UI.l3Edit?'<span class="small muted">Schrank ziehen = verschieben · anklicken = Name, Ausrichtung, Drehen, Entfernen</span>':''}</div>`:''}
+      <div class="l3-wrap l3-virt">${l3Virtual(sel,!!UI.l3Edit&&mg&&l3RoomArea(sel))}</div>
       ${mg&&cand.length?`<div class="row small" style="gap:8px;flex-wrap:wrap;padding:0 16px 14px"><span class="muted">Schon angelegt?</span><select class="inp" id="l3_link" style="max-width:320px"><option value="">– vorhandenes ${A[2]==='regal'?'Regal':'Bereich'} wählen –</option>${cand.map(n=>`<option value="${esc(n.id)}">${esc(lgPlain(n.id))}</option>`).join('')}</select><button class="btn sm" data-act="l3Link" data-v="${sel}">Verknüpfen</button></div>`:''}</div>`; }
   else { const bins=lgSub(node.id).filter(lgIsBin);
     const room=sel==='klein'||sel==='werkzeug', racks=room?lgKids(node.id).filter(n=>n.kind==='regal'):[];
-    const svg=!bins.length?`<div class="empty">Hier sind noch keine Lagerplätze angelegt.${mg&&node.kind!=='regal'?`<div style="margin-top:8px"><button class="btn sun sm" data-act="lgWiz" data-parent="${esc(node.id)}">Regal / Schrank mit Assistent anlegen</button></div>`:''}</div>`:node.kind==='regal'?l3Regal(node,q):sel==='keller'?l3Keller(node,q):l3Room(node,q);
+    const svg=!bins.length?`<div class="empty">Hier sind noch keine Lagerplätze angelegt.${mg&&node.kind!=='regal'?`<div style="margin-top:8px"><button class="btn sun sm" data-act="lgWiz" data-parent="${esc(node.id)}">Regal / Schrank mit Assistent anlegen</button></div>`:''}</div>`:node.kind==='regal'?l3Regal(node,q):sel==='keller'?l3Keller(node,q):l3Room(node,q,!!UI.l3Edit&&mg&&l3RoomArea(sel));
     const wallEd=room&&mg&&racks.length?`<details class="l3-walls"><summary class="small">Regale und Schränke den Wänden zuordnen (${racks.length})</summary><div class="l3-wl">${racks.map(r=>`<label class="small"><span>${esc((r.name||lgStLabel(r))+' '+(r.seg||''))}</span><select class="inp" data-chg="l3Wall" data-id="${esc(r.id)}">${['','links','hinten','rechts'].map(w=>`<option value="${w}" ${(r.wall||'')===w?'selected':''}>${w?'Wand '+w:'– Wand –'}</option>`).join('')}</select></label>`).join('')}<button class="btn sm" data-act="lgWiz" data-parent="${esc(node.id)}">+ Regal / Schrank</button></div></details>`:'';
     body=`<div class="card l3-card"><div class="card-h"><h3>${esc(A[1])} <span class="small muted">· ${esc(lgPlain(node.id))}</span></h3><span class="row" style="gap:6px">
         <input class="inp" type="search" placeholder="Artikel im Bereich suchen …" value="${esc(UI.l3q||'')}" data-chg="l3q" aria-label="Artikel im Bereich suchen" style="max-width:220px">
         ${mg&&sel==='keller'?`<button class="btn sm" data-act="l3KellerWiz">+ Nischen</button>`:''}${mg?`<button class="btn ghost sm" data-act="l3Unlink" data-v="${sel}" title="Zuordnung zu dieser Ansicht lösen (Lagerplätze bleiben)">Zuordnung lösen</button>`:''}</span></div>
-      ${wallEd}<div class="l3-wrap">${svg}</div>
+      ${mg&&l3RoomArea(sel)?`<div class="l3-tb"><button class="btn sm ${UI.l3Edit?'sun':''}" data-act="l3EditTog" aria-pressed="${!!UI.l3Edit}">✋ ${UI.l3Edit?'Anordnen beenden':'Anordnen'}</button><button class="btn sm" data-act="l3RackAdd">${ic('plus')}Schrank / Regal</button><button class="btn sm" data-act="l3Room">Raumgröße</button>${UI.l3Edit?'<span class="small muted">Schrank ziehen = verschieben · anklicken = Name, Ausrichtung, Drehen, Entfernen</span>':''}</div>`:''}
+      ${UI.l3Edit?'':wallEd}<div class="l3-wrap">${svg}</div>
       <div class="l3-leg small"><span><i class="lg-e"></i>leer</span><span><i class="lg-f"></i>belegt</span>${q?'<span><i class="lg-h"></i>Suchtreffer</span>':''}<span class="muted">Platz anklicken: Inhalt ansehen, einlagern, entnehmen, umlagern</span></div></div>`; }
   return head('Lagerverwaltung','3D-Lager · Bereich wählen, Platz anklicken',lgHeadBtns())+sw+tiles+body; }
 // Assistent Keller: Nischen links/rechts mit je n Bodenstellplätzen (Vorschau, dann alles auf einmal anlegen)
@@ -6659,6 +6740,12 @@ queueMicrotask(()=>{ Object.assign(A,{
   l3Area:d=>{ UI.l3Area=d.v; render(); },
   lg3dBin:d=>{ const m=String(d.id||'').match(/^v3_([a-z]+)_/); if(m) return l3VirtBin(m[1],d.id); lgBinSheet(d.id); },
   l3TplOpen:d=>l3TplSheet(d.v), l3TakeAll:()=>l3TakeAll(),
+  l3EditTog:()=>{ UI.l3Edit=!UI.l3Edit; render(); },
+  l3RackAdd:()=>l3RackNew(UI.l3Area), l3Room:()=>l3RoomSheet(UI.l3Area),
+  l3RoomAuto:d=>{ closeSheet(); const key=d.v; if(l3IsVirt(key)){ const t=l3Tpl(key); delete t.room; UI.l3Tpl={...(UI.l3Tpl||{}),[key]:t}; render(); } else { const n={...l3Node(key)}; delete n.room; lgWriteMany([n]); } },
+  l3RackTurn:d=>{ const p=L3_POS[d.id]; if(!p) return; const o=['back','left','front','right'], no=o[(o.indexOf(p.o)+1)%4]; closeSheet(); l3SaveRack(UI.l3Area,d.id,d.seg,{pos:l3Clamp({...p,o:no,L:p.L,D:p.D})},'Gedreht'); },
+  l3RackDel:d=>{ const key=UI.l3Area; if(l3IsVirt(key)){ const t=l3Tpl(key); t.racks=(t.racks||[]).filter(r=>r.seg!==d.seg); UI.l3Tpl={...(UI.l3Tpl||{}),[key]:t}; closeSheet(); render(); toast('Aus der Vorlage entfernt.'); return; }
+    closeSheet(); lgNodeDel(d.id); },
   l3TplApply:d=>{ const t=l3TplRead(d.v); if(!t) return; UI.l3Tpl={...(UI.l3Tpl||{}),[d.v]:t}; closeSheet(); render(); toast('Ansicht aktualisiert (noch nichts gespeichert).'); },
   l3TplRowAdd:()=>{ const k=L3_TPL_EDIT&&L3_TPL_EDIT.key; if(!k) return; const t=l3TplRead(k); if(!t) return; const used=new Set((t.racks||[]).map(r=>String(r.seg).toUpperCase())); let n=1; while(used.has('R'+String(n).padStart(2,'0'))) n++; t.racks.push({wall:'hinten',k:'regal',name:'Regal',seg:'R'+String(n).padStart(2,'0'),f:0,e:4,p:2,lt:'fach'}); UI.l3Tpl={...(UI.l3Tpl||{}),[k]:t}; closeSheet(); l3TplSheet(k); },
   l3TplRowDel:d=>{ const k=L3_TPL_EDIT&&L3_TPL_EDIT.key; if(!k) return; const t=l3TplRead(k); if(!t) return; t.racks.splice(+d.i,1); UI.l3Tpl={...(UI.l3Tpl||{}),[k]:t}; closeSheet(); l3TplSheet(k); },
