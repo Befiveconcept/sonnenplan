@@ -2518,7 +2518,7 @@ const defaultViews=n=>AREAS.map(a=>a[0]).filter(v=>(v!=='activity'||shortWho(n)=
 const permV2=(n,p,list)=>{ if(!p||p.v2) return list; const o=list.slice(); if(o.includes('todos')&&!p.ownTodos&&!o.includes('meetings')) o.push('meetings'); if(FIN_DEFAULT.includes(shortWho(n))&&!o.includes('fin')) o.push('fin'); return o; };
 // Rollen-Voreinstellungen fuer die Rechteverteilung (danach pro Person anpassbar)
 const ROLE_PRESETS={
- monteur:{l:'Monteur',views:['dash','projects','todos','private','notif','week','orders','stock','hr'],noEdit:['projects'],ownTodos:true,admin:false,info:'Projekte & Projekt-Timeline (nur ansehen), Terminplan, eigene + allgemeine To-Dos, Mitteilungen, Material & Lager, eigene Stempeluhr'},
+ monteur:{l:'Monteur',views:['dash','todos','private','notif','week','orders','stock','hr'],ownTodos:true,admin:false,info:'keine Projekte, Terminplan, eigene + allgemeine To-Dos, Mitteilungen, Material & Lager, eigene Stempeluhr'},
  buero:{l:'Büro',views:['dash','projects','todos','private','chat','notif','week','files','offers','reports','orders','stock','sales','stamm','hr'],ownTodos:false,admin:false,info:'Projekte & Planung, Material & Lager, Verkauf, eigene HR-Seite'},
  buchhaltung:{l:'Buchhaltung',views:AREAS.map(a=>a[0]).filter(v=>!['templates','settings','activity','kfrei'].includes(v)),ownTodos:false,admin:true,info:'alles außer Vorlagen, Team & Einstellungen, Aktivität und Rechte'},
  admin:{l:'Admin',views:AREAS.map(a=>a[0]).filter(v=>v!=='kfrei'),ownTodos:false,admin:true,info:'alles (Freigabe der Kunden-Texte nur per eigenem Häkchen)'}};
@@ -2546,7 +2546,12 @@ const permEff=n=>n===TAB_ME?TAB_PERM:permOf(n)||(n&&isMonteurDefault(n)?rolePerm
 const viewsOf=n=>{ const p=permEff(n); return p&&Array.isArray(p.views)?nfLegacy(p,permV2(n,p,p.views)):defaultViews(n); };
 const editsOf=n=>{ const p=permEff(n); return p&&Array.isArray(p.edit)?permV2(n,p,p.edit):viewsOf(n); };
 const canEdit=a=>isAdmin()||(!!ME&&editsOf(ME).includes(a)&&viewsOf(ME).includes(a));
-function canSee(v){ if(v==='rights') return isBaseAdmin(); if(v==='hr') return true; /* Stempeln und Urlaub: für alle */ if(String(v).startsWith('f:')) v='files'; if(String(v).startsWith('st:')) v='stamm'; if(v==='fin'||String(v).startsWith('fi:')) return finOk(); if(String(v).startsWith('vk:')) v='sales'; if(v==='dash') return true; if(!ME) return MODE==='cloud'?false:v!=='activity'; /* online angemeldet, aber keinem Mitarbeiter zugeordnet: nichts außer Übersicht und eigener Stempeluhr */ const vs=viewsOf(ME);
+/* Moji und ABou (Kürzel AS) sehen GAR NICHTS von Projekten (Wunsch EP, 12.11.2026) – unabhängig von gespeicherten Rechten:
+   keine Projektseiten, keine Projektlisten/Suche/KI-Projektdaten, kein „Seit deinem letzten Besuch“, keine Projekt-Mitteilungen.
+   Auf ihren eigenen Einsätzen und To-Dos bleibt nur der Name der Baustelle stehen, damit sie wissen, wohin. */
+const NO_PROJ_K=['moji','as'];
+const noProjUser=()=>!!ME&&(NO_PROJ_K.includes(String(meK()).toLowerCase())||/\b(moji|abou|abow)\b/i.test(String(ME)));
+function canSee(v){ if(v==='rights') return isBaseAdmin(); if((v==='projects'||v==='project')&&noProjUser()) return false; if(v==='hr') return true; /* Stempeln und Urlaub: für alle */ if(String(v).startsWith('f:')) v='files'; if(String(v).startsWith('st:')) v='stamm'; if(v==='fin'||String(v).startsWith('fi:')) return finOk(); if(String(v).startsWith('vk:')) v='sales'; if(v==='dash') return true; if(!ME) return MODE==='cloud'?false:v!=='activity'; /* online angemeldet, aber keinem Mitarbeiter zugeordnet: nichts außer Übersicht und eigener Stempeluhr */ const vs=viewsOf(ME);
   if(v==='kview') return isAdmin()||vs.includes('kview')||kfreiOk();
   if(v==='project') return vs.includes('projects'); if(v==='pool') return vs.includes('todos'); if(v==='meetings') return vs.includes('meetings'); if(v==='calendar') return vs.includes('week'); return vs.includes(v); }
 const canSeeActivity=()=>canSee('activity');
@@ -2756,7 +2761,7 @@ function sinceItems(last){ const me=meK(), out=[];
       out.push({c:k,id:x.id,pid:k==='projects'?x.id:x.pid||'',at:x.upd,by:[...new Set([...hs.map(h=>h.by),x.updBy])].join(', '),t:LIVE_COLL[k]+(lbl?' „'+String(lbl).slice(0,60)+'“':''),a:isNew?'neu angelegt':hs.length?hs.slice(-3).map(h=>h.a).join(' · '):'geändert'}); }); });
   return out.sort((a,b)=>String(b.at).localeCompare(String(a.at))); }
 var SINCE_FROM=''; // Stand beim Öffnen – für „Was ist neu?“ im Profil
-function sinceShow(force,from){ if(!ME) return; const last=from||seenGet(); if(!last){ seenSet(); return; } if(!from) SINCE_FROM=last; if(!force&&Date.now()-new Date(last).getTime()<20*60*1000) return;
+function sinceShow(force,from){ if(!ME||noProjUser()) return; const last=from||seenGet(); if(!last){ seenSet(); return; } if(!from) SINCE_FROM=last; if(!force&&Date.now()-new Date(last).getTime()<20*60*1000) return;
   const its=sinceItems(last); if(!its.length){ seenSet(); if(force) toast('Seit deinem letzten Besuch hat niemand etwas geändert.'); return; }
   if(SHEET){ setTimeout(()=>sinceShow(force,from),1500); return; }
   const ago=(()=>{ const m=Math.round((Date.now()-new Date(last).getTime())/60000); return m<90?m+' Min.':m<36*60?Math.round(m/60)+' Std.':Math.round(m/1440)+' Tagen'; })();
@@ -3154,7 +3159,7 @@ function nfDrop(id){ delete NF[id]; if(MODE==='cloud'&&DB) try{ DB.collection(nf
 // Sichtbar nur, was zum eigenen Konto gehört und wofür die aktuellen Rechte reichen (auch wenn sie sich inzwischen geändert haben)
 /* Recht „Mitteilungen & Benachrichtigungen“ (Rechtevergabe): eigene Mitteilungen sehen, auch zu Bereichen ohne eigenes Recht (z. B. Monteur ohne „Projekte“ wird als Projektleiter benachrichtigt). Öffnen des Vorgangs prüft weiter das Bereichsrecht (nfOpenOk). */
 const nfOn=()=>!!ME&&(isBaseAdmin()||canSee('notif'));
-const nfVisible=n=>!!n&&!n.hidden&&nfOn()&&n.to===NF_KEY&&(!n.pid||projVisId(n.pid))&&(n.c!=='projects'||projVisId(n.rid))&&!!NF_CAT[n.c];
+const nfVisible=n=>!!n&&!n.hidden&&nfOn()&&n.to===NF_KEY&&(!n.pid||projVisId(n.pid))&&(n.c!=='projects'||(projVisId(n.rid)&&!noProjUser()))&&!!NF_CAT[n.c];
 const nfOpenOk=n=>nfVisible(n)&&canSee(NF_CAT[n.c][1]);
 const nfList=()=>Object.values(NF).filter(nfVisible).sort((a,b)=>String(b.at).localeCompare(String(a.at)));
 const nfUnread=()=>nfList().filter(n=>!n.read).length;
@@ -3286,7 +3291,7 @@ function projVis(p){ if(!projRestr(p)) return true; if(!ME) return false; const 
 const projLock=p=>{ if(!projRestr(p)) return ''; const o=projOwner(p), sh=p.vis==='me'?[]:(p.share||[]).map(shortWho); return `<span class="p-lock" title="${esc('Internes Projekt – sichtbar nur für '+[o,...sh].filter(Boolean).join(', '))}" aria-label="Internes Projekt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>`; };
 const projVisId=id=>{ const p=id&&S.projects[id]; return !p||projVis(p); };
 const PID_COLLS=new Set(['tasks','orders','events','offers','reports','sales','files','meetings','psum','pms']);
-const arr = c=>{ let v=Object.values(S[c]||{}); if(c==='tasks'&&ownTodosOnly()) v=v.filter(taskOk); if(c==='projects') return v.filter(projVis); if(PID_COLLS.has(c)&&S.projects&&Object.values(S.projects).some(projRestr)) return v.filter(x=>!x||!x.pid||projVisId(x.pid)); return v; };
+const arr = c=>{ let v=Object.values(S[c]||{}); if(c==='tasks'&&ownTodosOnly()) v=v.filter(taskOk); if(c==='projects'&&noProjUser()) return []; if(c==='projects') return v.filter(projVis); if(PID_COLLS.has(c)&&S.projects&&Object.values(S.projects).some(projRestr)) return v.filter(x=>!x||!x.pid||projVisId(x.pid)); return v; };
 const INTERN='intern'; // Bestellungen ohne Kundenprojekt (Lager, Büro, Werkstatt)
 const projName = id=>{ if(id===INTERN) return 'Haus intern'; const p=S.projects[id]; return p&&projVis(p)? p.name : '' };
 // Austritt: s.exit = letzter Arbeitstag. Ab dem Tag danach ist die Person aus allen Auswahllisten raus (staff), bleibt aber für Einstellungen und Personalakte erhalten (staffAll).
@@ -3370,7 +3375,9 @@ function navSide(cur,cnt){ NAV_CUR=cur; const pins=navPins();
     navSide(cur,cnt)+
     `<div class="side-me"><button class="me-btn" data-act="meProfile" title="Mein Profil: Farbe, Passwort, Kürzel">${ME?`<span class="who-chip">${esc(meK())}</span> <span class="me-n">${esc(ME.replace(/\s*\([^)]*\)$/,''))}</span><span class="me-gear" aria-hidden="true">⚙</span>`:'<span class="who-chip open">?</span> Wer bist du?'}</button><button class="me-btn" data-act="sbLogout" title="Abmelden">⎋ Abmelden</button><div class="foot">${MODE==='cloud'?'● Synchronisiert über alle Geräte':MODE==='local'?'○ Lokaler Modus (nur dieses Gerät)':'Verbinde …'}</div></div>`;
   $('#mtop').innerHTML = (UI.view==='project'?`<button class="icon-btn" data-act="nav" data-v="projects" aria-label="Zurück">${ic('back')}</button>`:'<div class="wordmark"><span class="y">NUTZ DIE</span> <span class="g">SONNE</span></div>')+`<b>${UI.view==='dash'?'':VIEW_T[UI.view]||''}</b>${nfBellHtml()}<button class="btn sun sm" data-act="newMenu">${ic('plus')}Neu</button>`; nfPaint();
-  const tb=[['dash','Übersicht','dash'],['projects','Projekte','proj'],['week','Kalender','cal'],['todos','To-Dos','todo']];
+  // Handy-Leiste unten: nur, was die Person sehen darf (z. B. Moji/ABou ohne Projekte → stattdessen Lager)
+  let tb=[['dash','Übersicht','dash'],['projects','Projekte','proj'],['week','Kalender','cal'],['todos','To-Dos','todo']].filter(t=>canSee(t[0]));
+  if(tb.length<4&&canSee('stock')) tb.push(['stock','Lager','stock']);
   const inMore=!tb.some(t=>t[0]===cur);
   $('#tabbar').innerHTML = tb.map(([v,l,i])=>`<button class="${cur===v?'on':''}" data-act="nav" data-v="${v}">${ic(i)}${l}</button>`).join('')+`<button class="${inMore?'on':''}" data-act="moreMenu">${ic('more')}Mehr${MEET_ON?'<span class="rec-lamp tb-rec" aria-label="Meeting-Aufnahme läuft"></span>':''}${cnt.chat?`<span class="tb-dot" aria-label="${cnt.chat} ungelesene Chat-Nachrichten">${cnt.chat}</span>`:''}</button>`;
   document.title=(MEET_ON?'● Aufnahme · ':'')+(cnt.chat?'('+cnt.chat+') ':'')+'Sonnenplan Projektsteuerung';
