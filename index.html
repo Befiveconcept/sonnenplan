@@ -1648,6 +1648,61 @@ button.link-ms:hover{color:var(--ink)}
 .cal .ev.cont{margin-left:-6px;border-left:0;border-top-left-radius:0;border-bottom-left-radius:0;padding-left:7px}
 .cal .ev.mspan{margin-right:-6px;border-top-right-radius:0;border-bottom-right-radius:0}
 .cal .dc .dn{height:18px;line-height:18px;flex:none}
+/* Artikel-Kategorien (Baum) */
+.ac-wrap{display:grid;grid-template-columns:250px minmax(0,1fr);gap:12px;align-items:start}
+.ac-side{position:sticky;top:12px;max-height:calc(100vh - 40px);overflow:auto;padding:6px 4px}
+.ac-nav .ac-n,.ac-m{display:flex;align-items:center;gap:4px;border-radius:6px;min-height:30px}
+.ac-nav .ac-n.on{background:color-mix(in srgb,var(--sun) 30%,var(--surface))}
+.ac-nav .ac-n.arch .ac-nb{opacity:.6}
+.ac-tg{width:20px;flex:none;border:0;background:none;color:var(--muted);cursor:pointer;font-size:12px;padding:0;text-align:center}
+.ac-nb{flex:1;min-width:0;text-align:left;border:0;background:none;padding:5px 2px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-nb:hover{text-decoration:underline}
+.ac-c{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;padding-right:6px;white-space:nowrap}
+.ac-crumb{margin:0 0 8px}
+.ac-man .ac-tree{border:1px solid var(--line);border-radius:8px;padding:4px;max-height:60vh;overflow:auto}
+.ac-m{padding-right:4px;border:1px solid transparent}
+.ac-m:hover{background:var(--sunken)}
+.ac-m.arch .ac-mn{opacity:.55}
+.ac-m.virt .ac-mn{font-style:italic}
+.ac-m.dragging{opacity:.4}
+.ac-m.ac-over,.ac-root.ac-over{border-color:var(--sun);background:color-mix(in srgb,var(--sun) 22%,var(--surface))}
+.ac-m.ac-bad,.ac-root.ac-bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--surface))}
+.ac-hd{cursor:grab;color:var(--muted);font-size:12px;letter-spacing:-2px;padding:0 4px}
+.ac-mn{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.5px}
+.ac-ma{display:flex;gap:2px}
+.ac-ma .icon-btn{width:28px;height:28px;font-size:13px}
+.ac-ma .icon-btn[disabled]{opacity:.3;cursor:default}
+.ac-root{margin-top:8px;border:1px dashed var(--line);border-radius:8px;padding:8px;text-align:center;font-size:12.5px;color:var(--muted)}
+.ac-pk-cur{font-weight:600;margin-bottom:6px}
+.ac-pk-l{border:1px solid var(--line);border-radius:8px;max-height:240px;overflow:auto;margin-top:6px;padding:2px}
+.ac-pi{display:block;width:100%;text-align:left;border:0;background:none;padding:6px 8px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer;border-radius:5px}
+.ac-pi:hover{background:var(--sunken)}
+.ac-pi.on{background:color-mix(in srgb,var(--sun) 35%,var(--surface));font-weight:600}
+@media (max-width:860px){ .ac-wrap{grid-template-columns:1fr} .ac-side{position:static;max-height:300px} }
+/* Datei-Vorschau rechts */
+body{--pvw:min(560px,100vw)}
+@media (min-width:1200px){ body{--pvw:min(42vw,820px)} }
+#pvPane{position:fixed;top:0;right:0;bottom:0;width:var(--pvw);z-index:60;background:var(--surface);border-left:1px solid var(--line);box-shadow:-12px 0 30px rgba(0,0,0,.12);display:flex;flex-direction:column}
+#pvPane .pv-h{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);padding-top:max(10px,env(safe-area-inset-top,0px))}
+#pvPane .pv-t{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pvPane .pv-b{flex:1;min-height:0;overflow:auto;padding:12px;background:var(--sunken)}
+#pvPane .pv-msg{padding:24px 8px;color:var(--muted);text-align:center;line-height:1.5}
+#pvPane .pv-frame{width:100%;height:100%;border:0;display:block;background:#fff;border-radius:6px}
+#pvPane .pv-b:has(.pv-frame){padding:0}
+#pvPane .pv-img{display:flex;justify-content:center}
+#pvPane .pv-img img{max-width:100%;height:auto;border-radius:6px;background:#fff}
+#pvPane .pv-pages canvas{display:block;margin:0 auto 10px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+#pvPane .pv-media{width:100%}
+#pvPane .pv-txt{white-space:pre-wrap;word-break:break-word;font-size:13px;line-height:1.5;background:var(--surface);padding:12px;border-radius:6px;margin:0}
+#pvPane .pv-xl{overflow:auto;background:var(--surface);border-radius:6px}
+#pvPane .pv-xl table{border-collapse:collapse;font-size:12px}
+#pvPane .pv-xl td{border:1px solid var(--line);padding:3px 6px;white-space:nowrap}
+#pvPane .pv-docx{background:#fff;overflow:auto}
+#pvPane .pv-docx .docx-wrapper{padding:12px;background:var(--sunken)}
+#pvPane .pv-docx .docx-wrapper>section.docx{max-width:100%;padding:24px !important;box-sizing:border-box}
+.pv-cur{outline:2px solid var(--sun);outline-offset:-2px;border-radius:6px}
+@media (min-width:1200px){ body.pv-open .main{padding-right:calc(var(--pvw) + 16px)} }
+@media (max-width:640px){ #pvPane{width:100%;left:0} }
 .cal .more{font-size:11px;font-weight:600;color:var(--muted)}
 .ag-tm{font-weight:700;font-variant-numeric:tabular-nums}
 /* Termine farbig hinterlegt (nach Art), damit man Urlaub, Krankheit, Teams usw. auf einen Blick unterscheidet */
@@ -2342,7 +2397,7 @@ const ic = (n,extra='')=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentCo
 
 /* ========== Datenhaltung (gemeinsame Datenbank, sonst lokal) ========== */
 const COLLS = ['projects','tasks','orders','offers','events','reports','plan','log','files','stock','picks','lager','inv','chat','meetings','hrtime','hrabs','hrstaff','hrdocs','sales','pins','psum','pms','kview','pfold'];
-const S = {kview:{},pfold:{},lager:{},inv:{},stock:{},picks:{},pins:{},projects:{},tasks:{},orders:{},offers:{},events:{},reports:{},plan:{},log:{},hrtime:{},hrabs:{},hrstaff:{},hrdocs:{},kunden:{},lieferanten:{},artikel:{},sales:{},fin:{},anlagen:{},config:{staff:[]}};
+const S = {kview:{},pfold:{},lager:{},inv:{},stock:{},picks:{},pins:{},projects:{},tasks:{},orders:{},offers:{},events:{},reports:{},plan:{},log:{},hrtime:{},hrabs:{},hrstaff:{},hrdocs:{},kunden:{},lieferanten:{},artikel:{},artcat:{},sales:{},fin:{},anlagen:{},config:{staff:[]}};
 let DB=null, MODE='init', READONLY=false;
 const LS_KEY='sonnenplan-v1';
 function lsGet(k){ try{ return localStorage.getItem(k) }catch(e){ return null } }
@@ -2451,10 +2506,10 @@ function describeChange(coll,prev,o){
   return out.join(' · ');
 }
 // Schreibrecht je Rubrik (Admin-Bereich „Rechte“): ohne Häkchen „bearbeiten“ wird nichts gespeichert
-const COLL_AREA={projects:'projects',tasks:'todos',orders:'orders',offers:'offers',events:'week',plan:'week',reports:'reports',files:'files',stock:'stock',picks:'stock',lager:'stock',inv:'stock',chat:'chat',meetings:'meetings',hrtime:'hr',hrabs:'hr',hrstaff:'hr',hrdocs:'hr',kunden:'stamm',lieferanten:'stamm',artikel:'stamm',sales:'sales',fin:'fin',anlagen:'fin',kview:'kview'};
+const COLL_AREA={projects:'projects',tasks:'todos',orders:'orders',offers:'offers',events:'week',plan:'week',reports:'reports',files:'files',stock:'stock',picks:'stock',lager:'stock',inv:'stock',chat:'chat',meetings:'meetings',hrtime:'hr',hrabs:'hr',hrstaff:'hr',hrdocs:'hr',kunden:'stamm',lieferanten:'stamm',artikel:'stamm',artcat:'stamm',sales:'sales',fin:'fin',anlagen:'fin',kview:'kview'};
 const lagerOk=()=>isAdmin()||canEdit('stock');
 const stDelOk=k=>isAdmin()||(k==='artikel'&&lagerOk());
-function mayWrite(coll){ const a=COLL_AREA[coll]; if(a==='fin'&&ME) return finOk()&&(isAdmin()||editsOf(ME).includes('fin')); if(!a||!ME||isAdmin()) return true; if(coll==='artikel'&&canEdit('stock')) return true; if(a==='hr') return !['hrstaff','hrdocs'].includes(coll); return canEdit(a); }
+function mayWrite(coll){ const a=COLL_AREA[coll]; if(a==='fin'&&ME) return finOk()&&(isAdmin()||editsOf(ME).includes('fin')); if(!a||!ME||isAdmin()) return true; if((coll==='artikel'||coll==='artcat')&&canEdit('stock')) return true; if(a==='hr') return !['hrstaff','hrdocs'].includes(coll); return canEdit(a); }
 /* ---------- Doppelt-Sperre (greift bei JEDEM Speichern: Formular, KI, Meeting, Smart-Drop, Sprache, Belege, Handy) ---------- */
 const dupNorm=s=>String(s||'').toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').replace(/^\s*(bitte|todo|to-do|aufgabe)\s*:?\s+/,'').replace(/[^a-z0-9]+/g,' ').trim();
 // Notiz-/Update-Text ohne Datum, Uhrzeit und Kürzel davor („02.11.26 15:33 (EP): …“)
@@ -5176,6 +5231,54 @@ async function initCaps(){
   scheduleRender();
 }
 function loadScript(src){ return new Promise((res,rej)=>{ if(document.querySelector(`script[src="${src}"]`)) return res(); const s=document.createElement('script'); s.src=src; s.onload=()=>res(); s.onerror=()=>rej(new Error('Skript nicht ladbar')); document.head.appendChild(s); }); }
+/* ========== Datei-Vorschau rechts im Planner (statt neuem Tab) ==========
+   Alle Links auf /_blob/… öffnen hier. Strg/Cmd-Klick oder „Neuer Tab“ öffnet wie bisher extern. */
+const FPV={id:'',url:'',blob:null,seq:0};
+const pvExt=n=>(String(n||'').match(/\.([a-z0-9]{2,5})(?:$|\?)/i)||[])[1]?.toLowerCase()||'';
+const pvMobile=()=>/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)||(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
+function pvName(id,fallback){ const f=Object.values(S.files||{}).find(x=>x&&(x.asset===id||x.origAsset===id)); return (f&&(f.asset===id?(f.orig&&f.parent?f.orig:f.name):f.orig))||fallback||'Datei'; }
+function pvShell(title,body,id){ let el=$('#pvPane'); if(!el){ el=document.createElement('aside'); el.id='pvPane'; el.setAttribute('aria-label','Dateivorschau'); document.body.appendChild(el); }
+  el.innerHTML=`<div class="pv-h"><div class="pv-t" title="${esc(title)}">${esc(title)}</div>${id?`<a class="btn sm" href="/_blob/${esc(id)}" target="_blank" rel="noopener" data-pvskip="1" title="In neuem Tab öffnen">↗ Neuer Tab</a><button type="button" class="btn sm" data-act="pvDl" title="Herunterladen">⬇</button>`:''}<button type="button" class="icon-btn" data-act="pvClose" aria-label="Vorschau schließen" title="Schließen (Esc)">✕</button></div><div class="pv-b" id="pvBody">${body}</div>`;
+  document.body.classList.add('pv-open'); return el; }
+function pvClose(){ const el=$('#pvPane'); if(el) el.remove(); document.body.classList.remove('pv-open'); if(FPV.url){ URL.revokeObjectURL(FPV.url); } FPV.id=''; FPV.url=''; FPV.blob=null; FPV.seq++; document.querySelectorAll('.pv-cur').forEach(x=>x.classList.remove('pv-cur')); }
+function pvMark(id){ document.querySelectorAll('.pv-cur').forEach(x=>x.classList.remove('pv-cur')); if(!id) return; document.querySelectorAll(`a[href="/_blob/${CSS.escape(id)}"]`).forEach(a=>{ const r=a.closest('.fl,.doc,.li')||a; r.classList.add('pv-cur'); }); }
+async function pvOpen(id,name){ if(!id) return; const seq=++FPV.seq, title=pvName(id,name);
+  if(FPV.url){ URL.revokeObjectURL(FPV.url); FPV.url=''; } FPV.id=id; FPV.blob=null;
+  pvShell(title,'<div class="pv-msg">Vorschau wird geladen …</div>',id); pvMark(id);
+  let b; try{ const r=await fetch('/_blob/'+id); if(!r.ok) throw new Error(r.status); b=await r.blob(); }catch(e){ if(seq===FPV.seq) $('#pvBody').innerHTML='<div class="pv-msg">Die Datei konnte nicht geladen werden.</div>'; return; }
+  if(seq!==FPV.seq) return; FPV.blob=b; const ext=pvExt(title)||pvExt(id), ty=String(b.type||'').toLowerCase(), body=$('#pvBody');
+  const url=FPV.url=URL.createObjectURL(b);
+  const none=why=>{ body.innerHTML=`<div class="pv-msg"><b>Keine Vorschau für diesen Dateityp${why?' ('+esc(why)+')':''}.</b><br>Mit „↗ Neuer Tab“ oder ⬇ kannst du die Datei öffnen oder herunterladen.</div>`; };
+  try{
+    if(ty==='application/pdf'||ext==='pdf'){
+      if(!pvMobile()){ body.innerHTML=`<iframe class="pv-frame" src="${url}#view=FitH" title="${esc(title)}"></iframe>`; return; }
+      const lib=await pdfLib(); if(lib.GlobalWorkerOptions&&!lib.GlobalWorkerOptions.workerSrc) lib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const doc=await lib.getDocument({data:new Uint8Array(await b.arrayBuffer())}).promise; if(seq!==FPV.seq) return; body.innerHTML='<div class="pv-pages"></div>'; const box=body.firstChild, w=Math.max(300,body.clientWidth-24);
+      for(let i=1;i<=Math.min(doc.numPages,40);i++){ const pg=await doc.getPage(i); if(seq!==FPV.seq) return; const v0=pg.getViewport({scale:1}), sc=w/v0.width*(window.devicePixelRatio||1), vp=pg.getViewport({scale:sc}); const c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height; c.style.width='100%'; box.appendChild(c); await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise; }
+      if(doc.numPages>40) box.insertAdjacentHTML('beforeend',`<div class="pv-msg">… weitere ${doc.numPages-40} Seiten über „↗ Neuer Tab“.</div>`); return; }
+    if(ty.startsWith('image/')||/^(jpe?g|png|gif|webp|bmp|svg|heic)$/.test(ext)){ body.innerHTML=`<div class="pv-img"><img src="${url}" alt="${esc(title)}"></div>`; return; }
+    if(ty.startsWith('video/')||/^(mp4|mov|webm)$/.test(ext)){ body.innerHTML=`<video class="pv-media" src="${url}" controls playsinline></video>`; return; }
+    if(ty.startsWith('audio/')||/^(mp3|m4a|wav|ogg)$/.test(ext)){ body.innerHTML=`<audio class="pv-media" src="${url}" controls></audio>`; return; }
+    if(ext==='docx'||ty.includes('wordprocessingml')){ await docxLibs(); if(seq!==FPV.seq) return; body.innerHTML='<div class="pv-docx"></div>'; await window.docx.renderAsync(b,body.firstChild,null,{inWrapper:true,ignoreWidth:false,breakPages:true}); return; }
+    if(/^(xlsx|xlsm|xls|ods)$/.test(ext)||ty.includes('spreadsheetml')||ty.includes('ms-excel')){ if(!window.XLSX) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'); if(seq!==FPV.seq) return;
+      const wb=XLSX.read(new Uint8Array(await b.arrayBuffer()),{type:'array'}); const names=wb.SheetNames.slice(0,12);
+      body.innerHTML=`${names.length>1?`<div class="chips pv-tabs">${names.map((n,i)=>`<button type="button" class="chip ${i?'':'on'}" data-pvsheet="${i}">${esc(n)}</button>`).join('')}</div>`:''}<div class="pv-xl"></div>`;
+      const show=i=>{ body.querySelector('.pv-xl').innerHTML=XLSX.utils.sheet_to_html(wb.Sheets[names[i]],{editable:false}).replace(/^[\s\S]*?<table/i,'<table').replace(/<\/table>[\s\S]*$/i,'</table>'); body.querySelectorAll('[data-pvsheet]').forEach(x=>x.classList.toggle('on',+x.dataset.pvsheet===i)); };
+      body.querySelectorAll('[data-pvsheet]').forEach(x=>x.onclick=()=>show(+x.dataset.pvsheet)); show(0); return; }
+    if(ty.startsWith('text/')||/^(txt|csv|json|xml|eml|md|log)$/.test(ext)||ty.includes('json')){ const t=await b.text(); body.innerHTML=`<pre class="pv-txt">${esc(t.slice(0,300000))}</pre>`; return; }
+    if(ext==='msg'){ const f=Object.values(S.files||{}).find(x=>x&&x.origAsset===id); if(f&&f.text){ body.innerHTML=`<div class="pv-msg small">Outlook-Mail – angezeigt wird der erkannte Text.</div><pre class="pv-txt">${esc(f.text)}</pre>`; return; } return none('Outlook-Mail'); }
+    none(ext?'.'+ext:'');
+  }catch(e){ if(seq===FPV.seq) none('Fehler beim Anzeigen'); } }
+/* Mail-/Textdatensatz ohne Datei (z. B. abgelegte Mail) im selben Bereich */
+function pvOpenRec(f,kids){ if(FPV.url){ URL.revokeObjectURL(FPV.url); FPV.url=''; } FPV.seq++; FPV.id=''; FPV.blob=null;
+  pvShell(f.name,`<div class="small muted">${esc([f.from,fmtD(f.date),FILE_KINDS[f.kind],projName(f.pid)].filter(Boolean).join(' · '))}</div>
+    ${f.origAsset?`<div style="margin-top:8px"><a class="btn sm" href="/_blob/${esc(f.origAsset)}" target="_blank" rel="noopener" download="${esc(f.orig||'mail.msg')}">${ic('files')}Original-Mail öffnen (Outlook)</a></div>`:''}
+    ${kids.length?`<div class="small pv-atts" style="margin-top:8px">Anhänge (Klick = Vorschau): ${kids.map(k=>`<a href="/_blob/${esc(k.asset)}">${esc(k.orig||k.name)}</a>`).join(' · ')}</div>`:f.atts&&f.atts.length?`<div class="small" style="margin-top:6px">Anhänge: ${esc(f.atts.join(', '))}</div>`:''}
+    <pre class="pv-txt" style="margin-top:10px">${esc(f.text||'(kein Text)')}</pre>`,''); pvMark(''); }
+window.addEventListener('click',e=>{ if(e.defaultPrevented||e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey) return; const a=e.target.closest&&e.target.closest('a[href^="/_blob/"]'); if(!a||a.hasAttribute('download')||a.dataset.pvskip) return;
+  e.preventDefault(); e.stopImmediatePropagation(); let id=a.getAttribute('href').slice(7); try{ id=decodeURIComponent(id); }catch(_){} pvOpen(id,(a.textContent||'').replace(/^📎\s*/,'').trim()); },true);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&document.body.classList.contains('pv-open')&&!SHEET){ pvClose(); } });
+queueMicrotask(()=>Object.assign(A,{ pvClose:()=>pvClose(), pvDl:()=>{ if(FPV.blob) saveBlob(FPV.blob,pvName(FPV.id,'datei')); else if(FPV.id) fetch('/_blob/'+FPV.id).then(r=>r.blob()).then(b=>saveBlob(b,pvName(FPV.id,'datei'))).catch(()=>toast('Herunterladen ging nicht.')); } }));
 async function pdfLib(){
   if(!window.pdfjsLib){ await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'); await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'); }
   return window.pdfjsLib;
@@ -7263,6 +7366,7 @@ const A = {
  fdPick:d=>{ const f=$('#fdIn'); f.value=''; f.dataset.pid=d.pid||''; f.click(); },
  fileKindF:d=>{ UI.fkind=d.v; render(); },
  fileOpen:d=>{ const f=S.files[d.id]; if(!f) return; const kids=arr('files').filter(x=>x.parent===f.id&&x.asset);
+   if(f.asset) return pvOpen(f.asset,f.name); if(!SHEET) return pvOpenRec(f,kids);
    openSheet({title:f.name,wide:1,html:`<div class="fld full"><div class="small muted">${esc([f.from,fmtD(f.date),FILE_KINDS[f.kind],projName(f.pid)].filter(Boolean).join(' · '))}</div>
      ${f.origAsset?`<div style="margin-top:8px"><a class="btn sm" href="/_blob/${esc(f.origAsset)}" target="_blank" rel="noopener" download="${esc(f.orig||'mail.msg')}">${ic('files')}Original-Mail öffnen (Outlook)</a></div>`:''}
      ${kids.length?`<div class="small" style="margin-top:8px">Anhänge: ${kids.map(k=>`<a href="/_blob/${esc(k.asset)}" target="_blank" rel="noopener">${esc(k.orig||k.name)}</a>`).join(' · ')}</div>`:f.atts&&f.atts.length?`<div class="small" style="margin-top:6px">Anhänge: ${esc(f.atts.join(', '))}</div>`:''}<div class="longtext" style="margin-top:10px;max-height:60vh">${esc(f.text||'(kein Text)')}</div></div>`,saveLabel:'Schließen',onSave:()=>{}}); },
@@ -7817,7 +7921,7 @@ const SVG_SPK_ON='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" st
 const SVG_SPK_OFF='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
 const SVG_MIC='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
 function aicPaint(){ const box=$('#aic_msgs'); if(!box) return; const sp=document.querySelector('#aic [data-aic=spk]'); if(sp){ sp.innerHTML=ASK_SPEAK?SVG_SPK_ON:SVG_SPK_OFF; sp.title=ASK_SPEAK?'Vorlesen ist an – ausschalten':'Antworten vorlesen lassen'; sp.classList.toggle('on',ASK_SPEAK); }
-  box.innerHTML=(AIC.msgs.length?'':`<div class="aic-empty"><b>Was möchtest du wissen?</b><div class="small muted">Ich kenne alle Projekte, Notizen, To-Dos, Bestellungen, Lager und die Wochenplanung. Beispiele:</div>${['Gib mir alle To-Dos zum Energiepark','Was ist diese Woche bei Strundepark passiert?','Diagramm: offene To-Dos je Mitarbeiter','Welche Lieferungen kommen diese Woche?'].map(x=>`<button type="button" class="chip" data-aicq="${esc(x)}">${esc(x)}</button>`).join('')}</div>`)+
+  box.innerHTML=(AIC.msgs.length?'':`<div class="aic-empty"><b>Was möchtest du wissen?</b><div class="small muted">Ich kenne alle Projekte, Notizen, To-Dos, Bestellungen, Lager, Artikel und die Wochenplanung. Beispiele:</div>${['Gib mir alle To-Dos zum Energiepark','Was ist diese Woche bei Strundepark passiert?','Welche Artikel muss ich nachbestellen?','Welche Lieferungen kommen diese Woche?'].map(x=>`<button type="button" class="chip" data-aicq="${esc(x)}">${esc(x)}</button>`).join('')}</div>`)+
     AIC.msgs.map((m,i)=>m.role==='u'?`<div class="aic-m u">${esc(m.text)}</div>`:`<div class="aic-m a">${m.err?`<span class="muted">${esc(m.text)}</span>`:aicMd(m.text)}${aicTable(m.table)}${aicChart(m.chart)}${aicActsHtml(m,i)}<div class="aic-acts">${m.open&&aicOpenLabel(m.open)?`<button type="button" class="lnk" data-aic="go" data-i="${i}">↗ ${esc(aicOpenLabel(m.open))}</button>`:''}${CAN_SPEAK&&m.text&&!m.err?`<button type="button" class="lnk" data-aic="say" data-i="${i}">🔊 Vorlesen</button>`:''}</div></div>`).join('')+
     (AIC.busy?'<div class="aic-m a"><span class="aic-dots"><i></i><i></i><i></i></span></div>':'');
   box.querySelectorAll('[data-aicq]').forEach(b=>b.onclick=()=>aiChat(b.dataset.aicq));
@@ -7842,7 +7946,15 @@ const AIC_ACT={
  plan:{l:'Einsatz planen',form:1,desc:a=>[aicDate(a.d)?fmtD(a.d):'Datum fehlt',a.who,a.t,projName(aicPid(a.pid))].filter(Boolean).join(' · '),
    run:a=>planForm({d:aicDate(a.d)||TODAY(),t:a.t||'',who:aicWho(a.who),kind:'bau',pid:aicPid(a.pid),time:a.time||'',mat:[]},v=>savePlanEntry(v))},
  order:{l:'Bestellung erfassen',form:1,desc:a=>[a.supplier||'Lieferant fehlt',projName(aicPid(a.pid)),(a.items||[]).length+' Pos.',aicDate(a.delivery)&&'Lieferung '+fmtD(a.delivery)].filter(Boolean).join(' · '),
-   run:a=>orderForm(null,{supplier:a.supplier||'',pid:aicPid(a.pid),buyer:a.buyer||'',no:a.no||'',delivery:aicDate(a.delivery),items:markExtras((Array.isArray(a.items)?a.items:[]).filter(i=>i&&i.art).map(i=>({qty:+i.qty||1,unit:i.unit||'Stk',art:String(i.art)})))})},
+   run:a=>{ const its=(Array.isArray(a.items)?a.items:[]).filter(i=>i&&(i.art||aicArt(i.aid))).map(i=>{ const ar=aicArt(i.aid); return ar?{qty:+i.qty||+ar.reQty||1,unit:ar.unit||i.unit||'Stk',art:ar.name,...(ar.supNr||ar.nr?{artNr:ar.supNr||ar.nr}:{}),...(ar.price!=null&&ar.price!==''?{price:+ar.price}:{})}:{qty:+i.qty||1,unit:i.unit||'Stk',art:String(i.art)}; });
+     const sup=a.supplier||((its.length&&(a.items||[]).map(i=>aicArt(i&&i.aid)).find(x=>x&&x.supplier))||{}).supplier||'';
+     orderForm(null,{supplier:sup,pid:aicPid(a.pid),buyer:a.buyer||'',no:a.no||'',delivery:aicDate(a.delivery),items:markExtras(its)}); }},
+ article:{l:'Artikel anlegen / ändern',form:1,desc:a=>{ const ar=aicArt(a.id); return (ar?'Ändern: '+ar.name:'Neu: '+(a.name||'Bezeichnung fehlt'))+(a.nr?' · Nr. '+a.nr:'')+(a.supplier?' · '+a.supplier:''); },
+   run:a=>{ if(!canEdit('stamm')||!mayWrite('stamm')) return toast('Artikel ändern darf nur, wer die Stammdaten bearbeiten darf.'),false; stLoad(); const ar=aicArt(a.id), pre={};
+     ['nr','name','cat','unit','supplier','supNr','desc','notes'].forEach(k=>{ if(a[k]!=null&&String(a[k]).trim()!=='') pre[k]=String(a[k]).trim().slice(0,k==='desc'||k==='notes'?2000:200); });
+     ['price','vk','minQty','reQty'].forEach(k=>{ const v=a[k]; if(v!==''&&v!=null&&isFinite(+String(v).replace(',','.'))) pre[k]=+String(v).replace(',','.'); });
+     if(pre.cat){ const ix=acIndex(), m=Object.values(ix.byId).filter(c=>!c.virt&&!c.arch&&(acN(c.name)===acN(pre.cat)||acN(acPathTxt(c.id,ix))===acN(pre.cat))); if(m.length===1){ pre.catId=m[0].id; pre.cat=m[0].name; } }
+     if(!ar&&!pre.name) return toast('Bezeichnung fehlt.'),false; stForm('artikel',ar,pre); }},
  receive:{l:'Ware annehmen',form:1,desc:a=>{ const o=S.orders[a.order]; return o?[o.supplier,projName(o.pid),o.delivery&&'Liefertermin '+fmtD(o.delivery)].filter(Boolean).join(' · '):'Bestellung nicht gefunden'; },
    run:a=>{ if(!S.orders[a.order]) return toast('Bestellung nicht gefunden.'),false; receiveForm(a.order); }},
  sale:{l:'Beleg als Entwurf anlegen',desc:a=>{ const ty=SALE_T[a.doc]?a.doc:'rechnung', its=aicSaleItems(a), sum=its.reduce((s,i)=>s+(+i.qty||0)*(+i.price||0),0); return [SALE_T[ty][0],a.firm&&'von '+a.firm,'an '+(a.customer||'Kunde fehlt'),projName(aicPid(a.pid)),its.length+' Pos.',sum?euro(sum)+' netto':''].filter(Boolean).join(' · '); },
@@ -7850,7 +7962,9 @@ const AIC_ACT={
 };
 // „Mach eine Rechnung von Firma X an Kunde Y über Z €“: Beleg als Entwurf anlegen (Kunde aus Stammdaten), danach Editor öffnen
 function aicSaleItems(a){ const gross=!!a.gross, net=(p,v)=>gross?Math.round((+p||0)/(1+(v==='7'?.07:v==='19'?.19:0))*100)/100:+p||0;
-  let its=(Array.isArray(a.items)?a.items:[]).filter(i=>i&&(i.art||i.price)).map(i=>{ const vat=['19','7','0p','0r','0'].includes(String(i.vat))?String(i.vat):'19'; return {art:String(i.art||a.subject||'Leistung').slice(0,200),desc:String(i.desc||''),qty:+i.qty||1,unit:i.unit||'psch.',price:net(i.price,vat),vat}; });
+  let its=(Array.isArray(a.items)?a.items:[]).filter(i=>i&&(i.art||i.price||aicArt(i.aid))).map(i=>{ const vat=['19','7','0p','0r','0'].includes(String(i.vat))?String(i.vat):'19', ar=aicArt(i.aid);
+    if(ar) return {art:String(ar.name).slice(0,200),desc:String(i.desc||ar.desc||'').slice(0,500),qty:+i.qty||1,unit:ar.unit||i.unit||'Stk',price:i.price!=null&&i.price!==''?net(i.price,vat):+ar.vk||0,vat,...(ar.nr?{nr:ar.nr}:{})};
+    return {art:String(i.art||a.subject||'Leistung').slice(0,200),desc:String(i.desc||''),qty:+i.qty||1,unit:i.unit||'psch.',price:net(i.price,vat),vat}; });
   if(!its.length&&+a.amount){ const vat=['19','7','0p','0r','0'].includes(String(a.vat))?String(a.vat):'19'; its=[{art:String(a.subject||'Leistung').slice(0,200),desc:'',qty:1,unit:'psch.',price:net(a.amount,vat),vat}]; }
   return its; }
 function aicSale(a){ stLoad(); const ty=SALE_T[a.doc]?a.doc:'rechnung', kd=stKunde(a.customer||''), pid=aicPid(a.pid), p=S.projects[pid];
@@ -7863,7 +7977,7 @@ function aicActsHtml(m,i){ if(!m.acts||!m.acts.length) return '';
   return `<div class="aic-cards">${m.acts.map((a,j)=>{ const T=AIC_ACT[a.type], ok=m.done&&m.done[j];
     return `<div class="aic-card ${ok?'ok':''}"><div style="min-width:0"><div class="aic-cl">${esc(T.l)}</div><div class="aic-cd">${esc(T.desc(a))}</div></div>${ok?'<span class="dy-ok">✓</span>':`<button type="button" class="btn sun sm" data-aic="act" data-i="${i}" data-j="${j}">${T.form?'Prüfen & speichern':'Übernehmen'}</button>`}</div>`; }).join('')}</div>`; }
 // Stand der Daten, um zu erkennen, ob im Formular wirklich gespeichert wurde (Abbrechen → kein Haken)
-const aicStamp=()=>['tasks','events','orders','plan'].map(c=>Object.values(S[c]||{}).map(x=>x.upd||'').sort().pop()||'').join('|');
+const aicStamp=()=>['tasks','events','orders','plan','artikel'].map(c=>Object.values(S[c]||{}).map(x=>x.upd||'').sort().pop()||'').join('|');
 function aicRunAct(m,j){ const a=m.acts[j], T=AIC_ACT[a.type]; if(!T) return; const before=aicStamp(); let r; try{ r=T.run(a); }catch(e){ toast('Konnte nicht ausgeführt werden.'); return; }
   if(r===false) return; m.done=m.done||{}; if(!T.form&&r!=='form'){ m.done[j]=true; aicPaint(); return; }
   // Formular offen: Haken erst, wenn es zu ist UND sich Daten geändert haben
@@ -7877,6 +7991,20 @@ function aicDo(o,manual){ if(!o) return; const pid=S.projects[o.pid]?o.pid:'', t
     if(day&&tab==='status') setTimeout(()=>{ const c=document.querySelector(`.nb.dy[data-drop-note="${day}"]`); if(c){ c.scrollIntoView({behavior:'smooth',block:'center'}); c.classList.add('dy-hi'); setTimeout(()=>c.classList.remove('dy-hi'),3000); } },120); }
   else if(view) go(view);
   if(task&&(manual||!pid)) setTimeout(()=>A.editTask({id:task}),pid||view?150:0); }
+/* Artikel-Stammdaten für den Assistenten: kleine Kataloge ganz, große nur die passenden (Suchwörter, Nummern) + Artikel unter Mindestbestand.
+   Preise (EK/VK) nur für Leute mit Recht „Stammdaten“. */
+const aiArtOk=()=>canSee('stamm')||canSee('stock');
+function aiArtikel(ql){ if(!aiArtOk()) return ''; stLoad(); const all=Object.values(S.artikel||{}).filter(a=>a&&a.name); if(!all.length) return '';
+  const prices=canSee('stamm'), STOPA=new Set('und oder mit für fuer von bei den der die das ein eine einen was wie wer wir ich mir mal bitte alle artikel artikeln haben gibt welche zeig lager bestand'.split(' '));
+  const ws=[...new Set(String(ql||'').toLowerCase().split(/[^a-zäöüß0-9.\-]+/).filter(w=>w.length>=3&&!STOPA.has(w)))];
+  const sc=a=>{ const nr=[a.nr,a.supNr].map(x=>String(x||'').toLowerCase()), tok=[a.name,a.cat,a.supplier,a.desc].join(' ').toLowerCase(); return ws.reduce((s,w)=>s+(nr.includes(w)?6:tok.includes(w)?2:0),0); };
+  let pick=all.length<=150?all.slice():all.map(a=>({a,s:sc(a)})).filter(x=>x.s).sort((x,y)=>y.s-x.s).slice(0,80).map(x=>x.a);
+  if(/bestand|nachbestell|mindest|knapp|leer|ausgehen|fehlt|reserv/.test(ql)) artLow().slice(0,40).forEach(a=>{ if(!pick.includes(a)) pick.push(a); });
+  const aix=acIndex(), cats=acFlat(aix).map(x=>acPathTxt(x.id,aix)).slice(0,80);
+  const head=`ARTIKEL-STAMMDATEN (${all.length} Artikel insgesamt${all.length>150?', hier nur die zur Frage passenden – fehlt einer, nach Bezeichnung/Nummer fragen':''}${cats.length?'; Kategorien: '+cats.join(', '):''}).\nSpalten: id | Art.-Nr. | Bezeichnung | Kategorie | Einheit${prices?' | EK netto € | VK netto €':''} | Hauptlieferant | Lief.-Art.-Nr. | im Lager | reserviert | frei | unterwegs | Mindestbestand`;
+  if(!pick.length) return head+'\n- (keine passenden Artikel zur Frage)';
+  return head+'\n'+pick.map(a=>{ const f=artInfo(a); return [a.id,a.nr||'',String(a.name).slice(0,120),acPathTxt(acOfArt(a,aix),aix)||a.cat||'',a.unit||'',...(prices?[a.price??'',a.vk??'']:[]),a.supplier||'',a.supNr||'',qn(f.lager),qn(f.res),qn(f.frei),qn(f.weg),f.min||''].join(' | '); }).join('\n'); }
+const aicArt=id=>id&&(S.artikel||{})[id]||null;
 // Daten für Claude: kompakter Gesamtüberblick + Details zu den Projekten, um die es geht
 function aiSnapshot(q,hist){
   // Projekte, um die es geht: ganze Wörter aus Frage + letzter Gesprächsrunde gegen Projektname/Ort/Kunde/Nummer (ohne Allerweltswörter)
@@ -7893,6 +8021,7 @@ function aiSnapshot(q,hist){
   const ev=arr('events').filter(e=>e.date>=addDays(t0,-7)&&e.date<=addDays(t0,45)).sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||''))); if(ev.length) out.push('TERMINE (id | Datum | Uhrzeit | Titel | Art | wer | Projekt | Ort):\n'+ev.map(e=>[e.id,e.date,e.time||'',e.title||'',EV_KINDS[e.kind]||'',evWhos(e).map(shortWho).join(', '),projName(e.pid)||'',e.place||''].join(' | ')).join('\n'));
   const oo=arr('orders').filter(o=>orderState(o).open); if(oo.length) out.push('OFFENE BESTELLUNGEN (id | Lieferant | Projekt | bestellt | Liefertermin | Status | bestellt über | Positionen):\n'+oo.map(o=>[o.id,o.supplier||'',projName(o.pid)||'-',o.ordered||'',o.delivery||'',orderState(o).k,o.buyer||'',(o.items||[]).slice(0,5).map(i=>(i.qty||'')+' '+(i.unit||'')+' '+i.art).join('; ')].join(' | ')).join('\n'));
   const wk=arr('plan').flatMap(w=>(w.entries||[]).filter(e=>e.d>=mon&&e.d<=addDays(mon,11)).map(e=>[e.d,e.who?evWhos(e).map(shortWho).join(', '):'-',e.t||'',projName(e.pid)||''].join(' | '))); if(wk.length) out.push('WOCHENPLANUNG diese + nächste Woche (Datum | wer | was | Projekt):\n'+wk.join('\n'));
+  const ak=aiArtikel(ql); if(ak) out.push(ak);
   const st=arr('stock').filter(s=>+s.qty>0).slice(0,80); if(st.length) out.push('LAGER (Artikel | Bestand | Lagerplätze):\n'+st.map(s=>[s.art,qn(s.qty)+' '+(s.unit||''),stockBinsShort(s)||s.loc||''].join(' | ')).join('\n'));
   cand.forEach(p=>out.push(`DETAILS ${p.name} (${p.id}):\nNotizen je Tag (neueste zuerst):\n${diaryDays(p).slice(0,10).map(x=>'- '+(x.d||'ohne Datum')+': '+x.items.map(e=>(e.by?e.by+': ':'')+dyPlain(e)).join(' | ').slice(0,900)).join('\n')||'- keine'}\nAlle To-Dos inkl. erledigte:\n${arr('tasks').filter(t=>t.pid===p.id).map(t=>'- '+(t.done?'✓ ':'☐ ')+t.title+(t.who?' ('+shortWho(t.who)+')':'')+(t.due?' fällig '+t.due:'')+((t.upd2||[]).length?' · Updates: '+[...t.upd2].sort((a,b)=>updKey(a).localeCompare(updKey(b))).map(u=>u.d+' '+(u.by||'')+': '+u.t).join(' / ').slice(0,500):'')).join('\n')||'- keine'}${p.questions?'\nOffene Fragen: '+p.questions.slice(0,600):''}`));
   return out.join('\n\n').slice(0,45000);
@@ -7926,9 +8055,10 @@ Regeln:
   {"type":"note","pid":"","text":"…"}  (Projekt-Notiz)
   {"type":"event","title":"…","date":"","time":"HH:MM","end":"","who":"Kürzel","pid":"","place":"","kind":"bau|kunde|evu|lief|intern"}
   {"type":"plan","d":"","t":"was","who":"Kürzel","pid":"","time":""}  (Einsatz in der Wochenplanung)
-  {"type":"order","supplier":"","pid":"","buyer":"","no":"","delivery":"","items":[{"qty":1,"unit":"Stk","art":""}]}
+  {"type":"order","supplier":"","pid":"","buyer":"","no":"","delivery":"","items":[{"qty":1,"unit":"Stk","art":"","aid":"Artikel-id aus ARTIKEL-STAMMDATEN, wenn der Artikel dort steht – dann werden Bezeichnung, Einheit, Nummer und Preis übernommen"}]}  (supplier leer lassen = Hauptlieferant des Artikels)
+  {"type":"article","id":"Artikel-id zum Ändern, leer = neu anlegen","nr":"","name":"","cat":"Kategorie: Name oder Pfad aus der Kategorienliste oben","unit":"","price":EK netto,"vk":VK netto,"supplier":"","supNr":"","minQty":0,"reQty":0,"desc":""}  (Artikel in den Stammdaten anlegen oder ändern – nur die Felder angeben, die neu sind oder sich ändern)
   {"type":"receive","order":"Bestell-id"}  (Ware annehmen / Wareneingang buchen)
-  {"type":"sale","doc":"rechnung|angebot|auftrag|abschlag|lieferschein|gutschrift","firm":"ausstellende Firma (eine von: ${FIRMS().join(', ')}) oder leer","customer":"Kundenname wie genannt","pid":"","subject":"Betreff","amount":Betrag als Zahl,"gross":false,"vat":"19|7|0p|0r","items":[{"art":"","desc":"","qty":1,"unit":"psch.","price":0,"vat":"19"}]}  (Rechnung/Angebot/Auftrag usw. als Entwurf anlegen: „mach eine Rechnung an X über 5.000 €“. Einzelne Positionen nennen → items, sonst nur amount. gross=true, wenn der Betrag ausdrücklich brutto/inkl. MwSt. ist, sonst netto. PV-Anlagen für Wohngebäude ≤ 30 kWp → vat "0p".)
+  {"type":"sale","doc":"rechnung|angebot|auftrag|abschlag|lieferschein|gutschrift","firm":"ausstellende Firma (eine von: ${FIRMS().join(', ')}) oder leer","customer":"Kundenname wie genannt","pid":"","subject":"Betreff","amount":Betrag als Zahl,"gross":false,"vat":"19|7|0p|0r","items":[{"art":"","aid":"Artikel-id, wenn ein Artikel aus den Stammdaten gemeint ist (Bezeichnung, Einheit und VK werden übernommen; price nur angeben, wenn ausdrücklich ein anderer Preis genannt ist)","desc":"","qty":1,"unit":"psch.","price":0,"vat":"19"}]}  (Rechnung/Angebot/Auftrag usw. als Entwurf anlegen: „mach eine Rechnung an X über 5.000 €“. Einzelne Positionen nennen → items, sonst nur amount. gross=true, wenn der Betrag ausdrücklich brutto/inkl. MwSt. ist, sonst netto. PV-Anlagen für Wohngebäude ≤ 30 kWp → vat "0p".)
   Fehlen Pflichtangaben (z. B. Datum beim Termin, Lieferant bei Bestellung), trotzdem die Aktion vorbereiten und in say kurz nachfragen.
 - capture: nur noch für längere, unstrukturierte Texte zum Zuordnen (z. B. eingefügte Mail) – für einzelne Aufgaben/Notizen/Termine actions verwenden.`,{modelTier:'default'});
     AIC.busy=false;
@@ -8077,7 +8207,7 @@ Object.assign(A,{
  tlEditMs:d=>tlEditMs(d.pid,d.key), tlAddMs:d=>tlAddMs(d.pid),
  tlLaneRename:d=>{ if(!isAdmin()) return toast('Spurnamen ändern nur EP und AvE.'); const def=(TL_LANES.find(l=>l[0]===d.v)||[])[1]; openSheet({title:'Spur umbenennen',value:{n:tlLaneName(d.v,def)},fields:[{k:'n',label:'Überschrift',req:1,full:1}],onSave:v=>{ putConfig({...(S.config||{}),tlLaneNames:{...((S.config||{}).tlLaneNames||{}),[d.v]:v.n.trim()}}); toast('Überschrift geändert.'); }}); },
  aiNext:d=>aiNextSteps(d.pid),
- fileAsset:d=>{ window.open('/_blob/'+d.id,'_blank','noopener'); },
+ fileAsset:d=>{ pvOpen(d.id); },
  stockHist:d=>stockHist(d.id),
  ckPrint:d=>printChecklist(d.pid,d.ph||''),
  formPrint:(d,el,e)=>{ e&&e.stopPropagation&&e.stopPropagation(); if(formDocUrl(d.k)) formDocPrint(d.pid,d.k); else printForm(d.pid,d.k); },
@@ -9547,8 +9677,8 @@ const ST_DEF={
  artikel:{l:'Artikel',one:'Artikel',pre:'a-',icon:'stock',cols:[['nr','Nr.'],['name','Bezeichnung'],['cat','Kategorie'],['unit','Einheit'],['price','EK netto €'],['supplier','Hauptlieferant'],['_lager','Lager'],['_weg','unterwegs'],['_res','reserviert']],
    fields:[{k:'nr',label:'Artikel-Nr.'},{k:'name',label:'Bezeichnung',req:1,full:1},{k:'cat',label:'Kategorie',list:'stCatList'},{k:'unit',label:'Einheit',ph:'Stk, m, kWp …'},{k:'price',label:'Einkaufspreis netto (€)',type:'number',step:'any'},{k:'vk',label:'Verkaufspreis netto (€)',type:'number',step:'any'},{k:'supplier',label:'Hauptlieferant',list:'supplierList'},{k:'supNr',label:'Artikel-Nr. beim Lieferanten'},{k:'minQty',label:'Mindestbestand (Hinweis: nachbestellen)',type:'number',step:'any'},{k:'reQty',label:'Übliche Bestellmenge',type:'number',step:'any'},{k:'desc',label:'Beschreibung',type:'textarea',full:1},{k:'notes',label:'Notizen',type:'textarea',full:1}]}};
 var ST_ON=false; // var: wird schon beim ersten Zeichnen gelesen
-function stLoad(){ if(ST_ON) return; ST_ON=true; Object.keys(ST_DEF).forEach(k=>{ S[k]=S[k]||{}; });
-  if(MODE==='cloud'&&DB) Object.keys(ST_DEF).forEach(k=>DB.collection(k).onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); }); S[k]=o; stListsDirty=true; scheduleRender(); },()=>{})); }
+function stLoad(){ if(ST_ON) return; ST_ON=true; [...Object.keys(ST_DEF),'artcat'].forEach(k=>{ S[k]=S[k]||{}; });
+  if(MODE==='cloud'&&DB) [...Object.keys(ST_DEF),'artcat'].forEach(k=>DB.collection(k).onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); }); S[k]=o; stListsDirty=true; scheduleRender(); },()=>{})); }
 setTimeout(()=>{ if(MODE==='cloud') stLoad(); },8000); // Vorschlagslisten (Kunden/Lieferanten) im Hintergrund nachladen
 const stNorm=s=>String(s||'').toLowerCase().replace(/gmbh|&|co\.?|kg|ag|e\.k\.|ug|\(haftungsbeschränkt\)/g,'').replace(/[^a-z0-9äöüß]+/g,'');
 const stFind=(k,name)=>{ const n=stNorm(name); if(!n) return null; const all=Object.values(S[k]||{}); return all.find(x=>stNorm(x.name)===n)||all.find(x=>n.length>4&&stNorm(x.name).startsWith(n))||null; };
@@ -9589,30 +9719,35 @@ function vStamm(){
   stLoad(); const k=ST_DEF[UI.stTab]?UI.stTab:'kunden', D=ST_DEF[k], all=Object.values(S[k]||{}), q=String(UI.stQ||'').toLowerCase().trim(), cf=UI.stCat||'', ff=UI.stF||'', city=UI.stCity||'';
   const links=stLinks(k), dup=stDups(k), since=addDays(TODAY(),-30);
   const test={proj:x=>links(x)>0,noproj:x=>!links(x),mail:x=>!!x.email,nomail:x=>!x.email,nophone:x=>!x.phone&&!x.mobile,noaddr:x=>!x.street&&!x.city,nocust:x=>!x.custNo,noprice:x=>x.price===''||x.price==null,nounit:x=>!x.unit,nosup:x=>!x.supplier,reorder:x=>artInfo(x).low,weg:x=>artInfo(x).weg>0,res:x=>artInfo(x).res>0,new:x=>String(x.at||'').slice(0,10)>=since&&x.by!=='Import',dup:x=>dup.byId[x.id]!=null};
-  let list=all; if(cf) list=list.filter(x=>(x.cat||'')===cf); if(city) list=list.filter(x=>stNorm(x.city).startsWith(city)); if(ff&&test[ff]) list=list.filter(test[ff]); if(q) list=list.filter(x=>Object.values(x).join(' ').toLowerCase().includes(q));
+  const isA=k==='artikel', aix=isA?acIndex():null, acSel=isA&&(UI.stCatId==='__none'||(aix&&aix.byId[UI.stCatId]))?UI.stCatId:'';
+  let list=all; if(isA) list=acFilter(list,acSel); else if(cf) list=list.filter(x=>(x.cat||'')===cf); if(city) list=list.filter(x=>stNorm(x.city).startsWith(city)); if(ff&&test[ff]) list=list.filter(test[ff]);
+  if(q) list=list.filter(x=>(Object.values(x).filter(v=>typeof v!=='object').join(' ')+(isA?' '+acPathTxt(aix.artCat[x.id],aix):'')).toLowerCase().includes(q));
   const sk=UI.stSort||'name'; list=list.sort((a,b)=>sk==='nr'?String(b.nr||'').localeCompare(String(a.nr||''),'de',{numeric:true}):sk==='links'?links(b)-links(a):String(a.name||'').localeCompare(String(b.name||''),'de'));
   const cats=[...new Set(all.map(x=>x.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'de')), lim=UI.stLim||100;
   const cities=k==='artikel'?[]:Object.entries(all.reduce((m,x)=>{ const c=String(x.city||'').split(',')[0].trim(); if(c) m[c]=(m[c]||0)+1; return m; },{})).sort((a,b)=>b[1]-a[1]).slice(0,40);
   const lnkTxt=n=>!n?'':k==='kunden'?n+' Projekt'+(n>1?'e':''):k==='lieferanten'?n+' Bestellung'+(n>1?'en':''):'im Lager';
-  const adm=stDelOk(k), sel=new Set(((UI.stSel||{})[k]||[]).filter(id=>(S[k]||{})[id])), shown=list.slice(0,lim); ST_SHOWN={k,page:shown.map(x=>x.id),all:list.map(x=>x.id)};
-  const row=x=>{ const n=links(x), d=dup.byId[x.id]!=null; return `<tr class="clickable ${d?'st-dup':''}${sel.has(x.id)?' st-on':''}" data-act="stEdit" data-k="${k}" data-id="${esc(x.id)}">${adm?`<td class="st-ck" data-act="stSel" data-k="${k}" data-id="${esc(x.id)}"><input type="checkbox" class="ck" ${sel.has(x.id)?'checked':''} aria-label="${esc(x.name||'')} auswählen"></td>`:''}${D.cols.map(([c])=>`<td class="${c==='nr'||c==='price'?'mono':''}">${c==='name'?`<b>${esc(x.name||'')}</b>${d?' <span class="pill warn" title="möglicherweise doppelt">doppelt?</span>':''}`:c==='price'&&x.price!=null&&x.price!==''?esc(nf(+x.price,2)):c[0]==='_'?artCell(x,c):esc(x[c]||'')}</td>`).join('')}<td class="small muted">${lnkTxt(n)}</td></tr>`; };
-  const filterBar=`<div class="chips st-f">${ST_FILTERS[k].map(([f,l])=>`<button class="chip ${ff===f?'on':''}" data-act="stF" data-f="${f}">${l}${f==='dup'?` <span class="mono small">${dup.groups.reduce((a,g)=>a+g.items.length,0)}</span>`:''}</button>`).join('')}${ff||cf||city||q?`<button class="chip" data-act="stF" data-f="" title="Alle Filter zurücksetzen">✕ zurücksetzen</button>`:''}</div>`;
-  const selBar=adm&&sel.size&&ff!=='dup'?`<div class="st-selbar"><b>${sel.size.toLocaleString('de-DE')} ausgewählt</b>${list.length>sel.size?`<button class="btn sm" data-act="stSelAll" data-k="${k}" data-all="1">Alle ${list.length.toLocaleString('de-DE')} Treffer auswählen</button>`:''}<button class="btn sm" data-act="stSelNone" data-k="${k}">Auswahl aufheben</button><span class="spacer"></span><button class="btn sm danger" data-act="stSelDel" data-k="${k}">${ic('x')}Ausgewählte löschen</button></div>`:'';
+  const adm=stSelOk(k), delOk=stDelOk(k), sel=new Set(((UI.stSel||{})[k]||[]).filter(id=>(S[k]||{})[id])), shown=list.slice(0,lim); ST_SHOWN={k,page:shown.map(x=>x.id),all:list.map(x=>x.id)};
+  const row=x=>{ const n=links(x), d=dup.byId[x.id]!=null; return `<tr class="clickable ${d?'st-dup':''}${sel.has(x.id)?' st-on':''}" data-act="stEdit" data-k="${k}" data-id="${esc(x.id)}">${adm?`<td class="st-ck" data-act="stSel" data-k="${k}" data-id="${esc(x.id)}"><input type="checkbox" class="ck" ${sel.has(x.id)?'checked':''} aria-label="${esc(x.name||'')} auswählen"></td>`:''}${D.cols.map(([c])=>`<td class="${c==='nr'||c==='price'?'mono':''}">${c==='name'?`<b>${esc(x.name||'')}</b>${d?' <span class="pill warn" title="möglicherweise doppelt">doppelt?</span>':''}`:c==='price'&&x.price!=null&&x.price!==''?esc(nf(+x.price,2)):c[0]==='_'?artCell(x,c):isA&&c==='cat'?acCell(x,aix):esc(x[c]||'')}</td>`).join('')}<td class="small muted">${lnkTxt(n)}</td></tr>`; };
+  const filterBar=`<div class="chips st-f">${ST_FILTERS[k].map(([f,l])=>`<button class="chip ${ff===f?'on':''}" data-act="stF" data-f="${f}">${l}${f==='dup'?` <span class="mono small">${dup.groups.reduce((a,g)=>a+g.items.length,0)}</span>`:''}</button>`).join('')}${ff||cf||city||q||acSel?`<button class="chip" data-act="stF" data-f="" title="Alle Filter zurücksetzen">✕ zurücksetzen</button>`:''}</div>`;
+  const selBar=adm&&sel.size&&ff!=='dup'?`<div class="st-selbar"><b>${sel.size.toLocaleString('de-DE')} ausgewählt</b>${list.length>sel.size?`<button class="btn sm" data-act="stSelAll" data-k="${k}" data-all="1">Alle ${list.length.toLocaleString('de-DE')} Treffer auswählen</button>`:''}<button class="btn sm" data-act="stSelNone" data-k="${k}">Auswahl aufheben</button><span class="spacer"></span>${isA&&acOk()?`<button class="btn sun sm" data-act="acBulkAsk">🌳 Kategorie zuordnen</button>`:''}${delOk?`<button class="btn sm danger" data-act="stSelDel" data-k="${k}">${ic('x')}Ausgewählte löschen</button>`:''}</div>`:'';
   const body=ff==='dup'?stDupView(k,dup,q):selBar+`<div class="card"><div class="tbl-wrap"><table class="tbl st-tbl"><thead><tr>${adm?`<th class="st-ck" data-act="stSelAll" data-k="${k}"><input type="checkbox" class="ck" ${shown.length&&shown.every(x=>sel.has(x.id))?'checked':''} aria-label="Alle auf dieser Seite auswählen"></th>`:''}${D.cols.map(([,l])=>`<th>${l}</th>`).join('')}<th></th></tr></thead><tbody>${shown.map(row).join('')||`<tr><td colspan="${D.cols.length+(adm?2:1)}"><div class="empty">${all.length?'Keine Treffer.':'Noch keine '+D.l+'.'}</div></td></tr>`}</tbody></table></div>
     ${list.length>lim?`<div style="padding:10px 16px"><button class="btn sm" data-act="stMore">+ weitere ${Math.min(200,list.length-lim)} von ${list.length-lim} anzeigen</button></div>`:''}</div>`;
-  return head('Stammdaten · '+D.l,all.length.toLocaleString('de-DE')+' '+D.l+(ff||cf||city||q?' · '+list.length.toLocaleString('de-DE')+' gefiltert':'')+(MODE==='cloud'&&!all.length?' · wird geladen …':''),`<button class="btn pri" data-act="stEdit" data-k="${k}">${ic('plus')}${D.one} anlegen</button>`)+
+  return head('Stammdaten · '+D.l,all.length.toLocaleString('de-DE')+' '+D.l+(ff||cf||city||q||acSel?' · '+list.length.toLocaleString('de-DE')+' gefiltert':'')+(MODE==='cloud'&&!all.length?' · wird geladen …':''),`<button class="btn pri" data-act="stEdit" data-k="${k}">${ic('plus')}${D.one} anlegen</button>`)+
     `<div class="chips">${Object.entries(ST_DEF).map(([kk,dd])=>`<button class="chip ${kk===k?'on':''}" data-act="nav" data-v="st:${kk}">${dd.l} <span class="mono small">${Object.keys(S[kk]||{}).length}</span></button>`).join('')}</div>
     <div class="row"><input class="search" id="stQ" type="search" placeholder="${D.l} durchsuchen: Name, Nummer, Ort, E-Mail …" value="${esc(UI.stQ||'')}" aria-label="Suchen">
-      ${cats.length?`<select class="catsel" data-chg="stCat" aria-label="Kategorie"><option value="">Alle Kategorien</option>${cats.map(c=>`<option ${c===cf?'selected':''}>${esc(c)}</option>`).join('')}</select>`:''}
+      ${isA?acSelectHtml(acSel)+`<button class="btn sm ${UI.acSide?'pri':''}" data-act="acSide" aria-pressed="${!!UI.acSide}" title="Kategorien als Baum links einblenden">🌳 Baum</button><button class="btn sm ${UI.acMan?'pri':''}" data-act="acMan">Kategorien verwalten</button>`
+        :cats.length?`<select class="catsel" data-chg="stCat" aria-label="Kategorie"><option value="">Alle Kategorien</option>${cats.map(c=>`<option ${c===cf?'selected':''}>${esc(c)}</option>`).join('')}</select>`:''}
       ${cities.length?`<select class="catsel" data-chg="stCity" aria-label="Ort"><option value="">Alle Orte</option>${cities.map(([c,n])=>`<option value="${esc(stNorm(c))}" ${stNorm(c)===city?'selected':''}>${esc(c)} (${n})</option>`).join('')}</select>`:''}
       <select class="catsel" data-chg="stSort" aria-label="Sortieren"><option value="name" ${sk==='name'?'selected':''}>Name A–Z</option><option value="nr" ${sk==='nr'?'selected':''}>Nummer (neueste zuerst)</option><option value="links" ${sk==='links'?'selected':''}>${k==='kunden'?'meiste Projekte':k==='lieferanten'?'meiste Bestellungen':'im Lager zuerst'}</option></select></div>
-    ${filterBar}${body}`;
+    ${filterBar}${isA&&acSel?`<div class="ac-crumb small">Kategorie: <b>${acSel==='__none'?'ohne Kategorie':esc(acPathTxt(acSel,aix))}</b>${acSel!=='__none'&&(aix.kids[acSel]||[]).length?' <span class="muted">(inkl. Unterkategorien)</span>':''} <button class="lnk" data-act="acSel" data-id="">✕</button></div>`:''}${isA&&UI.acMan?acManHtml():''}${isA&&UI.acSide?`<div class="ac-wrap"><aside class="card ac-side" aria-label="Kategorien">${acNavHtml(acSel)}</aside><div class="ac-main">${body}</div></div>`:body}`;
 }
+const stSelOk=k=>stDelOk(k)||(k==='artikel'&&acOk());
+function acCell(x,ix){ const id=ix.artCat[x.id]; if(!id) return ''; const p=acPath(id,ix), c=ix.byId[id]; return `${p.length>1?`<span class="small muted">${esc(p.slice(0,-1).join(' → '))} → </span>`:''}${esc(p[p.length-1]||'')}${c&&c.virt?'':''}`; }
 // Mehrfachauswahl (nur Admins, wie das einzelne Löschen): Häkchen je Zeile, „Alle auf dieser Seite“ / „Alle Treffer“, dann gemeinsam löschen
 var ST_SHOWN={k:'',page:[],all:[]};
 queueMicrotask(()=>Object.assign(A,{
- stSel:d=>{ if(!stDelOk(d.k)) return; const m={...(UI.stSel||{})}, s=new Set(m[d.k]||[]); if(s.has(d.id)) s.delete(d.id); else s.add(d.id); m[d.k]=[...s]; UI.stSel=m; render(); },
- stSelAll:d=>{ if(!stDelOk(d.k)||ST_SHOWN.k!==d.k) return; const m={...(UI.stSel||{})}, s=new Set(m[d.k]||[]), ids=d.all?ST_SHOWN.all:ST_SHOWN.page;
+ stSel:d=>{ if(!stSelOk(d.k)) return; const m={...(UI.stSel||{})}, s=new Set(m[d.k]||[]); if(s.has(d.id)) s.delete(d.id); else s.add(d.id); m[d.k]=[...s]; UI.stSel=m; render(); },
+ stSelAll:d=>{ if(!stSelOk(d.k)||ST_SHOWN.k!==d.k) return; const m={...(UI.stSel||{})}, s=new Set(m[d.k]||[]), ids=d.all?ST_SHOWN.all:ST_SHOWN.page;
    if(!d.all&&ids.length&&ids.every(id=>s.has(id))) ids.forEach(id=>s.delete(id)); else ids.forEach(id=>s.add(id)); m[d.k]=[...s]; UI.stSel=m; render(); },
  stSelNone:d=>{ const m={...(UI.stSel||{})}; m[d.k]=[]; UI.stSel=m; render(); },
  stSelDel:d=>{ if(!stDelOk(d.k)) return; const k=d.k, D=ST_DEF[k], ids=((UI.stSel||{})[k]||[]).filter(id=>(S[k]||{})[id]); if(!ids.length) return; const links=stLinks(k), linked=ids.filter(id=>links(S[k][id])>0).length;
@@ -9630,7 +9765,7 @@ function stDupView(k,dup,q){ let gs=dup.groups; if(q) gs=gs.filter(g=>g.items.so
     (gs.length>lim?`<button class="btn sm" data-act="stMore">+ weitere Gruppen anzeigen</button>`:'');
 }
 Object.assign(A,{
- stF:d=>{ if(!d.f){ UI.stF=''; UI.stCat=''; UI.stCity=''; UI.stQ=''; } else UI.stF=UI.stF===d.f?'':d.f; UI.stLim=100; render(); },
+ stF:d=>{ if(!d.f){ UI.stF=''; UI.stCat=''; UI.stCatId=''; UI.stCity=''; UI.stQ=''; } else UI.stF=UI.stF===d.f?'':d.f; UI.stLim=100; render(); },
  stNotDup:d=>{ const ids=String(d.ids).split(','), cfg=clone(S.config||{}); cfg.notDup={...(cfg.notDup||{})}; const m={...(cfg.notDup[d.k]||{})}; for(let i=0;i<ids.length;i++) for(let j=i+1;j<ids.length;j++) m[[ids[i],ids[j]].sort().join('|')]=1; cfg.notDup[d.k]=m; putConfig(cfg); ST_DUP_CACHE={}; toast('Als „kein Duplikat“ markiert.'); },
  stMerge:d=>{ if(!isAdmin()) return; const k=d.k, items=String(d.ids).split(',').map(id=>(S[k]||{})[id]).filter(Boolean); if(items.length<2) return; const keep=clone(items[0]);
    confirmSheet(items.length-1+' Eintrag/Einträge in „'+keep.name+'“ ('+(keep.nr||'ohne Nr.')+') zusammenführen? Leere Felder werden ergänzt, Notizen zusammengefügt, die anderen gelöscht.',()=>{
@@ -9639,16 +9774,19 @@ Object.assign(A,{
 });
 Object.assign(CHG,{ stCity:(d,el)=>{ UI.stCity=el.value; UI.stLim=100; render(); } });
 let stQT; document.addEventListener('input',e=>{ if(e.target.id!=='stQ') return; UI.stQ=e.target.value; UI.stLim=100; clearTimeout(stQT); stQT=setTimeout(()=>render(),200); });
-function stForm(k,x){ const D=ST_DEF[k], isNew=!x; x=x?clone(x):{id:D.pre+uid()};
+function stForm(k,x,pre){ const D=ST_DEF[k], isNew=!x; x=x?{...clone(x),...(pre||{})}:{id:D.pre+uid(),...(pre||{})};
   const links=!isNew&&k==='kunden'?arr('projects').filter(p=>p.customer&&stNorm(p.customer)===stNorm(x.name)||p.custNr&&p.custNr===x.nr||p.owner&&stNorm(p.owner)===stNorm(x.name)):[];
   const ords=!isNew&&k==='lieferanten'?arr('orders').filter(o=>stNorm(o.supplier)===stNorm(x.name)).sort((a,b)=>String(b.ordered||'').localeCompare(String(a.ordered||''))).slice(0,8):[];
-  openSheet({title:isNew?D.one+' anlegen':D.one+' · '+(x.name||''),wide:1,value:x,fields:[...D.fields,
+  const acCur=k==='artikel'?acOfArt(x):'';
+  const flds=k==='artikel'?D.fields.map(f=>f.k==='cat'?{k:'catx',label:'Kategorie',type:'html',full:1,html:acPickHtml('st_cat',acCur)}:f):D.fields;
+  openSheet({title:isNew?D.one+' anlegen':D.one+' · '+(x.name||''),wide:1,value:x,fields:[...flds,
     ...(links.length?[{k:'lk',label:'Projekte',type:'html',html:links.map(p=>`<button type="button" class="chip" data-act="openProject" data-id="${p.id}">${esc(p.name)}${p.owner&&stNorm(p.owner)===stNorm(x.name)?' (Eigentümer)':''}</button>`).join(' ')}]:[]),
     ...(ords.length?[{k:'lo',label:'Letzte Bestellungen',type:'html',html:ords.map(o=>`<div class="small"><button type="button" class="lnk" data-act="editOrder" data-id="${o.id}">${esc(fmtD(o.ordered)||'')} · ${esc(projName(o.pid)||'')} · ${(o.items||[]).length} Pos.</button></div>`).join('')}]:[]),
     ...(()=>{ const ms=isNew||k==='artikel'?[]:arr('meetings').filter(m=>(m.ext||[]).some(e=>e.ref===x.id)).sort((a,b)=>String(b.date).localeCompare(String(a.date))); return ms.length?[{k:'lm',label:'Meetings',type:'html',html:ms.slice(0,10).map(m=>`<div class="small"><button type="button" class="lnk" data-act="meetGo" data-id="${m.id}">${esc(fmtD(m.date))} · ${esc(m.title||'Meeting')}</button></div>`).join('')}]:[]; })(),
     ...(k==='artikel'?[{k:'arti',label:'Bestand, Bestellungen und Reservierungen',type:'html',full:1,html:artPanel(x)}]:[]),
     ...(x.src?[{k:'srcx',label:'Herkunft',type:'html',html:`<span class="small muted">${esc(x.src)}</span>`}]:[])],
-    onSave:v=>{ delete v.lk; delete v.lo; delete v.srcx; delete v.arti; delete v.lm; if(k==='artikel'){ v.res=artResRead(); ['price','vk','minQty','reQty'].forEach(f=>{ if(v[f]!==''&&v[f]!=null) v[f]=+String(v[f]).replace(',','.'); }); }
+    onSave:v=>{ delete v.lk; delete v.lo; delete v.srcx; delete v.arti; delete v.lm; delete v.catx; if(k==='artikel'){ v.res=artResRead();
+        const sel=($('#st_cat')||{}).value; if(sel!=null&&sel!==acCur){ const cv=acAssignVals(sel); if(!cv) return false; Object.assign(v,cv); } else if(sel===acCur&&x.catId!==undefined){ v.catId=x.catId; } ['price','vk','minQty','reQty'].forEach(f=>{ if(v[f]!==''&&v[f]!=null) v[f]=+String(v[f]).replace(',','.'); }); }
       const dup=Object.values(S[k]||{}).find(y=>y.id!==x.id&&v.nr&&String(y.nr)===String(v.nr)); if(dup){ toast('Die Nummer '+v.nr+' ist schon vergeben ('+dup.name+').'); return false; }
       put(k,{...x,...v}); stListsDirty=true; toast(D.one+' gespeichert.'); },
     onDelete:isNew||!stDelOk(k)?null:()=>confirmSheet(D.one+' „'+(x.name||'')+'“ löschen?',()=>{ del(k,x.id); stListsDirty=true; closeSheet(); })}); }
@@ -9687,6 +9825,147 @@ const artLow=()=>Object.values(S.artikel||{}).filter(a=>(+a.minQty||arr('stock')
 Object.assign(A,{ artResAdd:()=>{ const t=$('#art_rest'), b=$('#art_res'); if(t&&b) b.insertAdjacentHTML('beforeend',t.innerHTML); },
   artResDel:(d,el)=>{ const r=el.closest('.art-res-row'); if(r) r.remove(); },
   artLow:()=>{ UI.stTab='artikel'; UI.stF='reorder'; go('stamm'); } });
+
+/* ========== Artikel-Kategorien als Baum (Ober-/Unterkategorien, beliebig tief) ==========
+   Sammlung „artcat“: {id, name, parent ('' = oberste Ebene), ord, arch (archiviert), legacy (alter Kategorietext)}.
+   Artikel: catId (neu) + cat (Text wie bisher; bleibt erhalten und wird beim Zuordnen auf den Kategorienamen gesetzt).
+   Alte Artikel ohne catId hängen über ihren Text an der Kategorie mit passendem legacy. Gibt es die (noch) nicht, erscheint der Text
+   als „alte Kategorie“ oben im Baum (nur angezeigt, nichts gespeichert). Ein echter Eintrag entsteht erst, wenn jemand sie bearbeitet,
+   verschiebt oder übernimmt – die Artikel selbst werden dabei NICHT angefasst, ihre Zuordnung bleibt über den Text bestehen. */
+const acN=s=>String(s||'').trim().toLowerCase();
+const acOk=()=>mayWrite('artcat'); /* = Stammdaten bearbeiten, Lager bearbeiten oder Admin */
+let AC_IX=null, AC_SIG='';
+function acIndex(){ const cats=Object.values(S.artcat||{}).filter(c=>c&&c.id&&String(c.name||'').trim()), arts=Object.values(S.artikel||{});
+  let mx=''; for(const a of arts){ const u=String(a.upd||''); if(u>mx) mx=u; }
+  const sig=cats.length+'|'+cats.map(c=>c.id+(c.upd||'')).join(',')+'|'+arts.length+'|'+mx;
+  if(AC_IX&&AC_SIG===sig) return AC_IX;
+  const byId={}, kids={}, leg={}, artCat={}, cnt={};
+  cats.forEach(c=>{ byId[c.id]={...c,name:String(c.name).trim()}; });
+  // Elternteil prüfen: fehlt er oder entstünde ein Kreis, kommt die Kategorie auf die oberste Ebene
+  const loops=id=>{ const seen=new Set([id]); let p=byId[id].parent; while(p&&byId[p]){ if(seen.has(p)) return true; seen.add(p); p=byId[p].parent; } return false; };
+  Object.values(byId).forEach(c=>{ c.par=c.parent&&byId[c.parent]&&c.parent!==c.id&&!loops(c.id)?c.parent:''; if(c.legacy){ const k=acN(c.legacy); if(!leg[k]) leg[k]=c.id; } });
+  arts.forEach(a=>{ if(!a) return; let id=a.catId&&byId[a.catId]&&!byId[a.catId].virt?a.catId:'';
+    if(!id&&String(a.cat||'').trim()){ const k=acN(a.cat); id=leg[k]||('L:'+k); if(!byId[id]) byId[id]={id,name:String(a.cat).trim(),par:'',virt:true}; }
+    artCat[a.id]=id; if(id) cnt[id]=(cnt[id]||0)+1; });
+  Object.values(byId).forEach(c=>{ (kids[c.par]=kids[c.par]||[]).push(c.id); });
+  const so=(x,y)=>{ const a=byId[x], b=byId[y]; return (a.virt?1:0)-(b.virt?1:0)||(a.ord??1e9)-(b.ord??1e9)||a.name.localeCompare(b.name,'de'); };
+  Object.values(kids).forEach(l=>l.sort(so));
+  const tot={}, sum=(id,d)=>{ if(tot[id]!=null) return tot[id]; if(d>40) return 0; let s=cnt[id]||0; (kids[id]||[]).forEach(k=>{ s+=sum(k,d+1); }); return tot[id]=s; }; Object.keys(byId).forEach(id=>sum(id,0));
+  AC_SIG=sig; return AC_IX={byId,kids,leg,artCat,cnt,tot}; }
+const acPath=(id,ix)=>{ ix=ix||acIndex(); const out=[]; let c=ix.byId[id], g=0; while(c&&g++<40){ out.unshift(c.name); c=c.par?ix.byId[c.par]:null; } return out; };
+const acPathTxt=(id,ix)=>acPath(id,ix).join(' → ');
+function acDesc(id,ix){ ix=ix||acIndex(); const s=new Set(), st=[id]; while(st.length){ const x=st.pop(); if(s.has(x)) continue; s.add(x); (ix.kids[x]||[]).forEach(k=>st.push(k)); } return s; }
+function acOfArt(a,ix){ ix=ix||acIndex(); if(!a) return ''; if(a.catId&&ix.byId[a.catId]&&!ix.byId[a.catId].virt) return a.catId; if(a.id&&ix.artCat[a.id]!=null&&!a.catId) return ix.artCat[a.id];
+  const k=acN(a.cat); return k?(ix.leg[k]||'L:'+k):''; }
+const acNextOrd=p=>{ const ix=acIndex(); return Math.max(0,...(ix.kids[p]||[]).map(id=>+ix.byId[id].ord||0))+10; };
+// Angezeigte alte Kategorie → echten Eintrag anlegen (Artikel bleiben über den Text verbunden)
+function acReal(id){ const ix=acIndex(), c=ix.byId[id]; if(!c) return ''; if(!c.virt) return id; if(!acOk()){ toast('Keine Rechte für Kategorien.'); return ''; }
+  const nid='c-'+uid(); put('artcat',{id:nid,name:c.name,parent:'',ord:acNextOrd(''),legacy:c.name}); AC_SIG=''; return nid; }
+// flache Liste in Baum-Reihenfolge (für Auswahllisten)
+function acFlat(ix,o){ ix=ix||acIndex(); o=o||{}; const out=[]; const walk=(p,d)=>(ix.kids[p]||[]).forEach(id=>{ const c=ix.byId[id]; if(c.arch&&!o.arch&&!(ix.tot[id]>0&&o.withArts)) return; if(o.skip&&o.skip.has(id)) return; out.push({id,c,d}); walk(id,d+1); }); walk('',0); return out; }
+
+/* ---------- Auswahl im Artikel-Formular und bei Mehrfach-Zuordnung: Baum mit Suche ---------- */
+function acPickList(hid,q,cur){ const ix=acIndex(); q=acN(q);
+  const none=`<button type="button" class="ac-pi ${!cur?'on':''}" data-act="acPick" data-hid="${hid}" data-id=""><span class="muted">– keine Kategorie –</span></button>`;
+  if(q){ const hits=acFlat(ix).filter(x=>acN(acPathTxt(x.id,ix)).includes(q)).slice(0,60);
+    return none+(hits.map(x=>`<button type="button" class="ac-pi ${x.id===cur?'on':''}" data-act="acPick" data-hid="${hid}" data-id="${esc(x.id)}">${esc(acPathTxt(x.id,ix))}${x.c.virt?' <span class="pill">alt</span>':''}</button>`).join('')||'<div class="small muted" style="padding:6px">Keine Kategorie gefunden.</div>'); }
+  return none+acFlat(ix).map(x=>`<button type="button" class="ac-pi ${x.id===cur?'on':''}" data-act="acPick" data-hid="${hid}" data-id="${esc(x.id)}" style="padding-left:${8+x.d*18}px">${x.d?'<span class="muted">└ </span>':''}${x.d?esc(x.c.name):`<b>${esc(x.c.name)}</b>`}${x.c.virt?' <span class="pill">alt</span>':''}${x.c.arch?' <span class="pill">archiviert</span>':''}</button>`).join(''); }
+function acPickHtml(hid,cur){ const p=cur?acPathTxt(cur):'';
+  return `<input type="hidden" id="${hid}" value="${esc(cur||'')}"><div class="ac-pk"><div class="ac-pk-cur" id="${hid}_p">${p?esc(p):'<span class="muted">– keine Kategorie –</span>'}</div>
+    <input class="inp ac-pk-q" type="search" data-acq="${hid}" placeholder="Kategorie suchen, z. B. Hybrid …" aria-label="Kategorie suchen"><div class="ac-pk-l" id="${hid}_l">${acPickList(hid,'',cur)}</div>
+    ${acOk()?`<div class="small muted" style="margin-top:4px">Fehlt eine Kategorie? Unter „Kategorien verwalten“ anlegen.</div>`:''}</div>`; }
+document.addEventListener('input',e=>{ const q=e.target.closest&&e.target.closest('[data-acq]'); if(!q) return; const hid=q.dataset.acq, l=document.getElementById(hid+'_l'), h=document.getElementById(hid); if(l) l.innerHTML=acPickList(hid,q.value,h?h.value:''); });
+// Gewählte Kategorie (ggf. alte → echt) für Artikel übernehmen; liefert {catId,cat}
+function acAssignVals(id){ if(!id) return {catId:'',cat:''}; const rid=acReal(id); if(!rid) return null; const c=acIndex().byId[rid]||(S.artcat||{})[rid]; return {catId:rid,cat:c?c.name:''}; }
+
+/* ---------- Seitliche Baum-Navigation in der Artikelliste ---------- */
+function acNavHtml(sel){ const ix=acIndex(), open=UI.acOpen||{}, total=Object.keys(S.artikel||{}).length, none=Object.values(S.artikel||{}).filter(a=>!ix.artCat[a.id]).length;
+  const node=(id,d)=>{ const c=ix.byId[id]; if(c.arch&&!ix.tot[id]) return ''; const ks=(ix.kids[id]||[]).filter(k=>!ix.byId[k].arch||ix.tot[k]), on=open[id]||(sel&&sel!==id&&acDesc(id,ix).has(sel));
+    return `<div class="ac-n ${sel===id?'on':''} ${c.arch?'arch':''}" style="padding-left:${4+d*14}px">${ks.length?`<button type="button" class="ac-tg" data-act="acTog" data-id="${esc(id)}" aria-label="${on?'zuklappen':'aufklappen'}" aria-expanded="${!!on}">${on?'▾':'▸'}</button>`:'<span class="ac-tg"></span>'}<button type="button" class="ac-nb" data-act="acSel" data-id="${esc(id)}" title="${esc(acPathTxt(id,ix))}">${esc(c.name)}${c.virt?' <span class="pill" title="alte Kategorie, noch nicht in den Baum übernommen">alt</span>':''}</button><span class="ac-c">${ix.tot[id]||''}</span></div>${on?ks.map(k=>node(k,d+1)).join(''):''}`; };
+  return `<div class="ac-nav"><div class="ac-n ${!sel?'on':''}"><span class="ac-tg"></span><button type="button" class="ac-nb" data-act="acSel" data-id=""><b>Alle Artikel</b></button><span class="ac-c">${total}</span></div>
+    ${(ix.kids['']||[]).map(id=>node(id,0)).join('')}
+    ${none?`<div class="ac-n ${sel==='__none'?'on':''}"><span class="ac-tg"></span><button type="button" class="ac-nb" data-act="acSel" data-id="__none"><i>ohne Kategorie</i></button><span class="ac-c">${none}</span></div>`:''}</div>`; }
+function acSelectHtml(sel){ const ix=acIndex();
+  return `<select class="catsel" data-chg="acSelChg" aria-label="Kategorie (mit Unterkategorien)"><option value="">Alle Kategorien</option>${acFlat(ix,{withArts:1}).map(x=>`<option value="${esc(x.id)}" ${x.id===sel?'selected':''}>${' '.repeat(x.d)}${x.d?'└ ':''}${esc(x.c.name)}${ix.tot[x.id]?' ('+ix.tot[x.id]+')':''}</option>`).join('')}<option value="__none" ${sel==='__none'?'selected':''}>– ohne Kategorie –</option></select>`; }
+// Filter: gewählte Kategorie inkl. aller Unterkategorien
+function acFilter(list,sel){ if(!sel) return list; const ix=acIndex(); if(sel==='__none') return list.filter(a=>!ix.artCat[a.id]); if(!ix.byId[sel]) return list; const s=acDesc(sel,ix); return list.filter(a=>s.has(ix.artCat[a.id])); }
+
+/* ---------- Kategorien verwalten (Baum mit Ziehen & Ablegen, Reihenfolge, Bearbeiten) ---------- */
+function acManHtml(){ const ix=acIndex(), ok=acOk(), arch=!!UI.acArch, open=UI.acMOpen||{}, virt=Object.values(ix.byId).filter(c=>c.virt);
+  const row=(id,d)=>{ const c=ix.byId[id]; if(c.arch&&!arch) return ''; const ks=(ix.kids[id]||[]), on=open[id]!==false, sib=(ix.kids[c.par]||[]).filter(x=>!ix.byId[x].virt), i=c.virt?-1:sib.indexOf(id);
+    return `<div class="ac-m ${c.arch?'arch':''} ${c.virt?'virt':''}" style="padding-left:${6+d*22}px" ${ok?`draggable="true" data-acdrag="${esc(id)}"`:''} data-acdrop="${esc(id)}">
+      ${ks.length?`<button type="button" class="ac-tg" data-act="acMTog" data-id="${esc(id)}" aria-label="${on?'zuklappen':'aufklappen'}">${on?'▾':'▸'}</button>`:'<span class="ac-tg"></span>'}
+      ${ok?'<span class="ac-hd" aria-hidden="true" title="Ziehen: auf eine andere Kategorie ablegen = dort einordnen">⋮⋮</span>':''}
+      <span class="ac-mn">${esc(c.name)}${c.virt?' <span class="pill" title="Kategorie aus den bisherigen Artikeldaten – noch kein eigener Eintrag">alt</span>':''}${c.arch?' <span class="pill">archiviert</span>':''}</span>
+      <span class="ac-c" title="Artikel direkt / mit Unterkategorien">${ix.cnt[id]||0}${ix.tot[id]!==(ix.cnt[id]||0)?' / '+ix.tot[id]:''}</span>
+      ${ok?`<span class="ac-ma"><button type="button" class="icon-btn sm" data-act="acNew" data-p="${esc(id)}" title="Unterkategorie anlegen" aria-label="Unterkategorie anlegen">＋</button><button type="button" class="icon-btn sm" data-act="acMv" data-id="${esc(id)}" data-d="-1" ${i<=0?'disabled':''} title="nach oben" aria-label="nach oben">↑</button><button type="button" class="icon-btn sm" data-act="acMv" data-id="${esc(id)}" data-d="1" ${i<0||i>=sib.length-1?'disabled':''} title="nach unten" aria-label="nach unten">↓</button><button type="button" class="icon-btn sm" data-act="acEdit" data-id="${esc(id)}" title="Bearbeiten, verschieben, zusammenführen, archivieren, löschen" aria-label="Bearbeiten">✎</button></span>`:''}</div>${on?ks.map(k=>row(k,d+1)).join(''):''}`; };
+  return `<div class="card ac-man"><div class="card-h"><h3>🌳 Kategorien verwalten</h3><span class="row" style="gap:6px">${ok?`<button class="btn sun sm" data-act="acNew" data-p="">${ic('plus')}Oberkategorie</button>`:''}<label class="tog-sw small"><input type="checkbox" data-chg="acArchSw" ${arch?'checked':''}><span class="sw" aria-hidden="true"></span><span>Archivierte zeigen</span></label><button class="btn sm" data-act="acManClose">Schließen</button></span></div>
+    <div class="card-b">${virt.length&&ok?`<div class="banner row" style="margin-bottom:10px"><span>${virt.length} bisherige Kategorie${virt.length>1?'n stehen':' steht'} noch als „alt“ oben. Sie funktionieren schon als Filter. Zum Einordnen einfach auf eine Oberkategorie ziehen oder ✎ → „Übergeordnete Kategorie“. Die Artikel bleiben dabei zugeordnet.</span><span class="spacer"></span><button class="btn sm" data-act="acTakeAll" title="Legt für jede alte Kategorie einen Eintrag auf oberster Ebene an – Artikel werden nicht verändert">Alle als Einträge übernehmen</button></div>`:''}
+      ${ok?'<div class="small muted" style="margin-bottom:6px">Ziehen &amp; Ablegen: Kategorie auf eine andere ziehen = dort als Unterkategorie einordnen. Auf „Oberste Ebene“ ziehen = nach ganz oben. Reihenfolge mit ↑ ↓.</div>':''}
+      <div class="ac-tree">${(ix.kids['']||[]).map(id=>row(id,0)).join('')||'<div class="empty">Noch keine Kategorien.</div>'}</div>
+      ${ok?'<div class="ac-root" data-acdrop="">⇡ Hierher ziehen = oberste Ebene</div>':''}</div></div>`; }
+function acCanMove(id,np){ const ix=acIndex(); if(!np) return true; if(np===id) return false; return !acDesc(id,ix).has(np); }
+function acMove(id,np,force){ if(!acOk()) return; const ix=acIndex(); if(!ix.byId[id]) return; if(!acCanMove(id,np)){ toast('Eine Kategorie kann nicht unter sich selbst oder ihre eigenen Unterkategorien.'); return; }
+  if((ix.byId[id].par||'')===(np||'')) return;
+  const same=!force&&(ix.kids[np||'']||[]).find(k=>k!==id&&!ix.byId[k].virt&&acN(ix.byId[k].name)===acN(ix.byId[id].name));
+  if(same){ const nm=ix.byId[id].name; openSheet({title:'„'+nm+'“ gibt es dort schon',html:`<div class="fld full">In „${esc(np?acPathTxt(np,ix):'oberste Ebene')}“ gibt es bereits „${esc(nm)}“. Zusammenführen (Artikel und Unterkategorien wandern hinein) oder trotzdem als zweite Kategorie einordnen?</div>`,saveLabel:'Zusammenführen',onSave:()=>{ acMerge(id,same); },extraBtn:`<button type="button" class="btn" data-act="acMvForce" data-id="${esc(id)}" data-p="${esc(np||'')}">Trotzdem einordnen</button>`}); return; }
+  const rid=acReal(id), rp=np?acReal(np):''; if(!rid||(np&&!rp)) return; const c=clone(S.artcat[rid]); if((c.parent||'')===rp) return; c.parent=rp; c.ord=acNextOrd(rp); put('artcat',c);
+  if(rp){ UI.acMOpen={...(UI.acMOpen||{}),[rp]:true}; } toast('„'+c.name+'“ '+(rp?'eingeordnet unter „'+acPathTxt(rp)+'“':'auf die oberste Ebene verschoben')+'.'); }
+function acForm(id,parent){ if(!acOk()) return toast('Keine Rechte für Kategorien.'); const ix=acIndex(), c=id?ix.byId[id]:null, isNew=!c;
+  const skip=c?acDesc(id,ix):new Set(), par=c?c.par:(parent||''), opts=acFlat(ix,{arch:1,skip}).filter(x=>!x.c.virt||x.id===par);
+  const merge=c?acFlat(ix,{skip}).filter(x=>x.id!==id):[];
+  openSheet({title:isNew?(par?'Unterkategorie in „'+acPathTxt(par)+'“':'Neue Oberkategorie'):'Kategorie: '+c.name,
+    html:`<div class="fld full"><label for="ac_nm">Name</label><input id="ac_nm" class="inp" value="${esc(c?c.name:'')}" placeholder="z. B. Hybridwechselrichter" required></div>
+      <div class="fld full"><label for="ac_par">Übergeordnete Kategorie</label><select id="ac_par" class="inp"><option value="">– oberste Ebene –</option>${opts.map(x=>`<option value="${esc(x.id)}" ${x.id===par?'selected':''}>${' '.repeat(x.d)}${esc(x.c.name)}</option>`).join('')}</select><div class="small muted" style="margin-top:4px">Die eigene Kategorie und ihre Unterkategorien stehen nicht zur Auswahl.</div></div>
+      ${c?`<div class="fld full"><label class="tog-sw"><input type="checkbox" id="ac_arch" ${c.arch?'checked':''}><span class="sw" aria-hidden="true"></span><span>Archiviert (nicht mehr bei neuen Artikeln wählbar; zugeordnete Artikel bleiben, wie sie sind)</span></label></div>
+      <div class="fld full"><div class="small"><b>${ix.cnt[id]||0}</b> Artikel direkt, <b>${ix.tot[id]||0}</b> inkl. Unterkategorien · ${(ix.kids[id]||[]).length} Unterkategorie(n)</div></div>
+      ${merge.length?`<div class="fld full"><label for="ac_mg">Zusammenführen mit …</label><div class="row" style="gap:6px"><select id="ac_mg" class="inp" style="flex:1"><option value="">– Ziel wählen –</option>${merge.map(x=>`<option value="${esc(x.id)}">${esc(acPathTxt(x.id,ix))}</option>`).join('')}</select><button type="button" class="btn sm" data-act="acMergeAsk" data-id="${esc(id)}">Zusammenführen</button></div><div class="small muted" style="margin-top:4px">Die Artikel und Unterkategorien von „${esc(c.name)}“ wandern ins Ziel, danach wird „${esc(c.name)}“ entfernt.</div></div>`:''}`:''}`,
+    saveLabel:isNew?'Anlegen':'Speichern',
+    onSave:()=>{ const nm=String($('#ac_nm').value||'').trim().slice(0,80), np=$('#ac_par').value; if(!nm){ toast('Bitte einen Namen eingeben.'); return false; }
+      const sibs=(acIndex().kids[np]||[]).filter(x=>x!==id).map(x=>acIndex().byId[x]); if(sibs.some(s=>acN(s.name)===acN(nm)&&!s.virt)){ toast('In dieser Ebene gibt es „'+nm+'“ schon.'); return false; }
+      if(isNew){ const rp=np?acReal(np):''; if(np&&!rp) return false; put('artcat',{id:'c-'+uid(),name:nm,parent:rp,ord:acNextOrd(rp)}); if(rp) UI.acMOpen={...(UI.acMOpen||{}),[rp]:true}; toast('Kategorie „'+nm+'“ angelegt.'); return; }
+      if(!acCanMove(id,np)){ toast('Eine Kategorie kann nicht unter sich selbst oder ihre eigenen Unterkategorien.'); return false; }
+      const rid=acReal(id), rp=np?acReal(np):''; if(!rid||(np&&!rp)) return false; const k=clone(S.artcat[rid]);
+      if((k.parent||'')!==rp){ k.parent=rp; k.ord=acNextOrd(rp); } k.name=nm; k.arch=!!($('#ac_arch')||{}).checked; if(!k.arch) delete k.arch; put('artcat',k); toast('Kategorie gespeichert.'); },
+    onDelete:c&&!c.virt?()=>acDelete(id):null}); }
+function acDelete(id){ const ix=acIndex(), c=ix.byId[id]; if(!c||c.virt) return;
+  if((ix.kids[id]||[]).length||ix.tot[id]){ toast('„'+c.name+'“ hat noch '+(ix.tot[id]?ix.tot[id]+' Artikel':'')+((ix.kids[id]||[]).length?((ix.tot[id]?' und ':'')+(ix.kids[id]||[]).length+' Unterkategorie(n)'):'')+'. Bitte erst verschieben/zusammenführen oder archivieren.'); return false; }
+  confirmSheet('Kategorie „'+c.name+'“ löschen? Sie ist leer.',()=>{ del('artcat',id); closeSheet(); toast('Kategorie gelöscht.'); }); return false; }
+function acMerge(id,to){ if(!acOk()) return; const ix=acIndex(), c=ix.byId[id], t=ix.byId[to]; if(!c||!t||id===to) return; if(acDesc(id,ix).has(to)){ toast('Ziel liegt unter der Kategorie selbst – so geht es nicht.'); return; }
+  const rt=acReal(to); if(!rt) return; const tn=(S.artcat[rt]||{}).name||t.name, arts=Object.values(S.artikel||{}).filter(a=>ix.artCat[a.id]===id);
+  arts.forEach(a=>put('artikel',{...clone(a),catId:rt,cat:tn}));
+  (ix.kids[id]||[]).filter(k=>!ix.byId[k].virt).forEach(k=>{ const x=clone(S.artcat[k]); x.parent=rt; x.ord=acNextOrd(rt); put('artcat',x); });
+  if(!c.virt) del('artcat',id); AC_SIG=''; closeSheet(); toast('„'+c.name+'“ mit „'+tn+'“ zusammengeführt ('+arts.length+' Artikel).'); }
+// Reihenfolge unter Geschwistern: neu durchnummerieren, nur Geänderte speichern
+function acReorder(id,dir){ if(!acOk()) return; let ix=acIndex(); const c=ix.byId[id]; if(!c||c.virt) return; const sib=(ix.kids[c.par]||[]).filter(x=>!ix.byId[x].virt), i=sib.indexOf(id), j=i+dir; if(i<0||j<0||j>=sib.length) return;
+  [sib[i],sib[j]]=[sib[j],sib[i]]; sib.forEach((rid,n)=>{ const k=S.artcat[rid]; if(k&&k.ord!==(n+1)*10) put('artcat',{...clone(k),ord:(n+1)*10}); }); }
+// Ziehen & Ablegen im Verwaltungs-Baum
+let AC_DRAG='';
+document.addEventListener('dragstart',e=>{ const r=e.target.closest&&e.target.closest('[data-acdrag]'); if(!r) return; AC_DRAG=r.dataset.acdrag; e.dataTransfer.effectAllowed='move'; try{ e.dataTransfer.setData('text/plain','acat'); }catch(_){} r.classList.add('dragging'); e.stopPropagation(); },true);
+document.addEventListener('dragend',()=>{ AC_DRAG=''; document.querySelectorAll('.ac-m.dragging,.ac-over,.ac-bad').forEach(x=>x.classList.remove('dragging','ac-over','ac-bad')); },true);
+document.addEventListener('dragover',e=>{ if(!AC_DRAG) return; const t=e.target.closest&&e.target.closest('[data-acdrop]'); if(!t) return; e.preventDefault(); e.stopPropagation(); const ok=acCanMove(AC_DRAG,t.dataset.acdrop);
+  document.querySelectorAll('.ac-over,.ac-bad').forEach(x=>{ if(x!==t) x.classList.remove('ac-over','ac-bad'); }); t.classList.toggle('ac-over',ok); t.classList.toggle('ac-bad',!ok); e.dataTransfer.dropEffect=ok?'move':'none'; },true);
+document.addEventListener('drop',e=>{ if(!AC_DRAG) return; const t=e.target.closest&&e.target.closest('[data-acdrop]'); if(!t) return; e.preventDefault(); e.stopPropagation(); const id=AC_DRAG; AC_DRAG=''; acMove(id,t.dataset.acdrop); },true);
+// Mehrere Artikel auf einmal einer Kategorie zuordnen
+function acBulk(ids){ if(!acOk()||!mayWrite('artikel')) return toast('Keine Rechte, Artikel zu ändern.'); ids=ids.filter(id=>(S.artikel||{})[id]); if(!ids.length) return;
+  openSheet({title:ids.length.toLocaleString('de-DE')+' Artikel einer Kategorie zuordnen',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:6px">${esc(ids.slice(0,6).map(id=>S.artikel[id].name).join(', '))}${ids.length>6?' … und '+(ids.length-6)+' weitere':''}</div>${acPickHtml('ac_bulk','')}</div>`,saveLabel:'Zuordnen',
+    onSave:()=>{ const id=$('#ac_bulk').value; const v=acAssignVals(id); if(!v) return false; let n=0; ids.forEach(aid=>{ const a=S.artikel[aid]; if(!a) return; if((a.catId||'')===v.catId&&(a.cat||'')===v.cat) return; put('artikel',{...clone(a),...v}); n++; });
+      toast(n+' Artikel '+(v.catId?'„'+acPathTxt(v.catId)+'“ zugeordnet':'ohne Kategorie')+'.'); }}); }
+queueMicrotask(()=>{ Object.assign(A,{
+  acSel:d=>{ UI.stCatId=d.id||''; UI.stLim=100; render(); },
+  acTog:d=>{ const o={...(UI.acOpen||{})}; o[d.id]=!o[d.id]; UI.acOpen=o; render(); },
+  acSide:()=>{ UI.acSide=!UI.acSide; render(); },
+  acMan:()=>{ UI.acMan=!UI.acMan; render(); }, acManClose:()=>{ UI.acMan=false; render(); },
+  acMTog:d=>{ const o={...(UI.acMOpen||{})}; o[d.id]=o[d.id]===false; UI.acMOpen=o; render(); },
+  acNew:d=>acForm(null,d.p||''), acEdit:d=>acForm(d.id), acMv:d=>acReorder(d.id,+d.d),
+  acMvForce:d=>{ closeSheet(); acMove(d.id,d.p||'',true); },
+  acMergeAsk:d=>{ const to=($('#ac_mg')||{}).value; if(!to) return toast('Bitte ein Ziel wählen.'); const ix=acIndex(), c=ix.byId[d.id]; const n=ix.cnt[d.id]||0;
+    closeSheet(); openSheet({title:'Zusammenführen?',html:`<div class="fld full">„${esc(c.name)}“ mit „${esc(acPathTxt(to,ix))}“ zusammenführen?<br><b>${n}</b> Artikel und <b>${(ix.kids[d.id]||[]).length}</b> Unterkategorie(n) wandern ins Ziel, danach wird „${esc(c.name)}“ entfernt.</div>`,saveLabel:'Ja, zusammenführen',onSave:()=>{ acMerge(d.id,to); }}); },
+  acTakeAll:()=>{ if(!acOk()) return; const v=Object.values(acIndex().byId).filter(c=>c.virt); if(!v.length) return;
+    openSheet({title:'Alte Kategorien übernehmen?',html:`<div class="fld full">${v.length} bisherige Kategorien werden als eigene Einträge auf der obersten Ebene angelegt. Die Artikel werden <b>nicht</b> verändert, ihre Zuordnung bleibt erhalten. Danach kannst du sie in Oberkategorien einordnen.</div>`,saveLabel:'Ja, übernehmen',onSave:()=>{ v.forEach(c=>acReal(c.id)); toast(v.length+' Kategorien übernommen.'); }}); },
+  acPick:d=>{ const h=document.getElementById(d.hid); if(!h) return; h.value=d.id||''; const p=document.getElementById(d.hid+'_p'); if(p) p.innerHTML=d.id?esc(acPathTxt(d.id)):'<span class="muted">– keine Kategorie –</span>'; document.querySelectorAll(`#${CSS.escape(d.hid)}_l .ac-pi`).forEach(b=>b.classList.toggle('on',b.dataset.id===(d.id||''))); },
+  acBulkAsk:()=>acBulk(((UI.stSel||{}).artikel||[]).slice()) });
+  Object.assign(CHG,{ acSelChg:(d,el)=>{ UI.stCatId=el.value; UI.stLim=100; render(); }, acArchSw:(d,el)=>{ UI.acArch=el.checked; render(); } }); });
 
 /* ========== To-Do: KI-Vorschlag (fertige E-Mail, Anruf mit Nummer und Gesprächsnotiz, Lösungsweg) ========== */
 // Kontaktdaten kommen nur aus Projekt und Stammdaten – die KI soll keine Nummern oder Adressen erfinden.
