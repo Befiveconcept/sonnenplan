@@ -1686,10 +1686,20 @@ button.link-ms:hover{color:var(--ink)}
 .l3-leg{display:flex;gap:14px;flex-wrap:wrap;align-items:center;padding:0 16px 14px}
 .l3-leg i{display:inline-block;width:14px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
 .l3-leg .lg-e{border:1px dashed #888;background:#fff}.l3-leg .lg-f{background:#c89b62}.l3-leg .lg-h{background:#F4DB02}
+.l3-take{display:flex;flex-direction:column;gap:10px;margin:0 16px 12px;padding:12px 14px;border:1px dashed var(--sun);border-radius:10px;background:color-mix(in srgb,var(--sun) 8%,var(--surface))}
+.l3-tk{display:flex;flex-wrap:wrap;gap:6px 16px}
 .l3-walls{margin:0 16px 8px}.l3-wl{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-top:6px}.l3-wl label{display:flex;flex-direction:column;gap:2px}
 /* Artikel-Kategorien (Baum) */
 .st-load,.st-err{margin:0 0 10px;gap:10px;align-items:center}
 .st-load .aic-dots{display:inline-flex}
+.ac-page{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,1fr);gap:12px;align-items:start}
+.ac-page .ac-man .ac-tree{max-height:calc(100vh - 260px)}
+.ac-detail{position:sticky;top:12px;padding:14px 16px}
+.ac-m.on{background:color-mix(in srgb,var(--sun) 30%,var(--surface));border-color:var(--sun)}
+.ac-mn[data-act]{cursor:pointer}.ac-mn[data-act]:hover{text-decoration:underline}
+.ac-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0}
+.ac-kpi div{background:var(--sunken);border-radius:8px;padding:8px;text-align:center}.ac-kpi b{display:block;font-size:18px}.ac-kpi span{font-size:11.5px;color:var(--muted)}
+@media (max-width:900px){ .ac-page{grid-template-columns:1fr} .ac-detail{position:static} }
 .ac-wrap{display:grid;grid-template-columns:250px minmax(0,1fr);gap:12px;align-items:start}
 .ac-side{position:sticky;top:12px;max-height:calc(100vh - 40px);overflow:auto;padding:6px 4px}
 .ac-nav .ac-n,.ac-m{display:flex;align-items:center;gap:4px;border-radius:6px;min-height:30px}
@@ -3250,7 +3260,17 @@ const UI = { view:'dash', pid:null, ptab:'status', open:{}, projFilter:'laufend'
 try{ const u=JSON.parse(lsGet('sonnenplan-ui2')||'null'); if(u){ ['view','pid','ptab','projFilter','projMode','todoWho','sort','hide','todoShowDone','todoMode','ptSort2','todoSort','dtlP','dtlL','dtlZ'].forEach(k=>{ if(u[k]!=null) UI[k]=u[k]; }); } }catch(e){}
 function saveUI(){ lsSet('sonnenplan-ui2', JSON.stringify({view:UI.view,pid:UI.pid,ptab:UI.ptab,projFilter:UI.projFilter,projMode:UI.projMode,todoWho:UI.todoWho,sort:UI.sort,hide:UI.hide,todoShowDone:UI.todoShowDone,todoMode:UI.todoMode,ptSort2:UI.ptSort2,todoSort:UI.todoSort,dtlP:UI.dtlP,dtlL:UI.dtlL,dtlZ:UI.dtlZ})); }
 let rq=false; function scheduleRender(){ if(rq) return; rq=true; requestAnimationFrame(()=>{ rq=false; render(); }); }
-function go(view,pid){ UI.view=view; if(pid!==undefined) UI.pid=pid; saveUI(); render(); window.scrollTo(0,0); }
+/* Scrollposition innerer Bereiche über das Neuzeichnen retten: je Bereichsart die n-te Instanz wieder auf dieselbe Position setzen (gleiche Seite vorausgesetzt) */
+const SCROLL_SEL='.tbl-wrap,.l3-wrap,.list,.ss-list,.ac-side,.ac-tree,.lg-tree,.tboard,.tcol .list,.pick-grid,.card-b,.gt-wrap,.gt-scroll,.ag,.ks-res,.st-sw,.cal-sw,.chips,[data-keep-scroll]';
+let SCROLL_VIEW='';
+function scrollKeep(v){ const vh=$('#view'); if(!vh) return null; const key=v+'|'+(UI.pid||'')+'|'+(UI.stockTab||'')+'|'+(UI.ptab||''); const same=SCROLL_VIEW===key; SCROLL_VIEW=key; if(!same) return null;
+  const out=[]; const cnt={}; vh.querySelectorAll(SCROLL_SEL).forEach(e=>{ const k=e.id?'#'+e.id:e.className; const i=cnt[k]=(cnt[k]||0)+1; if(e.scrollTop||e.scrollLeft) out.push({k,i,t:e.scrollTop,l:e.scrollLeft}); }); return out; }
+function scrollRestore(list){ if(!list||!list.length) return; const vh=$('#view'), cnt={}, map={}; vh.querySelectorAll(SCROLL_SEL).forEach(e=>{ const k=e.id?'#'+e.id:e.className; const i=cnt[k]=(cnt[k]||0)+1; map[k+'#'+i]=e; });
+  list.forEach(s=>{ const e=map[s.k+'#'+s.i]; if(e){ e.scrollTop=s.t; e.scrollLeft=s.l; } }); }
+// Nur bei echtem Seitenwechsel nach oben – bleibt man auf derselben Seite (nur Aktualisieren), bleibt die Position
+const pageKey=()=>[UI.view,UI.pid||'',UI.view==='stamm'?UI.stTab:'',UI.view==='fin'?UI.fiTab:'',UI.view==='sales'?UI.vkTab:'',UI.view==='files'?UI.fkind:'',UI.view==='hr'?UI.hrTab:''].join('|');
+var PAGE_KEY='';
+function go(view,pid){ UI.view=view; if(pid!==undefined) UI.pid=pid; saveUI(); const was=PAGE_KEY; render(); PAGE_KEY=pageKey(); if(was!==PAGE_KEY) window.scrollTo(0,0); }
 
 /* ========== Abgeleitete Daten ========== */
 // Eingeschränkte Projekte: sichtbar nur für die Person, die die Sichtbarkeit eingeschränkt hat (privBy, sonst Ersteller) und – bei „ausgewählte“ – für freigegebene Mitarbeiter (share). Altes internp wird beim Laden umgestellt.
@@ -3309,7 +3329,7 @@ function calItems(from,to){
 
 /* ========== Shell ========== */
 // „private“ ist Unterpunkt von To-Dos (aufklappbar); welche Rubriken jemand sieht, regelt canSee() (Admin-Bereich „Rechte“)
-const NAV = [['dash','Übersicht','dash'],['projects','Projekte','proj'],['todos','To-Dos','todo'],['private','Private To-Dos','lock','todos'],['pool','Allgemeine Aufgaben','todo','todos'],['meetings','Meetings','form'],['chat','Chat','chat'],['week','Kalender & Wochenplanung','cal'],['orders','Bestellungen & Wareneingänge','box'],['stock','Lagerverwaltung','stock'],['files','Datenablage','files'],['f:mail','Korrespondenz','chat','files'],['f:angebot','Angebote','offer','files'],['f:rechnung','Rechnungen','offer','files'],['f:lieferschein','Lieferscheine','truck','files'],['f:rapport','Tagesrapporte','report','files'],['f:kommi','Kommissionierung','stock','files'],['f:sonst','Sonstiges','files','files'],['sales','Verkauf','offer'],['vk:angebot','Angebote','offer','sales'],['vk:auftrag','Aufträge','form','sales'],['vk:lieferschein','Lieferscheine','truck','sales'],['vk:abschlag','Abschläge','offer','sales'],['vk:rechnung','Rechnungen','offer','sales'],['fin','Finanzen','euro'],['fi:bank','Bank / Kasse','euro','fin'],['fi:aus','Ausgaben','euro','fin'],['fi:ein','Sonstige Einnahmen','euro','fin'],['fi:journal','Buchungsübersicht','form','fin'],['fi:ust','USt-Voranmeldung','report','fin'],['fi:steuer','Steuerauswertungen','report','fin'],['fi:ausw','Auswertungen','report','fin'],['fi:export','Steuerberater-Export','files','fin'],['fi:anlagen','Anlagenverwaltung','box','fin'],['stamm','Stammdaten','box'],['st:kunden','Kunden','assign','stamm'],['st:lieferanten','Lieferanten','truck','stamm'],['st:artikel','Artikel','stock','stamm'],['templates','Vorlagen','tpl'],['hr','HR','clock'],['settings','Team & Einstellungen','gear'],['activity','Aktivität','form'],['rights','Admin: Rechte','lock']];
+const NAV = [['dash','Übersicht','dash'],['projects','Projekte','proj'],['todos','To-Dos','todo'],['private','Private To-Dos','lock','todos'],['pool','Allgemeine Aufgaben','todo','todos'],['meetings','Meetings','form'],['chat','Chat','chat'],['week','Kalender & Wochenplanung','cal'],['orders','Bestellungen & Wareneingänge','box'],['stock','Lagerverwaltung','stock'],['files','Datenablage','files'],['f:mail','Korrespondenz','chat','files'],['f:angebot','Angebote','offer','files'],['f:rechnung','Rechnungen','offer','files'],['f:lieferschein','Lieferscheine','truck','files'],['f:rapport','Tagesrapporte','report','files'],['f:kommi','Kommissionierung','stock','files'],['f:sonst','Sonstiges','files','files'],['sales','Verkauf','offer'],['vk:angebot','Angebote','offer','sales'],['vk:auftrag','Aufträge','form','sales'],['vk:lieferschein','Lieferscheine','truck','sales'],['vk:abschlag','Abschläge','offer','sales'],['vk:rechnung','Rechnungen','offer','sales'],['fin','Finanzen','euro'],['fi:bank','Bank / Kasse','euro','fin'],['fi:aus','Ausgaben','euro','fin'],['fi:ein','Sonstige Einnahmen','euro','fin'],['fi:journal','Buchungsübersicht','form','fin'],['fi:ust','USt-Voranmeldung','report','fin'],['fi:steuer','Steuerauswertungen','report','fin'],['fi:ausw','Auswertungen','report','fin'],['fi:export','Steuerberater-Export','files','fin'],['fi:anlagen','Anlagenverwaltung','box','fin'],['stamm','Stammdaten','box'],['st:kunden','Kunden','assign','stamm'],['st:lieferanten','Lieferanten','truck','stamm'],['st:artikel','Artikel','stock','stamm'],['st:kategorien','Artikel-Kategorien','form','stamm'],['templates','Vorlagen','tpl'],['hr','HR','clock'],['settings','Team & Einstellungen','gear'],['activity','Aktivität','form'],['rights','Admin: Rechte','lock']];
 const VIEW_T = {dash:'Übersicht',projects:'Projekte',project:'Projekt',todos:'To-Dos',pool:'Allgemeine Aufgaben',meetings:'Meetings',week:'Wochenplanung Team',calendar:'Kalender',files:'Datenablage',stock:'Lagerverwaltung',chat:'Chat',private:'Privat',activity:'Aktivität',orders:'Bestellungen & Wareneingänge',offers:'Angebote',reports:'Tagesrapporte',templates:'Vorlagen',settings:'Team & Einstellungen',rights:'Rechte',stamm:'Stammdaten',hr:'HR',sales:'Verkauf',fin:'Finanzen'};
 function sunMark(){ return `<svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="2" y="15" width="26" height="12" rx="2" fill="var(--primary)"/><path d="M2 21h26M10.7 15v12M19.3 15v12" stroke="var(--surface)" stroke-width="1.3"/><circle cx="15" cy="9" r="5" fill="var(--sun)"/></svg>` }
 // Seitenmenü in Bereichen: Übersicht und Chat oben, darunter aufklappbare Bereiche.
@@ -3411,8 +3431,10 @@ function render(){ if(EXIT_LOCK) return;
         return `<div class="cal-sw" role="tablist">${tabs.map(([k,l,i,n])=>`<button role="tab" class="${v===k?'on':''}" data-act="nav" data-v="${k}">${i}${l}${n!==''?` <span class="mono small">${n}</span>`:''}</button>`).join('')}</div>`+fn0(); } : fn0;
   const y=window.scrollY, ae=document.activeElement, aid=ae&&ae.id&&$('#view').contains(ae)?ae.id:null;
   const sel=aid&&typeof ae.selectionStart==='number'?[ae.selectionStart,ae.selectionEnd]:null;
-  $('#view').innerHTML = banner()+fn();
-  window.scrollTo(0,y);
+  const ins=scrollKeep(v);   // auch innere Scrollbereiche (Tabellen, Listen, Baum, 3D, Gantt …) behalten ihre Position
+  const vh=$('#view'); vh.style.minHeight=vh.offsetHeight+'px';   // kurz die alte Höhe halten, damit der Browser nicht nach oben „klemmt“
+  vh.innerHTML = banner()+fn();
+  window.scrollTo(0,y); scrollRestore(ins); if(!PAGE_KEY) PAGE_KEY=pageKey(); requestAnimationFrame(()=>{ vh.style.minHeight=''; if(Math.abs(window.scrollY-y)>2&&document.documentElement.scrollHeight>y+innerHeight-2) window.scrollTo(0,y); });
   if(aid){ const el=document.getElementById(aid); if(el){ el.focus({preventScroll:true}); if(sel&&el.setSelectionRange) try{ el.setSelectionRange(sel[0],sel[1]); }catch(e){} } }
   voiceAfterRender();
 }
@@ -6186,7 +6208,7 @@ function vLgPlaces(sw){ const q=(UI.lgq||'').toLowerCase().trim(), mgr=lgMgr(), 
   return head('Lagerverwaltung',roots.length+' Standort'+(roots.length===1?'':'e')+' · '+nb+' Lagerplätze'+(unN&&nb?' · '+unN+' Artikel mit Bestand ohne Platz':''),lgHeadBtns()+btns)+sw+
     `<div class="card"><div class="card-h lg-bar"><input class="inp" type="search" style="flex:1;min-width:180px" placeholder="Suchen: Platzcode, Bezeichnung oder Standort" value="${esc(UI.lgq||'')}" data-chg="lgQ" aria-label="Lagerorte suchen">${roots.length?`<button class="btn sm" data-act="lgOpenAll">Alle aufklappen</button><button class="btn sm" data-act="lgCloseAll">Alle zuklappen</button>`:''}</div>
       ${!mgr?'<div class="small muted" style="padding:0 16px 8px">Ansehen ist für alle mit Lagerrechten möglich. Anlegen und Ändern dürfen Admins und freigegebene Personen.</div>':''}
-      <div class="lg-tree">${roots.map(r=>row(r,0)).join('')||`<div class="lg-empty"><b>Noch keine Lagerorte angelegt.</b><div class="small muted">So geht's: 1. „Neuer Standort“ (z. B. Bornheim, Kürzel BO). 2. Am Standort „Assistent“ → Regal, Palettenzone oder Kleinteileschrank wählen, optional gleich einen Bereich (z. B. Hauptlager, HL) dazu – alle Felder, Ebenen und Plätze entstehen auf einmal (BO-HL-R01-F01-E01-P01 …).</div>${mgr?`<button class="btn sun" data-act="lgNew" data-parent="">${ic('plus')}Neuer Standort</button>`:''}</div>`}</div></div>`+(mgr?lgMigHtml():'')+lgMgrBox(); }
+      ${l3TakeBox()}<div class="lg-tree">${roots.map(r=>row(r,0)).join('')||`<div class="lg-empty"><b>Noch keine Lagerorte angelegt.</b><div class="small muted">So geht's: 1. „Neuer Standort“ (z. B. Bornheim, Kürzel BO). 2. Am Standort „Assistent“ → Regal, Palettenzone oder Kleinteileschrank wählen, optional gleich einen Bereich (z. B. Hauptlager, HL) dazu – alle Felder, Ebenen und Plätze entstehen auf einmal (BO-HL-R01-F01-E01-P01 …).</div>${mgr?`<button class="btn sun" data-act="lgNew" data-parent="">${ic('plus')}Neuer Standort</button>`:''}</div>`}</div></div>`+(mgr?lgMigHtml():'')+lgMgrBox(); }
 const lgMgrBox=()=>isAdmin()?`<div class="card"><div class="card-h"><div><h3>Wer darf Lagerorte verwalten?</h3><div class="small muted">Admins und alle, die unter „Admin: Rechte“ bei <b>Lagerverwaltung</b> das Häkchen <b>Bearbeiten</b> haben: Lagerorte anlegen/ändern/löschen, buchen, Inventur freigeben, Lager- und Stammdaten-Artikel löschen (auch mehrere auf einmal). Wer die Lagerverwaltung nur sehen darf, kann nur ansehen.</div></div></div><div class="small muted" style="padding:0 16px 14px">Bearbeiten dürfen aktuell: ${esc(staff().filter(s=>s.name&&(permOf(s.name)||{}).admin||editsOf(s.name).includes('stock')&&viewsOf(s.name).includes('stock')).map(s=>shortWho(s.name)).join(', ')||'–')}</div></div>`:'';
 // Übernahme alter Bestände: nichts automatisch. Je alter Lagerort-Text ein Platz wählen → Vorschau → Übernehmen (als Bewegung „Übernahme“ protokolliert).
 var LG_MIG=[];
@@ -6426,7 +6448,7 @@ function l3Slot(bin,x,y,z,w,d,q,big){ const st=binStock(bin.id), n=st.length, hi
   const tip=esc(code+(n?' – '+st.slice(0,4).map(s=>s.art+' '+qn(s.bins[bin.id])+' '+(s.unit||'')).join(', ')+(n>4?' …':''):' – leer'));
   const ex=` data-act="lg3dBin" data-id="${esc(bin.id)}" role="button" tabindex="0" aria-label="${tip}"`, cls='l3-slot'+(n?' full':'')+(hit?' hit':'')+(lgUsable(bin)?'':' off'), out=[];
   // big = Höhe des Fachs (Regal/Schrank): ganzes Fach als durchsichtiger Quader → große Klickfläche vorne; sonst Bodenfläche
-  if(big>0) out.push({...l3Box(x,y,z+.01,w,d,big,cls+' l3-fach',ex),k:l3K(x,y,z,w,d)-.001});
+  if(big>0){ const bx=l3Box(x,y,z+.01,w,d,big,cls+' l3-fach',ex); bx.svg=bx.svg.replace('>',`><title>${tip}</title>`); out.push({...bx,k:l3K(x,y,z,w,d)-.001}); }
   else out.push(l3Flat(x,y,z+.01,w,d,cls+' l3-pad',ex,`<title>${tip}</title>`));
   if(n){ const small=w<1||d<.8, ph=small?0:.14, hh=small?Math.min(.28,.12+n*.05):Math.min(1.3,.45+n*.18), m=small?.04:.08;
     if(ph) out.push(l3Box(x+m,y+m,z,w-2*m,d-2*m,ph,'l3-pal'+(hit?' hit':''),ex));
@@ -6439,7 +6461,7 @@ function l3Keller(root,q){ L3_FRONT=false; const zones=lgKids(root.id).filter(n=
   if(loose.length) L.push({id:root.id,seg:'',name:'ohne Nische',_bins:loose});
   const BW=3.4, RD=3.2, A=4, n=Math.max(1,L.length,R.length), X=n*BW, items=[], lab=[];
   items.push({k:-99,b:[0,0,0,X,RD*2+A,0],svg:`<polygon class="l3-floor" points="${l3pts([[0,0,0],[X,0,0],[X,RD*2+A,0],[0,RD*2+A,0]])}"/><polygon class="l3-aisle" points="${l3pts([[0,RD,0],[X,RD,0],[X,RD+A,0],[0,RD+A,0]])}"/>`});
-  items.push(l3Box(0,-.25,0,X,.25,2.8,'l3-wall brick')); items.push(l3Box(-.25,-.25,0,.25,RD*2+A+.25,2.8,'l3-wall'));
+  items.push({...l3Box(0,-.25,0,X,.25,2.8,'l3-wall brick'),k:-98}); items.push({...l3Box(-.25,-.25,0,.25,RD*2+A+.25,2.8,'l3-wall'),k:-98});
   const row=(list,y0,yP,lbl)=>list.forEach((z,i)=>{ const x0=i*BW, bins=(z._bins||lgSub(z.id).filter(lgIsBin)).sort((a,b)=>lgCode(a.id).localeCompare(lgCode(b.id),'de',{numeric:true}));
       const k=bins.length, cols=k<=2?k||1:Math.ceil(Math.sqrt(k)), rows=Math.max(1,Math.ceil(k/cols)), cw=(BW-.6)/cols, cd=(RD-.5)/rows;
       bins.forEach((b,j)=>{ const cx=x0+.3+(j%cols)*cw, cy=y0+.25+Math.floor(j/cols)*cd; items.push(...l3Slot(b,cx+.05,cy+.05,0,cw-.1,cd-.1,q)); lab.push(l3Txt(cx+cw/2,cy+cd/2,.02,String(b.seg||''),'l3-t sm')); });
@@ -6470,8 +6492,41 @@ function l3Rack(rg,x0,Y,st,q,items,lab){ const fields=lgKids(rg.id).filter(n=>n.
 function l3Regal(rg,q){ L3_FRONT=true; const items=[], lab=[], Y=.6, r=l3Rack(rg,0,Y,'pal',q,items,lab);
   items.push({k:-99,b:[0,0,0,r.w,Y+r.d+2.2,0],svg:`<polygon class="l3-floor" points="${l3pts([[0,0,0],[r.w,0,0],[r.w,Y+r.d+2.2,0],[0,Y+r.d+2.2,0]])}"/>`});
   items.push(l3Box(0,-.25,0,r.w,.25,r.h+.6,'l3-wall brick')); return l3Svg(items,lab); }
-// Raum mit mehreren Regalen/Schränken (Kleinteilelager, Werkzeug-Raum): nebeneinander an der Wand, je nach Wand gruppiert
-function l3Room(root,q){ L3_FRONT=true; const W={links:0,hinten:1,rechts:2}, racks=lgKids(root.id).filter(n=>n.kind==='regal').sort((a,b)=>(W[a.wall]??1)-(W[b.wall]??1)||String(a.seg).localeCompare(String(b.seg),'de',{numeric:true}));
+// Raum in 3D (Draufsicht wie Keller): Regale/Schränke an Wand hinten (Rückwand), links (Stirnwand) und rechts (vorne, offen gezeichnet)
+function l3Room(root,q){ L3_FRONT=false; const racks=lgKids(root.id).filter(n=>n.kind==='regal').sort((a,b)=>String(a.seg).localeCompare(String(b.seg),'de',{numeric:true}));
+  const wallOf=r=>['links','hinten','rechts'].includes(r.wall)?r.wall:'hinten', items=[], lab=[];
+  const dims=r=>{ const fields=lgKids(r.id).filter(n=>n.kind==='feld'), F=fields.length?fields:[r], pal=r.stype==='hochregal';
+    const lev=f=>{ const es=lgKids(f.id).filter(n=>n.kind==='ebene'); return es.length?es.map(e=>({e,bins:lgKids(e.id).filter(lgIsBin)})):[{e:f,bins:lgKids(f.id).filter(lgIsBin)}]; };
+    const nE=Math.max(1,...F.map(f=>lev(f).length)), FW=pal?2.4:1.1, D=pal?1:.55, LH=pal?1.2:Math.max(.32,Math.min(.55,2.2/nE));
+    return {F,lev,nE,FW,D,LH,L:F.length*FW,H:nE*LH+.08,pal}; };
+  const groups={links:[],hinten:[],rechts:[]}; racks.forEach(r=>groups[wallOf(r)].push({r,m:dims(r)}));
+  const sum=g=>g.reduce((a,x)=>a+x.m.L+.3,0), maxD=g=>Math.max(0,...g.map(x=>x.m.D));
+  const dL=maxD(groups.links), dB=maxD(groups.hinten), dR=maxD(groups.rechts);
+  const X=Math.max(3,dL+.5+Math.max(sum(groups.hinten),sum(groups.rechts))+.3), Y=Math.max(3,dB+.5+sum(groups.links)+.4+dR+1.2);
+  items.push({k:-99,b:[0,0,0,X,Y,0],svg:`<polygon class="l3-floor" points="${l3pts([[0,0,0],[X,0,0],[X,Y,0],[0,Y,0]])}"/>`});
+  items.push({...l3Box(0,-.2,0,X,.2,2.6,'l3-wall brick'),k:-98}); items.push({...l3Box(-.2,-.2,0,.2,Y+.2,2.6,'l3-wall'),k:-98});
+  // Ein Regal/Schrank in lokalen Koordinaten (u = entlang der Wand, v = Abstand zur Wand) zeichnen und in den Raum drehen
+  const place=(x,m,wall,u0)=>{ const map=(u,v,z,lw,ld,h,cl,ex)=>wall==='links'?l3Box(v,u0+u,z,ld,lw,h,cl,ex):wall==='rechts'?l3Box(dL+.5+u0+u,Y-v-ld,z,lw,ld,h,cl,ex):l3Box(dL+.5+u0+u,v,z,lw,ld,h,cl,ex);
+    const slot=(b,u,v,z,lw,ld,big)=>wall==='links'?l3Slot(b,v,u0+u,z,ld,lw,q,big):wall==='rechts'?l3Slot(b,dL+.5+u0+u,Y-v-ld,z,lw,ld,q,big):l3Slot(b,dL+.5+u0+u,v,z,lw,ld,q,big);
+    const txt=(u,v,z,t,cl)=>wall==='links'?l3Txt(v,u0+u,z,t,cl):wall==='rechts'?l3Txt(dL+.5+u0+u,Y-v,z,t,cl):l3Txt(dL+.5+u0+u,v,z,t,cl);
+    const {F,lev,FW,D,LH,H,L,pal}=m, open=wall==='rechts';
+    if(!open) items.push(map(0,0,0,L,.04,H,'l3-cab back'));
+    F.forEach((f,i)=>{ const fu=i*FW; lev(f).forEach((lv,e)=>{ const z=e*LH+.04, k=Math.max(1,lv.bins.length), sw=(FW-.1)/k;
+        items.push(map(fu+.03,.04,z-.03,FW-.06,D-.04,.03,pal?'l3-beam':'l3-board'));
+        lv.bins.forEach((b,j)=>{ items.push(...slot(b,fu+.05+j*sw,.06,z,sw-.04,D-.1,LH-.08)); }); }); });
+    [0,L].forEach(u=>{ items.push(map(u-.03,0,0,.06,.06,H,pal?'l3-up':'l3-cab')); items.push(map(u-.03,D-.06,0,.06,.06,H,pal?'l3-up':'l3-cab')); });
+    items.push(map(0,0,H,L,D,.03,'l3-cab'));
+    lab.push(txt(L/2,D+.35,0,x.seg||x.name||'','l3-t zl')); };
+  let u=0; groups.hinten.forEach(g=>{ place(g.r,g.m,'hinten',u); u+=g.m.L+.3; });
+  u=dB+.5; groups.links.forEach(g=>{ place(g.r,g.m,'links',u); u+=g.m.L+.3; });
+  const r0=Math.max(0,X-dL-.8-sum(groups.rechts)); u=r0; groups.rechts.forEach(g=>{ place(g.r,g.m,'rechts',u); u+=g.m.L+.3; }); // rechts an die vordere rechte Ecke, damit nichts verdeckt wird
+  if(groups.hinten.length) lab.push(l3Txt(dL+.5+sum(groups.hinten)/2,-.3,2.9,'Wand hinten','l3-t wl'));
+  if(groups.links.length) lab.push(l3Txt(-.3,dB+.5+sum(groups.links)/2,2.9,'Wand links','l3-t wl'));
+  if(groups.rechts.length) lab.push(l3Txt(dL+.5+r0+sum(groups.rechts)/2,Y+1,0,'Wand rechts','l3-t wl'));
+  const loose=lgKids(root.id).filter(lgIsBin); loose.forEach((b,j)=>{ items.push(...l3Slot(b,dL+.8+j*1.1,dB+1,0,1,1,q)); lab.push(l3Txt(dL+1.3+j*1.1,dB+1.5,.02,String(b.seg||''),'l3-t sm')); });
+  return l3Svg(items,lab); }
+// Frontansicht (alte Darstellung, für Regale mit vielen Fächern weiter verfügbar)
+function l3RoomFront(root,q){ L3_FRONT=true; const W={links:0,hinten:1,rechts:2}, racks=lgKids(root.id).filter(n=>n.kind==='regal').sort((a,b)=>(W[a.wall]??1)-(W[b.wall]??1)||String(a.seg).localeCompare(String(b.seg),'de',{numeric:true}));
   const loose=lgKids(root.id).filter(lgIsBin), items=[], lab=[], Y=.35; let x=0, lastW=null;
   racks.forEach(rg=>{ const wl=rg.wall||''; if(lastW!==null&&wl!==lastW) x+=.8; if(wl&&wl!==lastW) lab.push(l3Txt(x+.6,-.4,2.9,'Wand '+wl,'l3-t wl')); lastW=wl;
     const pal=rg.stype==='hochregal', r=l3Rack(rg,x,Y,pal?'pal':'cab',q,items,lab); x+=r.w+.35; });
@@ -6502,6 +6557,30 @@ function l3Build(key,t,parent,idf){ const out=[]; let n=0; const pad=(i,m)=>Stri
 // Vorlage zeichnen: Knoten nur für die Dauer des Zeichnens einblenden, danach wieder weg
 function l3Virtual(key){ const t=l3Tpl(key), {out,root}=l3Build(key,t,'',i=>'v3_'+key+'_'+i), orig=S.lager; S.lager={...(orig||{})}; out.forEach(x=>{ S.lager[x.id]=x; });
   try{ return key==='keller'?l3Keller(root,''):t.kind==='regal'?l3Regal(root,''):l3Room(root,''); } finally{ S.lager=orig; } }
+/* „Lagerorte & Plätze“: Baum genau wie in der 3D-Skizze anlegen (mehrere Bereiche auf einmal, alle Plätze leer) */
+const l3TplBins=k=>l3Build(k,l3Tpl(k),'',i=>'c'+i).out.filter(x=>x.kind==='platz').length;
+function l3TakeBox(){ if(!lgMgr()) return ''; const open=L3_AREAS.filter(a=>!l3Node(a[0])); if(!open.length) return ''; const hosts=lgAll().filter(n=>n.kind==='standort');
+  return `<div class="l3-take"><div><b>🧊 Struktur aus dem 3D-Lager übernehmen</b><div class="small muted">Legt den Baum (Bereich → Regal/Schrank → Ebene → Platz) genau wie in der 3D-Skizze an – alle Plätze leer. Zahlen vorher im Reiter „3D-Lager“ über „Vorlage anpassen“ ändern; später alles über Assistent und Baum änderbar.</div></div>
+    <div class="l3-tk">${open.map(([k,l])=>`<label class="small"><input type="checkbox" class="ck l3tk" value="${k}" ${['hrl','hrr'].includes(k)?'':'checked'}> ${esc(l)}${['hrl','hrr'].includes(k)?' <span class="muted">– falls schon vorhanden: im 3D-Lager verknüpfen statt neu anlegen</span>':''} <span class="muted">(${l3TplBins(k)} Plätze)</span></label>`).join('')}</div>
+    <div class="row" style="gap:8px;flex-wrap:wrap;align-items:end">${hosts.length?`<label class="small">Unter Standort<br><select id="l3tk_h" class="inp">${hosts.map(h=>`<option value="${esc(h.id)}">${esc(lgPlain(h.id))}</option>`).join('')}</select></label>`:`<label class="small">Neuer Standort<br><input id="l3tk_hn" class="inp" value="Lager" style="width:150px"></label><label class="small">Kürzel<br><input id="l3tk_hs" class="inp" value="LG" style="width:70px"></label>`}
+      <button class="btn sun" data-act="l3TakeAll">Ausgewählte anlegen</button><button class="btn" data-act="stockTab" data-v="ansicht">Im 3D-Lager ansehen</button></div></div>`; }
+function l3TakeAll(){ if(!lgMgr()) return; const keys=[...document.querySelectorAll('.l3tk:checked')].map(x=>x.value).filter(k=>!l3Node(k)); if(!keys.length) return toast('Bitte mindestens einen Bereich anhaken.');
+  const pre=[], now=new Date().toISOString(); let host=($('#l3tk_h')||{}).value||'';
+  if(!host){ const hn=String(($('#l3tk_hn')||{}).value||'').trim(), hs=String(($('#l3tk_hs')||{}).value||'').trim().replace(/\s+/g,''); if(!hn||!/^[0-9A-Za-zÄÖÜäöü]+$/.test(hs)) return toast('Bitte Name und Kürzel des Standorts angeben.'); const H=lgCleanNode({id:uid()+'h',parent:'',kind:'standort',name:hn,seg:hs}); pre.push(H); host=H.id; }
+  const all=[...pre], M={...(S.lager||{})}; pre.forEach(x=>M[x.id]=x); let s=0, err='';
+  keys.forEach(k=>{ if(err) return; const t=l3Tpl(k), seg=t.kind==='regal'?t.racks[0].seg:t.seg, kind=t.kind==='regal'?'regal':'bereich';
+    if(Object.values(M).some(x=>(x.parent||'')===host&&x.kind===kind&&String(x.seg||'').toLowerCase()===String(seg).toLowerCase())){ err='„'+seg+'“ gibt es unter dem Standort schon ('+L3_AREAS.find(a=>a[0]===k)[1]+'). Bitte im 3D-Lager das Kürzel anpassen oder das Vorhandene verknüpfen.'; return; }
+    const {out}=l3Build(k,t,host,()=>uid()+(s++).toString(36)); out.forEach(x=>{ M[x.id]=x; all.push(x); }); });
+  if(err) return toast(err); const dup=lgDupBin(M); if(dup) return toast('Der Lagerplatzcode „'+dup+'“ gäbe es doppelt.');
+  all.forEach(x=>{ x.by=meK(); x.at=now; }); const bins=all.filter(x=>x.kind==='platz').length;
+  openSheet({title:'Struktur anlegen – '+bins+' Lagerplätze',html:`<div class="fld full">${keys.map(k=>`<div>• ${esc(L3_AREAS.find(a=>a[0]===k)[1])}: ${l3TplBins(k)} Plätze</div>`).join('')}<div class="small muted" style="margin-top:8px">Alle Plätze sind leer. Es wird alles auf einmal gespeichert – oder bei einem Fehler gar nichts.</div></div>`,saveLabel:'Jetzt anlegen',
+    onSave:()=>{ lgWriteMany(all).then(ok=>{ if(ok){ UI.l3Tpl={}; toast(bins+' Lagerplätze angelegt.'); render(); } }); }}); }
+// Klick auf einen Platz der Vorlage: zeigen, wo er ist und dass er leer ist (noch nicht angelegt)
+function l3VirtBin(key,id){ const t=l3Tpl(key), {out}=l3Build(key,t,'',i=>'v3_'+key+'_'+i), M={}; out.forEach(x=>M[x.id]=x); const n=M[id]; if(!n) return;
+  const path=lgPathIn(M,id), code=lgCodeIn(M,id), plain=lgPlainIn(M,id), A0=L3_AREAS.find(a=>a[0]===key);
+  openSheet({title:'Platz '+code,html:`<div class="fld full"><div class="small muted">${esc(A0[1])} · ${esc(plain)}</div><div class="row" style="gap:6px;margin-top:6px"><span class="pill">${esc(LG_TYPES[n.ltype]||'Platz')}</span><span class="pill">Vorlage – noch nicht angelegt</span></div></div>
+    <div class="fld full"><div class="empty">Hier liegt noch nichts. Der Platz ist leer.</div><div class="small muted">Damit hier Ware eingelagert werden kann, wird die Struktur einmal angelegt. Danach kannst du hier einlagern, entnehmen und umlagern.</div></div>`,
+    saveLabel:lgMgr()?'Struktur anlegen …':'Schließen',onSave:()=>{ if(lgMgr()) setTimeout(()=>l3TplSheet(key),30); }}); }
 // Vorlage anpassen und (auf Wunsch) als echte Lagerplätze anlegen
 function l3TplSheet(key){ const t=l3Tpl(key), A0=L3_AREAS.find(a=>a[0]===key), mg=lgMgr(), hosts=lgAll().filter(n=>t.kind==='regal'?(n.kind==='standort'||n.kind==='bereich'):n.kind==='standort').sort((a,b)=>lgPlain(a.id).localeCompare(lgPlain(b.id),'de'));
   const num=(id,l,v,mx)=>`<div class="fld"><label for="${id}">${l}</label><input id="${id}" class="inp" type="number" min="0" max="${mx||99}" value="${esc(v)}"></div>`;
@@ -6578,8 +6657,8 @@ function l3KellerWiz(){ if(!lgMgr()) return toast('Einrichten dürfen Admins und
         onSave:()=>{ lgWriteMany(out).then(ok=>{ if(ok){ UI.l3Area='keller'; toast(bins+' Bodenstellplätze im Keller angelegt.'); render(); } }); }}),60); }}); }
 queueMicrotask(()=>{ Object.assign(A,{
   l3Area:d=>{ UI.l3Area=d.v; render(); },
-  lg3dBin:d=>{ const m=String(d.id||'').match(/^v3_([a-z]+)_/); if(m){ if(lgMgr()) return l3TplSheet(m[1]); return toast('Dieser Bereich ist noch eine Vorlage – EP/AvE bzw. die Lagerverwaltung legt die Plätze an.'); } lgBinSheet(d.id); },
-  l3TplOpen:d=>l3TplSheet(d.v),
+  lg3dBin:d=>{ const m=String(d.id||'').match(/^v3_([a-z]+)_/); if(m) return l3VirtBin(m[1],d.id); lgBinSheet(d.id); },
+  l3TplOpen:d=>l3TplSheet(d.v), l3TakeAll:()=>l3TakeAll(),
   l3TplApply:d=>{ const t=l3TplRead(d.v); if(!t) return; UI.l3Tpl={...(UI.l3Tpl||{}),[d.v]:t}; closeSheet(); render(); toast('Ansicht aktualisiert (noch nichts gespeichert).'); },
   l3TplRowAdd:()=>{ const k=L3_TPL_EDIT&&L3_TPL_EDIT.key; if(!k) return; const t=l3TplRead(k); if(!t) return; const used=new Set((t.racks||[]).map(r=>String(r.seg).toUpperCase())); let n=1; while(used.has('R'+String(n).padStart(2,'0'))) n++; t.racks.push({wall:'hinten',k:'regal',name:'Regal',seg:'R'+String(n).padStart(2,'0'),f:0,e:4,p:2,lt:'fach'}); UI.l3Tpl={...(UI.l3Tpl||{}),[k]:t}; closeSheet(); l3TplSheet(k); },
   l3TplRowDel:d=>{ const k=L3_TPL_EDIT&&L3_TPL_EDIT.key; if(!k) return; const t=l3TplRead(k); if(!t) return; t.racks.splice(+d.i,1); UI.l3Tpl={...(UI.l3Tpl||{}),[k]:t}; closeSheet(); l3TplSheet(k); },
@@ -10081,7 +10160,7 @@ const ST_FILTERS={kunden:[['proj','mit Projekt'],['noproj','ohne Projekt'],['mai
   lieferanten:[['proj','mit Bestellungen'],['noproj','ohne Bestellungen'],['mail','mit E-Mail'],['nomail','ohne E-Mail'],['nophone','ohne Telefon'],['nocust','ohne unsere Kd.-Nr.'],['new','neu (30 Tage)'],['dup','⚠ Dopplungen']],
   artikel:[['proj','im Lager'],['reorder','⚠ nachbestellen'],['weg','unterwegs'],['res','reserviert'],['noprice','ohne Preis'],['nounit','ohne Einheit'],['nosup','ohne Lieferant'],['new','neu (30 Tage)'],['dup','⚠ Dopplungen']]};
 function vStamm(){
-  stLoad(); const k=ST_DEF[UI.stTab]?UI.stTab:'kunden', D=ST_DEF[k], all=Object.values(S[k]||{}), q=String(UI.stQ||'').toLowerCase().trim(), cf=UI.stCat||'', ff=UI.stF||'', city=UI.stCity||'';
+  stLoad(); if(UI.stTab==='kategorien') return vArtCats(); const k=ST_DEF[UI.stTab]?UI.stTab:'kunden', D=ST_DEF[k], all=Object.values(S[k]||{}), q=String(UI.stQ||'').toLowerCase().trim(), cf=UI.stCat||'', ff=UI.stF||'', city=UI.stCity||'';
   const links=stLinks(k), dup=stDups(k), since=addDays(TODAY(),-30);
   const test={proj:x=>links(x)>0,noproj:x=>!links(x),mail:x=>!!x.email,nomail:x=>!x.email,nophone:x=>!x.phone&&!x.mobile,noaddr:x=>!x.street&&!x.city,nocust:x=>!x.custNo,noprice:x=>x.price===''||x.price==null,nounit:x=>!x.unit,nosup:x=>!x.supplier,reorder:x=>artInfo(x).low,weg:x=>artInfo(x).weg>0,res:x=>artInfo(x).res>0,new:x=>String(x.at||'').slice(0,10)>=since&&x.by!=='Import',dup:x=>dup.byId[x.id]!=null};
   const isA=k==='artikel', aix=isA?acIndex():null, acSel=isA&&(UI.stCatId==='__none'||(aix&&aix.byId[UI.stCatId]))?UI.stCatId:'';
@@ -10099,7 +10178,7 @@ function vStamm(){
     ${list.length>lim?`<div style="padding:10px 16px"><button class="btn sm" data-act="stMore">+ weitere ${Math.min(200,list.length-lim)} von ${list.length-lim} anzeigen</button></div>`:''}</div>`;
   const stS=MODE==='cloud'?(ST_STATE[k]||{}).s:'ok';
   return head('Stammdaten · '+D.l,(stS!=='ok'&&!all.length?(stS==='fehler'?D.l+' nicht geladen':D.l+' werden geladen …'):all.length.toLocaleString('de-DE')+' '+D.l+(ff||cf||city||q||acSel?' · '+list.length.toLocaleString('de-DE')+' gefiltert':'')),`<button class="btn pri" data-act="stEdit" data-k="${k}">${ic('plus')}${D.one} anlegen</button>`)+
-    `<div class="chips">${Object.entries(ST_DEF).map(([kk,dd])=>`<button class="chip ${kk===k?'on':''}" data-act="nav" data-v="st:${kk}">${dd.l} <span class="mono small">${MODE==='cloud'&&(ST_STATE[kk]||{}).s!=='ok'&&!Object.keys(S[kk]||{}).length?((ST_STATE[kk]||{}).s==='fehler'?'!':'…'):Object.keys(S[kk]||{}).length.toLocaleString('de-DE')}</span></button>`).join('')}</div>
+    `<div class="chips">${Object.entries(ST_DEF).map(([kk,dd])=>`<button class="chip ${kk===k?'on':''}" data-act="nav" data-v="st:${kk}">${dd.l} <span class="mono small">${MODE==='cloud'&&(ST_STATE[kk]||{}).s!=='ok'&&!Object.keys(S[kk]||{}).length?((ST_STATE[kk]||{}).s==='fehler'?'!':'…'):Object.keys(S[kk]||{}).length.toLocaleString('de-DE')}</span></button>`).join('')}<button class="chip" data-act="nav" data-v="st:kategorien">Artikel-Kategorien</button></div>
     <div class="row"><input class="search" id="stQ" type="search" placeholder="${D.l} durchsuchen: Name, Nummer, Ort, E-Mail …" value="${esc(UI.stQ||'')}" aria-label="Suchen">
       ${isA?acSelectHtml(acSel)+`<button class="btn sm ${UI.acSide?'pri':''}" data-act="acSide" aria-pressed="${!!UI.acSide}" title="Kategorien als Baum links einblenden">🌳 Baum</button><button class="btn sm ${UI.acMan?'pri':''}" data-act="acMan">Kategorien verwalten</button>`
         :cats.length?`<select class="catsel" data-chg="stCat" aria-label="Kategorie"><option value="">Alle Kategorien</option>${cats.map(c=>`<option ${c===cf?'selected':''}>${esc(c)}</option>`).join('')}</select>`:''}
@@ -10257,19 +10336,40 @@ function acSelectHtml(sel){ const ix=acIndex();
 function acFilter(list,sel){ if(!sel) return list; const ix=acIndex(); if(sel==='__none') return list.filter(a=>!ix.artCat[a.id]); if(!ix.byId[sel]) return list; const s=acDesc(sel,ix); return list.filter(a=>s.has(ix.artCat[a.id])); }
 
 /* ---------- Kategorien verwalten (Baum mit Ziehen & Ablegen, Reihenfolge, Bearbeiten) ---------- */
-function acManHtml(){ const ix=acIndex(), ok=acOk(), arch=!!UI.acArch, open=UI.acMOpen||{}, virt=Object.values(ix.byId).filter(c=>c.virt);
+function acManHtml(page){ const ix=acIndex(), cur=page?UI.acCur:'', ok=acOk(), arch=!!UI.acArch, open=UI.acMOpen||{}, virt=Object.values(ix.byId).filter(c=>c.virt);
   const row=(id,d)=>{ const c=ix.byId[id]; if(c.arch&&!arch) return ''; const ks=(ix.kids[id]||[]), on=open[id]!==false, sib=(ix.kids[c.par]||[]).filter(x=>!ix.byId[x].virt), i=c.virt?-1:sib.indexOf(id);
-    return `<div class="ac-m ${c.arch?'arch':''} ${c.virt?'virt':''}" style="padding-left:${6+d*22}px" ${ok?`draggable="true" data-acdrag="${esc(id)}"`:''} data-acdrop="${esc(id)}">
+    return `<div class="ac-m ${c.arch?'arch':''} ${c.virt?'virt':''} ${cur===id?'on':''}" style="padding-left:${6+d*22}px" ${ok?`draggable="true" data-acdrag="${esc(id)}"`:''} data-acdrop="${esc(id)}">
       ${ks.length?`<button type="button" class="ac-tg" data-act="acMTog" data-id="${esc(id)}" aria-label="${on?'zuklappen':'aufklappen'}">${on?'▾':'▸'}</button>`:'<span class="ac-tg"></span>'}
       ${ok?'<span class="ac-hd" aria-hidden="true" title="Ziehen: auf eine andere Kategorie ablegen = dort einordnen">⋮⋮</span>':''}
-      <span class="ac-mn">${esc(c.name)}${c.virt?' <span class="pill" title="Kategorie aus den bisherigen Artikeldaten – noch kein eigener Eintrag">alt</span>':''}${c.arch?' <span class="pill">archiviert</span>':''}</span>
+      <span class="ac-mn"${page?` data-act="acCur" data-id="${esc(id)}" role="button" tabindex="0"`:''}>${esc(c.name)}${c.virt?' <span class="pill" title="Kategorie aus den bisherigen Artikeldaten – noch kein eigener Eintrag">alt</span>':''}${c.arch?' <span class="pill">archiviert</span>':''}</span>
       <span class="ac-c" title="Artikel direkt / mit Unterkategorien">${ix.cnt[id]||0}${ix.tot[id]!==(ix.cnt[id]||0)?' / '+ix.tot[id]:''}</span>
-      ${ok?`<span class="ac-ma"><button type="button" class="icon-btn sm" data-act="acNew" data-p="${esc(id)}" title="Unterkategorie anlegen" aria-label="Unterkategorie anlegen">＋</button><button type="button" class="icon-btn sm" data-act="acMv" data-id="${esc(id)}" data-d="-1" ${i<=0?'disabled':''} title="nach oben" aria-label="nach oben">↑</button><button type="button" class="icon-btn sm" data-act="acMv" data-id="${esc(id)}" data-d="1" ${i<0||i>=sib.length-1?'disabled':''} title="nach unten" aria-label="nach unten">↓</button><button type="button" class="icon-btn sm" data-act="acEdit" data-id="${esc(id)}" title="Bearbeiten, verschieben, zusammenführen, archivieren, löschen" aria-label="Bearbeiten">✎</button></span>`:''}</div>${on?ks.map(k=>row(k,d+1)).join(''):''}`; };
-  return `<div class="card ac-man"><div class="card-h"><h3>🌳 Kategorien verwalten</h3><span class="row" style="gap:6px">${ok?`<button class="btn sun sm" data-act="acNew" data-p="">${ic('plus')}Oberkategorie</button>`:''}<label class="tog-sw small"><input type="checkbox" data-chg="acArchSw" ${arch?'checked':''}><span class="sw" aria-hidden="true"></span><span>Archivierte zeigen</span></label><button class="btn sm" data-act="acManClose">Schließen</button></span></div>
+      ${ok?`<span class="ac-ma"><button type="button" class="icon-btn sm" data-act="acNew" data-p="${esc(id)}" title="Unterkategorie anlegen" aria-label="Unterkategorie anlegen">＋</button><button type="button" class="icon-btn sm" data-act="acMv" data-id="${esc(id)}" data-d="-1" ${i<=0?'disabled':''} title="nach oben" aria-label="nach oben">↑</button><button type="button" class="icon-btn sm" data-act="acMv" data-id="${esc(id)}" data-d="1" ${i<0||i>=sib.length-1?'disabled':''} title="nach unten" aria-label="nach unten">↓</button><button type="button" class="icon-btn sm" data-act="${page?'acCur':'acEdit'}" data-id="${esc(id)}" title="Bearbeiten, verschieben, zusammenführen, archivieren, löschen" aria-label="Bearbeiten">✎</button></span>`:''}</div>${on?ks.map(k=>row(k,d+1)).join(''):''}`; };
+  return `<div class="card ac-man"><div class="card-h"><h3>🌳 ${page?'Kategorienbaum':'Kategorien verwalten'}</h3><span class="row" style="gap:6px">${ok?`<button class="btn sun sm" data-act="acNew" data-p="">${ic('plus')}Oberkategorie</button>`:''}<label class="tog-sw small"><input type="checkbox" data-chg="acArchSw" ${arch?'checked':''}><span class="sw" aria-hidden="true"></span><span>Archivierte zeigen</span></label>${page?'':'<button class="btn sm" data-act="acManClose">Schließen</button>'}</span></div>
     <div class="card-b">${virt.length&&ok?`<div class="banner row" style="margin-bottom:10px"><span>${virt.length} bisherige Kategorie${virt.length>1?'n stehen':' steht'} noch als „alt“ oben. Sie funktionieren schon als Filter. Zum Einordnen einfach auf eine Oberkategorie ziehen oder ✎ → „Übergeordnete Kategorie“. Die Artikel bleiben dabei zugeordnet.</span><span class="spacer"></span><button class="btn sm" data-act="acTakeAll" title="Legt für jede alte Kategorie einen Eintrag auf oberster Ebene an – Artikel werden nicht verändert">Alle als Einträge übernehmen</button></div>`:''}
       ${ok?'<div class="small muted" style="margin-bottom:6px">Ziehen &amp; Ablegen: Kategorie auf eine andere ziehen = dort als Unterkategorie einordnen. Auf „Oberste Ebene“ ziehen = nach ganz oben. Reihenfolge mit ↑ ↓.</div>':''}
       <div class="ac-tree">${(ix.kids['']||[]).map(id=>row(id,0)).join('')||'<div class="empty">Noch keine Kategorien.</div>'}</div>
       ${ok?'<div class="ac-root" data-acdrop="">⇡ Hierher ziehen = oberste Ebene</div>':''}</div></div>`; }
+/* Eigene Seite „Stammdaten → Artikel-Kategorien“: links der Baum (Ziehen & Ablegen, ↑↓, ＋), rechts die gewählte Kategorie direkt bearbeiten */
+function vArtCats(){ const ix=acIndex(), ok=acOk(), cur=UI.acCur&&ix.byId[UI.acCur]?UI.acCur:'', c=cur?ix.byId[cur]:null;
+  const tabs=`<div class="chips">${Object.entries(ST_DEF).map(([kk,dd])=>`<button class="chip" data-act="nav" data-v="st:${kk}">${dd.l} <span class="mono small">${Object.keys(S[kk]||{}).length.toLocaleString('de-DE')}</span></button>`).join('')}<button class="chip on" data-act="nav" data-v="st:kategorien">Artikel-Kategorien <span class="mono small">${Object.values(ix.byId).filter(x=>!x.virt).length}</span></button></div>`;
+  let side='';
+  if(!c) side=`<div class="empty"><b>Kategorie auswählen</b>Links auf einen Namen klicken, um sie hier zu bearbeiten.${ok?`<div style="margin-top:10px"><button class="btn sun sm" data-act="acNew" data-p="">${ic('plus')}Neue Oberkategorie</button></div>`:''}</div>`;
+  else { const skip=acDesc(cur,ix), opts=acFlat(ix,{arch:1,skip}).filter(x=>!x.c.virt||x.id===c.par), merge=acFlat(ix,{skip}).filter(x=>x.id!==cur), kids=(ix.kids[cur]||[]);
+    side=`<div class="ac-ed"><div class="small muted">${esc(acPathTxt(cur,ix))}</div><h3 style="margin:4px 0 8px">${esc(c.name)} ${c.virt?'<span class="pill">alt – noch kein eigener Eintrag</span>':''}${c.arch?'<span class="pill">archiviert</span>':''}</h3>
+      <div class="ac-kpi"><div><b>${ix.cnt[cur]||0}</b><span>Artikel direkt</span></div><div><b>${ix.tot[cur]||0}</b><span>inkl. Unterkategorien</span></div><div><b>${kids.length}</b><span>Unterkategorien</span></div></div>
+      <button class="lnk small" data-act="acShowArts" data-id="${esc(cur)}">→ Diese Artikel in der Artikelliste zeigen</button>
+      ${ok?`<div class="fld full" style="margin-top:12px"><label for="aci_nm">Name</label><input id="aci_nm" class="inp" value="${esc(c.name)}"></div>
+      <div class="fld full"><label for="aci_par">Übergeordnete Kategorie</label><select id="aci_par" class="inp"><option value="">– oberste Ebene –</option>${opts.map(x=>`<option value="${esc(x.id)}" ${x.id===c.par?'selected':''}>${' '.repeat(x.d)}${esc(x.c.name)}</option>`).join('')}</select></div>
+      ${c.virt?'':`<label class="tog-sw small"><input type="checkbox" id="aci_arch" ${c.arch?'checked':''}><span class="sw" aria-hidden="true"></span><span>Archiviert (bei neuen Artikeln nicht mehr wählbar)</span></label>`}
+      <div class="row" style="gap:6px;margin-top:10px;flex-wrap:wrap"><button class="btn sun sm" data-act="acSaveInline" data-id="${esc(cur)}">Speichern</button><button class="btn sm" data-act="acNew" data-p="${esc(cur)}">${ic('plus')}Unterkategorie</button>${!c.virt?`<button class="btn sm danger" data-act="acDelInline" data-id="${esc(cur)}">Löschen</button>`:''}</div>
+      ${merge.length?`<div class="fld full" style="margin-top:14px"><label for="ac_mg">Zusammenführen mit …</label><div class="row" style="gap:6px"><select id="ac_mg" class="inp" style="flex:1"><option value="">– Ziel wählen –</option>${merge.map(x=>`<option value="${esc(x.id)}">${esc(acPathTxt(x.id,ix))}</option>`).join('')}</select><button type="button" class="btn sm" data-act="acMergeAsk" data-id="${esc(cur)}">Zusammenführen</button></div><div class="small muted" style="margin-top:4px">Artikel und Unterkategorien wandern ins Ziel, danach wird „${esc(c.name)}“ entfernt.</div></div>`:''}`:'<div class="small muted" style="margin-top:10px">Ändern dürfen, wer Stammdaten oder Lager bearbeiten darf.</div>'}</div>`; }
+  return head('Stammdaten · Artikel-Kategorien',Object.values(ix.byId).filter(x=>!x.virt).length+' Kategorien · '+Object.keys(S.artikel||{}).length.toLocaleString('de-DE')+' Artikel',ok?`<button class="btn pri" data-act="acNew" data-p="">${ic('plus')}Oberkategorie</button>`:'')+tabs+
+    `<div class="ac-page"><div>${acManHtml(true)}</div><aside class="card ac-detail">${side}</aside></div>`; }
+function acSaveInline(id){ if(!acOk()) return; const ix=acIndex(), c=ix.byId[id]; if(!c) return; const nm=String(($('#aci_nm')||{}).value||'').trim().slice(0,80), np=($('#aci_par')||{}).value||'';
+  if(!nm) return toast('Bitte einen Namen eingeben.'); if(!acCanMove(id,np)) return toast('Eine Kategorie kann nicht unter sich selbst oder ihre eigenen Unterkategorien.');
+  if((ix.kids[np]||[]).some(k=>k!==id&&!ix.byId[k].virt&&acN(ix.byId[k].name)===acN(nm))) return toast('In dieser Ebene gibt es „'+nm+'“ schon – dafür „Zusammenführen“ nutzen.');
+  const rid=acReal(id), rp=np?acReal(np):''; if(!rid||(np&&!rp)) return; const k=clone(S.artcat[rid]); if((k.parent||'')!==rp){ k.parent=rp; k.ord=acNextOrd(rp); } k.name=nm; const a=$('#aci_arch'); if(a){ if(a.checked) k.arch=true; else delete k.arch; }
+  put('artcat',k); UI.acCur=rid; toast('Kategorie gespeichert.'); }
 function acCanMove(id,np){ const ix=acIndex(); if(!np) return true; if(np===id) return false; return !acDesc(id,ix).has(np); }
 function acMove(id,np,force){ if(!acOk()) return; const ix=acIndex(); if(!ix.byId[id]) return; if(!acCanMove(id,np)){ toast('Eine Kategorie kann nicht unter sich selbst oder ihre eigenen Unterkategorien.'); return; }
   if((ix.byId[id].par||'')===(np||'')) return;
@@ -10321,7 +10421,11 @@ queueMicrotask(()=>{ Object.assign(A,{
   acSel:d=>{ UI.stCatId=d.id||''; UI.stLim=100; render(); },
   acTog:d=>{ const o={...(UI.acOpen||{})}; o[d.id]=!o[d.id]; UI.acOpen=o; render(); },
   acSide:()=>{ UI.acSide=!UI.acSide; render(); },
-  acMan:()=>{ UI.acMan=!UI.acMan; render(); }, acManClose:()=>{ UI.acMan=false; render(); },
+  acMan:()=>{ UI.stTab='kategorien'; go('stamm'); }, acManClose:()=>{ UI.acMan=false; render(); },
+  acCur:d=>{ UI.acCur=d.id; render(); },
+  acSaveInline:d=>acSaveInline(d.id),
+  acDelInline:d=>{ const r=acDelete(d.id); if(r!==false) UI.acCur=''; },
+  acShowArts:d=>{ UI.stTab='artikel'; UI.stCatId=d.id; UI.stLim=100; go('stamm'); },
   acMTog:d=>{ const o={...(UI.acMOpen||{})}; o[d.id]=o[d.id]===false; UI.acMOpen=o; render(); },
   acNew:d=>acForm(null,d.p||''), acEdit:d=>acForm(d.id), acMv:d=>acReorder(d.id,+d.d),
   acMvForce:d=>{ closeSheet(); acMove(d.id,d.p||'',true); },
