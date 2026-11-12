@@ -1652,6 +1652,41 @@ button.link-ms:hover{color:var(--ink)}
 .cal .ev.cont{margin-left:-6px;border-left:0;border-top-left-radius:0;border-bottom-left-radius:0;padding-left:7px}
 .cal .ev.mspan{margin-right:-6px;border-top-right-radius:0;border-bottom-right-radius:0}
 .cal .dc .dn{height:18px;line-height:18px;flex:none}
+/* 3D-Lager */
+.l3-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin:0 0 12px}
+.l3-tile{display:flex;flex-direction:column;gap:2px;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;font:inherit;color:var(--ink)}
+.l3-tile.on{border-color:var(--sun);box-shadow:0 0 0 2px var(--sun) inset}
+.l3-wrap{overflow:auto;background:#f7f6f2;border-radius:10px;margin:0 12px 8px;padding:6px}
+.l3-svg{display:block;width:100%;height:auto;min-width:560px;max-height:72vh}
+.l3-svg polygon{stroke:#4b4b4b;stroke-width:.6;stroke-linejoin:round}
+.l3-floor{fill:#d9d7d1}.l3-aisle{fill:#cfccc4;stroke-dasharray:4 4}
+.l3-wall .f-t{fill:#e9e7e2}.l3-wall .f-l,.l3-wall .f-r{fill:#f1efea}
+.l3-wall.brick .f-l{fill:#f4f2ee}
+.l3-pillar .f-t{fill:#c9c6bf}.l3-pillar .f-l{fill:#b9b6ae}.l3-pillar .f-r{fill:#a9a69e}.l3-pillar.ghost{opacity:.35}
+.l3-up .f-t,.l3-up .f-l,.l3-up .f-r{fill:#2b4c9b}
+.l3-beam .f-t{fill:#f2c200}.l3-beam .f-l{fill:#e0b000}.l3-beam .f-r{fill:#c99d00}.l3-beam.back{opacity:.55}
+.l3-cab .f-t{fill:#e3e1db}.l3-cab .f-l{fill:#d6d3cc}.l3-cab .f-r{fill:#c7c4bd}.l3-cab.back .f-l{fill:#ecebe6}
+.l3-board .f-t{fill:#fbfaf7}.l3-board .f-l{fill:#e7e5df}.l3-board .f-r{fill:#dedbd4}
+.l3-slot{cursor:pointer;outline:none}
+.l3-slot.l3-pad .f-t{fill:rgba(255,255,255,.55);stroke:#8a8a8a;stroke-dasharray:3 2}
+.l3-slot.full.l3-pad .f-t{fill:rgba(244,219,2,.18);stroke:#6b6b6b;stroke-dasharray:none}
+.l3-slot:hover .f-t,.l3-slot:focus .f-t{fill:rgba(244,219,2,.55);stroke:#111}
+.l3-slot.off .f-t{fill:#cfcfcf;opacity:.6}
+.l3-fach polygon{fill:rgba(255,255,255,.18);stroke:#9a9a9a;stroke-dasharray:3 2;stroke-width:.5}
+.l3-fach.full polygon{fill:rgba(244,219,2,.10);stroke:#7a7a7a;stroke-dasharray:none}
+.l3-fach:hover polygon,.l3-fach:focus polygon{fill:rgba(244,219,2,.45);stroke:#111;stroke-dasharray:none}
+.l3-fach.hit polygon{fill:rgba(244,219,2,.6);stroke:#111}
+.l3-pal .f-t{fill:#c89b62}.l3-pal .f-l{fill:#b0844f}.l3-pal .f-r{fill:#9c7442}
+.l3-load .f-t,.l3-box .f-t{fill:#ffffff}.l3-load .f-l,.l3-box .f-l{fill:#e6e4df}.l3-load .f-r,.l3-box .f-r{fill:#d3d0c9}
+.l3-pal,.l3-load,.l3-box{cursor:pointer}
+.l3-load.hit .f-t,.l3-box.hit .f-t,.l3-pal.hit .f-t,.l3-slot.hit .f-t{fill:#F4DB02}.l3-load.hit .f-l,.l3-box.hit .f-l{fill:#e5c900}.l3-load.hit .f-r,.l3-box.hit .f-r{fill:#d1b700}
+.l3-t{font:600 9px Inter,system-ui,sans-serif;fill:#333;pointer-events:none}
+.l3-t.sm{font-size:6.5px;fill:#555}.l3-t.xs{font-size:7px;fill:#777}.l3-t.zl{font-size:10px;fill:#111}.l3-t.big{font-size:13px;fill:#888;letter-spacing:.08em}.l3-t.wl{font-size:11px;fill:#2b4c9b}
+.l3-svg.fr .l3-t.sm{font-size:4.6px}.l3-svg.fr .l3-t.xs{font-size:4.6px}.l3-svg.fr .l3-t.zl{font-size:7px}.l3-svg.fr .l3-t.wl{font-size:8px}
+.l3-leg{display:flex;gap:14px;flex-wrap:wrap;align-items:center;padding:0 16px 14px}
+.l3-leg i{display:inline-block;width:14px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.l3-leg .lg-e{border:1px dashed #888;background:#fff}.l3-leg .lg-f{background:#c89b62}.l3-leg .lg-h{background:#F4DB02}
+.l3-walls{margin:0 16px 8px}.l3-wl{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-top:6px}.l3-wl label{display:flex;flex-direction:column;gap:2px}
 /* Artikel-Kategorien (Baum) */
 .st-load,.st-err{margin:0 0 10px;gap:10px;align-items:center}
 .st-load .aic-dots{display:inline-flex}
@@ -6367,16 +6402,144 @@ function pickCard(pk,inProject){
       ${pk.status==='offen'?`<button class="btn sm pri" data-act="pickStatus" data-id="${pk.id}" data-v="gepackt">Gepackt</button>`:''}${pk.status!=='uebergeben'?`<button class="btn sun sm" data-act="pickStatus" data-id="${pk.id}" data-v="uebergeben">An Baustelle übergeben</button>`:`<button class="btn ghost sm" data-act="pickStatus" data-id="${pk.id}" data-v="offen">Wieder öffnen</button>`}
       ${isAdmin()?`<button class="icon-btn" title="Liste löschen" data-act="pickDel" data-id="${pk.id}">${ic('x')}</button>`:''}</div></div>`;
 }
+/* ========== 3D-Lager: Bereiche als isometrische Skizze, jedes Fach / jeder Stellplatz anklickbar ==========
+   Gezeichnet wird aus den echten Lagerplätzen (Sammlung lager). Ein Bereich/Regal wird per Feld v3d einer Ansicht zugeordnet.
+   Leere Plätze sind gestrichelt und leer; belegte zeigen eine Palette. Klick = Lagerplatz öffnen (Einlagern, Entnehmen, Umlagern). */
+const L3_AREAS=[['hrl','Hochregallager links','regal'],['hrr','Hochregallager rechts','regal'],['klein','Kleinteilelager','bereich'],['werkzeug','Werkzeug-Raum','bereich'],['keller','Keller','bereich']];
+const l3Node=k=>lgAll().find(n=>n.v3d===k)||null;
+const L3S=24, l3c=.866;
+// Zwei Blickwinkel: Draufsicht (isometrisch, für den Keller) und Frontansicht mit etwas Tiefe (für Regale und Schränke – wie auf den Fotos)
+let L3_FRONT=false;
+const l3P=(x,y,z)=>L3_FRONT?[(x-y*.42)*L3S*1.6,(-z+y*.32)*L3S*1.6]:[(x-y)*l3c*L3S,(x+y)*.5*L3S-z*L3S];
+const l3K=(x,y,z,w,d)=>L3_FRONT?(y+d/2)*100+(x+w/2)+z*.01:x+w/2+y+d/2+z*.02;
+const l3pts=a=>a.map(p=>{ const q=l3P(...p); return q[0].toFixed(1)+','+q[1].toFixed(1); }).join(' ');
+// Quader: sichtbar sind Oberseite, Seite bei großem y (links vorne) und Seite bei großem x (rechts vorne)
+function l3Box(x,y,z,w,d,h,cl,ex){ const t=[[x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h]], l=[[x,y+d,z],[x+w,y+d,z],[x+w,y+d,z+h],[x,y+d,z+h]], r=[[x+w,y,z],[x+w,y+d,z],[x+w,y+d,z+h],[x+w,y,z+h]];
+  return {k:l3K(x,y,z,w,d), b:[x,y,z,w,d,h], svg:`<g class="${cl}"${ex||''}><polygon class="f-l" points="${l3pts(l)}"/><polygon class="f-r" points="${l3pts(r)}"/><polygon class="f-t" points="${l3pts(t)}"/></g>`}; }
+function l3Flat(x,y,z,w,d,cl,ex,inner){ return {k:l3K(x,y,z,w,d)-.5, b:[x,y,z,w,d,0], svg:`<g class="${cl}"${ex||''}><polygon class="f-t" points="${l3pts([[x,y,z],[x+w,y,z],[x+w,y+d,z],[x,y+d,z]])}"/>${inner||''}</g>`}; }
+const l3Txt=(x,y,z,t,cl)=>{ const p=l3P(x,y,z); return `<text class="${cl||'l3-t'}" x="${p[0].toFixed(1)}" y="${p[1].toFixed(1)}" text-anchor="middle">${esc(t)}</text>`; };
+function l3Svg(items,labels,extra){ const xs=[], ys=[]; items.forEach(i=>{ const [x,y,z,w,d,h]=i.b; [[x,y,z],[x+w,y,z],[x,y+d,z],[x+w,y+d,z],[x,y,z+h],[x+w,y+d,z+h],[x+w,y,z+h],[x,y+d,z+h]].forEach(p=>{ const q=l3P(...p); xs.push(q[0]); ys.push(q[1]); }); });
+  const m=30, x0=Math.min(...xs)-m, y0=Math.min(...ys)-m, W=Math.max(...xs)-x0+m, H=Math.max(...ys)-y0+m;
+  return `<svg class="l3-svg${L3_FRONT?' fr':''}" viewBox="${x0.toFixed(0)} ${y0.toFixed(0)} ${W.toFixed(0)} ${H.toFixed(0)}" role="img" aria-label="3D-Skizze des Lagerbereichs">${items.slice().sort((a,b)=>a.k-b.k).map(i=>i.svg).join('')}${labels||''}${extra||''}</svg>`; }
+// Ein Platz: leer = gestrichelte Fläche; belegt = Palette mit Ladung. Suchtreffer leuchten gelb.
+function l3Slot(bin,x,y,z,w,d,q,big){ const st=binStock(bin.id), n=st.length, hit=q&&st.some(s=>[s.art,s.artNr].join(' ').toLowerCase().includes(q)), code=lgCode(bin.id);
+  const tip=esc(code+(n?' – '+st.slice(0,4).map(s=>s.art+' '+qn(s.bins[bin.id])+' '+(s.unit||'')).join(', ')+(n>4?' …':''):' – leer'));
+  const ex=` data-act="lg3dBin" data-id="${esc(bin.id)}" role="button" tabindex="0" aria-label="${tip}"`, cls='l3-slot'+(n?' full':'')+(hit?' hit':'')+(lgUsable(bin)?'':' off'), out=[];
+  // big = Höhe des Fachs (Regal/Schrank): ganzes Fach als durchsichtiger Quader → große Klickfläche vorne; sonst Bodenfläche
+  if(big>0) out.push({...l3Box(x,y,z+.01,w,d,big,cls+' l3-fach',ex),k:l3K(x,y,z,w,d)-.001});
+  else out.push(l3Flat(x,y,z+.01,w,d,cls+' l3-pad',ex,`<title>${tip}</title>`));
+  if(n){ const small=w<1||d<.8, ph=small?0:.14, hh=small?Math.min(.28,.12+n*.05):Math.min(1.3,.45+n*.18), m=small?.04:.08;
+    if(ph) out.push(l3Box(x+m,y+m,z,w-2*m,d-2*m,ph,'l3-pal'+(hit?' hit':''),ex));
+    out.push(l3Box(x+m*1.6,y+m*1.6,z+ph,w-3.2*m,d-3.2*m,hh,(small?'l3-box':'l3-load')+(hit?' hit':''),ex)); }
+  return out; }
+// Keller: Halle mit Mittelgang, links und rechts Nischen zwischen Pfeilern, Bodenstellplätze in den Nischen
+function l3Keller(root,q){ L3_FRONT=false; const zones=lgKids(root.id).filter(n=>n.kind!=='platz'), loose=lgKids(root.id).filter(lgIsBin);
+  const side=z=>z.side||(/^l/i.test(z.seg||'')?'L':/^r/i.test(z.seg||'')?'R':'');
+  let L=zones.filter(z=>side(z)==='L'), R=zones.filter(z=>side(z)==='R'); const rest=zones.filter(z=>!side(z)); rest.forEach((z,i)=>(i%2?R:L).push(z));
+  if(loose.length) L.push({id:root.id,seg:'',name:'ohne Nische',_bins:loose});
+  const BW=3.4, RD=3.2, A=4, n=Math.max(1,L.length,R.length), X=n*BW, items=[], lab=[];
+  items.push({k:-99,b:[0,0,0,X,RD*2+A,0],svg:`<polygon class="l3-floor" points="${l3pts([[0,0,0],[X,0,0],[X,RD*2+A,0],[0,RD*2+A,0]])}"/><polygon class="l3-aisle" points="${l3pts([[0,RD,0],[X,RD,0],[X,RD+A,0],[0,RD+A,0]])}"/>`});
+  items.push(l3Box(0,-.25,0,X,.25,2.8,'l3-wall brick')); items.push(l3Box(-.25,-.25,0,.25,RD*2+A+.25,2.8,'l3-wall'));
+  const row=(list,y0,yP,lbl)=>list.forEach((z,i)=>{ const x0=i*BW, bins=(z._bins||lgSub(z.id).filter(lgIsBin)).sort((a,b)=>lgCode(a.id).localeCompare(lgCode(b.id),'de',{numeric:true}));
+      const k=bins.length, cols=k<=2?k||1:Math.ceil(Math.sqrt(k)), rows=Math.max(1,Math.ceil(k/cols)), cw=(BW-.6)/cols, cd=(RD-.5)/rows;
+      bins.forEach((b,j)=>{ const cx=x0+.3+(j%cols)*cw, cy=y0+.25+Math.floor(j/cols)*cd; items.push(...l3Slot(b,cx+.05,cy+.05,0,cw-.1,cd-.1,q)); lab.push(l3Txt(cx+cw/2,cy+cd/2,.02,String(b.seg||''),'l3-t sm')); });
+      lab.push(l3Txt(x0+BW/2,y0+(lbl==='L'?.05:RD-.05),0,(z.seg||z.name||'')+(k?'':' (keine Plätze)'),'l3-t zl'));
+      items.push(l3Box(x0,yP,0,.35,.35,2.8,'l3-pillar'+(lbl==='R'?' ghost':''))); if(i===list.length-1) items.push(l3Box(x0+BW-.35,yP,0,.35,.35,2.8,'l3-pillar'+(lbl==='R'?' ghost':''))); });
+  row(L,0,RD-.35,'L'); row(R,RD+A,RD+A,'R');
+  lab.push(l3Txt(X/2,RD+A/2,0,'Mittelgang','l3-t big'));
+  return l3Svg(items,lab); }
+// Ein Regal/Schrank ab Position x0: Felder × Ebenen × Plätze (Ebene 1 = unten).
+// Stil „pal“ = Hochregal (blaue Rahmen, gelbe Traversen); „cab“ = Wandregal/Schrank (hellgrauer Korpus, weiße Böden).
+function l3Rack(rg,x0,Y,st,q,items,lab){ const fields=lgKids(rg.id).filter(n=>n.kind==='feld'); const F=fields.length?fields:[rg], pal=st==='pal';
+  const lev=f=>{ const es=lgKids(f.id).filter(n=>n.kind==='ebene'); const L=es.length?es.map(e=>({e,bins:lgKids(e.id).filter(lgIsBin)})):[{e:f,bins:lgKids(f.id).filter(lgIsBin)}]; if(es.length&&f===rg){ const lb=lgKids(f.id).filter(lgIsBin); if(lb.length) L.unshift({e:{seg:''},bins:lb}); } return L; };
+  const FW=pal?2.7:1.1, D=pal?1.1:.5, nE=Math.max(1,...F.map(f=>lev(f).length)), LH=pal?1.75:Math.max(.35,Math.min(.6,2.1/nE)), H=nE*LH+(pal?.4:.1);
+  F.forEach((f,i)=>{ const fx=x0+i*FW, L=lev(f);
+    if(!pal) items.push(l3Box(fx,Y-.02,0,FW,.04,H,'l3-cab back'));
+    L.forEach((lv,e)=>{ const z=e*LH+(pal?0:.05), bins=lv.bins, k=Math.max(1,bins.length), sw=(FW-(pal?.3:.12))/k;
+      if(pal&&e>0){ items.push(l3Box(fx+.1,Y+D-.12,z-.14,FW-.1,.12,.14,'l3-beam')); items.push(l3Box(fx+.1,Y,z-.14,FW-.1,.12,.14,'l3-beam back')); }
+      if(!pal) items.push(l3Box(fx+.03,Y,z-.03,FW-.06,D,.03,'l3-board'));
+      bins.forEach((b,j)=>{ items.push(...l3Slot(b,fx+(pal?.2:.06)+j*sw,Y+.04,z,sw-(pal?.08:.04),D-.08,q,LH-(pal?.32:.1))); lab.push(l3Txt(fx+(pal?.2:.06)+j*sw+sw/2,Y+D/2,z+.02,String(b.seg||''),'l3-t sm')); });
+      if(lv.e.seg) lab.push(l3Txt(fx+FW+.05,Y+D+(pal?.35:.15),z+LH*.3,lv.e.seg,'l3-t xs')); });
+    if(f!==rg) lab.push(l3Txt(fx+FW/2,Y+D+(pal?.9:.5),0,f.seg||'','l3-t xs')); });
+  const X=F.length*FW;
+  if(pal){ for(let i=0;i<=F.length;i++){ items.push(l3Box(x0+i*FW,Y,0,.1,.1,H,'l3-up')); items.push(l3Box(x0+i*FW,Y+D-.1,0,.1,.1,H,'l3-up')); } }
+  else { items.push(l3Box(x0-.04,Y,0,.04,D,H,'l3-cab')); items.push(l3Box(x0+X,Y,0,.04,D,H,'l3-cab')); items.push(l3Box(x0,Y,H,X,D,.04,'l3-cab')); }
+  lab.push(l3Txt(x0+X/2,Y+D+(pal?1.4:.7),0,pal?(rg.name||lgStLabel(rg))+(rg.seg?' '+rg.seg:''):(rg.seg||rg.name||''),'l3-t zl'));
+  return {w:X,h:H,d:D}; }
+// Hochregal (ein Regal)
+function l3Regal(rg,q){ L3_FRONT=true; const items=[], lab=[], Y=.6, r=l3Rack(rg,0,Y,'pal',q,items,lab);
+  items.push({k:-99,b:[0,0,0,r.w,Y+r.d+2.2,0],svg:`<polygon class="l3-floor" points="${l3pts([[0,0,0],[r.w,0,0],[r.w,Y+r.d+2.2,0],[0,Y+r.d+2.2,0]])}"/>`});
+  items.push(l3Box(0,-.25,0,r.w,.25,r.h+.6,'l3-wall brick')); return l3Svg(items,lab); }
+// Raum mit mehreren Regalen/Schränken (Kleinteilelager, Werkzeug-Raum): nebeneinander an der Wand, je nach Wand gruppiert
+function l3Room(root,q){ L3_FRONT=true; const W={links:0,hinten:1,rechts:2}, racks=lgKids(root.id).filter(n=>n.kind==='regal').sort((a,b)=>(W[a.wall]??1)-(W[b.wall]??1)||String(a.seg).localeCompare(String(b.seg),'de',{numeric:true}));
+  const loose=lgKids(root.id).filter(lgIsBin), items=[], lab=[], Y=.35; let x=0, lastW=null;
+  racks.forEach(rg=>{ const wl=rg.wall||''; if(lastW!==null&&wl!==lastW) x+=.8; if(wl&&wl!==lastW) lab.push(l3Txt(x+.6,-.4,2.9,'Wand '+wl,'l3-t wl')); lastW=wl;
+    const pal=rg.stype==='hochregal', r=l3Rack(rg,x,Y,pal?'pal':'cab',q,items,lab); x+=r.w+.35; });
+  if(loose.length){ const k=loose.length, sw=1; loose.forEach((b,j)=>{ items.push(...l3Slot(b,x+j*sw,Y+.1,0,sw-.1,.8,q)); lab.push(l3Txt(x+j*sw+sw/2,Y+.5,.02,String(b.seg||''),'l3-t sm')); }); lab.push(l3Txt(x+k*sw/2,Y+1.4,0,'Bodenplätze','l3-t zl')); x+=k*sw; }
+  const X=Math.max(2,x), H=2.6;
+  items.push({k:-99,b:[0,0,0,X,3.2,0],svg:`<polygon class="l3-floor" points="${l3pts([[0,0,0],[X,0,0],[X,3.2,0],[0,3.2,0]])}"/>`});
+  items.push(l3Box(0,-.2,0,X,.2,H,'l3-wall brick'));
+  return l3Svg(items,lab); }
+function vLg3d(sw){ const sel=L3_AREAS.find(a=>a[0]===UI.l3Area)?UI.l3Area:'keller', q=String(UI.l3q||'').trim().toLowerCase(), mg=lgMgr();
+  const tiles=`<div class="l3-tiles">${L3_AREAS.map(([k,l])=>{ const n=l3Node(k), bins=n?lgSub(n.id).filter(lgIsBin):[], full=bins.filter(b=>binStock(b.id).length).length;
+    return `<button type="button" class="l3-tile ${k===sel?'on':''}" data-act="l3Area" data-v="${k}"><b>${esc(l)}</b><span class="small muted">${n?bins.length+' Plätze · '+full+' belegt':'noch nicht eingerichtet'}</span></button>`; }).join('')}</div>`;
+  const A=L3_AREAS.find(a=>a[0]===sel), node=l3Node(sel);
+  let body;
+  if(!node){ const cand=lgAll().filter(n=>A[2]==='regal'?n.kind==='regal':(n.kind==='bereich'||n.kind==='standort')).sort((a,b)=>lgPlain(a.id).localeCompare(lgPlain(b.id),'de'));
+    body=`<div class="card"><div class="lg-empty"><b>${esc(A[1])} ist noch nicht eingerichtet.</b>
+      <div class="small muted">${sel==='keller'?'Der Keller wird als Halle mit Mittelgang gezeichnet: links und rechts Nischen mit Bodenstellplätzen. Lege die Nischen und Stellplätze mit dem Assistenten an – oder verknüpfe einen vorhandenen Bereich.':A[2]==='regal'?'Das Hochregal wird aus seinen Lagerplätzen gezeichnet (Felder × Ebenen × Plätze). Lege es unter „Lagerorte & Plätze“ mit dem Assistenten an – oder verknüpfe ein vorhandenes Regal.':'Der Raum wird aus seinen Regalen und Schränken gezeichnet (Wand links, hinten, rechts). Verknüpfe den Bereich unter „Lagerorte & Plätze“ – Regale und Schränke legst du danach hier mit dem Assistenten an.'}</div>
+      ${mg?`<div class="row" style="gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px">${sel==='keller'?`<button class="btn sun" data-act="l3KellerWiz">Keller-Stellplätze anlegen</button>`:A[2]==='regal'?`<button class="btn sun" data-act="lgWiz">Regal mit Assistent anlegen</button>`:''}
+        ${cand.length?`<select class="inp" id="l3_link" style="max-width:320px"><option value="">– vorhandenes ${A[2]==='regal'?'Regal':'Bereich'} wählen –</option>${cand.map(n=>`<option value="${esc(n.id)}">${esc(lgPlain(n.id))}</option>`).join('')}</select><button class="btn" data-act="l3Link" data-v="${sel}">Verknüpfen</button>`:''}</div>`:'<div class="small muted" style="margin-top:8px">Einrichten dürfen Admins und alle mit „Lagerverwaltung – Bearbeiten“.</div>'}</div></div>`; }
+  else { const bins=lgSub(node.id).filter(lgIsBin);
+    const room=sel==='klein'||sel==='werkzeug', racks=room?lgKids(node.id).filter(n=>n.kind==='regal'):[];
+    const svg=!bins.length?`<div class="empty">Hier sind noch keine Lagerplätze angelegt.${mg&&node.kind!=='regal'?`<div style="margin-top:8px"><button class="btn sun sm" data-act="lgWiz" data-parent="${esc(node.id)}">Regal / Schrank mit Assistent anlegen</button></div>`:''}</div>`:node.kind==='regal'?l3Regal(node,q):sel==='keller'?l3Keller(node,q):l3Room(node,q);
+    const wallEd=room&&mg&&racks.length?`<details class="l3-walls"><summary class="small">Regale und Schränke den Wänden zuordnen (${racks.length})</summary><div class="l3-wl">${racks.map(r=>`<label class="small"><span>${esc((r.name||lgStLabel(r))+' '+(r.seg||''))}</span><select class="inp" data-chg="l3Wall" data-id="${esc(r.id)}">${['','links','hinten','rechts'].map(w=>`<option value="${w}" ${(r.wall||'')===w?'selected':''}>${w?'Wand '+w:'– Wand –'}</option>`).join('')}</select></label>`).join('')}<button class="btn sm" data-act="lgWiz" data-parent="${esc(node.id)}">+ Regal / Schrank</button></div></details>`:'';
+    body=`<div class="card l3-card"><div class="card-h"><h3>${esc(A[1])} <span class="small muted">· ${esc(lgPlain(node.id))}</span></h3><span class="row" style="gap:6px">
+        <input class="inp" type="search" placeholder="Artikel im Bereich suchen …" value="${esc(UI.l3q||'')}" data-chg="l3q" aria-label="Artikel im Bereich suchen" style="max-width:220px">
+        ${mg&&sel==='keller'?`<button class="btn sm" data-act="l3KellerWiz">+ Nischen</button>`:''}${mg?`<button class="btn ghost sm" data-act="l3Unlink" data-v="${sel}" title="Zuordnung zu dieser Ansicht lösen (Lagerplätze bleiben)">Zuordnung lösen</button>`:''}</span></div>
+      ${wallEd}<div class="l3-wrap">${svg}</div>
+      <div class="l3-leg small"><span><i class="lg-e"></i>leer</span><span><i class="lg-f"></i>belegt</span>${q?'<span><i class="lg-h"></i>Suchtreffer</span>':''}<span class="muted">Platz anklicken: Inhalt ansehen, einlagern, entnehmen, umlagern</span></div></div>`; }
+  return head('Lagerverwaltung','3D-Lager · Bereich wählen, Platz anklicken',lgHeadBtns())+sw+tiles+body; }
+// Assistent Keller: Nischen links/rechts mit je n Bodenstellplätzen (Vorschau, dann alles auf einmal anlegen)
+function l3KellerWiz(){ if(!lgMgr()) return toast('Einrichten dürfen Admins und alle mit „Lagerverwaltung – Bearbeiten“.'); const root=l3Node('keller'), hosts=lgAll().filter(n=>n.kind==='standort');
+  if(!root&&!hosts.length) return toast('Bitte zuerst unter „Lagerorte & Plätze“ einen Lagerstandort anlegen.');
+  const ex=root?lgKids(root.id).filter(n=>n.kind!=='platz'):[], nl=ex.filter(z=>(z.side||'')==='L'||/^l/i.test(z.seg||'')).length, nr=ex.filter(z=>(z.side||'')==='R'||/^r/i.test(z.seg||'')).length;
+  openSheet({title:root?'Keller: weitere Nischen anlegen':'Keller einrichten',wide:1,html:`${root?`<div class="fld full small muted">Vorhanden: ${nl} Nischen links, ${nr} rechts. Neue Nischen werden fortlaufend weiter nummeriert.</div>`:`<div class="fld"><label for="kw_h">Standort</label><select id="kw_h" class="inp">${hosts.map(h=>`<option value="${esc(h.id)}">${esc(lgPlain(h.id))}</option>`).join('')}</select></div><div class="fld"><label for="kw_s">Kürzel Bereich</label><input id="kw_s" class="inp" value="KE"></div>`}
+    <div class="fld"><label for="kw_l">Neue Nischen links</label><input id="kw_l" class="inp" type="number" min="0" max="40" value="${root?0:6}"></div>
+    <div class="fld"><label for="kw_r">Neue Nischen rechts</label><input id="kw_r" class="inp" type="number" min="0" max="40" value="${root?0:6}"></div>
+    <div class="fld"><label for="kw_p">Bodenstellplätze je Nische</label><input id="kw_p" class="inp" type="number" min="1" max="40" value="4"></div>
+    <div class="fld"><label for="kw_t">Platztyp</label><select id="kw_t" class="inp">${['boden','palette','gitterbox','langgut'].map(t=>`<option value="${t}">${esc(LG_TYPES[t])}</option>`).join('')}</select></div>
+    <div class="fld full small muted">Codes z. B. <span class="mono">…-KE-L01-P01</span> (Nische links 1, Platz 1). Alles startet leer und wird nach und nach befüllt.</div>`,saveLabel:'Vorschau',
+    onSave:()=>{ const v={h:($('#kw_h')||{}).value,s:String(($('#kw_s')||{}).value||'KE').trim().replace(/\s+/g,''),l:Math.max(0,Math.min(40,+$('#kw_l').value||0)),r:Math.max(0,Math.min(40,+$('#kw_r').value||0)),p:Math.max(1,Math.min(40,+$('#kw_p').value||1)),t:$('#kw_t').value};
+      if(!v.l&&!v.r){ toast('Bitte mindestens eine Nische.'); return false; } if(!root&&!/^[0-9A-Za-zÄÖÜäöü]+$/.test(v.s)){ toast('Kürzel bitte nur aus Buchstaben und Ziffern.'); return false; }
+      const M={...(S.lager||{})}, out=[], now=new Date().toISOString(); let seq=0; const mk=(kind,parent,name,seg,extra)=>{ const x=lgCleanNode({id:uid()+(seq++).toString(36),parent,kind,name:name||'',seg:seg||'',...(extra||{})}); x.by=meK(); x.at=now; M[x.id]=x; out.push(x); return x; };
+      let rid=root&&root.id; if(!root){ if(lgKids(v.h).some(x=>x.kind==='bereich'&&String(x.seg).toLowerCase()===v.s.toLowerCase())){ toast('Einen Bereich „'+v.s+'“ gibt es dort schon – bitte verknüpfen statt neu anlegen.'); return false; } rid=mk('bereich',v.h,'Keller',v.s,{stype:'keller',v3d:'keller'}).id; }
+      const pad=i=>String(i).padStart(2,'0'), have=s=>(root?lgKids(root.id):[]).filter(z=>z.kind!=='platz'&&((z.side||'')===s||new RegExp('^'+s,'i').test(z.seg||''))).length;
+      [['L',v.l,'links'],['R',v.r,'rechts']].forEach(([s,c,w])=>{ const st=have(s); for(let i=1;i<=c;i++){ const no=st+i, Z=mk('regal',rid,'Nische '+w+' '+no,s+pad(no),{stype:'palzone',side:s}); for(let p=1;p<=v.p;p++) mk('platz',Z.id,'','P'+pad(p),{ltype:v.t}); } });
+      const dup=lgDupBin(M); if(dup){ toast('Der Code „'+dup+'“ wäre doppelt.'); return false; }
+      const bins=out.filter(x=>x.kind==='platz').length; setTimeout(()=>openSheet({title:'Vorschau – '+bins+' Bodenstellplätze',html:`<div class="fld full">${root?'':'Neuer Bereich <b>Keller ('+esc(v.s)+')</b> unter '+esc(lgPlain(v.h))+'. '}${v.l} Nische(n) links, ${v.r} rechts, je ${v.p} Stellplätze = <b>${bins}</b> Plätze.<div class="small" style="margin-top:6px">Codes: <span class="mono">${esc(lgCodeIn(M,out.find(x=>x.kind==='platz').id))}</span> bis <span class="mono">${esc(lgCodeIn(M,[...out].reverse().find(x=>x.kind==='platz').id))}</span></div><div class="small muted" style="margin-top:6px">Es wird alles auf einmal gespeichert – oder bei einem Fehler gar nichts.</div></div>`,saveLabel:'Jetzt anlegen',
+        onSave:()=>{ lgWriteMany(out).then(ok=>{ if(ok){ UI.l3Area='keller'; toast(bins+' Bodenstellplätze im Keller angelegt.'); render(); } }); }}),60); }}); }
+queueMicrotask(()=>{ Object.assign(A,{
+  l3Area:d=>{ UI.l3Area=d.v; render(); },
+  lg3dBin:d=>lgBinSheet(d.id),
+  l3KellerWiz:()=>l3KellerWiz(),
+  l3Link:d=>{ if(!lgMgr()) return; const id=($('#l3_link')||{}).value; if(!id) return toast('Bitte auswählen.'); const old=lgAll().filter(n=>n.v3d===d.v&&n.id!==id).map(n=>{ const x={...n}; delete x.v3d; return x; }); const n={...lgNode(id),v3d:d.v};
+    lgWriteMany([...old,n]).then(ok=>{ if(ok) toast('Verknüpft.'); }); },
+  l3Unlink:d=>{ if(!lgMgr()) return; const n=l3Node(d.v); if(!n) return; const x={...n}; delete x.v3d; lgWriteMany([x]).then(ok=>{ if(ok) toast('Zuordnung gelöst – die Lagerplätze bleiben bestehen.'); }); } });
+  Object.assign(CHG,{ l3q:(d,el)=>{ UI.l3q=el.value; render(); },
+    l3Wall:(d,el)=>{ if(!lgMgr()) return; const n=lgNode(d.id); if(!n) return; const x={...n}; if(el.value) x.wall=el.value; else delete x.wall; lgWriteMany([x]); } });
+  document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.target.closest&&e.target.closest('.l3-slot')){ e.preventDefault(); const g=e.target.closest('.l3-slot'); A.lg3dBin({id:g.dataset.id}); } }); });
 function vStock(){
   const tab=UI.stockTab||'bestand', q=(UI.sq||'').toLowerCase();
   const st=arr('stock').sort((a,b)=>String(a.art).localeCompare(String(b.art))), low=st.filter(s=>s.min&&(+s.qty||0)<=s.min).length;
   const picks=arr('picks').sort((a,b)=>(a.status==='uebergeben')-(b.status==='uebergeben')||String(a.date||'').localeCompare(String(b.date||'')));
   const openP=picks.filter(p=>p.status!=='uebergeben'), invOpen=arr('inv').filter(x=>x.status==='offen'||x.status==='pruefen').length;
-  const T=[['bestand','box','Lagerbestand',st.length],['plaetze','stock','Lagerorte & Plätze',lgAll().filter(lgIsBin).length],['listen','truck','Kommissionierlisten',openP.length],['bewegungen','form','Bewegungen',''],['inventur','report','Inventur',invOpen||''],['etiketten','tpl','Etiketten','']];
+  const T=[['bestand','box','Lagerbestand',st.length],['ansicht','stock','3D-Lager',''],['plaetze','stock','Lagerorte & Plätze',lgAll().filter(lgIsBin).length],['listen','truck','Kommissionierlisten',openP.length],['bewegungen','form','Bewegungen',''],['inventur','report','Inventur',invOpen||''],['etiketten','tpl','Etiketten','']];
   const sw=`<div class="cal-sw st-sw" role="tablist">${T.map(([k,i,l,n])=>`<button role="tab" class="${tab===k?'on':''}" data-act="stockTab" data-v="${k}">${ic(i)}${l}${n!==''?' '+n:''}</button>`).join('')}</div>`;
   if(tab==='listen') return head('Lagerverwaltung',openP.length+' offene Kommissionierlisten',lgHeadBtns()+`<button class="btn" data-act="pickNew">${ic('plus')}Kommissionierliste</button>`)+sw+
     `<label class="tog-sw"><input type="checkbox" data-chg="pickShowAll" ${UI.pickAll?'checked':''}> Übergebene Listen einblenden</label>`+
     `<div class="pick-layout">${stockSide()}<div class="pick-grid">${(UI.pickAll?picks:openP).map(p=>pickCard(p,false)).join('')||'<div class="card"><div class="empty">Keine offenen Kommissionierlisten. Sie entstehen beim Wareneingang („Baustelle kommissionieren“), bei der Entnahme aus dem Lager oder über „+ Kommissionierliste“.</div></div>'}</div></div>`;
+  if(tab==='ansicht') return vLg3d(sw);
   if(tab==='plaetze') return vLgPlaces(sw); if(tab==='bewegungen') return vLgMoves(sw); if(tab==='inventur') return vLgInv(sw); if(tab==='etiketten') return vLgLabels(sw);
   return vStockList(st,q,low,sw);
 }
