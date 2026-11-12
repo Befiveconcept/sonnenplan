@@ -1763,7 +1763,46 @@ button.link-ms:hover{color:var(--ink)}
 [data-theme="future"] .side{border-right-color:rgba(244,219,2,.25)}
 [data-theme="future"] .li{transition:background .2s}
 [data-theme="future"] .pill.bad,[data-theme="future"] .overdue{text-shadow:0 0 10px rgba(255,107,91,.45)}
-@media (prefers-reduced-motion:reduce){[data-theme="future"] .hero::after,[data-theme="future"] .hero,[data-theme="future"] body::before,[data-theme="future"] body::after{animation:none}}
+/* --- Future, Stufe 2: noch krasser --- */
+/* Polarlicht: wabernde Lichtschleier hinter allem */
+.fx-aurora,.fx-stars,.fx-scan{display:none}
+[data-theme="future"] .fx-aurora{display:block;position:fixed;inset:-20%;z-index:0;pointer-events:none;filter:blur(60px) saturate(140%);opacity:.75;
+  background:radial-gradient(35% 30% at 20% 30%,rgba(244,219,2,.22),transparent 70%),radial-gradient(30% 35% at 80% 20%,rgba(61,220,151,.18),transparent 70%),radial-gradient(40% 30% at 60% 80%,rgba(90,120,255,.16),transparent 70%),radial-gradient(25% 25% at 35% 75%,rgba(255,120,60,.12),transparent 70%);
+  animation:fxAur 28s ease-in-out infinite alternate}
+@keyframes fxAur{0%{transform:translate(0,0) rotate(0deg) scale(1)}33%{transform:translate(4%,-3%) rotate(8deg) scale(1.08)}66%{transform:translate(-5%,4%) rotate(-6deg) scale(.96)}100%{transform:translate(3%,5%) rotate(12deg) scale(1.1)}}
+/* Sternenstaub: feine Lichtpunkte, die langsam nach oben treiben */
+[data-theme="future"] .fx-stars{display:block;position:fixed;left:0;top:0;width:2px;height:2px;z-index:0;pointer-events:none;border-radius:50%;background:transparent;animation:fxStar 90s linear infinite;
+  box-shadow:120px 80vh 0 0 rgba(255,232,77,.8),280px 40vh 0 0 rgba(255,255,255,.5),430px 95vh 0 0 rgba(255,232,77,.6),610px 20vh 0 0 rgba(255,255,255,.45),760px 70vh 0 0 rgba(61,220,151,.7),910px 55vh 0 0 rgba(255,232,77,.7),1080px 15vh 0 0 rgba(255,255,255,.5),1230px 85vh 0 0 rgba(255,232,77,.55),1390px 35vh 0 0 rgba(255,255,255,.4),1550px 65vh 0 0 rgba(61,220,151,.55),1700px 10vh 0 0 rgba(255,232,77,.6),1850px 90vh 0 0 rgba(255,255,255,.45),
+  200px 140vh 0 0 rgba(255,232,77,.7),520px 120vh 0 0 rgba(255,255,255,.5),840px 160vh 0 0 rgba(255,232,77,.6),1160px 130vh 0 0 rgba(61,220,151,.6),1480px 150vh 0 0 rgba(255,255,255,.5),1780px 125vh 0 0 rgba(255,232,77,.65)}
+@keyframes fxStar{to{transform:translateY(-100vh)}}
+/* Scanlinie wie bei einem Monitor */
+[data-theme="future"] .fx-scan{display:block;position:fixed;left:0;right:0;top:-10vh;height:10vh;z-index:2;pointer-events:none;background:linear-gradient(180deg,transparent,rgba(244,219,2,.035),transparent);animation:fxScan 9s linear infinite}
+@keyframes fxScan{to{transform:translateY(120vh)}}
+/* Schimmernde Überschriften */
+[data-theme="future"] .hero h1,[data-theme="future"] .topbar h1{background:linear-gradient(100deg,#FFFFFF 0%,#FFFFFF 35%,#FFE84D 45%,#FFFFFF 55%,#FFFFFF 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:fxShine 6s ease-in-out infinite}
+[data-theme="future"] .hero h1 span{animation:none}
+@keyframes fxShine{0%{background-position:100% 0}60%,100%{background-position:-50% 0}}
+/* Taschenlampe: Lichtkegel folgt der Maus auf Karten, Rand leuchtet an der Stelle */
+[data-theme="future"] .card::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .3s;
+  background:radial-gradient(260px circle at var(--mx,50%) var(--my,0%),rgba(244,219,2,.10),transparent 60%);z-index:-1}
+[data-theme="future"] .card:hover::after{opacity:1}
+[data-theme="future"] .card{isolation:isolate}
+[data-theme="future"] .card::before{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;padding:1px;opacity:0;z-index:-1;transition:opacity .3s;
+  background:radial-gradient(180px circle at var(--mx,50%) var(--my,0%),rgba(255,232,77,.9),transparent 70%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+[data-theme="future"] .card:hover::before{opacity:1}
+/* Leuchtende Menü-Icons, aktiver Punkt pulsiert */
+[data-theme="future"] .nav-btn svg{filter:drop-shadow(0 0 4px rgba(244,219,2,.35))}
+[data-theme="future"] .nav-btn.on{animation:fxNav 3s ease-in-out infinite}
+@keyframes fxNav{50%{box-shadow:0 0 0 1px rgba(244,219,2,.7),0 0 38px rgba(244,219,2,.6)}}
+[data-theme="future"] .cnt-b{animation:fxNav 3s ease-in-out infinite}
+/* Seitenwechsel: Karten gleiten nacheinander herein (nur beim Wechsel, nicht bei jeder Aktualisierung) */
+[data-theme="future"] #view.fx-in>*{animation:fxIn .55s cubic-bezier(.2,.8,.2,1) both}
+[data-theme="future"] #view.fx-in>*:nth-child(2){animation-delay:.05s}[data-theme="future"] #view.fx-in>*:nth-child(3){animation-delay:.1s}[data-theme="future"] #view.fx-in>*:nth-child(4){animation-delay:.15s}[data-theme="future"] #view.fx-in>*:nth-child(5){animation-delay:.2s}[data-theme="future"] #view.fx-in>*:nth-child(n+6){animation-delay:.25s}
+@keyframes fxIn{from{opacity:0;transform:translateY(14px) scale(.985);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+/* Kennzahlen mit Neon */
+[data-theme="future"] .kpi .v,[data-theme="future"] .hk .hv{color:#fff;text-shadow:0 0 10px rgba(255,232,77,.55),0 0 28px rgba(244,219,2,.3)}
+[data-theme="future"] .hk.hi .hv{color:#111;text-shadow:none}
+@media (prefers-reduced-motion:reduce){[data-theme="future"] .hero::after,[data-theme="future"] .hero,[data-theme="future"] body::before,[data-theme="future"] body::after,[data-theme="future"] .fx-aurora,[data-theme="future"] .fx-stars,[data-theme="future"] .fx-scan,[data-theme="future"] .hero h1,[data-theme="future"] .nav-btn.on,[data-theme="future"] .cnt-b,[data-theme="future"] #view.fx-in>*{animation:none}}
 /* Schieberegler Hell/Dunkel (Startseite) */
 .hero-sm .hero-a:has(.theme-sw3){display:flex!important}
 .theme-sw3{position:relative;display:inline-grid;grid-template-columns:repeat(3,1fr);align-items:center;padding:3px;border-radius:99px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);isolation:isolate}
@@ -2681,6 +2720,15 @@ const themeSwHtml=()=>{ const c=themeCur(), i=THEMES.findIndex(x=>x[0]===c);
   return `<div class="theme-sw3" role="radiogroup" aria-label="Design" style="--i:${i}"><span class="ts3-knob" aria-hidden="true"></span>${THEMES.map(([k,l,s])=>`<button type="button" role="radio" aria-checked="${k===c}" class="${k===c?'on':''}" data-act="themeSet" data-v="${k}" title="Design: ${l}"><span aria-hidden="true">${s}</span> ${l}</button>`).join('')}</div>`; };
 queueMicrotask(()=>Object.assign(A,{ themeSet:d=>{ const t=THEMES.some(x=>x[0]===d.v)?d.v:'light'; const sw=document.querySelector('.theme-sw3'); if(sw) sw.style.setProperty('--i',THEMES.findIndex(x=>x[0]===t));
   setTimeout(()=>{ document.documentElement.setAttribute('data-theme',t); lsSet('sonnenplan-theme',t); render(); },180); } }));
+/* Future-Effekte: Ebenen (Polarlicht, Sternenstaub, Scanlinie) einmal anlegen – sichtbar nur bei data-theme="future" (per CSS) */
+(function(){ const add=()=>{ if(document.querySelector('.fx-aurora')) return; ['fx-aurora','fx-stars','fx-scan'].forEach(c=>{ const d=document.createElement('div'); d.className=c; d.setAttribute('aria-hidden','true'); document.body.insertBefore(d,document.body.firstChild); }); };
+  if(document.body) add(); else document.addEventListener('DOMContentLoaded',add); })();
+// Lichtkegel folgt der Maus auf Karten (nur Future; günstig: eine Variable je Karte, max. 1× pro Bild)
+let FX_T=0;
+document.addEventListener('pointermove',e=>{ if(document.documentElement.getAttribute('data-theme')!=='future') return; const now=e.timeStamp||Date.now(); if(now-FX_T<16) return; FX_T=now;
+  const c=e.target&&e.target.closest&&e.target.closest('.card'); if(!c) return; const r=c.getBoundingClientRect(); c.style.setProperty('--mx',(e.clientX-r.left)+'px'); c.style.setProperty('--my',(e.clientY-r.top)+'px'); },{passive:true});
+// Seitenwechsel: Karten gleiten herein (nur beim Wechsel der Seite)
+function fxPageIn(){ if(document.documentElement.getAttribute('data-theme')!=='future') return; const v=$('#view'); if(!v) return; v.classList.remove('fx-in'); void v.offsetWidth; v.classList.add('fx-in'); clearTimeout(window.__fxT); window.__fxT=setTimeout(()=>v.classList.remove('fx-in'),900); }
 /* Moji und ABou (Kürzel AS) sehen GAR NICHTS von Projekten (Wunsch EP, 12.11.2026) – unabhängig von gespeicherten Rechten:
    keine Projektseiten, keine Projektlisten/Suche/KI-Projektdaten, kein „Seit deinem letzten Besuch“, keine Projekt-Mitteilungen.
    Auf ihren eigenen Einsätzen und To-Dos bleibt nur der Name der Baustelle stehen, damit sie wissen, wohin. */
@@ -3425,7 +3473,7 @@ function scrollRestore(list){ if(!list||!list.length) return; const vh=$('#view'
 // Nur bei echtem Seitenwechsel nach oben – bleibt man auf derselben Seite (nur Aktualisieren), bleibt die Position
 const pageKey=()=>[UI.view,UI.pid||'',UI.view==='stamm'?UI.stTab:'',UI.view==='fin'?UI.fiTab:'',UI.view==='sales'?UI.vkTab:'',UI.view==='files'?UI.fkind:'',UI.view==='hr'?UI.hrTab:''].join('|');
 var PAGE_KEY='';
-function go(view,pid){ UI.view=view; if(pid!==undefined) UI.pid=pid; saveUI(); const was=PAGE_KEY; render(); PAGE_KEY=pageKey(); if(was!==PAGE_KEY) window.scrollTo(0,0); }
+function go(view,pid){ UI.view=view; if(pid!==undefined) UI.pid=pid; saveUI(); const was=PAGE_KEY; render(); PAGE_KEY=pageKey(); if(was!==PAGE_KEY){ window.scrollTo(0,0); if(typeof fxPageIn==='function') fxPageIn(); } }
 
 /* ========== Abgeleitete Daten ========== */
 // Eingeschränkte Projekte: sichtbar nur für die Person, die die Sichtbarkeit eingeschränkt hat (privBy, sonst Ersteller) und – bei „ausgewählte“ – für freigegebene Mitarbeiter (share). Altes internp wird beim Laden umgestellt.
