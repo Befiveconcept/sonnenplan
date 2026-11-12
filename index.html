@@ -97,7 +97,7 @@ a{color:var(--primary)}
 .pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.sun{background:var(--sun-soft);color:var(--warn)} .pill.pri{background:var(--sunken);color:var(--primary)}
 .type{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--tc)}
 .type::before{content:"";width:9px;height:9px;border-radius:2px;background:var(--tc)}
-.t-ffa{--tc:var(--t-ffa)} .t-dach{--tc:var(--t-dach)} .t-bess{--tc:var(--t-bess)} .t-lade{--tc:var(--t-lade)} .t-sonst{--tc:var(--muted)}
+.t-ffa{--tc:var(--t-ffa)} .t-dach{--tc:var(--t-dach)} .t-bess{--tc:var(--t-bess)} .t-lade{--tc:var(--t-lade)} .t-sonst{--tc:var(--muted)} .t-intern{--tc:#C9A400}
 .mstrip{display:grid;grid-template-columns:repeat(var(--n,29),1fr);gap:1px;min-width:120px}
 .mstrip i{height:7px;background:var(--sunken)} .mstrip i:first-child{border-radius:2px 0 0 2px} .mstrip i:last-child{border-radius:0 2px 2px 0}
 .mstrip i.d{background:var(--ok)} .mstrip i.c{background:var(--sun)} .mstrip i.gap{margin-left:3px}
@@ -1636,7 +1636,20 @@ button.link-ms:hover{color:var(--ink)}
 .ag-it .bar{align-self:stretch;border-radius:2px;background:var(--kc,var(--muted))}
 .ag-it .tt{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ag-it .mt{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* Terminfarben: Rot = abwesend (Krankheit, Urlaub, Lehrgang), Grau = Kundentermin und Baustelle, Gelb = alles andere */ .k-abw,.k-urlaub,.k-krank,.k-lehrgang{--kc:#D32F2F} .k-kunde,.k-bau,.k-proj{--kc:#8A8F98} .k-evu,.k-lief,.k-ausw,.k-teams,.k-intern,.k-sonst,.k-todo{--kc:#F4DB02} .k-ho{--kc:#8E44CC}
+/* Terminfarben: Rot = abwesend, Blau = Termine mit Kunden/EVU/auswärts, Orange = Baustelle & Team, Grün = Projekt-Meilensteine, Türkis = Lieferungen, Gelb = To-Do-Fristen, Grau = intern/sonstiges, Lila = Homeoffice */ .k-abw,.k-urlaub,.k-krank,.k-lehrgang{--kc:#D32F2F} .k-kunde,.k-evu,.k-ausw,.k-termin{--kc:#1E73BE} .k-bau{--kc:#E67E00} .k-proj{--kc:#2E7D32} .k-lief{--kc:#00897B} .k-todo{--kc:#F4DB02} .k-teams,.k-intern,.k-sonst{--kc:#8A8F98} .k-ho{--kc:#8E44CC}
+.cal-f{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin:2px 0 8px}
+.cal-f .chips{margin:0}
+.cal-f .cal-k i{display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--kc);margin-right:6px;vertical-align:-1px}
+.cal-f .cal-k.off{opacity:.5;text-decoration:line-through}
+.cal-f .cal-k.off i{background:transparent;box-shadow:inset 0 0 0 2px var(--kc)}
+.cal-f .cal-who{width:auto;min-width:170px;padding:5px 8px;font-size:13px}
+.cal-f .cal-tip{margin-left:auto;cursor:help}
+.cal .ev .tm{font-weight:700;margin-right:3px;font-variant-numeric:tabular-nums}
+.cal .ev.cont{margin-left:-6px;border-left:0;border-top-left-radius:0;border-bottom-left-radius:0;padding-left:7px}
+.cal .ev.mspan{margin-right:-6px;border-top-right-radius:0;border-bottom-right-radius:0}
+.cal .dc .dn{height:18px;line-height:18px;flex:none}
+.cal .more{font-size:11px;font-weight:600;color:var(--muted)}
+.ag-tm{font-weight:700;font-variant-numeric:tabular-nums}
 /* Termine farbig hinterlegt (nach Art), damit man Urlaub, Krankheit, Teams usw. auf einen Blick unterscheidet */
 .cal .ev[class*="k-"],.team .en[class*="k-"],.day-it .en[class*="k-"],.dev[class*="k-"]{background:color-mix(in srgb,var(--kc) 17%,var(--surface))}
 .dev[class*="k-"]{background:color-mix(in srgb,var(--kc,transparent) 11%,var(--surface))}
@@ -2066,7 +2079,7 @@ const TPL = {
 const FOLDERS = [['00','Checklisten & Vorlagen'],['01','Aufmaß, Pläne & Bilder'],['02','Planung, PV Sol & Berichte'],['03','Kostenplanung'],['04','ERP: Angebote & Rechnungen'],['05','Lieferanten'],['06','Baumappe & Bilder'],['07','EVU, ASA, IBN'],['08','Abnahme & Dokumentation']];
 const DOKU_GR = ['01 Inhaltsverzeichnis','05 Datenblatt / Bedienungsanleitung WR','06 Datenblatt / Bedienungsanleitung Logger','07 Datenblatt / Montageanleitung Unterkonstruktion','08 Datenblatt / Bedienungsanleitung NA-Schutz','10 Abnahmeprotokoll'];
 
-const TYPES = {ffa:'Freifläche',dach:'Dachanlage',bess:'Batteriespeicher',lade:'Ladepark',sonst:'Service / Sonstiges'};
+const TYPES = {ffa:'Freifläche',dach:'Dachanlage',bess:'Batteriespeicher',lade:'Ladepark',sonst:'Service / Sonstiges',intern:'Internes Projekt'};
 // Projektkategorien und Statusschritte wie in der „Status-Liste“ (Spalten L–AQ)
 const CATS = {planung:'In Planung',laufend:'Laufend',onhold:'Onhold',erledigt:'Erledigt',abgesagt:'Abgesagt'};
 const CAT_CLS = {planung:'pri',laufend:'sun',onhold:'warn',erledigt:'ok',abgesagt:'bad'};
@@ -2098,7 +2111,7 @@ const FLOWS = {
   technik:{n:'Technik (Fernwirkanlage, EZA-Regler, Zählerschrank, Umbau)',opt:[],st:[['Klärung & Angebot',[36,37,3]],['Auftrag & Material',[7,13]],['Umsetzung',[38,39]],['Nachweis & Abnahme',[40,41,26]],['Abrechnung',[24,25]]]},
   service:{n:'Service / Wartung / Störung',opt:[],st:[['Auftrag',[49,50]],['Einsatz',[51,52]],['Abrechnung',[53,54]]]}
 };
-const FLOW_DEF = {ffa:'ffa',dach:'efh',bess:'speicher',lade:'lade',sonst:'efh'};
+const FLOW_DEF = {ffa:'ffa',dach:'efh',bess:'speicher',lade:'lade',sonst:'efh',intern:'service'};
 // früheres „PV Großprojekt“ ist aufgeteilt: Freifläche → ffa, sonst Gewerbe-Dach
 const flowId = p=>{ const f=p.flow==='gross'?(p.type==='ffa'?'ffa':'gdach'):p.flow; return FLOWS[f]?f:(FLOW_DEF[p.type]||'efh'); };
 const flowOf = p=>FLOWS[flowId(p)];
@@ -3085,13 +3098,13 @@ const calSplit=x=>x.whos&&x.whos.length>1?x.whos.map(w=>({...x,who:w})):[x];
 const isHoTxt=t=>/^\s*(home[\s-]?office|ho)\b/i.test(String(t||''));
 function calItems(from,to){
   const out=[];
-  arr('events').forEach(e=>{ if(!e.date) return; const multi=!!(e.end&&e.end>e.date), whos=evWhos(e); eachDay(e.date,e.end,from,to,(d,first,last)=>out.push({d,k:isHoTxt(e.title)&&!['abw','urlaub','krank','lehrgang'].includes(e.kind)?'ho':e.kind||'intern',t:e.title,m:[e.time,projName(e.pid),whos.join(', '),e.km!=null?String(e.km).replace('.',',')+' km':'',multi?'bis '+fmtD(e.end):''].filter(Boolean).join(' · '),act:'editEvent',id:e.id,who:e.who,whos,ref:'event:'+e.id,first,last,multi,rz:true})); });
+  arr('events').forEach(e=>{ if(!e.date) return; const multi=!!(e.end&&e.end>e.date), whos=evWhos(e); eachDay(e.date,e.end,from,to,(d,first,last)=>out.push({d,k:isHoTxt(e.title)&&!['abw','urlaub','krank','lehrgang'].includes(e.kind)?'ho':e.kind||'intern',t:e.title,m:[e.time,projName(e.pid),whos.join(', '),e.km!=null?String(e.km).replace('.',',')+' km':'',multi?'bis '+fmtD(e.end):''].filter(Boolean).join(' · '),act:'editEvent',id:e.id,who:e.who,whos,ref:'event:'+e.id,first,last,multi,rz:true,st:e.date,tm:first&&/^\d{1,2}:\d{2}/.test(e.time||'')?String(e.time).slice(0,5):''})); });
   arr('orders').forEach(o=>{ const st=orderState(o); if(o.delivery&&o.delivery>=from&&o.delivery<=to&&st.open) out.push({d:o.delivery,k:'lief',t:'Lieferung: '+(o.supplier||'Lieferant'),m:[projName(o.pid),(o.items||[]).length+' Pos.'].filter(Boolean).join(' · '),act:'receive',id:o.id,ref:'order:'+o.id,first:true,last:true}); });
   arr('tasks').forEach(t=>{ if(!t.done&&t.due&&t.due>=from&&t.due<=to) out.push({d:t.due,k:'todo',t:t.title,m:[t.who,projName(t.pid)].filter(Boolean).join(' · '),act:'editTask',id:t.id,who:t.who,ref:'task:'+t.id,first:true,last:true}); });
   activeProjects().forEach(p=>{ if(p.start&&p.start>=from&&p.start<=to) out.push({d:p.start,k:'proj',t:'Baubeginn '+p.name,m:TYPES[p.type],act:'openProject',id:p.id,ref:'pstart:'+p.id,first:true,last:true});
     if(p.end&&p.end>=from&&p.end<=to) out.push({d:p.end,k:'proj',t:'Bau-Fertigstellung '+p.name,m:TYPES[p.type],act:'openProject',id:p.id,ref:'pend:'+p.id,first:true,last:true}); });
   arr('projects').forEach(p=>{ if(catOf(p)==='onhold'&&p.wvl&&p.wvl>=from&&p.wvl<=to) out.push({d:p.wvl,k:'proj',t:'Wiedervorlage (Onhold): '+p.name,m:'Projekt prüfen und ggf. wieder aktivieren',act:'openProject',id:p.id,ref:'wvl:'+p.id,first:true,last:true}); });
-  arr('plan').forEach(w=>(w.entries||[]).forEach((e,i)=>{ if(!e.d||(e.pid&&!projVisId(e.pid))) return; const multi=!!(e.end&&e.end>e.d), whos=evWhos(e); eachDay(e.d,e.end,from,to,(d,first,last)=>out.push({d,k:e.kind==='abw'?'abw':e.kind==='ho'||isHoTxt(e.t)?'ho':'bau',t:e.t,whos,m:[whos.join(', ')||'Teamplanung',e.km!=null?String(e.km).replace('.',',')+' km':'',multi?'bis '+fmtD(e.end):''].filter(Boolean).join(' · '),act:'editPlan',id:w.id+'|'+i,who:e.who,lbl:e.kind==='abw'?'Abwesend':e.kind==='ho'?'Homeoffice':'Team',ref:'plan:'+w.id+'|'+i,e,first,last,multi,rz:true})); }));
+  arr('plan').forEach(w=>(w.entries||[]).forEach((e,i)=>{ if(!e.d||(e.pid&&!projVisId(e.pid))) return; const multi=!!(e.end&&e.end>e.d), whos=evWhos(e); eachDay(e.d,e.end,from,to,(d,first,last)=>out.push({d,k:e.kind==='abw'?'abw':e.kind==='ho'||isHoTxt(e.t)?'ho':'bau',t:e.t,whos,m:[whos.join(', ')||'Teamplanung',e.km!=null?String(e.km).replace('.',',')+' km':'',multi?'bis '+fmtD(e.end):''].filter(Boolean).join(' · '),act:'editPlan',id:w.id+'|'+i,who:e.who,lbl:e.kind==='abw'?'Abwesend':e.kind==='ho'?'Homeoffice':'Team',ref:'plan:'+w.id+'|'+i,e,first,last,multi,rz:true,st:e.d,tm:first&&/^\d{1,2}:\d{2}/.test(e.time||'')?String(e.time).slice(0,5):''})); }));
   arr('hrabs').forEach(a=>{ if(!hrAbsLive(a)||!a.from) return; const see=a.who===ME||isAdmin(); eachDay(a.from,a.to||a.from,from,to,d=>{ if(!hrIsWork(a.who,d)) return; out.push({d,k:'abw',hr:1,t:(see?(HR_ABS[a.type]||['Abwesend'])[0]:'Abwesend')+(a.status==='beantragt'?' (beantragt)':''),m:shortWho(a.who),act:'hrAbsEdit',id:a.id,who:a.who,lbl:'Abwesend',first:true,last:true}); }); });
   return out.sort((a,b)=>a.d.localeCompare(b.d));
 }
@@ -3724,7 +3737,7 @@ function projAgenda(p,from,to){ const seen=new Set(); return calItems(from,to).f
 function agenda(items){
   let last='', h='';
   items.forEach(it=>{ if(it.d!==last){ h+=`<div class="ag-day">${fmtD(it.d)} · ${relDay(it.d)}</div>`; last=it.d; }
-    h+=`<div class="ag-it k-${it.k}" data-act="${it.act}" data-id="${it.id}"><span class="bar"></span><div style="min-width:0"><div class="tt">${esc(it.t)}</div><div class="mt">${esc(it.m||'')}</div></div><span class="pill">${it.lbl?it.lbl:it.k==='lief'?'Lieferung':it.k==='todo'?'Frist':it.k==='proj'?'Projekt':EV_KINDS[it.k]||''}</span></div>`; });
+    h+=`<div class="ag-it k-${it.k}" data-act="${it.act}" data-id="${it.id}"><span class="bar"></span><div style="min-width:0"><div class="tt">${it.tm?`<span class="ag-tm">${esc(it.tm)}</span> `:''}${esc(it.t)}</div><div class="mt">${esc(it.m||'')}</div></div><span class="pill">${it.lbl?it.lbl:it.k==='lief'?'Lieferung':it.k==='todo'?'Frist':it.k==='proj'?'Projekt':EV_KINDS[it.k]||''}</span></div>`; });
   return h? `<div class="ag">${h}</div>`:'';
 }
 // Updates direkt am To-Do: letztes Update sichtbar, alle per Klick aufklappbar
@@ -4275,20 +4288,36 @@ function addMatRows(rows){
   box.querySelectorAll('.lrow:not(.lhead)').forEach(r=>{ if(r.closest('template')) return; if(![...r.querySelectorAll('input:not([type=checkbox])')].some(i=>i.value)) r.remove(); });
   rows.forEach(m=>{ const r=tp.content.firstElementChild.cloneNode(true); r.querySelectorAll('[data-c]').forEach(i=>{ const v=m[i.dataset.c]; if(i.type==='checkbox') i.checked=!!v; else i.value=v??''; }); anchor.before(r); });
 }
+/* Kalender-Filter: Arten an/aus und eine Person; gemerkt pro Gerät */
+const CAL_CATS=[['termin','Termine','kunde'],['bau','Baustelle & Team','bau'],['abw','Abwesend','krank'],['ho','Homeoffice','ho'],['lief','Lieferungen','lief'],['todo','To-Do-Fristen','todo'],['proj','Projekt-Meilensteine','proj']];
+const calCat=k=>['abw','urlaub','krank','lehrgang'].includes(k)?'abw':['ho','bau','lief','todo','proj'].includes(k)?k:'termin';
+const calHid=()=>{ if(!UI.calHide){ try{ UI.calHide=JSON.parse(lsGet('sonnenplan-calhide')||'[]')||[]; }catch(e){ UI.calHide=[]; } if(UI.calWho==null) UI.calWho=lsGet('sonnenplan-calwho')||''; } return UI.calHide; };
+const calWhoOk=(x,w)=>{ if(!w) return true; const c=whoCanon(w), k=shortWho(w); return [...(x.whos||[]),x.who].some(n=>n&&(n===w||whoCanon(n)===c||shortWho(n)===k)); };
+const calFilt=items=>{ const h=calHid(); return items.filter(x=>!h.includes(calCat(x.k))&&calWhoOk(x,UI.calWho)).sort((a,b)=>a.d.localeCompare(b.d)||((b.multi?1:0)-(a.multi?1:0))||(a.multi&&b.multi?String(a.st||'').localeCompare(String(b.st||''))||String(a.ref||'').localeCompare(String(b.ref||'')):0)||String(a.tm||'99').localeCompare(String(b.tm||'99'))||String(a.t).localeCompare(String(b.t))); };
+const calKs=x=>[...new Set([...(x.whos||[]),x.who].filter(n=>n&&staff().some(s=>s.name===n||s.name===whoCanon(n))).map(shortWho))].slice(0,3);
+function calFilterBar(){ const h=calHid(), w=UI.calWho||'', ppl=staffUniq().map(s=>s.name);
+  return `<div class="cal-f"><div class="chips">${CAL_CATS.map(([k,l,c])=>`<button type="button" class="chip cal-k k-${c} ${h.includes(k)?'off':''}" data-act="calKind" data-v="${k}" aria-pressed="${!h.includes(k)}" title="${h.includes(k)?'einblenden':'ausblenden'}"><i aria-hidden="true"></i>${l}</button>`).join('')}</div>
+    <select class="inp cal-who" data-chg="calWho" aria-label="Nur Einträge einer Person zeigen"><option value="">Alle Personen</option>${ppl.map(n=>`<option value="${esc(n)}" ${n===w?'selected':''}>${esc(shortWho(n))} – ${esc(n.replace(/\s*\([^)]*\)\s*$/,''))}</option>`).join('')}</select>
+    ${h.length||w?`<button type="button" class="lnk small" data-act="calFReset">Filter zurücksetzen</button>`:''}
+    <span class="small muted cal-tip" title="Einträge auf einen anderen Tag ziehen; am rechten Rand ziehen zum Verlängern oder Verkürzen.">ⓘ Ziehen zum Verschieben</span></div>`; }
 function vCalendar(){
   const [y,m]=UI.calMonth.split('-').map(Number), first=new Date(y,m-1,1), startOff=(first.getDay()+6)%7;
-  const start=iso(new Date(y,m-1,1-startOff)), end=addDays(start,41), items=calItems(start,end), t=TODAY();
+  const start=iso(new Date(y,m-1,1-startOff)), end=addDays(start,41), items=calFilt(calItems(start,end)), t=TODAY(), MAXC=4;
   let cells='';
-  for(let i=0;i<42;i++){ const d=addDays(start,i), its=items.filter(x=>x.d===d), dd=new Date(d+'T12:00');
-    cells+=`<div class="dc ${dd.getMonth()!==m-1?'out':''} ${d===t?'today':''} ${d===UI.calSel?'sel':''}" data-act="calSel" data-d="${d}" data-drop-d="${d}"><span class="dn">${dd.getDate()}</span>${its.slice(0,3).map(x=>`<div class="ev k-${x.k} ${x.multi&&!x.first?'cont':''}" data-act="${x.act}" data-id="${x.id}" data-drag="${x.ref||''}" title="${esc(x.t+(x.m?' · '+x.m:''))}">${x.multi&&!x.first?'↳ ':''}${x.who&&staff().some(s=>s.name===x.who)?`<b>${esc(shortWho(x.who))}</b> `:''}${esc(x.t)}${x.rz&&x.last?'<span class="rz" aria-hidden="true"></span>':''}</div>`).join('')}${its.length>3?`<div class="small muted">+${its.length-3}</div>`:''}<div class="dots">${its.slice(0,5).map(x=>`<i class="k-${x.k}"></i>`).join('')}</div></div>`; }
-  const sel=calItems(UI.calSel,UI.calSel), up=calItems(t,addDays(t,21));
+  for(let i=0;i<42;i++){ const d=addDays(start,i), its=items.filter(x=>x.d===d), dd=new Date(d+'T12:00'), mon=i%7===0;
+    cells+=`<div class="dc ${dd.getMonth()!==m-1?'out':''} ${d===t?'today':''} ${d===UI.calSel?'sel':''}" data-act="calSel" data-d="${d}" data-drop-d="${d}"><span class="dn">${dd.getDate()}</span>${its.slice(0,MAXC).map(x=>{ const cont=x.multi&&!x.first, showT=!cont||mon, ks=calKs(x);
+      return `<div class="ev k-${x.k} ${cont?'cont':''} ${x.multi&&!x.last?'mspan':''}" data-act="${x.act}" data-id="${x.id}" data-drag="${x.ref||''}" title="${esc((x.tm?x.tm+' ':'')+x.t+(x.m?' · '+x.m:''))}">${showT?`${x.tm?`<span class="tm">${esc(x.tm)}</span>`:''}${ks.length?`<b>${esc(ks.join(' '))}</b> `:''}${esc(x.t)}`:'&nbsp;'}${x.rz&&x.last?'<span class="rz" aria-hidden="true"></span>':''}</div>`; }).join('')}${its.length>MAXC?`<div class="more">+${its.length-MAXC} weitere</div>`:''}<div class="dots">${its.slice(0,5).map(x=>`<i class="k-${x.k}"></i>`).join('')}</div></div>`; }
+  const sel=calFilt(calItems(UI.calSel,UI.calSel)), up=calFilt(calItems(t,addDays(t,21))).filter(x=>!x.multi||x.first||x.d===t);
   return head(MON[m-1]+' '+y,'Kalender',`<button class="icon-btn" data-act="calNav" data-v="-1" aria-label="Vormonat">${ic('left')}</button><button class="btn sm" data-act="calNav" data-v="0">Heute</button><button class="icon-btn" data-act="calNav" data-v="1" aria-label="Folgemonat">${ic('right')}</button>`)+
-  calModeChips()+`<div class="legend"><span class="k-krank">Krankheit / Urlaub / Lehrgang</span><span class="k-kunde">Kundentermin / Baustelle</span><span class="k-ho">Homeoffice</span><span class="k-sonst">Sonstiges</span></div>
-  <div class="small muted">Einträge auf einen anderen Tag ziehen; am rechten Rand ziehen zum Verlängern oder Verkürzen.</div>
+  calModeChips()+calFilterBar()+`
   <div class="card" style="overflow:hidden"><div class="cal">${['Mo','Di','Mi','Do','Fr','Sa','So'].map(d=>`<div class="dh">${d}</div>`).join('')}${cells}</div></div>
   <div class="grid2"><div class="card"><div class="card-h"><h3>${fmtDL(UI.calSel)}</h3><button class="btn sm" data-act="newEvent" data-date="${UI.calSel}">${ic('plus')}Termin</button></div><div class="card-b">${agenda(sel)||'<div class="empty">Nichts geplant.</div>'}</div></div>
-  <div class="card"><div class="card-h"><h3>Nächste 3 Wochen</h3></div><div class="card-b">${agenda(up)||'<div class="empty">Keine Einträge.</div>'}</div></div></div>`;
+  <div class="card"><div class="card-h"><h3>Nächste 3 Wochen</h3><span class="small muted">mehrtägige Einträge nur einmal</span></div><div class="card-b">${agenda(up)||'<div class="empty">Keine Einträge.</div>'}</div></div></div>`;
 }
+queueMicrotask(()=>{ Object.assign(A,{
+  calKind:d=>{ const h=calHid().slice(), i=h.indexOf(d.v); if(i>=0) h.splice(i,1); else h.push(d.v); UI.calHide=h; lsSet('sonnenplan-calhide',JSON.stringify(h)); render(); },
+  calFReset:()=>{ UI.calHide=[]; UI.calWho=''; lsSet('sonnenplan-calhide','[]'); lsSet('sonnenplan-calwho',''); render(); } });
+  Object.assign(CHG,{ calWho:(d,el)=>{ calHid(); UI.calWho=el.value; lsSet('sonnenplan-calwho',el.value); render(); } }); });
 
 /* ========== Bestellungen & Wareneingang ========== */
 function ordersTable(os){
