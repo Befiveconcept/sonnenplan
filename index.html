@@ -2976,7 +2976,8 @@ async function carStart(){ const ss=window.speechSynthesis; if(!ss) return toast
 function carClose(){ if(!CAR.on) return; briefStop(); CAR.on=false; CAR.msg=''; CAR.err=''; CAR.sig=''; CAR.started=false; if(CAR.aud) CAR.aud.pause(); carSession(false); try{ if(CAR.lock) CAR.lock.release(); }catch(e){} CAR.lock=null; const o=$('#carBox'); if(o) o.remove(); }
 // Zurück in die App (z. B. nach Bildschirm-Aus): Bildschirm wieder wachhalten und abgerissenes Vorlesen fortsetzen
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState!=='visible'||!CAR.on) return; carWake(); if(BRIEF_Q.st==='play'&&!speechSynthesis.speaking){ carAudioPlay(); briefSpeakNext(); } });
-const briefDashStrip=()=>briefOn()&&window.speechSynthesis?`<div class="brief-strip"><span>☀️ <b>Morgen-Briefing</b></span><button type="button" class="btn ghost sm" data-act="briefShow">Lesen</button><button type="button" class="btn sun sm" data-act="carStart">🚗 Im Auto hören</button></div>`:'';
+// Leiste auf der Startseite entfernt (Wunsch EP, 12.11.2026): Das Briefing öffnet man über „☀️ Morgen-Briefing“ im schwarzen Begrüßungsfeld; „Im Auto hören“ steht im Briefing selbst.
+const briefDashStrip=()=>'';
 queueMicrotask(()=>Object.assign(A,{ carStart:()=>{ carStart(); }, carClose:()=>carClose(), carTest:()=>{ carTest(); }, briefBack:()=>briefSkip(-1), briefFwd:()=>briefSkip(1) }));
 function briefStop(){ const q=BRIEF_Q; q.st='stop'; q.i=0; q.tok=(q.tok||0)+1; BRIEF_SPK=false; if(window.speechSynthesis) speechSynthesis.cancel(); briefSpkUi(); }
 const briefSpkBtn=briefSpkUi;
