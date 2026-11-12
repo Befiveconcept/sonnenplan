@@ -1763,6 +1763,68 @@ button.link-ms:hover{color:var(--ink)}
 [data-theme="future"] .side{border-right-color:rgba(244,219,2,.25)}
 [data-theme="future"] .li{transition:background .2s}
 [data-theme="future"] .pill.bad,[data-theme="future"] .overdue{text-shadow:0 0 10px rgba(255,107,91,.45)}
+/* --- Future: Symbolleiste links (schmal, klappt beim Überfahren als Glas-Panel mit Beschriftung auf) --- */
+@media (min-width:901px){
+[data-theme="future"] .app{grid-template-columns:64px minmax(0,1fr)}
+[data-theme="future"] .side{width:64px;padding:12px 8px;gap:2px;overflow-x:hidden;z-index:45;transition:width .28s cubic-bezier(.2,.8,.2,1),box-shadow .28s,background .28s;scrollbar-width:none}
+[data-theme="future"] .side::-webkit-scrollbar{display:none}
+[data-theme="future"] .side:hover,[data-theme="future"] .side:has(:focus-visible){width:276px;background:linear-gradient(180deg,rgba(10,13,18,.975),rgba(4,5,7,.985));-webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%);box-shadow:1px 0 0 rgba(244,219,2,.35),20px 0 60px rgba(0,0,0,.6),0 0 40px rgba(244,219,2,.08)}
+/* Logo: im schmalen Zustand nur die Sonne */
+[data-theme="future"] .brand{padding:4px 0 12px;align-items:center;position:relative;min-height:40px}
+[data-theme="future"] .brand::before{content:"";width:30px;height:30px;border-radius:50%;flex:none;background:radial-gradient(circle,#FFF6A8 0 28%,#F4DB02 30% 46%,transparent 48%),conic-gradient(from 0deg,transparent 0 10deg,rgba(244,219,2,.7) 10deg 20deg,transparent 20deg 40deg,rgba(244,219,2,.7) 40deg 50deg,transparent 50deg 70deg,rgba(244,219,2,.7) 70deg 80deg,transparent 80deg 100deg,rgba(244,219,2,.7) 100deg 110deg,transparent 110deg 130deg,rgba(244,219,2,.7) 130deg 140deg,transparent 140deg 160deg,rgba(244,219,2,.7) 160deg 170deg,transparent 170deg 190deg,rgba(244,219,2,.7) 190deg 200deg,transparent 200deg 220deg,rgba(244,219,2,.7) 220deg 230deg,transparent 230deg 250deg,rgba(244,219,2,.7) 250deg 260deg,transparent 260deg 280deg,rgba(244,219,2,.7) 280deg 290deg,transparent 290deg 310deg,rgba(244,219,2,.7) 310deg 320deg,transparent 320deg 340deg,rgba(244,219,2,.7) 340deg 350deg,transparent 350deg);filter:drop-shadow(0 0 8px rgba(244,219,2,.7));animation:snSpin 30s linear infinite}
+[data-theme="future"] .brand .wordmark,[data-theme="future"] .brand small{position:absolute;left:44px;top:8px;opacity:0;transition:opacity .2s;white-space:nowrap}
+[data-theme="future"] .brand small{top:26px}
+[data-theme="future"] .side:hover .brand,[data-theme="future"] .side:has(:focus-visible) .brand{align-items:flex-start;padding-left:6px}
+[data-theme="future"] .side:hover .brand .wordmark,[data-theme="future"] .side:hover .brand small,[data-theme="future"] .side:has(:focus-visible) .brand .wordmark{opacity:1}
+/* Gruppen: statt Überschrift eine feine Leuchtlinie; beim Aufklappen kleine Überschrift */
+[data-theme="future"] .nav-grp{margin-top:6px;padding-top:6px;border-top:1px solid transparent;border-image:linear-gradient(90deg,transparent,rgba(244,219,2,.35),transparent) 1}
+[data-theme="future"] .nav-gh{height:0;padding:0 10px;margin:0;overflow:hidden;opacity:0;background:none;border:0;font-family:var(--f-mono);font-size:10px;letter-spacing:.16em;color:#FFE84D!important;pointer-events:none;transition:height .25s,opacity .2s,padding .25s}
+[data-theme="future"] .nav-gh .nav-gc,[data-theme="future"] .nav-gh .cnt{display:none}
+[data-theme="future"] .side:hover .nav-gh,[data-theme="future"] .side:has(:focus-visible) .nav-gh{height:22px;padding:4px 10px;opacity:.85}
+/* Einträge: nur Symbol, Text erscheint beim Aufklappen */
+[data-theme="future"] .nav-btn{padding:9px 0 9px 13px;gap:14px;border-radius:12px;white-space:nowrap;position:relative}
+[data-theme="future"] .nav-btn svg{width:20px;height:20px}
+[data-theme="future"] .nav-btn>span:not(.cnt):not(.rec-lamp){opacity:0;transition:opacity .2s}
+[data-theme="future"] .side:hover .nav-btn>span,[data-theme="future"] .side:has(:focus-visible) .nav-btn>span{opacity:1}
+[data-theme="future"] .nav-grp.open .nav-row .nav-btn,[data-theme="future"] .nav-grp.open>.nav-btn.sub{margin-left:0}
+[data-theme="future"] .nav-btn .cnt{position:absolute;left:28px;top:3px;min-width:16px;height:16px;padding:0 4px;font-size:10px;line-height:16px;text-align:center;border-radius:8px;background:#F4DB02;color:#111;box-shadow:0 0 10px rgba(244,219,2,.7)}
+[data-theme="future"] .nav-btn.on .cnt{background:#111;color:#FFE84D}
+[data-theme="future"] .side:hover .nav-btn .cnt,[data-theme="future"] .side:has(:focus-visible) .nav-btn .cnt{position:static;margin-left:auto;margin-right:8px}
+[data-theme="future"] .nav-pin,[data-theme="future"] .nav-tg{display:none}
+[data-theme="future"] .side:hover .nav-pin,[data-theme="future"] .side:hover .nav-tg{display:inline-block}
+[data-theme="future"] .nav-row.sub{display:none}
+[data-theme="future"] .side:hover .nav-row.sub{display:flex}
+[data-theme="future"] .nav-pins{padding:2px;margin:4px 0;border-radius:12px}
+[data-theme="future"] .nav-pins-h{display:none}
+[data-theme="future"] .side:hover .nav-pins-h{display:block}
+/* Aktiver Eintrag: Leuchtbalken links */
+[data-theme="future"] .nav-btn.on::before{content:"";position:absolute;left:-8px;top:8px;bottom:8px;width:3px;border-radius:3px;background:#FFE84D;box-shadow:0 0 12px #F4DB02}
+/* Profil unten: nur Kürzel-Kreis */
+[data-theme="future"] .side-me{margin:auto -8px -12px;padding:8px 8px 12px;background:#05070A;border-top-color:rgba(244,219,2,.18)}
+[data-theme="future"] .side-me .foot{display:none}
+[data-theme="future"] .side-me .me-btn{font-size:0;padding:6px;justify-content:flex-start;white-space:nowrap;overflow:hidden}
+[data-theme="future"] .side-me .me-btn .who-chip{font-size:11px}
+[data-theme="future"] .side:hover .side-me .me-btn{font-size:13px}
+[data-theme="future"] .side:hover .side-me .foot{display:block}
+}
+/* --- Future: alles etwas kompakter --- */
+[data-theme="future"] body{font-size:13.5px}
+[data-theme="future"] .main{padding-block:14px 28px}
+[data-theme="future"] .wrap{gap:12px;max-width:1360px}
+[data-theme="future"] h1{font-size:25px}[data-theme="future"] h2{font-size:18px}[data-theme="future"] h3{font-size:15px}
+[data-theme="future"] .card-h{padding-top:10px;padding-bottom:8px}
+[data-theme="future"] .btn{padding:5px 12px;font-size:13px}
+[data-theme="future"] .btn.sm{padding:3px 10px;font-size:12px}
+[data-theme="future"] .chip{padding:3px 10px;font-size:12.5px}
+[data-theme="future"] .li{padding:8px 13px;gap:10px}
+[data-theme="future"] .tbl th{padding:6px 8px}[data-theme="future"] .tbl td{padding:6px 8px}
+[data-theme="future"] .kpi{padding:10px 12px}[data-theme="future"] .kpi .v{font-size:25px}
+[data-theme="future"] .hero-in{padding:18px 22px;gap:12px 20px}
+[data-theme="future"] .hk{padding:9px 10px 8px;border-radius:12px}
+[data-theme="future"] .search{padding:5px 12px}
+[data-theme="future"] .inp{padding-top:6px;padding-bottom:6px}
+[data-theme="future"] .pin{padding:13px 12px 8px}
+[data-theme="future"] .sheet{border-radius:16px}
 /* --- Future, Stufe 2: noch krasser --- */
 /* Polarlicht: wabernde Lichtschleier hinter allem */
 .fx-aurora,.fx-stars,.fx-scan{display:none}
@@ -3562,7 +3624,7 @@ var NAV_CUR='dash';
 function navSide(cur,cnt){ NAV_CUR=cur; const pins=navPins();
   const pinHtml=pins.length?`<div class="nav-pins"><div class="nav-pins-h">☀ Angeheftet</div>${pins.map(v=>{ const n=NAV.find(x=>x[0]===v); return `<div class="nav-row"><button class="nav-btn ${cur===v?'on':''}" data-act="nav" data-v="${v}">${ic(n[2])}<span>${esc(navLabel(v))}</span>${recLamp(v)}${cnt[v]?`<span class="cnt">${cnt[v]}</span>`:''}</button><button class="nav-pin on" data-act="navPin" data-v="${v}" title="Lösen" aria-label="Lösen">☀</button></div>`; }).join('')}</div>`:'';
   return navGroups().map(([g,l,items])=>{ const html=items.map(n=>navItem(n,cur,cnt)).join(''); if(!g) return html+pinHtml;
-  const open=navGrpOpen(g,items,cur), c=items.reduce((a,n)=>a+(+cnt[n[0]]||0),0);
+  const open=navGrpOpen(g,items,cur)||document.documentElement.getAttribute('data-theme')==='future', c=items.reduce((a,n)=>a+(+cnt[n[0]]||0),0); /* Future: Symbolleiste zeigt alle Bereiche */
   return `<div class="nav-grp ${open?'open':''}"><button class="nav-gh" data-act="navGrp" data-g="${g}" aria-expanded="${open?'true':'false'}"><span>${l}</span>${!open&&items.some(n=>n[0]==='meetings')?recLamp('meetings'):''}${!open&&c?`<span class="cnt">${c}</span>`:''}<span class="nav-gc" aria-hidden="true">▾</span></button>${open?html:''}</div>`; }).join(''); }function renderShell(){  const openTodos=arr('tasks').filter(t=>!t.done&&!(t.pool&&!t.who)).length, openOrders=arr('orders').filter(o=>orderState(o).open).length;
   const cnt={projects:activeProjects().length,todos:openTodos,orders:ordApprover()?ordPending().length||openOrders:openOrders,chat:chatUnreadAll(),private:Object.values(S.priv||{}).filter(t=>!t.done).length,pool:arr('tasks').filter(t=>t.pool&&!t.done&&!t.who).length};
   const cur = UI.view==='sales'?'vk:'+(UI.vkTab||'rechnung'):UI.view==='fin'?'fi:'+(UI.fiTab||'bank'):UI.view==='stamm'?'st:'+(UI.stTab||'kunden'):UI.view==='project'?'projects':UI.view==='calendar'?'week':UI.view==='files'&&UI.fkind?'f:'+UI.fkind:UI.view==='offers'?'f:angebot':UI.view==='reports'?'f:rapport':UI.view;
