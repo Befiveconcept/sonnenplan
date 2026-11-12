@@ -18,7 +18,8 @@
 <title>Sonnenplan Projektsteuerung</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<!-- Schriften NICHT blockierend laden: Ein Stylesheet vor den Skripten hält sonst den ganzen App-Start an, solange Google Fonts nicht antwortet -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'">
 <style>
 /* Layout: schwarze Seitenleiste (Desktop) bzw. Tab-Leiste unten (Handy); Gestaltung nach nutz-die-sonne.de: Schwarz + Sonnengelb, Work Sans + Inter */
 :root{
@@ -1649,6 +1650,8 @@ button.link-ms:hover{color:var(--ink)}
 .cal .ev.mspan{margin-right:-6px;border-top-right-radius:0;border-bottom-right-radius:0}
 .cal .dc .dn{height:18px;line-height:18px;flex:none}
 /* Artikel-Kategorien (Baum) */
+.st-load,.st-err{margin:0 0 10px;gap:10px;align-items:center}
+.st-load .aic-dots{display:inline-flex}
 .ac-wrap{display:grid;grid-template-columns:250px minmax(0,1fr);gap:12px;align-items:start}
 .ac-side{position:sticky;top:12px;max-height:calc(100vh - 40px);overflow:auto;padding:6px 4px}
 .ac-nav .ac-n,.ac-m{display:flex;align-items:center;gap:4px;border-radius:6px;min-height:30px}
@@ -1908,7 +1911,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 <input type="file" id="fdIn" multiple hidden>
 <div id="sunLoader" class="on" aria-hidden="true"><svg viewBox="0 0 100 100"><g fill="#F4DB02"><circle cx="50" cy="50" r="19"/><g stroke="#F4DB02" stroke-width="6" stroke-linecap="round"><line x1="50" y1="6" x2="50" y2="20"/><line x1="50" y1="80" x2="50" y2="94"/><line x1="6" y1="50" x2="20" y2="50"/><line x1="80" y1="50" x2="94" y2="50"/><line x1="18.9" y1="18.9" x2="28.8" y2="28.8"/><line x1="71.2" y1="71.2" x2="81.1" y2="81.1"/><line x1="18.9" y1="81.1" x2="28.8" y2="71.2"/><line x1="71.2" y1="28.8" x2="81.1" y2="18.9"/></g></g></svg></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <script>
 /* Sonnenplan · eigenständige Version: Supabase statt claude.ai
    Stellt dieselbe Schnittstelle bereit, die die App auf claude.ai nutzt (window.claude.use: db, user, assets, sample),
@@ -1920,9 +1923,23 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
   const BUCKET = 'files';
   const AI_FN  = 'hyper-handler';       // Name der KI-Funktion in Supabase (Edge Functions)
 
-  const sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
-  window.SB = sb;
+  /* Ladezeiten nachvollziehbar machen (nur Dauer und Anzahl, keine Daten, keine Zugangsschlüssel) */
+  const T0 = performance.now(); const tlog = (what, extra) => { try{ console.info('[Sonnenplan] ' + what + ' nach ' + Math.round(performance.now() - T0) + ' ms' + (extra ? ' · ' + extra : '')); }catch(e){} };
+  window.SP_TLOG = tlog;
+  /* Supabase-Bibliothek NICHT mehr blockierend laden: Ein hängendes CDN hielt sonst den ganzen Seitenaufbau an
+     (DOMContentLoaded erst nach Minuten). Jetzt im Hintergrund, mit Zeitlimit und zweitem CDN als Ersatz. */
+  const LIBS = ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js', 'https://fastly.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js', 'https://unpkg.com/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js'];
+  function loadLib(){ return new Promise((res, rej) => { let i = 0;
+    const next = () => { if (window.supabase && window.supabase.createClient) return res(); if (i >= LIBS.length) return rej(new Error('lib'));
+      const src = LIBS[i++], s = document.createElement('script'); let done = false; s.src = src; s.async = true;
+      const t = setTimeout(() => { if (done) return; done = true; tlog('Supabase-Bibliothek antwortet nicht, versuche Ersatz', new URL(src).host); next(); }, 8000);
+      s.onload = () => { if (done) { if (window.supabase) res(); return; } done = true; clearTimeout(t); res(); };
+      s.onerror = () => { if (done) return; done = true; clearTimeout(t); tlog('Supabase-Bibliothek nicht ladbar', new URL(src).host); next(); };
+      (document.head || document.documentElement).appendChild(s); };
+    next(); }); }
+  let sb = null;
   let session = null, readyResolve; const ready = new Promise(r => readyResolve = r);
+  const markReady = () => { tlog('Sitzung bereit'); readyResolve(); };
 
   /* ---------- Anmeldung ---------- */
   // Feste helle Farben (auch im Dunkelmodus von Handy/Browser/App gut lesbar)
@@ -1955,12 +1972,20 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
       if(error) msg(/invalid/i.test(error.message)?'E-Mail oder Passwort falsch.':error.message); };
     setTimeout(()=>{ const i=el.querySelector('input'); if(i) i.focus(); },50);
   }
-  sb.auth.onAuthStateChange((ev,s)=>{
-    if(ev==='PASSWORD_RECOVERY'){ session=s; loginScreen('newpw'); return; }
-    if(s&&!session){ session=s; const el=document.getElementById('sbLogin'); if(el&&!/type=recovery/.test(location.hash)) el.remove(); readyResolve(); }
-    if(!s&&session){ location.reload(); }
-  });
-  sb.auth.getSession().then(({data})=>{ if(data.session){ session=data.session; readyResolve(); } else if(document.body) loginScreen(); else document.addEventListener('DOMContentLoaded',()=>{ if(!session) loginScreen(); }); });
+  function libFail(){ const show=()=>{ let el=document.getElementById('sbLogin'); if(!el){ const st=document.createElement('style'); st.textContent=css; document.head.appendChild(st); el=document.createElement('div'); el.id='sbLogin'; document.body.appendChild(el); }
+      el.innerHTML='<form><div class="wm"><span>NUTZ DIE</span> SONNE</div><div class="msg err">Die Verbindung zur Datenbank-Bibliothek konnte nicht hergestellt werden (Netzwerk oder Firewall).</div><button type="button" onclick="location.reload()">Erneut versuchen</button></form>'; };
+    if(document.body) show(); else document.addEventListener('DOMContentLoaded',show); }
+  function startAuth(){
+    sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+    window.SB = sb;
+    sb.auth.onAuthStateChange((ev,s)=>{
+      if(ev==='PASSWORD_RECOVERY'){ session=s; loginScreen('newpw'); return; }
+      if(s&&!session){ session=s; const el=document.getElementById('sbLogin'); if(el&&!/type=recovery/.test(location.hash)) el.remove(); markReady(); }
+      if(!s&&session){ location.reload(); }
+    });
+    sb.auth.getSession().then(({data})=>{ if(data.session){ if(!session){ session=data.session; markReady(); } } else if(document.body) loginScreen(); else document.addEventListener('DOMContentLoaded',()=>{ if(!session) loginScreen(); }); });
+  }
+  loadLib().then(()=>{ tlog('Supabase-Bibliothek geladen'); startAuth(); }).catch(()=>{ tlog('Supabase-Bibliothek fehlgeschlagen'); libFail(); });
   window.SB_LOGOUT = async()=>{ await sb.auth.signOut(); location.reload(); };
   // Live: wer ist gerade wo und tippt (Supabase Presence, nichts wird gespeichert)
   let pres=null, presCb=null, presState={};
@@ -1979,13 +2004,26 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
   const loaded = {};
   let lastSync='';                   // neuester updated_at, den dieses Gerät kennt (für das Nachholen)
   const seen = t => { if(t&&t>lastSync) lastSync=t; };
+  /* Eine Sammlung laden. Große Sammlungen (z. B. 4.300 Kunden): erste Seite mit Gesamtzahl, Rest parallel statt nacheinander.
+     Fehlschläge werden NICHT gemerkt – sonst blieb eine Sammlung nach einem einzigen Netzwerkfehler bis zum Neuladen leer („wird geladen …“). */
+  const PAGE = 1000, T_LOAD = 45000;
+  const withTimeout = (p, ms, what) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error('Zeitüberschreitung: ' + what), { code: 'timeout' })), ms))]);
   async function load(coll){
     if(loaded[coll]) return loaded[coll];
-    loaded[coll] = (async()=>{ const m=new Map(); let from=0;
-      for(;;){ const {data,error}=await sb.from('docs').select('id,data,updated_at').eq('coll',coll).range(from,from+999); if(error) throw error; data.forEach(r=>{ m.set(r.id,r.data); seen(r.updated_at); }); if(data.length<1000) break; from+=1000; }
-      cache[coll]=m; })();
+    const t1 = performance.now();
+    loaded[coll] = withTimeout((async()=>{ const m=new Map(); const add=data=>data.forEach(r=>{ m.set(r.id,r.data); seen(r.updated_at); });
+      const first=await sb.from('docs').select('id,data,updated_at',{count:'exact'}).eq('coll',coll).order('id').range(0,PAGE-1); if(first.error) throw first.error; add(first.data||[]);
+      const total=first.count==null?(first.data||[]).length:first.count;
+      if((first.data||[]).length>=PAGE&&total>PAGE){ const pages=[]; for(let from=PAGE; from<total; from+=PAGE) pages.push(from);
+        // höchstens 4 gleichzeitig
+        for(let i=0;i<pages.length;i+=4){ const res=await Promise.all(pages.slice(i,i+4).map(from=>sb.from('docs').select('id,data,updated_at').eq('coll',coll).order('id').range(from,from+PAGE-1))); for(const r of res){ if(r.error) throw r.error; add(r.data||[]); } }
+        // Falls in der Zwischenzeit etwas dazugekommen ist: weiterblättern, bis eine Seite nicht mehr voll ist
+        let from=Math.ceil(total/PAGE)*PAGE; for(;;){ const r=await sb.from('docs').select('id,data,updated_at').eq('coll',coll).order('id').range(from,from+PAGE-1); if(r.error) throw r.error; add(r.data||[]); if((r.data||[]).length<PAGE) break; from+=PAGE; } }
+      cache[coll]=m; if(m.size>=200||performance.now()-t1>2000) tlog('„'+coll+'“ geladen', m.size+' Einträge in '+Math.round(performance.now()-t1)+' ms'); })(), T_LOAD, coll)
+      .catch(e=>{ delete loaded[coll]; tlog('„'+coll+'“ konnte nicht geladen werden', (e&&e.code)||'Fehler'); throw e; });
     return loaded[coll];
   }
+  window.SP_RELOAD = coll => { delete loaded[coll]; return load(coll).then(()=>emit(coll)); };
   /* Live-Abgleich, drei Wege – damit Einträge anderer in unter einer Sekunde erscheinen:
      1) Broadcast: wer speichert, ruft „coll/id geändert“ in den Kanal; alle anderen holen genau diesen Datensatz (schnell, auch bei großen Einträgen)
      2) Datenbank-Änderungen (postgres_changes) wie bisher – große Datensätze werden dabei nachgeladen statt übernommen
@@ -2948,7 +2986,14 @@ const nfTeam=()=>new Set(staff().map(s=>nfK(shortWho(s.name))));
 const nfName=k=>{ const s=staff().find(x=>nfK(shortWho(x.name))===nfK(k)); return s?s.name.replace(/\s*\([^)]*\)$/,''):String(k||''); };
 const nfLocalAll=()=>{ try{ return JSON.parse(lsGet('sonnenplan-nf')||'{}')||{}; }catch(e){ return {}; } };
 // self: Erinnerungen an sich selbst; sonst bekommt niemand eine Mitteilung über die eigene Aktion
+/* Schon verschickte Mitteilungen pro Gerät merken (Kennung + Tag, max. 2.000, 60 Tage). Grund: Die Kennung ergibt sich aus dem Ereignis;
+   Erinnerungen („Heute fällig“) wurden bei JEDEM Start erneut angelegt und von der Datenbank korrekt als Duplikat abgelehnt (HTTP 409 / 23505).
+   Jetzt wird gar nicht erst neu gesendet. Der Datenbank-Schutz gegen doppelte Einträge bleibt unverändert. */
+const NF_SENT_KEY='sonnenplan-nf-sent';
+const nfSentDisk=(()=>{ try{ const o=JSON.parse(lsGet(NF_SENT_KEY)||'{}')||{}, lim=Date.now()-60*864e5; Object.keys(o).forEach(k=>{ if(!(o[k]>lim)) delete o[k]; }); return o; }catch(e){ return {}; } })();
+const nfSentAdd=id=>{ nfSentDisk[id]=Date.now(); const ks=Object.keys(nfSentDisk); if(ks.length>2000) ks.sort((a,b)=>nfSentDisk[a]-nfSentDisk[b]).slice(0,ks.length-2000).forEach(k=>delete nfSentDisk[k]); lsSet(NF_SENT_KEY,JSON.stringify(nfSentDisk)); };
 function nfSend(to,n,self){ const k=nfK(to); if(!k||!ME||(!self&&k===nfK(meK()))||!nfTeam().has(k)) return; const id='n'+strHash([n.type,n.c,n.rid,n.stamp,k].join('|')).slice(1); if(NF_SENT.has(id)) return; NF_SENT.add(id);
+  if(nfSentDisk[id]||(k===NF_KEY&&NF[id])) return; nfSentAdd(id);
   const doc={id,to:k,type:n.type,prio:n.prio||'info',title:n.title,text:String(n.text||'').slice(0,300),c:n.c,rid:n.rid,pid:n.pid||'',by:self?'':meK(),at:new Date().toISOString(),read:false};
   if(MODE==='cloud'&&DB){ const ref=DB.collection(nfColl(k)).doc(id); try{ (ref.insert?ref.insert(doc):ref.set(doc)).catch(()=>{}); }catch(e){} }
   else { const a=nfLocalAll(), c=nfColl(k); a[c]=a[c]||{}; if(!a[c][id]) a[c][id]=doc; lsSet('sonnenplan-nf',JSON.stringify(a)); if(k===NF_KEY) nfApply(a[c]); } }
@@ -3094,10 +3139,11 @@ async function initStore(){
   if(window.claude&&window.claude.use){ try{ db=await window.claude.use('db'); }catch(e){ db=null; } }
   if(!db){ MODE='local'; loadLocal(); scheduleRender(); busy(-1,'init'); return; }
   DB=db; MODE='cloud'; initCaps(); initMe();
-  COLLS.forEach(k=>{
-    db.collection(k).onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); }); liveDiff(k,S[k],o); S[k]=o; scheduleRender(); if(k==='projects'){ setTimeout(ensureIntern,1500); busy(-1,'init'); } },
-      err=>{ toast('Verbindung unterbrochen ('+err.code+'). Seite neu laden.'); });
-  });
+  // Fehlgeschlagene Sammlung bis zu 3× automatisch neu versuchen (2 s, 6 s, 15 s), statt bis zum Neuladen leer zu bleiben
+  const subColl=(k,n)=>{ let un=null; un=db.collection(k).onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); }); liveDiff(k,S[k],o); S[k]=o; scheduleRender(); if(k==='projects') setTimeout(ensureIntern,1500); if(k==='projects'&&!LIVE_READY.__p){ LIVE_READY.__p=1; busy(-1,'init'); window.SP_TLOG&&window.SP_TLOG('Projekte da, App bedienbar'); stLoadSoon(); } },
+      err=>{ console.warn('[Sonnenplan] „'+k+'“ nicht geladen:',(err&&err.code)||'Fehler'); try{ un&&un(); }catch(e){}
+        if(n<3) setTimeout(()=>subColl(k,n+1),[2000,6000,15000][n]); else toast('„'+k+'“ konnte nicht geladen werden ('+((err&&err.code)||'Fehler')+'). Bitte Seite neu laden.'); }); };
+  COLLS.forEach(k=>subColl(k,0));
   db.doc('config/main').onSnapshot(s=>{ S.config = s.exists? s.data() : {staff:[]}; applyTplConfig(); applyUserMap(); scheduleRender(); }, ()=>{});
   scheduleRender();
 }
@@ -9677,9 +9723,24 @@ const ST_DEF={
  artikel:{l:'Artikel',one:'Artikel',pre:'a-',icon:'stock',cols:[['nr','Nr.'],['name','Bezeichnung'],['cat','Kategorie'],['unit','Einheit'],['price','EK netto €'],['supplier','Hauptlieferant'],['_lager','Lager'],['_weg','unterwegs'],['_res','reserviert']],
    fields:[{k:'nr',label:'Artikel-Nr.'},{k:'name',label:'Bezeichnung',req:1,full:1},{k:'cat',label:'Kategorie',list:'stCatList'},{k:'unit',label:'Einheit',ph:'Stk, m, kWp …'},{k:'price',label:'Einkaufspreis netto (€)',type:'number',step:'any'},{k:'vk',label:'Verkaufspreis netto (€)',type:'number',step:'any'},{k:'supplier',label:'Hauptlieferant',list:'supplierList'},{k:'supNr',label:'Artikel-Nr. beim Lieferanten'},{k:'minQty',label:'Mindestbestand (Hinweis: nachbestellen)',type:'number',step:'any'},{k:'reQty',label:'Übliche Bestellmenge',type:'number',step:'any'},{k:'desc',label:'Beschreibung',type:'textarea',full:1},{k:'notes',label:'Notizen',type:'textarea',full:1}]}};
 var ST_ON=false; // var: wird schon beim ersten Zeichnen gelesen
-function stLoad(){ if(ST_ON) return; ST_ON=true; [...Object.keys(ST_DEF),'artcat'].forEach(k=>{ S[k]=S[k]||{}; });
-  if(MODE==='cloud'&&DB) [...Object.keys(ST_DEF),'artcat'].forEach(k=>DB.collection(k).onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); }); S[k]=o; stListsDirty=true; scheduleRender(); },()=>{})); }
-setTimeout(()=>{ if(MODE==='cloud') stLoad(); },8000); // Vorschlagslisten (Kunden/Lieferanten) im Hintergrund nachladen
+/* Ladezustand je Sammlung: 'laden' | 'ok' | 'fehler' (+ Zeitpunkt). Eine leere Liste gilt erst als „keine Einträge“, wenn das Laden geklappt hat. */
+var ST_STATE={}, ST_UNSUB={};
+const ST_COLLS=()=>[...Object.keys(ST_DEF),'artcat'];
+function stSub(k){ if(!(MODE==='cloud'&&DB)) return; try{ ST_UNSUB[k]&&ST_UNSUB[k](); }catch(e){} ST_STATE[k]={s:'laden',t:Date.now()};
+  ST_UNSUB[k]=DB.collection(k).onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); }); S[k]=o; ST_STATE[k]={s:'ok',t:Date.now()}; stListsDirty=true; scheduleRender(); },
+    e=>{ ST_STATE[k]={s:'fehler',t:Date.now(),code:(e&&e.code)||'',msg:e&&e.code==='timeout'?'Zeitüberschreitung':!navigator.onLine?'Keine Internetverbindung':'Fehler beim Laden'}; console.warn('[Sonnenplan] Stammdaten „'+k+'“ nicht geladen:',(e&&e.code)||'Fehler'); scheduleRender(); }); }
+function stLoad(){ if(ST_ON) return; ST_ON=true; ST_COLLS().forEach(k=>{ S[k]=S[k]||{}; }); if(MODE==='cloud'&&DB) ST_COLLS().forEach(stSub); }
+// Stammdaten früh im Hintergrund laden (früher erst nach 8 s): kurz nachdem die Projekte da sind, damit sie beim Öffnen schon bereitstehen
+function stLoadSoon(){ if(MODE==='cloud') setTimeout(stLoad,1200); }
+setTimeout(()=>{ if(MODE==='cloud') stLoad(); },8000); // Sicherheitsnetz, falls der frühe Start nicht ausgelöst wurde
+// Status-Zeile für die Stammdaten-Seite
+function stStateHtml(k,n){ if(MODE!=='cloud') return ''; const st=ST_STATE[k]||{s:'laden',t:Date.now()};
+  if(st.s==='fehler') return `<div class="banner row st-err" role="alert"><span>⚠ ${esc(ST_DEF[k]?ST_DEF[k].l:k)} konnten nicht geladen werden (${esc(st.msg||'Fehler')}). Vorhandene Daten sind nicht verloren.</span><span class="spacer"></span><button class="btn sun sm" data-act="stRetry" data-k="${esc(k)}">Erneut laden</button></div>`;
+  if(st.s==='laden'){ const sec=Math.round((Date.now()-st.t)/1000); return `<div class="banner row st-load" role="status"><span class="aic-dots"><i></i><i></i><i></i></span><span>${esc(ST_DEF[k]?ST_DEF[k].l:k)} werden geladen …${sec>=15?' (dauert ungewöhnlich lange)':''}</span>${sec>=15?`<span class="spacer"></span><button class="btn sm" data-act="stRetry" data-k="${esc(k)}">Neu versuchen</button>`:''}</div>`; }
+  return ''; }
+queueMicrotask(()=>Object.assign(A,{ stRetry:d=>{ const k=d.k; if(!k) return; if(window.SP_RELOAD){ ST_STATE[k]={s:'laden',t:Date.now()}; render(); window.SP_RELOAD(k).catch(()=>{}); } stSub(k); render(); } }));
+// Hinweis „dauert ungewöhnlich lange“ aktualisieren, solange die Stammdaten-Seite offen ist und noch geladen wird
+setInterval(()=>{ if(UI.view==='stamm'&&Object.values(ST_STATE).some(s=>s.s==='laden')&&!SHEET) scheduleRender(); },5000);
 const stNorm=s=>String(s||'').toLowerCase().replace(/gmbh|&|co\.?|kg|ag|e\.k\.|ug|\(haftungsbeschränkt\)/g,'').replace(/[^a-z0-9äöüß]+/g,'');
 const stFind=(k,name)=>{ const n=stNorm(name); if(!n) return null; const all=Object.values(S[k]||{}); return all.find(x=>stNorm(x.name)===n)||all.find(x=>n.length>4&&stNorm(x.name).startsWith(n))||null; };
 const stKunde=n=>stFind('kunden',n), stLief=n=>stFind('lieferanten',n);
@@ -9730,16 +9791,17 @@ function vStamm(){
   const row=x=>{ const n=links(x), d=dup.byId[x.id]!=null; return `<tr class="clickable ${d?'st-dup':''}${sel.has(x.id)?' st-on':''}" data-act="stEdit" data-k="${k}" data-id="${esc(x.id)}">${adm?`<td class="st-ck" data-act="stSel" data-k="${k}" data-id="${esc(x.id)}"><input type="checkbox" class="ck" ${sel.has(x.id)?'checked':''} aria-label="${esc(x.name||'')} auswählen"></td>`:''}${D.cols.map(([c])=>`<td class="${c==='nr'||c==='price'?'mono':''}">${c==='name'?`<b>${esc(x.name||'')}</b>${d?' <span class="pill warn" title="möglicherweise doppelt">doppelt?</span>':''}`:c==='price'&&x.price!=null&&x.price!==''?esc(nf(+x.price,2)):c[0]==='_'?artCell(x,c):isA&&c==='cat'?acCell(x,aix):esc(x[c]||'')}</td>`).join('')}<td class="small muted">${lnkTxt(n)}</td></tr>`; };
   const filterBar=`<div class="chips st-f">${ST_FILTERS[k].map(([f,l])=>`<button class="chip ${ff===f?'on':''}" data-act="stF" data-f="${f}">${l}${f==='dup'?` <span class="mono small">${dup.groups.reduce((a,g)=>a+g.items.length,0)}</span>`:''}</button>`).join('')}${ff||cf||city||q||acSel?`<button class="chip" data-act="stF" data-f="" title="Alle Filter zurücksetzen">✕ zurücksetzen</button>`:''}</div>`;
   const selBar=adm&&sel.size&&ff!=='dup'?`<div class="st-selbar"><b>${sel.size.toLocaleString('de-DE')} ausgewählt</b>${list.length>sel.size?`<button class="btn sm" data-act="stSelAll" data-k="${k}" data-all="1">Alle ${list.length.toLocaleString('de-DE')} Treffer auswählen</button>`:''}<button class="btn sm" data-act="stSelNone" data-k="${k}">Auswahl aufheben</button><span class="spacer"></span>${isA&&acOk()?`<button class="btn sun sm" data-act="acBulkAsk">🌳 Kategorie zuordnen</button>`:''}${delOk?`<button class="btn sm danger" data-act="stSelDel" data-k="${k}">${ic('x')}Ausgewählte löschen</button>`:''}</div>`:'';
-  const body=ff==='dup'?stDupView(k,dup,q):selBar+`<div class="card"><div class="tbl-wrap"><table class="tbl st-tbl"><thead><tr>${adm?`<th class="st-ck" data-act="stSelAll" data-k="${k}"><input type="checkbox" class="ck" ${shown.length&&shown.every(x=>sel.has(x.id))?'checked':''} aria-label="Alle auf dieser Seite auswählen"></th>`:''}${D.cols.map(([,l])=>`<th>${l}</th>`).join('')}<th></th></tr></thead><tbody>${shown.map(row).join('')||`<tr><td colspan="${D.cols.length+(adm?2:1)}"><div class="empty">${all.length?'Keine Treffer.':'Noch keine '+D.l+'.'}</div></td></tr>`}</tbody></table></div>
+  const body=ff==='dup'?stDupView(k,dup,q):selBar+`<div class="card"><div class="tbl-wrap"><table class="tbl st-tbl"><thead><tr>${adm?`<th class="st-ck" data-act="stSelAll" data-k="${k}"><input type="checkbox" class="ck" ${shown.length&&shown.every(x=>sel.has(x.id))?'checked':''} aria-label="Alle auf dieser Seite auswählen"></th>`:''}${D.cols.map(([,l])=>`<th>${l}</th>`).join('')}<th></th></tr></thead><tbody>${shown.map(row).join('')||`<tr><td colspan="${D.cols.length+(adm?2:1)}"><div class="empty">${all.length?'Keine Treffer.':MODE==='cloud'&&(ST_STATE[k]||{}).s==='laden'?D.l+' werden geladen …':MODE==='cloud'&&(ST_STATE[k]||{}).s==='fehler'?D.l+' konnten nicht geladen werden.':'Noch keine '+D.l+'.'}</div></td></tr>`}</tbody></table></div>
     ${list.length>lim?`<div style="padding:10px 16px"><button class="btn sm" data-act="stMore">+ weitere ${Math.min(200,list.length-lim)} von ${list.length-lim} anzeigen</button></div>`:''}</div>`;
-  return head('Stammdaten · '+D.l,all.length.toLocaleString('de-DE')+' '+D.l+(ff||cf||city||q||acSel?' · '+list.length.toLocaleString('de-DE')+' gefiltert':'')+(MODE==='cloud'&&!all.length?' · wird geladen …':''),`<button class="btn pri" data-act="stEdit" data-k="${k}">${ic('plus')}${D.one} anlegen</button>`)+
-    `<div class="chips">${Object.entries(ST_DEF).map(([kk,dd])=>`<button class="chip ${kk===k?'on':''}" data-act="nav" data-v="st:${kk}">${dd.l} <span class="mono small">${Object.keys(S[kk]||{}).length}</span></button>`).join('')}</div>
+  const stS=MODE==='cloud'?(ST_STATE[k]||{}).s:'ok';
+  return head('Stammdaten · '+D.l,(stS!=='ok'&&!all.length?(stS==='fehler'?D.l+' nicht geladen':D.l+' werden geladen …'):all.length.toLocaleString('de-DE')+' '+D.l+(ff||cf||city||q||acSel?' · '+list.length.toLocaleString('de-DE')+' gefiltert':'')),`<button class="btn pri" data-act="stEdit" data-k="${k}">${ic('plus')}${D.one} anlegen</button>`)+
+    `<div class="chips">${Object.entries(ST_DEF).map(([kk,dd])=>`<button class="chip ${kk===k?'on':''}" data-act="nav" data-v="st:${kk}">${dd.l} <span class="mono small">${MODE==='cloud'&&(ST_STATE[kk]||{}).s!=='ok'&&!Object.keys(S[kk]||{}).length?((ST_STATE[kk]||{}).s==='fehler'?'!':'…'):Object.keys(S[kk]||{}).length.toLocaleString('de-DE')}</span></button>`).join('')}</div>
     <div class="row"><input class="search" id="stQ" type="search" placeholder="${D.l} durchsuchen: Name, Nummer, Ort, E-Mail …" value="${esc(UI.stQ||'')}" aria-label="Suchen">
       ${isA?acSelectHtml(acSel)+`<button class="btn sm ${UI.acSide?'pri':''}" data-act="acSide" aria-pressed="${!!UI.acSide}" title="Kategorien als Baum links einblenden">🌳 Baum</button><button class="btn sm ${UI.acMan?'pri':''}" data-act="acMan">Kategorien verwalten</button>`
         :cats.length?`<select class="catsel" data-chg="stCat" aria-label="Kategorie"><option value="">Alle Kategorien</option>${cats.map(c=>`<option ${c===cf?'selected':''}>${esc(c)}</option>`).join('')}</select>`:''}
       ${cities.length?`<select class="catsel" data-chg="stCity" aria-label="Ort"><option value="">Alle Orte</option>${cities.map(([c,n])=>`<option value="${esc(stNorm(c))}" ${stNorm(c)===city?'selected':''}>${esc(c)} (${n})</option>`).join('')}</select>`:''}
       <select class="catsel" data-chg="stSort" aria-label="Sortieren"><option value="name" ${sk==='name'?'selected':''}>Name A–Z</option><option value="nr" ${sk==='nr'?'selected':''}>Nummer (neueste zuerst)</option><option value="links" ${sk==='links'?'selected':''}>${k==='kunden'?'meiste Projekte':k==='lieferanten'?'meiste Bestellungen':'im Lager zuerst'}</option></select></div>
-    ${filterBar}${isA&&acSel?`<div class="ac-crumb small">Kategorie: <b>${acSel==='__none'?'ohne Kategorie':esc(acPathTxt(acSel,aix))}</b>${acSel!=='__none'&&(aix.kids[acSel]||[]).length?' <span class="muted">(inkl. Unterkategorien)</span>':''} <button class="lnk" data-act="acSel" data-id="">✕</button></div>`:''}${isA&&UI.acMan?acManHtml():''}${isA&&UI.acSide?`<div class="ac-wrap"><aside class="card ac-side" aria-label="Kategorien">${acNavHtml(acSel)}</aside><div class="ac-main">${body}</div></div>`:body}`;
+    ${stStateHtml(k)}${isA&&(ST_STATE.artcat||{}).s==='fehler'?stStateHtml('artcat'):''}${filterBar}${isA&&acSel?`<div class="ac-crumb small">Kategorie: <b>${acSel==='__none'?'ohne Kategorie':esc(acPathTxt(acSel,aix))}</b>${acSel!=='__none'&&(aix.kids[acSel]||[]).length?' <span class="muted">(inkl. Unterkategorien)</span>':''} <button class="lnk" data-act="acSel" data-id="">✕</button></div>`:''}${isA&&UI.acMan?acManHtml():''}${isA&&UI.acSide?`<div class="ac-wrap"><aside class="card ac-side" aria-label="Kategorien">${acNavHtml(acSel)}</aside><div class="ac-main">${body}</div></div>`:body}`;
 }
 const stSelOk=k=>stDelOk(k)||(k==='artikel'&&acOk());
 function acCell(x,ix){ const id=ix.artCat[x.id]; if(!id) return ''; const p=acPath(id,ix), c=ix.byId[id]; return `${p.length>1?`<span class="small muted">${esc(p.slice(0,-1).join(' → '))} → </span>`:''}${esc(p[p.length-1]||'')}${c&&c.virt?'':''}`; }
