@@ -1671,10 +1671,10 @@ button.link-ms:hover{color:var(--ink)}
   radial-gradient(900px 520px at -8% 105%,rgba(61,220,151,.07),transparent 60%),
   radial-gradient(700px 500px at 50% 50%,rgba(64,120,255,.04),transparent 70%),#06080B;background-attachment:fixed}
 /* feines Solarzellen-Raster im Hintergrund */
-[data-theme="future"] body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;
+[data-theme="future"] body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.5;
   background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:44px 44px;
   -webkit-mask-image:radial-gradient(ellipse at 70% 20%,#000 0%,transparent 75%);mask-image:radial-gradient(ellipse at 70% 20%,#000 0%,transparent 75%)}
-[data-theme="future"] .app{position:relative;z-index:1}
+[data-theme="future"] .app{position:relative}
 /* Seitenleiste: Glas mit leuchtender Kante */
 [data-theme="future"] .side{background:linear-gradient(180deg,rgba(10,12,16,.92),rgba(4,5,7,.96));border-right:1px solid rgba(244,219,2,.12);box-shadow:1px 0 0 rgba(244,219,2,.05),8px 0 40px rgba(0,0,0,.5)}
 [data-theme="future"] .nav-btn{transition:background .2s,color .2s,box-shadow .2s}
@@ -1740,7 +1740,7 @@ button.link-ms:hover{color:var(--ink)}
   radial-gradient(800px 560px at -10% 110%,rgba(61,220,151,.12),transparent 60%),
   radial-gradient(900px 600px at 45% 55%,rgba(80,110,255,.07),transparent 70%),#05070A;background-attachment:fixed}
 [data-theme="future"] body::before{opacity:1;background-image:linear-gradient(rgba(244,219,2,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(244,219,2,.045) 1px,transparent 1px);background-size:38px 38px;animation:snGrid 40s linear infinite}
-[data-theme="future"] body::after{content:"";position:fixed;right:-140px;top:-160px;width:420px;height:420px;border-radius:50%;pointer-events:none;z-index:0;background:radial-gradient(circle,rgba(255,232,77,.35),rgba(244,219,2,.12) 40%,transparent 70%);filter:blur(10px);animation:snPulse 7s ease-in-out infinite}
+[data-theme="future"] body::after{content:"";position:fixed;right:-140px;top:-160px;width:420px;height:420px;border-radius:50%;pointer-events:none;z-index:-1;background:radial-gradient(circle,rgba(255,232,77,.35),rgba(244,219,2,.12) 40%,transparent 70%);filter:blur(10px);animation:snPulse 7s ease-in-out infinite}
 @keyframes snGrid{to{background-position:38px 38px,38px 38px}}
 @keyframes snPulse{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
 /* Begrüßungsfeld: umlaufende Lichtkante */
@@ -1828,17 +1828,17 @@ button.link-ms:hover{color:var(--ink)}
 /* --- Future, Stufe 2: noch krasser --- */
 /* Polarlicht: wabernde Lichtschleier hinter allem */
 .fx-aurora,.fx-stars,.fx-scan{display:none}
-[data-theme="future"] .fx-aurora{display:block;position:fixed;inset:-20%;z-index:0;pointer-events:none;filter:blur(60px) saturate(140%);opacity:.75;
+[data-theme="future"] .fx-aurora{display:block;position:fixed;inset:-20%;z-index:-1;pointer-events:none;filter:blur(60px) saturate(140%);opacity:.75;
   background:radial-gradient(35% 30% at 20% 30%,rgba(244,219,2,.22),transparent 70%),radial-gradient(30% 35% at 80% 20%,rgba(61,220,151,.18),transparent 70%),radial-gradient(40% 30% at 60% 80%,rgba(90,120,255,.16),transparent 70%),radial-gradient(25% 25% at 35% 75%,rgba(255,120,60,.12),transparent 70%);
   animation:fxAur 28s ease-in-out infinite alternate}
 @keyframes fxAur{0%{transform:translate(0,0) rotate(0deg) scale(1)}33%{transform:translate(4%,-3%) rotate(8deg) scale(1.08)}66%{transform:translate(-5%,4%) rotate(-6deg) scale(.96)}100%{transform:translate(3%,5%) rotate(12deg) scale(1.1)}}
 /* Sternenstaub: feine Lichtpunkte, die langsam nach oben treiben */
-[data-theme="future"] .fx-stars{display:block;position:fixed;left:0;top:0;width:2px;height:2px;z-index:0;pointer-events:none;border-radius:50%;background:transparent;animation:fxStar 90s linear infinite;
+[data-theme="future"] .fx-stars{display:block;position:fixed;left:0;top:0;width:2px;height:2px;z-index:-1;pointer-events:none;border-radius:50%;background:transparent;animation:fxStar 90s linear infinite;
   box-shadow:120px 80vh 0 0 rgba(255,232,77,.8),280px 40vh 0 0 rgba(255,255,255,.5),430px 95vh 0 0 rgba(255,232,77,.6),610px 20vh 0 0 rgba(255,255,255,.45),760px 70vh 0 0 rgba(61,220,151,.7),910px 55vh 0 0 rgba(255,232,77,.7),1080px 15vh 0 0 rgba(255,255,255,.5),1230px 85vh 0 0 rgba(255,232,77,.55),1390px 35vh 0 0 rgba(255,255,255,.4),1550px 65vh 0 0 rgba(61,220,151,.55),1700px 10vh 0 0 rgba(255,232,77,.6),1850px 90vh 0 0 rgba(255,255,255,.45),
   200px 140vh 0 0 rgba(255,232,77,.7),520px 120vh 0 0 rgba(255,255,255,.5),840px 160vh 0 0 rgba(255,232,77,.6),1160px 130vh 0 0 rgba(61,220,151,.6),1480px 150vh 0 0 rgba(255,255,255,.5),1780px 125vh 0 0 rgba(255,232,77,.65)}
 @keyframes fxStar{to{transform:translateY(-100vh)}}
 /* Scanlinie wie bei einem Monitor */
-[data-theme="future"] .fx-scan{display:block;position:fixed;left:0;right:0;top:-10vh;height:10vh;z-index:2;pointer-events:none;background:linear-gradient(180deg,transparent,rgba(244,219,2,.035),transparent);animation:fxScan 9s linear infinite}
+[data-theme="future"] .fx-scan{display:block;position:fixed;left:0;right:0;top:-10vh;height:10vh;z-index:-1;pointer-events:none;background:linear-gradient(180deg,transparent,rgba(244,219,2,.035),transparent);animation:fxScan 9s linear infinite}
 @keyframes fxScan{to{transform:translateY(120vh)}}
 /* Schimmernde Überschriften */
 [data-theme="future"] .hero h1,[data-theme="future"] .topbar h1{background:linear-gradient(100deg,#FFFFFF 0%,#FFFFFF 35%,#FFE84D 45%,#FFFFFF 55%,#FFFFFF 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:fxShine 6s ease-in-out infinite}
@@ -2058,6 +2058,19 @@ input[type=checkbox].ck:checked::after{content:"";width:10px;height:6px;border-l
 .cal .dc.sel{outline:2px solid var(--sun);outline-offset:-2px}
 .cal .dn{font-family:var(--f-mono);font-size:12px}
 .cal .dc.today .dn{background:var(--sun);color:#1b1400;border-radius:4px;padding:0 5px;align-self:flex-start}
+/* Heute deutlicher: gelber Rahmen, getönter Hintergrund, Etikett „Heute“ (Monatskalender, Wochenplanung, Tagesspalten) */
+.cal .dc.today{background:color-mix(in srgb,var(--sun) 16%,var(--surface));box-shadow:inset 0 0 0 2px var(--sun);position:relative}
+.cal .dc.today .dn{font-weight:800;font-size:13px;padding:1px 7px;border-radius:6px}
+.cal .dc.today::after{content:"Heute";position:absolute;top:4px;right:5px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#1b1400;background:var(--sun);border-radius:4px;padding:0 5px;line-height:16px}
+.team .th.today{background:var(--sun)!important;color:#111!important;font-weight:800;box-shadow:0 2px 0 var(--sun)}
+.team .th.today::after{content:" · Heute";font-weight:700}
+.day-blk.today{border:2px solid var(--sun);background:color-mix(in srgb,var(--sun) 10%,var(--surface))}
+.day-blk.today .day-h b::after{content:"Heute";margin-left:8px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:var(--sun);color:#111;border-radius:4px;padding:1px 6px;vertical-align:1px}
+.dcol.today{box-shadow:0 0 0 2px var(--sun) inset;background:color-mix(in srgb,var(--sun) 10%,transparent)}
+.dcol.today .dcol-h{background:var(--sun);color:#111}
+[data-theme="future"] .cal .dc.today{background:radial-gradient(circle at 30% 0%,rgba(244,219,2,.28),rgba(244,219,2,.08) 70%);box-shadow:inset 0 0 0 1.5px #FFE84D,0 0 22px rgba(244,219,2,.35);animation:fxNav 3s ease-in-out infinite}
+[data-theme="future"] .team .th.today,[data-theme="future"] .dcol.today .dcol-h{box-shadow:0 0 18px rgba(244,219,2,.55)}
+[data-theme="future"] .day-blk.today{box-shadow:0 0 0 1px rgba(244,219,2,.6),0 0 26px rgba(244,219,2,.25)}
 .cal .ev{font-size:11px;line-height:1.35;border-left:3px solid var(--kc);padding:0 4px;background:var(--sunken);border-radius:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cal .dots{display:none;gap:3px;flex-wrap:wrap}
 .cal .dots i{width:6px;height:6px;border-radius:50%;background:var(--kc)}
