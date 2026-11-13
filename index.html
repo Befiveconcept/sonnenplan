@@ -2069,6 +2069,19 @@ input[type=checkbox].ck:checked::after{content:"";width:10px;height:6px;border-l
 .cal .dc.today::after{content:"Heute";position:absolute;top:4px;right:5px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#1b1400;background:var(--sun);border-radius:4px;padding:0 5px;line-height:16px}
 .team .th.today{background:var(--sun)!important;color:#111!important;font-weight:800;box-shadow:0 2px 0 var(--sun)}
 .team .th.today::after{content:" · Heute";font-weight:700}
+/* Wochenplanung: Kollegen-Zeilen auf-/zuklappbar */
+.team .wk-who{display:flex!important;flex-direction:row!important;justify-content:flex-start;align-items:center;gap:8px;padding:6px 10px;min-height:0;text-align:left;border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);font:inherit;font-weight:600;cursor:pointer;color:var(--ink)}
+.team .wk-who:hover{background:color-mix(in srgb,var(--sun) 18%,var(--sunken))}
+.team .wk-who .cnt-b{margin-left:auto}
+.wk-ar{width:12px;color:var(--muted);flex:none}
+.team .cell.wk-mini{min-height:0!important;height:32px;padding:4px 8px;display:flex!important;flex-direction:row!important;align-items:center;justify-content:flex-start;gap:6px;cursor:pointer;overflow:hidden}
+.team .wk-who:not(.open){height:32px}
+.team .wk-who:not(.open)>span:nth-child(2){white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+.team .wk-who.open .wk-ar{color:var(--sun)}
+.team .cell.wk-mini:hover{background:var(--sunken)}
+.wk-dots{display:inline-flex;gap:2px;flex:none}.wk-dots i{width:7px;height:7px;border-radius:50%;background:var(--kc,var(--muted))}
+.wk-t{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.team .th.wk-all{display:flex;align-items:center}
 /* Ganze Spalte „heute“ gelblich (Wochenplanung: alle Zeilen; Monatskalender: der Wochentag von heute in allen Wochen leicht) */
 .team .cell.today{background:color-mix(in srgb,var(--sun) 14%,var(--surface))!important;box-shadow:inset 2px 0 0 var(--sun),inset -2px 0 0 var(--sun)}
 .cal .dc.tcol:not(.today){background:color-mix(in srgb,var(--sun) 7%,var(--surface))}
@@ -4747,6 +4760,12 @@ function planCard(x){
     ${cont?'↳ ':''}${e.time&&!cont?`<b class="mono">${esc(e.time)}</b> `:''}${pj?`<b>${esc(pj.name)}</b><br>`:''}${esc(e.t||'')}
     ${e.kind==='haus'?'<span class="tag">im Haus</span>':''}${e.kind==='abw'?'<span class="tag">abwesend</span>':''}${mat.length&&!cont?`<span class="tag ${ok===mat.length?'ok':''}">Material ${ok}/${mat.length}</span>`:''}${x.multi&&x.last?`<span class="tag">bis ${esc(fmtD(e.end))}</span>`:''}${!cont&&(e.updBy||e.by)&&e.by!=='Import'||e.updBy?`<span class="tag by" title="${esc(planTrail(e))}">${esc(e.updBy||e.by)}</span>`:''}${rz}</div>`;
 }
+/* Aufgeklappte Kollegen in der Wochenplanung (je Gerät). Standard: nur die eigene Zeile offen. */
+function wkOpenGet(){ try{ const o=JSON.parse(lsGet('sonnenplan-wkopen')||'null'); if(o&&typeof o==='object') return o; }catch(e){} return ME?{[ME]:true}:{}; }
+function wkOpenSet(o){ lsSet('sonnenplan-wkopen',JSON.stringify(o)); }
+queueMicrotask(()=>Object.assign(A,{
+  wkTog:d=>{ const o=wkOpenGet(); o[d.n]=!o[d.n]; wkOpenSet(o); render(); },
+  wkAll:d=>{ const o={}; if(d.v==='1') staff().forEach(s=>o[s.name]=true), ['Abwesenheiten','Allgemein','Team'].forEach(n=>o[n]=true), document.querySelectorAll('.team .wk-who').forEach(b=>o[b.dataset.n]=true); wkOpenSet(o); render(); } }));
 function vTeamWeek(){
   const ws=weekStart(), days=[0,1,2,3,4,5].map(i=>addDays(ws,i)), t=TODAY(), kw=kwOf(ws);
   const base=calItems(ws,addDays(ws,5)).filter(x=>x.k!=='proj'), all=base.flatMap(calSplit); // Termin mit mehreren Personen: in jeder Personen-Zeile
@@ -4761,8 +4780,12 @@ function vTeamWeek(){
   const dropWho=pn=>pn==='Abwesenheiten'?'__abw':pn===GEN?'__none':pn;
   const byTime=(a,b)=>((a.e&&a.e.time)||'').localeCompare((b.e&&b.e.time)||'');
   let g=`<div class="th">KW ${kw}</div>`+dd.map(d=>`<div class="th ${d===t?'today':''}">${fmtD(d)}</div>`).join('');
-  people.forEach(pn=>{ const role=(staff().find(s=>s.name===pn)||{}).role;
-    g+=`<div class="who">${esc(pn)}${role?`<span class="small muted">${esc(ROLES[role]||role)}</span>`:''}</div>`+dd.map(d=>`<div class="cell ${d===t?'today':''}" data-drop-d="${d}" data-drop-who="${esc(dropWho(pn))}">${all.filter(x=>x.d===d&&whoOf(x)===pn).sort(byTime).map(planCard).join('')}${pn!==GEN?`<button class="add-en" data-act="newPlan" data-date="${d}" data-who="${esc(pn==='Abwesenheiten'?'':pn)}" ${pn==='Abwesenheiten'?'data-kind="abw"':''} aria-label="Eintrag ${esc(pn)} ${fmtD(d)}">+</button>`:''}</div>`).join(''); });
+  /* Je Kollege nur eine Kopfzeile; Klick auf den Namen klappt seine Woche auf (gemerkt je Gerät). Zugeklappt: je Tag nur die Anzahl als kleiner Punkt. */
+  const wkOpen=wkOpenGet(), anyOpen=people.some(pn=>wkOpen[pn]);
+  g=`<div class="th wk-all"><button type="button" class="lnk small" data-act="wkAll" data-v="${anyOpen?'0':'1'}">${anyOpen?'▴ Alle zu':'▾ Alle auf'}</button></div>`+g.slice(g.indexOf('</div>')+6);
+  people.forEach(pn=>{ const role=(staff().find(s=>s.name===pn)||{}).role, open=!!wkOpen[pn]||!!sel, mine=all.filter(x=>whoOf(x)===pn);
+    if(!open){ g+=`<button type="button" class="who wk-who" data-act="wkTog" data-n="${esc(pn)}" aria-expanded="false"><span class="wk-ar" aria-hidden="true">▸</span><span>${esc(pn)}</span>${mine.length?`<span class="cnt-b">${mine.length}</span>`:''}</button>`+dd.map(d=>{ const n=mine.filter(x=>x.d===d); return `<div class="cell wk-mini ${d===t?'today':''}" data-drop-d="${d}" data-drop-who="${esc(dropWho(pn))}" data-act="wkTog" data-n="${esc(pn)}" title="${esc(n.map(x=>x.t||'').filter(Boolean).join(' · ')||'frei')}">${n.length?`<span class="wk-dots">${n.slice(0,4).map(x=>`<i class="k-${esc(x.k||(x.e&&x.e.kind==='abw'?'abw':'bau'))}"></i>`).join('')}</span><span class="wk-t">${esc(String(n[0].t||'').slice(0,28))}${n.length>1?' +'+(n.length-1):''}</span>`:''}</div>`; }).join(''); return; }
+    g+=`<button type="button" class="who wk-who open" data-act="wkTog" data-n="${esc(pn)}" aria-expanded="true"><span class="wk-ar" aria-hidden="true">▾</span><span>${esc(pn)}${role?`<span class="small muted" style="display:block">${esc(ROLES[role]||role)}</span>`:''}</span></button>`+dd.map(d=>`<div class="cell ${d===t?'today':''}" data-drop-d="${d}" data-drop-who="${esc(dropWho(pn))}">${all.filter(x=>x.d===d&&whoOf(x)===pn).sort(byTime).map(planCard).join('')}${pn!==GEN?`<button class="add-en" data-act="newPlan" data-date="${d}" data-who="${esc(pn==='Abwesenheiten'?'':pn)}" ${pn==='Abwesenheiten'?'data-kind="abw"':''} aria-label="Eintrag ${esc(pn)} ${fmtD(d)}">+</button>`:''}</div>`).join(''); });
   // Handy: Tagesliste
   const dayList=dd.map(d=>{ const its=(sel?all:base).filter(x=>x.d===d&&(!sel||whoOf(x)===sel)).sort(byTime); // Tagesliste: jeden Termin nur einmal, mit allen Kürzeln
     return `<div class="day-blk ${d===t?'today':''}" data-drop-d="${d}"><div class="day-h"><b>${fmtD(d)}</b><button class="btn ghost sm" data-act="newPlan" data-date="${d}" data-who="${esc(sel)}">${ic('plus')}Eintrag</button></div>${its.map(x=>`<div class="day-it"><span class="small muted">${esc(!sel&&x.whos&&x.whos.length>1?x.whos.map(shortWho).join(', '):whoOf(x)===GEN?'':shortWho(whoOf(x)))}</span>${planCard(x)}</div>`).join('')||'<div class="small muted">Nichts geplant.</div>'}</div>`; }).join('');
