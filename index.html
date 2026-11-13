@@ -2074,8 +2074,10 @@ input[type=checkbox].ck:checked::after{content:"";width:10px;height:6px;border-l
 .team .wk-who:hover{background:color-mix(in srgb,var(--sun) 18%,var(--sunken))}
 .team .wk-who .cnt-b{margin-left:auto}
 .wk-ar{width:12px;color:var(--muted);flex:none}
-.team .cell.wk-mini{min-height:0!important;height:32px;padding:4px 8px;display:flex!important;flex-direction:row!important;align-items:center;justify-content:flex-start;gap:6px;cursor:pointer;overflow:hidden}
-.team .wk-who:not(.open){height:32px}
+.team .cell.wk-mini{min-height:32px!important;padding:4px 8px;display:flex!important;flex-direction:column!important;align-items:stretch;justify-content:center;gap:1px;cursor:pointer;overflow:hidden}
+.wk-l{display:flex;align-items:center;gap:5px;min-width:0;line-height:1.3}
+.wk-d{width:7px;height:7px;border-radius:50%;background:var(--kc,var(--muted));flex:none}
+.team .wk-who:not(.open){min-height:32px}
 .team .wk-who:not(.open)>span:nth-child(2){white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
 .team .wk-who.open .wk-ar{color:var(--sun)}
 .team .cell.wk-mini:hover{background:var(--sunken)}
@@ -4784,7 +4786,7 @@ function vTeamWeek(){
   const wkOpen=wkOpenGet(), anyOpen=people.some(pn=>wkOpen[pn]);
   g=`<div class="th wk-all"><button type="button" class="lnk small" data-act="wkAll" data-v="${anyOpen?'0':'1'}">${anyOpen?'▴ Alle zu':'▾ Alle auf'}</button></div>`+g.slice(g.indexOf('</div>')+6);
   people.forEach(pn=>{ const role=(staff().find(s=>s.name===pn)||{}).role, open=!!wkOpen[pn]||!!sel, mine=all.filter(x=>whoOf(x)===pn);
-    if(!open){ g+=`<button type="button" class="who wk-who" data-act="wkTog" data-n="${esc(pn)}" aria-expanded="false"><span class="wk-ar" aria-hidden="true">▸</span><span>${esc(pn)}</span>${mine.length?`<span class="cnt-b">${mine.length}</span>`:''}</button>`+dd.map(d=>{ const n=mine.filter(x=>x.d===d); return `<div class="cell wk-mini ${d===t?'today':''}" data-drop-d="${d}" data-drop-who="${esc(dropWho(pn))}" data-act="wkTog" data-n="${esc(pn)}" title="${esc(n.map(x=>x.t||'').filter(Boolean).join(' · ')||'frei')}">${n.length?`<span class="wk-dots">${n.slice(0,4).map(x=>`<i class="k-${esc(x.k||(x.e&&x.e.kind==='abw'?'abw':'bau'))}"></i>`).join('')}</span><span class="wk-t">${esc(String(n[0].t||'').slice(0,28))}${n.length>1?' +'+(n.length-1):''}</span>`:''}</div>`; }).join(''); return; }
+    if(!open){ g+=`<button type="button" class="who wk-who" data-act="wkTog" data-n="${esc(pn)}" aria-expanded="false"><span class="wk-ar" aria-hidden="true">▸</span><span>${esc(pn)}</span></button>`+dd.map(d=>{ const n=mine.filter(x=>x.d===d); return `<div class="cell wk-mini ${d===t?'today':''}" data-drop-d="${d}" data-drop-who="${esc(dropWho(pn))}" data-act="wkTog" data-n="${esc(pn)}" title="${esc(n.map(x=>x.t||'').filter(Boolean).join(' · ')||'frei')}">${n.slice(0,3).map(x=>`<span class="wk-l"><i class="wk-d k-${esc(x.k||(x.e&&x.e.kind==='abw'?'abw':'bau'))}"></i><span class="wk-t">${esc(String(x.t||'').slice(0,40))}</span></span>`).join('')}${n.length>3?`<span class="wk-t">+${n.length-3} weitere</span>`:''}</div>`; }).join(''); return; }
     g+=`<button type="button" class="who wk-who open" data-act="wkTog" data-n="${esc(pn)}" aria-expanded="true"><span class="wk-ar" aria-hidden="true">▾</span><span>${esc(pn)}${role?`<span class="small muted" style="display:block">${esc(ROLES[role]||role)}</span>`:''}</span></button>`+dd.map(d=>`<div class="cell ${d===t?'today':''}" data-drop-d="${d}" data-drop-who="${esc(dropWho(pn))}">${all.filter(x=>x.d===d&&whoOf(x)===pn).sort(byTime).map(planCard).join('')}${pn!==GEN?`<button class="add-en" data-act="newPlan" data-date="${d}" data-who="${esc(pn==='Abwesenheiten'?'':pn)}" ${pn==='Abwesenheiten'?'data-kind="abw"':''} aria-label="Eintrag ${esc(pn)} ${fmtD(d)}">+</button>`:''}</div>`).join(''); });
   // Handy: Tagesliste
   const dayList=dd.map(d=>{ const its=(sel?all:base).filter(x=>x.d===d&&(!sel||whoOf(x)===sel)).sort(byTime); // Tagesliste: jeden Termin nur einmal, mit allen Kürzeln
