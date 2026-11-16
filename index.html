@@ -5953,13 +5953,16 @@ function parseMailLocal(text){
   const g=rx=>{ const m=t.match(rx); return m?m[1].trim():''; };
   const buyer=g(/Vielen Dank für Ihre Bestellung,\s*([^\n]+?)\.?\s*(\n|$)/i);
   const docNo=g(/Bestell(?:nummer|-Nr\.?|nr\.?)\s*:?\s*([A-Z0-9\-\/]{4,})/i)||g(/Auftrags(?:nummer|-Nr\.?)\s*:?\s*([A-Z0-9\-\/]{4,})/i);
+  // Daten aus dem Mailtext: „Bestelldatum 22.10.2026 16:11 Uhr“, „Liefertermin 30.10.2026“
+  const dIso=s=>{ const m=String(s||'').match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})/); if(!m) return ''; const y=m[3].length===2?'20'+m[3]:m[3]; return y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'); };
+  const orderDate=dIso(g(/Bestell(?:datum|t am)\s*:?\s*(\d{1,2}\.\d{1,2}\.\d{2,4})/i)), delivery=dIso(g(/(?:Liefertermin|Lieferdatum|voraussichtliche Lieferung)\s*:?\s*(\d{1,2}\.\d{1,2}\.\d{2,4})/i));
   // Projekt nur bei eindeutigem Treffer über Kommission (Bestellzeichen ist oft zu allgemein, z. B. „Gebäude V“)
   const komm=[g(/Kommissionstext\s*:?\s*([^\n]+)/i),g(/Kommission\s*:?\s*([^\n]+)/i)].filter(Boolean).join(' ');
   const GEN=new Set(['gebäude','halle','dach','projekt','solarpark','energie','strasse','straße','haus']);
   let projectId=''; if(komm){ const kw=words(komm); const hits=arr('projects').filter(p=>catOf(p)==='laufend').filter(p=>[...words(p.name)].some(w=>w.length>3&&!GEN.has(w)&&kw.has(w))); if(hits.length===1) projectId=hits[0].id; }
   const SUP=['Sonepar','Rexel','Krannich','BayWa r.e.','Memodo','Eldra','Hornbach','Würth','Elektro Wagner','Alzmetall','Fega & Schmitt','Zeitler','Obeta','Gienger','Solarmarkt','Wattkraft','IBC Solar','Segen Solar','Phoenix Contact','Conrad'];
   const supplier=SUP.find(s=>new RegExp('\\b'+s.replace(/[.&]/g,'\\$&')+'\\b','i').test(t))||'';
-  return {items:markExtras(items.map(i=>({...i,recv:0,miss:false,dmg:false}))),buyer,docNo,projectId,supplier};
+  return {items:markExtras(items.map(i=>({...i,recv:0,miss:false,dmg:false}))),buyer,docNo,projectId,supplier,orderDate,delivery};
 }
 const SAMPLE_ERR={not_granted:'Claude-Zugriff wurde nicht erlaubt. Positionen bitte von Hand eintragen.',sampling_disabled:'Claude ist für dieses Konto nicht verfügbar.',rate_limited:'Gerade zu viele Anfragen. Bitte in ein paar Minuten erneut versuchen.',image_rejected:'Das Bild konnte nicht gelesen werden. Bitte ein schärferes Foto oder ein PDF nehmen.',images_unavailable:'Gescannte Belege kann diese Ansicht nicht an Claude schicken. Bitte ein PDF mit Text nehmen oder Positionen von Hand eintragen.',invalid_json:'Claude hat keine Positionen erkannt. Bitte erneut versuchen oder von Hand eintragen.',nothing:'Im Beleg wurde kein Text gefunden.',refused:'Claude hat diesen Beleg nicht verarbeitet.'};
 async function handleInvoice(file,mail,mailFile){
@@ -5981,7 +5984,7 @@ async function handleInvoice(file,mail,mailFile){
   let hadItems=(o.items||[]).some(i=>String(i.art||'').trim()), confirm=!CUR_ORDER_NEW; // bestehende Bestellung: Die Mail bestätigt sie, sie ist keine neue Liste
   const mailText=mail?[mail.subject&&'Betreff: '+mail.subject,mail.from&&'Von: '+mail.from,mail.date&&'Datum: '+mail.date,mail.text].filter(Boolean).join('\n'):'';
   const loc=mail?parseMailLocal(mail.text):null;
-  if(loc){ loc.supplier=String(mail.from||'').replace(/<[^>]*>|\S+@\S+/g,'').replace(/["']/g,'').trim().split(/\s{2,}/)[0]||loc.supplier; loc.delivery=''; }
+  if(loc){ loc.supplier=String(mail.from||'').replace(/<[^>]*>|\S+@\S+/g,'').replace(/["']/g,'').trim().split(/\s{2,}/)[0]||loc.supplier; loc.delivery=loc.delivery||''; }
   // lokale Erkennung nur nehmen, wenn sie plausibel ist (sonst Claude, falls verfügbar)
   const useLocal=loc&&loc.items.length&&!file&&(!SAMPLE||loc.items.every(i=>i.art.length<=90));
   if(SAMPLE||useLocal){
@@ -6021,7 +6024,11 @@ async function handleInvoice(file,mail,mailFile){
         else if(isReal&&!CUR_ORDER_NEW&&ordWait(o)) stMsg='Status bleibt: Die Bestellung wartet noch auf Freigabe durch HH / AvE.';
         else if(isReal&&(ordDraft(o)||o.status==='angefragt'||(o.status==='bestellt'&&kind==='ab')||CUR_ORDER_NEW)){ o.status=kind==='ab'?'bestaetigt':'bestellt'; if(CUR_ORDER_NEW) o.otype='bestellt'; stMsg='Status: '+ORDER_ST[o.status]; } }
       const doc=file&&ASSETS?(o.docs||[]).find(d=>d.fp===fp):null; if(doc){ doc.kind=r.docType||''; doc.docNo=r.docNo||''; }
-      info=found+' Position'+(found===1?'':'en')+' übernommen'+(mg.hit?', '+mg.hit+' waren schon da':'')+'.'+info+' Bitte prüfen und speichern.';
+      // Klar sagen, was passiert ist: neu angelegt, ergänzt oder schon vollständig vorhanden
+      const nAll=(o.items||[]).filter(i=>String(i.art||'').trim()).length;
+      info=(linked&&!found&&mg.hit?'Diese Bestellung gibt es schon ('+[o.supplier,nr].filter(Boolean).join(' ')+'). '+(mg.hit===1?'Die Position steht':'Alle '+mg.hit+' Positionen stehen')+' bereits drin, nichts doppelt angelegt.'
+        :linked||!blank?found+' neue Position'+(found===1?'':'en')+' ergänzt'+(mg.hit?', '+mg.hit+' stand'+(mg.hit===1?'':'en')+' schon drin':'')+' · jetzt '+nAll+' Position'+(nAll===1?'':'en')+'.'
+        :found+' Position'+(found===1?'':'en')+' übernommen.')+info+' Bitte prüfen und speichern.';
       { const li=a=>a.length?`<ul>${a.slice(0,8).map(s=>`<li>${esc(s)}</li>`).join('')}${a.length>8?`<li>… und ${a.length-8} weitere</li>`:''}</ul>`:'', isLs=kind==='ls', KN={best:'Bestellung',ab:'Auftragsbestätigung',ls:'Lieferschein',re:'Rechnung',ang:'Angebot',anf:'Anfrage'}, facts=[nr?'Bestellnummer '+nr:'keine Bestellnummer gefunden',od?'bestellt am '+fmtD(od)+(odWas&&odWas!==od&&!CUR_ORDER_NEW?' (vorher '+fmtD(odWas)+')':''):'kein Bestelldatum gefunden',isLs||delDate?'geliefert am '+fmtD(delDate):dl?'Liefertermin '+fmtD(dl)+(dlChg?' (vorher '+fmtD(dlChg)+')':''):'kein Liefertermin gefunden'];
         if(autoSave) info='Der Bestellung bei '+linked+' zugeordnet und gespeichert'+(dl?', Liefertermin '+fmtD(dl):'.');
         res=`<b>Erkannt: ${esc(KN[kind]||'Beleg')} – ${autoSave?'automatisch zugeordnet und gespeichert':'bitte prüfen und speichern'}</b>${linked?`<br>${esc('Gehört zur vorhandenen Bestellung bei '+linked+', keine zweite angelegt.')}`:''}<br>${esc(facts.join(' · '))}${stMsg?'<br>'+esc(stMsg):''}${lsMsg.length?'<br>'+esc(lsMsg.join(' ')):''}${mg.chg.length?`<div>${isLs?'Teillieferung:':'Geändert:'}</div>`+li(mg.chg):''}${mg.add.length&&hadItems?`<div>${isLs?'Geliefert, aber nicht bestellt:':'Neu aus dem Beleg:'}</div>`+li(mg.add.map(i=>i.art)):''}${mg.miss.length?`<div>${isLs?'Noch nicht geliefert:':'Bei uns, aber nicht im Beleg (bleibt stehen):'}</div>`+li(mg.miss.map(i=>i.art)):''}`; }
