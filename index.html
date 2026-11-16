@@ -344,6 +344,17 @@ body.dragging,body.dragging *{cursor:grabbing!important}
   .stk-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stk.wide{grid-column:span 2}}
 @media (max-width:520px){.stk.wide{grid-column:auto}.stk-grid{grid-template-columns:minmax(0,1fr)}}
 /* Bestellung: Ablagefläche für die echte Bestell-Mail */
+.ord-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}.ord-bar .chips{margin:0}.ord-q{flex:1 1 200px;min-width:160px}.ord-bar select.inp{width:auto;max-width:220px}
+.obd{display:grid;grid-template-columns:repeat(4,minmax(210px,1fr));gap:12px;align-items:start;overflow-x:auto;padding-bottom:6px;margin-bottom:8px}
+.obc{background:var(--sunken);border-radius:14px;padding:10px;min-height:110px}.obc-h{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 2px 8px}.obc-h .small{flex-basis:100%;line-height:1.25}.obc-faellig .obc-h b{color:#c62828}.obc-e{padding:6px 2px}
+.obc-b,.oc-grid{display:flex;flex-direction:column;gap:8px}.oc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.oc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 11px;cursor:pointer;display:flex;flex-direction:column;gap:4px;min-width:0;transition:border-color .15s,box-shadow .15s}.oc:hover{border-color:var(--sun);box-shadow:0 2px 10px rgba(0,0,0,.07)}.oc.late{border-left:4px solid #c62828}
+.oc-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline;min-width:0}.oc-h b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.oc-h .small{white-space:nowrap;flex-shrink:0}
+.oc-i div,.oc-p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.oc-f{display:flex;flex-wrap:wrap;gap:4px;align-items:center}.oc-f>.small{margin-right:auto}.oc-a{display:flex;gap:6px;margin-top:2px}
+@media(max-width:900px){.obd{grid-template-columns:repeat(4,minmax(250px,84vw));scroll-snap-type:x mandatory}.obc{scroll-snap-align:start}.ord-bar select.inp{flex:1 1 140px;max-width:none}}
+.tbl th.osort{cursor:pointer;user-select:none;white-space:nowrap}.tbl th.osort i{font-style:normal;font-size:10px;margin-left:4px;opacity:.45}.tbl th.osort.on i{opacity:1}.tbl th.osort:hover i{opacity:.9}
+.ret-list{display:flex;flex-direction:column;gap:4px}.ret-row{display:grid;grid-template-columns:22px 1fr 80px 40px;gap:8px;align-items:center;padding:6px 8px;border:1px solid var(--line);border-radius:10px}.ret-old{display:grid;grid-template-columns:1fr 170px;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px}
+@media(max-width:600px){.ret-row{grid-template-columns:22px 1fr 64px}.ret-row>span.small{display:none}.ret-old{grid-template-columns:1fr}}
 .ord-mz{border:2px dashed var(--line);border-radius:12px;padding:12px 14px;background:var(--sunken);transition:border-color .15s,background .15s}.ord-mz.over{border-color:var(--sun);background:var(--sun-soft);color:#111}
 .ord-pick{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:pointer}.ord-pick:hover{border-color:var(--sun);background:var(--sun-soft)}
 .ord-res{margin-top:8px;font-size:12.5px;border-left:3px solid var(--sun);padding-left:9px}.ord-res ul{margin:3px 0 0 16px;padding:0}.ord-res li{margin:1px 0}
@@ -2086,10 +2097,12 @@ input[type=checkbox].ck:checked::after{content:"";width:10px;height:6px;border-l
 .team .th.wk-all{display:flex;align-items:center}
 /* Ganze Spalte „heute“ gelblich (Wochenplanung: alle Zeilen; Monatskalender: der Wochentag von heute in allen Wochen leicht) */
 .team .cell.today{background:color-mix(in srgb,var(--sun) 14%,var(--surface))!important;box-shadow:inset 2px 0 0 var(--sun),inset -2px 0 0 var(--sun)}
-.cal .dc.tcol:not(.today){background:color-mix(in srgb,var(--sun) 7%,var(--surface))}
-.cal .dh.tcol{background:var(--sun);color:#111;font-weight:800}
+.cal .dc.cal-tc:not(.today){background:color-mix(in srgb,var(--sun) 7%,var(--surface))}
+.cal .dc{position:relative}.cal-kw{position:absolute;top:5px;right:6px;font-family:var(--f-mono);font-size:10px;color:var(--muted);letter-spacing:.04em}
+.cal .dc.today .cal-kw{right:58px}
+.cal .dh.cal-tc{background:var(--sun);color:#111;font-weight:800}
 [data-theme="future"] .team .cell.today{background:linear-gradient(180deg,rgba(244,219,2,.16),rgba(244,219,2,.08))!important;box-shadow:inset 1px 0 0 rgba(255,232,77,.7),inset -1px 0 0 rgba(255,232,77,.7)}
-[data-theme="future"] .cal .dc.tcol:not(.today){background:rgba(244,219,2,.06)}
+[data-theme="future"] .cal .dc.cal-tc:not(.today){background:rgba(244,219,2,.06)}
 .day-blk.today{border:2px solid var(--sun);background:color-mix(in srgb,var(--sun) 10%,var(--surface))}
 .day-blk.today .day-h b::after{content:"Heute";margin-left:8px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:var(--sun);color:#111;border-radius:4px;padding:1px 6px;vertical-align:1px}
 .dcol.today{box-shadow:0 0 0 2px var(--sun) inset;background:color-mix(in srgb,var(--sun) 10%,transparent)}
@@ -3682,7 +3695,7 @@ function navSide(cur,cnt){ NAV_CUR=cur; const pins=navPins();
   $('#staffList').innerHTML = staff().map(s=>`<option value="${esc(s.name)}">`).join('');
   const sup=[...new Set(arr('orders').map(o=>o.supplier).filter(Boolean))];
   $('#supplierList').innerHTML = sup.map(s=>`<option value="${esc(s)}">`).join('');
-  const buy=[...new Set([...FIRMS(),...arr('orders').map(o=>o.buyer).filter(Boolean)])];
+  const buy=[...new Map([...arr('orders').map(o=>o.buyer).filter(Boolean),...FIRMS()].map(s=>[firmKey(s),firmCanon(s)])).values()];
   $('#buyerList').innerHTML = buy.map(s=>`<option value="${esc(s)}">`).join('');
   stLists();
   $('#stockArtList').innerHTML = arr('stock').map(s=>`<option value="${esc(s.art)}">`).join('');
@@ -4792,7 +4805,7 @@ function vTeamWeek(){
   const dayList=dd.map(d=>{ const its=(sel?all:base).filter(x=>x.d===d&&(!sel||whoOf(x)===sel)).sort(byTime); // Tagesliste: jeden Termin nur einmal, mit allen Kürzeln
     return `<div class="day-blk ${d===t?'today':''}" data-drop-d="${d}"><div class="day-h"><b>${fmtD(d)}</b><button class="btn ghost sm" data-act="newPlan" data-date="${d}" data-who="${esc(sel)}">${ic('plus')}Eintrag</button></div>${its.map(x=>`<div class="day-it"><span class="small muted">${esc(!sel&&x.whos&&x.whos.length>1?x.whos.map(shortWho).join(', '):whoOf(x)===GEN?'':shortWho(whoOf(x)))}</span>${planCard(x)}</div>`).join('')||'<div class="small muted">Nichts geplant.</div>'}</div>`; }).join('');
   const whoOpts=names;
-  return head('KW '+kw+' · '+fmtD(ws)+' – '+fmtD(days[4]),'Wochenplanung Team',`<button class="icon-btn" data-act="weekNav" data-v="-1" aria-label="Vorwoche">${ic('left')}</button><button class="btn sm" data-act="weekNav" data-v="0">Diese Woche</button><button class="icon-btn" data-act="weekNav" data-v="1" aria-label="Folgewoche">${ic('right')}</button><button class="btn" data-act="copyWeek">Vorwoche übernehmen</button><button class="btn sun" data-act="weekPrint" title="Wochenansicht als PDF / auf Papier">${ic('report')}Woche drucken</button><button class="btn sun" data-act="monteurSheet" title="Persönlicher Wochenplan je Monteur: Termine, Material, Lückenfüller">${ic('report')}Monteur-Pläne</button>`)+
+  return head('KW '+kw+' · '+fmtD(ws)+' – '+fmtD(days[4]),'Wochenplanung Team',`<button class="icon-btn" data-act="weekNav" data-v="-1" aria-label="Vorwoche">${ic('left')}</button><button class="btn sm" data-act="weekNav" data-v="0">Diese Woche</button><button class="icon-btn" data-act="weekNav" data-v="1" aria-label="Folgewoche">${ic('right')}</button><button class="btn sun" data-act="weekPrint" title="Wochenansicht als PDF / auf Papier">${ic('report')}Woche drucken</button><button class="btn sun" data-act="monteurSheet" title="Persönlicher Wochenplan je Monteur: Termine, Material, Lückenfüller">${ic('report')}Monteur-Pläne</button>`)+
    `<div class="chips"><button class="chip ${!sel?'on':''}" data-act="weekWho" data-v="">Alle</button>${whoOpts.map(n=>`<button class="chip ${sel===n?'on':''}" data-act="weekWho" data-v="${esc(n)}">${esc(shortWho(n))}</button>`).join('')}<button class="chip" data-act="nav" data-v="calendar">Monatskalender</button></div>
    <div class="card week-grid"><div class="tbl-wrap"><div class="team" style="grid-template-columns:170px repeat(${dd.length},minmax(140px,1fr))">${g}</div></div></div>
    <div class="week-days">${dayList}</div>
@@ -4844,12 +4857,12 @@ function vCalendar(){
   const start=iso(new Date(y,m-1,1-startOff)), end=addDays(start,41), items=calFilt(calItems(start,end)), t=TODAY(), MAXC=4;
   let cells=''; const tIn=t>=start&&t<=end, tDow=(new Date(t+'T12:00').getDay()+6)%7;
   for(let i=0;i<42;i++){ const d=addDays(start,i), its=items.filter(x=>x.d===d), dd=new Date(d+'T12:00'), mon=i%7===0;
-    cells+=`<div class="dc ${dd.getMonth()!==m-1?'out':''} ${d===t?'today':''} ${tIn&&i%7===tDow?'tcol':''} ${d===UI.calSel?'sel':''}" data-act="calSel" data-d="${d}" data-drop-d="${d}"><span class="dn">${dd.getDate()}</span>${its.slice(0,MAXC).map(x=>{ const cont=x.multi&&!x.first, showT=!cont||mon, ks=calKs(x);
+    cells+=`<div class="dc ${dd.getMonth()!==m-1?'out':''} ${d===t?'today':''} ${tIn&&i%7===tDow?'cal-tc':''} ${d===UI.calSel?'sel':''}" data-act="calSel" data-d="${d}" data-drop-d="${d}"><span class="dn">${dd.getDate()}</span>${mon?`<span class="cal-kw">KW ${kwOf(d)}</span>`:''}${its.slice(0,MAXC).map(x=>{ const cont=x.multi&&!x.first, showT=!cont||mon, ks=calKs(x);
       return `<div class="ev k-${x.k} ${cont?'cont':''} ${x.multi&&!x.last?'mspan':''}" data-act="${x.act}" data-id="${x.id}" data-drag="${x.ref||''}" title="${esc((x.tm?x.tm+' ':'')+x.t+(x.m?' · '+x.m:''))}">${showT?`${x.tm?`<span class="tm">${esc(x.tm)}</span>`:''}${ks.length?`<b>${esc(ks.join(' '))}</b> `:''}${esc(x.t)}`:'&nbsp;'}${x.rz&&x.last?'<span class="rz" aria-hidden="true"></span>':''}</div>`; }).join('')}${its.length>MAXC?`<div class="more">+${its.length-MAXC} weitere</div>`:''}<div class="dots">${its.slice(0,5).map(x=>`<i class="k-${x.k}"></i>`).join('')}</div></div>`; }
   const sel=calFilt(calItems(UI.calSel,UI.calSel)), up=calFilt(calItems(t,addDays(t,21))).filter(x=>!x.multi||x.first||x.d===t);
-  return head(MON[m-1]+' '+y,'Kalender',`<button class="icon-btn" data-act="calNav" data-v="-1" aria-label="Vormonat">${ic('left')}</button><button class="btn sm" data-act="calNav" data-v="0">Heute</button><button class="icon-btn" data-act="calNav" data-v="1" aria-label="Folgemonat">${ic('right')}</button>`)+
+  return head(MON[m-1]+' '+y,'Kalender · heute KW '+kwOf(mondayOf(t)),`<button class="icon-btn" data-act="calNav" data-v="-1" aria-label="Vormonat">${ic('left')}</button><button class="btn sm" data-act="calNav" data-v="0">Heute</button><button class="icon-btn" data-act="calNav" data-v="1" aria-label="Folgemonat">${ic('right')}</button>`)+
   calModeChips()+calFilterBar()+`
-  <div class="card" style="overflow:hidden"><div class="cal">${['Mo','Di','Mi','Do','Fr','Sa','So'].map((d,j)=>`<div class="dh ${tIn&&j===tDow?'tcol':''}">${d}${tIn&&j===tDow?' · heute':''}</div>`).join('')}${cells}</div></div>
+  <div class="card" style="overflow:hidden"><div class="cal">${['Mo','Di','Mi','Do','Fr','Sa','So'].map((d,j)=>`<div class="dh ${tIn&&j===tDow?'cal-tc':''}">${d}${tIn&&j===tDow?' · heute':''}</div>`).join('')}${cells}</div></div>
   <div class="grid2"><div class="card"><div class="card-h"><h3>${fmtDL(UI.calSel)}</h3><button class="btn sm" data-act="newEvent" data-date="${UI.calSel}">${ic('plus')}Termin</button></div><div class="card-b">${agenda(sel)||'<div class="empty">Nichts geplant.</div>'}</div></div>
   <div class="card"><div class="card-h"><h3>Nächste 3 Wochen</h3><span class="small muted">mehrtägige Einträge nur einmal</span></div><div class="card-b">${agenda(up)||'<div class="empty">Keine Einträge.</div>'}</div></div></div>`;
 }
@@ -4859,28 +4872,98 @@ queueMicrotask(()=>{ Object.assign(A,{
   Object.assign(CHG,{ calWho:(d,el)=>{ calHid(); UI.calWho=el.value; lsSet('sonnenplan-calwho',el.value); render(); } }); });
 
 /* ========== Bestellungen & Wareneingang ========== */
+// Sortieren der Bestellliste per Klick auf die Spaltenüberschrift (gemerkt pro Gerät); erneuter Klick dreht die Richtung
+const ORD_SORT={sup:o=>String(o.supplier||'').trim().toLowerCase(),proj:o=>String(projName(o.pid)||'').toLowerCase(),art:o=>String(((o.items||[]).find(i=>String(i.art||'').trim())||{}).art||'').toLowerCase(),ord:o=>o.ordered||'',dl:o=>o.delivery||'',st:o=>orderState(o).k};
+const ordSortGet=()=>{ if(!UI.ordSort){ try{ UI.ordSort=JSON.parse(lsGet('sonnenplan-ordsort')||'null')||{k:'',dir:1}; }catch(e){ UI.ordSort={k:'',dir:1}; } } return UI.ordSort; };
+// Retouren: Ware geht an den Lieferanten zurück. Je Bestellung eine Liste o.returns = [{id,date,by,st,why,rma,lines:[{art,artNr,unit,qty}]}]
+const RET_ST={angemeldet:'Angemeldet',unterwegs:'Zurückgeschickt',gutgeschrieben:'Gutgeschrieben'};
+const retOpen=o=>(o.returns||[]).filter(r=>r.st!=='gutgeschrieben');
+const retAllOpen=()=>arr('orders').reduce((n,o)=>n+retOpen(o).length,0);
+const retCan=o=>mayWrite('orders')&&((o.items||[]).some(i=>+i.recv>0)||(o.returns||[]).length>0);
+function retSheet(id){ const o=S.orders[id]; if(!o) return; const its=(o.items||[]).filter(i=>String(i.art||'').trim()), R=o.returns||[];
+  const old=R.length?`<div class="sec-t" style="margin:0 0 6px">Bisherige Retouren</div>${R.map((r,j)=>`<div class="ret-old"><div><b>${fmtD(r.date)}</b> <span class="small muted">${esc([r.by,r.rma?'RMA '+r.rma:'',r.why].filter(Boolean).join(' · '))}</span><div class="small">${r.lines.map(l=>esc(nf(l.qty)+' '+(l.unit||'')+' '+l.art)).join('<br>')}</div></div><select class="inp" id="ret_s${j}" aria-label="Status der Retoure">${Object.entries(RET_ST).map(([k,l])=>`<option value="${k}" ${r.st===k?'selected':''}>${l}</option>`).join('')}</select></div>`).join('')}<div class="sec-t" style="margin:12px 0 6px">Neue Retoure</div>`:'';
+  openSheet({title:'Retoure · '+(o.supplier||'Lieferant'),wide:1,html:`<div class="fld full">${old}
+    <div class="ret-list">${its.map((i,k)=>`<label class="ret-row"><input type="checkbox" class="ck" id="ret_c${k}"><span>${esc(i.art)}${i.artNr?` <span class="small muted">${esc(i.artNr)}</span>`:''}<span class="small muted"> · bestellt ${nf(+i.qty||0)}, geliefert ${nf(+i.recv||0)}</span></span><input class="inp" type="number" min="0" step="any" id="ret_q${k}" value="${+i.recv||+i.qty||1}" aria-label="Menge zurück"><span class="small">${esc(i.unit||'Stk')}</span></label>`).join('')||'<div class="empty">Keine Positionen.</div>'}</div>
+    <div class="grid2" style="margin-top:8px"><label class="info-f"><span>Grund</span><input class="inp" id="ret_why" placeholder="z. B. falsch geliefert, beschädigt, zu viel bestellt"></label><label class="info-f"><span>Retouren-Nr. (RMA) vom Lieferanten</span><input class="inp" id="ret_rma"></label></div>
+    <label class="info-f" style="margin-top:8px"><span>Status</span><select class="inp" id="ret_st">${Object.entries(RET_ST).map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select></label>
+    <div class="small muted" style="margin-top:6px">Der Lagerbestand wird dabei nicht geändert. Liegt die Ware schon im Lager, bitte dort ausbuchen.</div></div>`,saveLabel:'Speichern',
+    onSave:()=>{ const n=clone(S.orders[id]); if(!n) return; n.returns=(n.returns||[]).map((r,j)=>{ const s=$('#ret_s'+j); return s&&s.value!==r.st?{...r,st:s.value,stAt:TODAY(),stBy:meK()}:r; });
+      const lines=its.map((i,k)=>({i,c:$('#ret_c'+k),q:deNum($('#ret_q'+k).value)})).filter(x=>x.c.checked&&x.q>0).map(x=>({art:x.i.art,artNr:x.i.artNr||'',unit:x.i.unit||'Stk',qty:x.q}));
+      if(lines.length) n.returns.push({id:uid(),date:TODAY(),by:meK(),st:$('#ret_st').value,why:$('#ret_why').value.trim().slice(0,300),rma:$('#ret_rma').value.trim().slice(0,60),lines});
+      else if(($('#ret_why').value||$('#ret_rma').value).trim()){ toast('Bitte mindestens eine Position anhaken.'); return false; }
+      put('orders',n); toast(lines.length?'Retoure gespeichert.':'Gespeichert.'); }}); }
+queueMicrotask(()=>Object.assign(A,{
+  ordSort:d=>{ const s=ordSortGet(); UI.ordSort=s.k===d.v?{k:d.v,dir:-s.dir}:{k:d.v,dir:d.v==='ord'?-1:1}; lsSet('sonnenplan-ordsort',JSON.stringify(UI.ordSort)); render(); },
+  retSheet:d=>{ if(SHEET) closeSheet(); setTimeout(()=>retSheet(d.id),30); } }));
 function ordersTable(os){
   if(!os.length) return '<div class="empty">Keine Bestellungen.</div>';
-  os=os.slice().sort((a,b)=>(orderState(b).open-orderState(a).open)||(a.delivery||'9').localeCompare(b.delivery||'9'));
-  return `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Lieferant</th><th>Projekt</th><th>Positionen</th><th>Liefertermin</th><th>Status</th><th></th></tr></thead><tbody>${os.map(o=>{ const st=orderState(o);
-    return `<tr class="clickable" data-act="editOrder" data-id="${o.id}"><td><b>${esc(o.supplier)}</b><div class="small muted">${esc([o.no,o.buyer?'über '+o.buyer:'',o.orderedBy?'von '+shortWho(o.orderedBy):''].filter(Boolean).join(' · '))}</div></td><td>${esc(projName(o.pid))}</td><td class="small">${(o.items||[]).slice(0,4).map(i=>`<div class="pos">${itemChip(i)} ${nf(i.qty)} ${esc(i.unit||'')} ${esc(i.art)}</div>`).join('')}${(o.items||[]).length>4?`<span class="muted">+${o.items.length-4} weitere</span>`:''}${(o.docs||[]).length?`<div class="muted" style="margin-top:3px">${o.docs.length} Beleg${o.docs.length>1?'e':''}</div>`:''}</td><td class="${st.late?'overdue':''}" style="white-space:nowrap">${fmtD(o.delivery)||'–'}${o.delivery&&st.open?`<div class="small muted">${relDay(o.delivery)}</div>`:''}</td><td><span class="pill ${st.cls}">${st.late&&st.cls===''?'überfällig':st.k}</span></td><td class="r">${st.draft&&!ordWait(o)&&mayWrite('orders')?`<button class="btn sun sm" data-act="ordPlaced" data-id="${o.id}" title="Beim Lieferanten bestellt - zu den bestellten Bestellungen verschieben">✓ Jetzt bestellt</button>`:''}${ordWait(o)&&ordApprover()?`<button class="btn sun sm" data-act="ordApprove" data-id="${o.id}">✓ Freigeben</button><button class="btn ghost sm" data-act="ordStorno" data-id="${o.id}">Stornieren</button>`:''}${st.open&&!ordWait(o)?`<button class="btn sm" data-act="receive" data-id="${o.id}">${ic('truck')}Annahme</button>`:''}${unrouted(o).length?`<button class="btn sun sm" data-act="routeOrder" data-id="${o.id}" title="Angenommene Ware ins Lager oder auf die Kommissionierliste">${ic('stock')}Verteilen</button>`:''}</td></tr>`; }).join('')}</tbody></table></div>`;
+  const so=ordSortGet(), fn=ORD_SORT[so.k];
+  os=os.slice().sort(fn?(a,b)=>{ const x=fn(a), y=fn(b), e=!x?1:0, f=!y?1:0; return (e-f)||String(x).localeCompare(String(y),'de',{numeric:true})*so.dir||(a.delivery||'9').localeCompare(b.delivery||'9'); }:(a,b)=>(orderState(b).open-orderState(a).open)||(a.delivery||'9').localeCompare(b.delivery||'9'));
+  const th=(k,l)=>`<th class="osort ${so.k===k?'on':''}" data-act="ordSort" data-v="${k}" title="Nach ${l} sortieren" aria-sort="${so.k===k?(so.dir>0?'ascending':'descending'):'none'}">${l}<i aria-hidden="true">${so.k===k?(so.dir>0?'▲':'▼'):'↕'}</i></th>`;
+  return `<div class="tbl-wrap"><table class="tbl"><thead><tr>${th('sup','Lieferant')}${th('proj','Projekt')}${th('art','Artikel')}${th('ord','Bestellt am')}${th('dl','Liefertermin')}${th('st','Status')}<th></th></tr></thead><tbody>${os.map(o=>{ const st=orderState(o), rt=retOpen(o);
+    return `<tr class="clickable" data-act="editOrder" data-id="${o.id}"><td><b>${esc(o.supplier)}</b><div class="small muted">${esc([o.no,o.buyer?'über '+firmCanon(o.buyer):'',o.orderedBy?'von '+shortWho(o.orderedBy):''].filter(Boolean).join(' · '))}</div></td><td>${esc(projName(o.pid))}</td><td class="small">${(o.items||[]).slice(0,4).map(i=>`<div class="pos">${itemChip(i)} ${nf(i.qty)} ${esc(i.unit||'')} ${esc(i.art)}</div>`).join('')}${(o.items||[]).length>4?`<span class="muted">+${o.items.length-4} weitere</span>`:''}${(o.docs||[]).length?`<div class="muted" style="margin-top:3px">${o.docs.length} Beleg${o.docs.length>1?'e':''}</div>`:''}</td><td style="white-space:nowrap">${fmtD(o.ordered)||'–'}</td><td class="${st.late?'overdue':''}" style="white-space:nowrap">${fmtD(o.delivery)||'–'}${o.delivery&&st.open?`<div class="small muted">${relDay(o.delivery)}</div>`:''}</td><td><span class="pill ${st.cls}">${st.late&&st.cls===''?'überfällig':st.k}</span>${(o.returns||[]).length?`<div style="margin-top:4px"><span class="pill ${rt.length?'warn':'ok'}" title="${esc((o.returns||[]).map(r=>RET_ST[r.st]+': '+r.lines.map(l=>nf(l.qty)+' '+l.art).join(', ')).join(' | '))}">↩ Retoure ${rt.length?RET_ST[rt[0].st].toLowerCase():'erledigt'}</span></div>`:''}</td><td class="r">${st.draft&&!ordWait(o)&&mayWrite('orders')?`<button class="btn sun sm" data-act="ordPlaced" data-id="${o.id}" title="Beim Lieferanten bestellt - zu den bestellten Bestellungen verschieben">✓ Jetzt bestellt</button>`:''}${ordWait(o)&&ordApprover()?`<button class="btn sun sm" data-act="ordApprove" data-id="${o.id}">✓ Freigeben</button><button class="btn ghost sm" data-act="ordStorno" data-id="${o.id}">Stornieren</button>`:''}${st.open&&!ordWait(o)?`<button class="btn sm" data-act="receive" data-id="${o.id}">${ic('truck')}Annahme</button>`:''}${unrouted(o).length?`<button class="btn sun sm" data-act="routeOrder" data-id="${o.id}" title="Angenommene Ware ins Lager oder auf die Kommissionierliste">${ic('stock')}Verteilen</button>`:''}${retCan(o)?`<button class="btn ghost sm" data-act="retSheet" data-id="${o.id}" title="Ware an den Lieferanten zurückschicken">↩ Retoure</button>`:''}</td></tr>`; }).join('')}</tbody></table></div>`;
 }
+/* Bestellungen & Wareneingang: Tafel nach Ablauf (Standard), Liste zum Sortieren, Retouren, Wareneingänge */
+const ORD_TABS=[['tafel','Ablauf'],['liste','Liste'],['retouren','Retouren'],['eingang','Wareneingänge']];
+const ordTab=()=>{ if(!UI.ordTab) UI.ordTab=lsGet('sonnenplan-ordtab')||'tafel'; return UI.ordTab; };
+function ordFiltered(list){ const q=String(UI.ordQ||'').trim().toLowerCase(), fb=UI.orderBuyer||'', fp=UI.ordPid||'';
+  return list.filter(o=>{ if(fb==='__none'){ if(firmKey(o.buyer)) return false; } else if(fb&&firmKey(o.buyer)!==fb) return false;
+    if(fp&&o.pid!==fp) return false;
+    if(q){ const hay=[o.supplier,o.no,o.buyer,projName(o.pid),o.notes,...(o.items||[]).map(i=>(i.art||'')+' '+(i.artNr||''))].join(' ').toLowerCase(); if(!q.split(/\s+/).every(w=>hay.includes(w))) return false; }
+    return true; }); }
+// In welche Spalte gehört eine Bestellung? Erledigte (geliefert und verteilt) und stornierte stehen nur in der Liste.
+const ordCol=o=>{ if(o.status==='storniert'||o.appr==='storno') return ''; const st=orderState(o); if(st.draft) return 'entwurf';
+  if(st.open) return st.late||(o.delivery&&o.delivery<=TODAY())?'faellig':'bestellt'; return unrouted(o).length?'verteilen':''; };
+const ORD_COLS=[['entwurf','Entwurf','noch nicht bestellt'],['bestellt','Bestellt','unterwegs'],['faellig','Fällig','heute oder überfällig'],['verteilen','Zu verteilen','geliefert, noch nicht im Lager / auf der Baustelle']];
+function ordCard(o,col){ const its=(o.items||[]).filter(i=>String(i.art||'').trim()), rt=retOpen(o), t=TODAY(), late=col==='faellig'&&o.delivery&&o.delivery<t;
+  const act=col==='entwurf'?(ordWait(o)?(ordApprover()?`<button class="btn sun sm" data-act="ordApprove" data-id="${o.id}">✓ Freigeben</button>`:''):mayWrite('orders')?`<button class="btn sun sm" data-act="ordPlaced" data-id="${o.id}">✓ Jetzt bestellt</button>`:'')
+    :col==='verteilen'?`<button class="btn sun sm" data-act="routeOrder" data-id="${o.id}">${ic('stock')}Verteilen</button>`
+    :!ordWait(o)?`<button class="btn ${col==='faellig'?'sun':''} sm" data-act="receive" data-id="${o.id}">${ic('truck')}Annahme</button>`:'';
+  const when=col==='entwurf'?(o.at?'angelegt '+fmtD(String(o.at).slice(0,10)):'')
+    :col==='verteilen'?(o.delivered?'geliefert '+fmtD(o.delivered):'geliefert')
+    :!o.delivery?'kein Liefertermin':late?'überfällig seit '+fmtD(o.delivery):o.delivery===t?'Lieferung heute':'Liefertermin '+fmtD(o.delivery);
+  return `<div class="oc ${late?'late':''}" data-act="editOrder" data-id="${o.id}">
+    <div class="oc-h"><b>${esc(o.supplier||'Lieferant fehlt')}</b>${o.no?`<span class="small muted">${esc(o.no)}</span>`:''}</div>
+    <div class="oc-p small muted">${esc(projName(o.pid)||'ohne Projekt')}${o.orderedBy?' · '+esc(shortWho(o.orderedBy)):''}</div>
+    <div class="oc-i small">${its.slice(0,2).map(i=>`<div>${nf(i.qty)} ${esc(i.unit||'')} ${esc(i.art)}</div>`).join('')}${its.length>2?`<div class="muted">+${its.length-2} weitere</div>`:''}${its.length?'':'<div class="muted">keine Positionen</div>'}</div>
+    <div class="oc-f"><span class="small ${late?'overdue':'muted'}">${esc(when)}</span>${ordWait(o)?'<span class="pill warn">wartet auf Freigabe</span>':''}${col!=='entwurf'&&its.some(i=>+i.recv>0&&itemOpen(i))?'<span class="pill warn">teilgeliefert</span>':''}${rt.length?'<span class="pill warn">↩ Retoure</span>':''}</div>
+    ${act?`<div class="oc-a">${act}</div>`:''}</div>`; }
+function ordBoard(list){ const by={}; list.forEach(o=>{ const c=ordCol(o); if(c) (by[c]=by[c]||[]).push(o); });
+  const d9=s=>s||'9999'; (by.entwurf||[]).sort((a,b)=>(ordWait(a)?0:1)-(ordWait(b)?0:1)||String(b.at||'').localeCompare(String(a.at||'')));
+  ['bestellt','faellig'].forEach(k=>(by[k]||[]).sort((a,b)=>d9(a.delivery).localeCompare(d9(b.delivery)))); (by.verteilen||[]).sort((a,b)=>d9(a.delivered).localeCompare(d9(b.delivered)));
+  return `<div class="obd">${ORD_COLS.map(([k,l,d])=>{ const L=by[k]||[]; return `<section class="obc obc-${k}" aria-label="${l}"><div class="obc-h"><b>${l}</b><span class="cnt-b">${L.length}</span><span class="small muted">${d}</span></div><div class="obc-b">${L.map(o=>ordCard(o,k)).join('')||'<div class="small muted obc-e">nichts</div>'}</div></section>`; }).join('')}</div>`; }
 function vOrders(){
-  const f=UI.orderFilter, drafts=arr('orders').filter(o=>ordDraft(o)&&o.appr!=='storno').sort((a,b)=>(ordWait(a)?0:1)-(ordWait(b)?0:1)||String(b.at||'').localeCompare(String(a.at||''))); let os=arr('orders').filter(o=>!ordDraft(o));
-  // „Offen“ zeigt auch Gelieferte, deren Ware noch nicht ins Lager / auf die Baustelle verteilt ist
-  if(f==='offen') os=os.filter(o=>orderState(o).open||unrouted(o).length); else if(f==='geliefert') os=os.filter(o=>!orderState(o).open);
-  // Filter „Bestellt über“ (bestellende Firma)
-  const bk=s=>String(s||'').trim().toLowerCase(), fb=UI.orderBuyer||'', buyers=[...new Map([...FIRMS(),...arr('orders').map(o=>o.buyer)].filter(s=>String(s||'').trim()).map(s=>[bk(s),String(s).trim()])).values()];
-  if(fb==='__none') os=os.filter(o=>!bk(o.buyer)); else if(fb) os=os.filter(o=>bk(o.buyer)===fb);
-  const recent=arr('orders').flatMap(o=>(o.receipts||[]).map(r=>({...r,o}))).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,8);
-  return head('Bestellungen & Wareneingänge', arr('orders').filter(o=>orderState(o).open).length+' Lieferungen offen', `${ASSETS||SAMPLE?`<button class="btn sun" data-act="newOrderFromInvoice">${ic('plus')}Aus Rechnung anlegen</button>`:''}<button class="btn" data-act="newOrder">${ic('plus')}Bestellung</button>`)+
-  ordApprBanner()+dropZoneHtml('')+(dueDeliveries().length?`<div class="banner row"><span>${ic('truck','style="width:18px;height:18px;vertical-align:-3px"')} ${dueDeliveries().length} Lieferung${dueDeliveries().length>1?'en sind':' ist'} fällig und noch nicht gebucht.</span><span class="spacer"></span><button class="btn sun sm" data-act="checkDlv">Jetzt prüfen</button></div>`:'')+
-  `<div class="chips">${[['offen','Offen'],['geliefert','Geliefert'],['alle','Alle']].map(([k,l])=>`<button class="chip ${f===k?'on':''}" data-act="orderFilter" data-v="${k}">${l}</button>`).join('')}</div>
-  ${buyers.length?`<div class="chips"><span class="small muted" style="align-self:center">Bestellt über:</span>${[['','Alle'],...buyers.map(b=>[bk(b),b]),['__none','ohne Angabe']].map(([k,l])=>`<button class="chip ${fb===k?'on':''}" data-act="orderBuyer" data-v="${esc(k)}">${esc(l)}</button>`).join('')}</div>`:''}
-  ${drafts.length?`<div class="card ord-drafts"><div class="card-h"><h3>📝 Entwürfe – noch nicht bestellt <span class="cnt-b">${drafts.length}</span></h3><span class="small muted">Bestellanfragen: erst nach Freigabe beim Lieferanten bestellen, dann auf ✓ Jetzt bestellt klicken</span></div>${ordersTable(drafts)}</div>`:''}
-  <div class="card"><div class="card-h"><h3>Bestellt</h3><span class="small muted">bereits beim Lieferanten aufgegeben</span></div>${ordersTable(os)}</div>
-  <div class="card"><div class="card-h"><h3>Letzte Warenannahmen</h3></div><div class="list">${recent.map(r=>`<div class="li clickable" data-act="editOrder" data-id="${r.o.id}"><span class="pill ${r.dmg?'bad':'ok'}">${r.dmg?'Schaden':'ok'}</span><div class="body"><div class="tt">${esc(r.o.supplier)} · ${esc(projName(r.o.pid))}</div><div class="mt"><span>${fmtD(r.date)}</span>${r.by?`<span>angenommen von ${esc(r.by)}</span>`:''}${r.ls?`<span>LS ${esc(r.ls)}</span>`:''}${r.note?`<span>${esc(r.note)}</span>`:''}${(r.lines||[]).filter(l=>l.st!=='da').length?`<span class="overdue">fehlt: ${esc(r.lines.filter(l=>l.st!=='da').map(l=>l.art).join(', '))}</span>`:''}</div></div></div>`).join('')||'<div class="empty">Noch keine Warenannahme erfasst.</div>'}</div></div>`;
+  const t=ordTab(), all=arr('orders'), fl=ordFiltered(all), t0=TODAY();
+  const nOpen=all.filter(o=>orderState(o).open).length, nLate=all.filter(o=>ordCol(o)==='faellig').length;
+  const bk=firmKey, fb=UI.orderBuyer||'', buyers=[...new Map([...all.map(o=>o.buyer),...FIRMS()].filter(s=>String(s||'').trim()).map(s=>[bk(s),firmCanon(s)])).values()];
+  const projs=[...new Set(all.map(o=>o.pid).filter(Boolean))].map(id=>[id,projName(id)]).filter(x=>x[1]).sort((a,b)=>a[1].localeCompare(b[1]));
+  const anyF=UI.ordQ||fb||UI.ordPid;
+  const bar=`<div class="ord-bar"><div class="chips ord-tabs">${ORD_TABS.map(([k,l])=>`<button class="chip ${t===k?'on':''}" data-act="ordTab" data-v="${k}">${l}${k==='retouren'&&retAllOpen()?` (${retAllOpen()})`:''}</button>`).join('')}</div>
+    <input class="inp ord-q" id="ordQ" type="search" placeholder="Suchen: Lieferant, Nummer, Artikel …" value="${esc(UI.ordQ||'')}" aria-label="Bestellungen durchsuchen">
+    <select class="inp" data-chg="ordBuyer" aria-label="Bestellt über"><option value="">Alle Firmen</option>${buyers.map(b=>`<option value="${esc(bk(b))}" ${fb===bk(b)?'selected':''}>${esc(b)}</option>`).join('')}<option value="__none" ${fb==='__none'?'selected':''}>ohne Firma</option></select>
+    <select class="inp" data-chg="ordPid" aria-label="Projekt"><option value="">Alle Projekte</option>${projs.map(([id,n])=>`<option value="${esc(id)}" ${UI.ordPid===id?'selected':''}>${esc(n)}</option>`).join('')}</select>
+    ${anyF?'<button type="button" class="lnk small" data-act="ordFReset">Filter zurücksetzen</button>':''}</div>`;
+  const drop=`<div class="dropz slim" data-dropz="" tabindex="0" aria-label="Bestellung per Drag and Drop anlegen">${ic('box')}<div><b>E-Mail, AB oder Rechnung hierher ziehen</b></div><div class="dz-btns"><button type="button" class="btn sm" data-act="dzPick" data-pid="">Datei wählen</button><button type="button" class="btn sm" data-act="dzPaste" data-pid="">E-Mail-Text einfügen</button></div></div>`;
+  let body='';
+  if(t==='tafel') body=ordBoard(fl)+'<div class="small muted">Fertig gelieferte und verteilte Bestellungen stehen unter „Liste“.</div>';
+  else if(t==='liste'){ const f=UI.orderFilter==='retouren'?'offen':UI.orderFilter; let os=fl.filter(o=>!ordDraft(o));
+    if(f==='offen') os=os.filter(o=>orderState(o).open||unrouted(o).length); else if(f==='geliefert') os=os.filter(o=>!orderState(o).open);
+    body=`<div class="chips">${[['offen','Offen'],['geliefert','Geliefert'],['alle','Alle']].map(([k,l])=>`<button class="chip ${f===k?'on':''}" data-act="orderFilter" data-v="${k}">${l}</button>`).join('')}<span class="small muted" style="align-self:center">Spaltenüberschrift anklicken zum Sortieren</span></div><div class="card">${ordersTable(os)}</div>`; }
+  else if(t==='retouren'){ const os=fl.filter(o=>(o.returns||[]).length).sort((a,b)=>retOpen(b).length-retOpen(a).length);
+    body=`<div class="card">${os.length?ordersTable(os):'<div class="empty">Keine Retouren. Eine Retoure legst du an der gelieferten Bestellung mit „↩ Retoure“ an.</div>'}</div>`; }
+  else { const due=fl.filter(o=>ordCol(o)==='faellig'), recent=fl.flatMap(o=>(o.receipts||[]).map(r=>({...r,o}))).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,30);
+    body=`<div class="card"><div class="card-h"><h3>Heute fällig oder überfällig <span class="cnt-b">${due.length}</span></h3>${dueDeliveries().length?'<button class="btn sun sm" data-act="checkDlv">Alle prüfen</button>':''}</div><div class="card-b">${due.length?`<div class="oc-grid">${due.map(o=>ordCard(o,'faellig')).join('')}</div>`:'<div class="empty">Nichts fällig.</div>'}</div></div>
+    <div class="card"><div class="card-h"><h3>Letzte Warenannahmen</h3></div><div class="list">${recent.map(r=>`<div class="li clickable" data-act="editOrder" data-id="${r.o.id}"><span class="pill ${r.dmg?'bad':'ok'}">${r.dmg?'Schaden':'ok'}</span><div class="body"><div class="tt">${esc(r.o.supplier)} · ${esc(projName(r.o.pid))}</div><div class="mt"><span>${fmtD(r.date)}</span>${r.by?`<span>angenommen von ${esc(r.by)}</span>`:''}${r.ls?`<span>LS ${esc(r.ls)}</span>`:''}${r.note?`<span>${esc(r.note)}</span>`:''}${(r.lines||[]).filter(l=>l.st!=='da').length?`<span class="overdue">fehlt: ${esc(r.lines.filter(l=>l.st!=='da').map(l=>l.art).join(', '))}</span>`:''}</div></div></div>`).join('')||'<div class="empty">Noch keine Warenannahme erfasst.</div>'}</div></div>`; }
+  return head('Bestellungen & Wareneingang',nOpen+' offen'+(nLate?' · '+nLate+' fällig':''),`${ASSETS||SAMPLE?`<button class="btn" data-act="newOrderFromInvoice">${ic('plus')}Aus Rechnung</button>`:''}<button class="btn sun" data-act="newOrder">${ic('plus')}Bestellung</button>`)+
+    ordApprBanner()+drop+bar+body;
 }
+queueMicrotask(()=>{ Object.assign(A,{
+  ordTab:d=>{ UI.ordTab=d.v; lsSet('sonnenplan-ordtab',d.v); render(); },
+  ordFReset:()=>{ UI.ordQ=''; UI.orderBuyer=''; UI.ordPid=''; render(); } });
+  Object.assign(CHG,{ ordBuyer:(d,el)=>{ UI.orderBuyer=el.value; render(); }, ordPid:(d,el)=>{ UI.ordPid=el.value; render(); } }); });
+// Suche: beim Tippen neu zeichnen, Cursor im Feld behalten
+let ORD_QT=0; document.addEventListener('input',e=>{ if(!e.target||e.target.id!=='ordQ') return; UI.ordQ=e.target.value; clearTimeout(ORD_QT);
+  ORD_QT=setTimeout(()=>{ render(); const el=$('#ordQ'); if(el){ el.focus(); const n=el.value.length; try{ el.setSelectionRange(n,n); }catch(x){} } },250); });
 
 /* ========== Bestellfreigabe: HH und AvE genehmigen, ändern, stornieren oder fassen mehrere beim selben Lieferanten zusammen ========== */
 const ORD_APPROVERS=['hh','ave'];
@@ -5391,12 +5474,13 @@ var ORD_MAIL_RES=''; // Ergebnis des letzten Abgleichs mit einer Bestell-Mail (n
 // Beleg ↔ vorhandene Bestellung. Nummer oder Hinweis der KI = sicher. Sonst Lieferant gleich und mindestens die Hälfte der Positionen gleich. Mehrere oder schwache Treffer: fragen. Bei einer eigenen neuen Bestellung (best) zählt nur die Nummer.
 var ORD_HINT='', ORD_PICK='';
 function ordFindMatch(r,selfId,nr,hint,kind){ const live=x=>x.id!==selfId&&x.status!=='storniert'&&x.appr!=='storno', all=arr('orders').filter(live);
-  if(hint&&S.orders[hint]&&live(S.orders[hint])) return {hit:S.orders[hint]};
+  // Vorschlag aus der Ablage nur nehmen, wenn die Bestellnummer nicht widerspricht (sonst landen fremde Positionen als „schon da“ in einer anderen Bestellung)
+  if(hint&&S.orders[hint]&&live(S.orders[hint])){ const hn=String(S.orders[hint].no||'').split('/').map(normNr).filter(Boolean); if(!nr||!hn.length||hn.includes(normNr(nr))) return {hit:S.orders[hint]}; }
   if(nr){ const h=all.find(x=>String(x.no||'').split('/').some(n=>normNr(n)&&normNr(n)===normNr(nr))); if(h) return {hit:h}; }
   if(!['ab','ls','re'].includes(kind)) return {};
   const cl=s=>String(s||'').replace(/\b(gmbh|mbh|ag|kg|co|ug|ohg|se|e\.?\s?k\.?)\b|&/gi,' '), its=r.items||[];
   const cands=all.filter(x=>(ordDraft(x)||orderState(x).open)&&simWords(cl(x.supplier),cl(r.supplier))>=0.5); if(!cands.length) return {};
-  const scored=cands.map(x=>{ const xi=(x.items||[]).filter(i=>String(i.art||'').trim()), hits=its.filter(i=>xi.some(y=>(normNr(i.artNr)&&normNr(i.artNr)===normNr(y.artNr))||simWords(y.art,i.art)>=0.6)).length, base=Math.min(its.length,xi.length), share=base?hits/base:0, pj=r.projectId&&x.pid?(r.projectId===x.pid?0.3:-0.5):0; return {x,share,score:share+pj}; }).sort((a,b)=>b.score-a.score);
+  const scored=cands.map(x=>{ const xi=(x.items||[]).filter(i=>String(i.art||'').trim()), hits=its.filter(i=>xi.some(y=>(normNr(i.artNr)&&normNr(i.artNr)===normNr(y.artNr))||(!nrClash(i,y)&&simWords(y.art,i.art)>=0.6))).length, base=Math.min(its.length,xi.length), share=base?hits/base:0, pj=r.projectId&&x.pid?(r.projectId===x.pid?0.3:-0.5):0; return {x,share,score:share+pj}; }).sort((a,b)=>b.score-a.score);
   const good=scored.filter(s=>s.share>=0.5&&s.score>=0.5); if(good.length===1||(good.length>1&&good[0].score-good[1].score>=0.25)) return {hit:good[0].x};
   return {ask:(good.length?good:scored).slice(0,6).map(s=>s.x)}; }
 function ordPickSheet(list,kind){ return new Promise(res=>{ ORD_PICK=''; const KN={ab:'Die Auftragsbestätigung',ls:'Der Lieferschein',re:'Die Rechnung'};
@@ -5407,7 +5491,7 @@ queueMicrotask(()=>Object.assign(A,{ ordPick:d=>{ ORD_PICK=d.id; closeSheet(); }
 function ordDocKind(r,mail){ const s=String((r&&r.docType)||'').toLowerCase(); return /liefer/.test(s)?'ls':/rechn/.test(s)?'re':/^ab$|auftragsbest|bestätig/.test(s)?'ab':/angebot/.test(s)?'ang':/anfrage|bedarf/.test(s)?'anf':/bestell|mail/.test(s)||mail?'best':''; }
 function ordMergeMail(old,neu,keepQty){ const out=(old||[]).map(i=>({...i})), used=new Set(), add=[], chg=[]; let hit=0;
   (neu||[]).forEach(n=>{ const nr=normNr(n.artNr); let j=nr?out.findIndex((x,k)=>!used.has(k)&&normNr(x.artNr)===nr):-1;
-    if(j<0){ let best=-1, bs=0; out.forEach((x,k)=>{ if(used.has(k)) return; const s=simWords(x.art,n.art); if(s>bs){ bs=s; best=k; } }); if(bs>=0.6) j=best; }
+    if(j<0){ let best=-1, bs=0; out.forEach((x,k)=>{ if(used.has(k)||nrClash(x,n)) return; const s=simWords(x.art,n.art); if(s>bs){ bs=s; best=k; } }); if(bs>=0.6) j=best; }
     if(j<0){ out.push({...n}); used.add(out.length-1); add.push(n); return; }
     used.add(j); hit++; const x=out[j], label=x.art||n.art;
     if(!x.artNr&&n.artNr) x.artNr=n.artNr;
@@ -5432,8 +5516,8 @@ function orderForm(o,pre,forceNew){
     {k:'status',label:'Status',type:'select',options:Object.entries(ORDER_ST)},{k:'ordered',label:'Bestellt am',type:'date'},{k:'delivery',label:'Liefertermin (geplant)',type:'date'},{k:'delivered',label:'Geliefert am',type:'date'},
     {k:'address',label:'Lieferadresse',full:1,ph:'Baustelle oder Lager'},
     {k:'items',label:'Positionen',type:'lines',cols:ORDER_COLS},{k:'notes',label:'Notiz',type:'textarea'}],
-    extraBtn:isNew?'':`${ordWait(o)&&ordApprover()?`<button type="button" class="btn sun" data-act="ordApprove" data-id="${o.id}">✓ Freigeben</button><button type="button" class="btn ghost" data-act="ordStorno" data-id="${o.id}">Stornieren</button>`:''}${unrouted(o).length?`<button type="button" class="btn sun" data-act="routeOrder" data-id="${o.id}">${ic('stock')}Ins Lager / Baustelle</button>`:''}<button type="button" class="btn" data-act="receive" data-id="${o.id}">${ic('truck')}Warenannahme</button>`,
-    onSave:v=>{ delete v.apprx; if(isNew){ if(v.otype==='entwurf') v.status='entwurf'; else if(ordDraft(v)) v.status='bestellt'; delete o.otype; } delete v.otype; const old=o.items||[]; Object.assign(o,v); o.items=o.items.map((it,i)=>{ const same=old[i]&&old[i].art===it.art; return {...it,recv:same?old[i].recv||0:0,routed:same?old[i].routed||0:0,dmg:same?!!old[i].dmg:false,miss:same?!!old[i].miss:false,...(same&&old[i].extra?{extra:true}:{}),price:it.price===''||it.price==null?null:+it.price}; }); put('orders',o); CUR_ORDER=null; toast('Bestellung gespeichert.'); },
+    extraBtn:isNew?'':`${ordWait(o)&&ordApprover()?`<button type="button" class="btn sun" data-act="ordApprove" data-id="${o.id}">✓ Freigeben</button><button type="button" class="btn ghost" data-act="ordStorno" data-id="${o.id}">Stornieren</button>`:''}${unrouted(o).length?`<button type="button" class="btn sun" data-act="routeOrder" data-id="${o.id}">${ic('stock')}Ins Lager / Baustelle</button>`:''}${retCan(o)?`<button type="button" class="btn" data-act="retSheet" data-id="${o.id}">↩ Retoure${retOpen(o).length?' ('+retOpen(o).length+' offen)':''}</button>`:''}<button type="button" class="btn" data-act="receive" data-id="${o.id}">${ic('truck')}Warenannahme</button>`,
+    onSave:v=>{ delete v.apprx; if(isNew){ if(v.otype==='entwurf') v.status='entwurf'; else if(ordDraft(v)) v.status='bestellt'; delete o.otype; } delete v.otype; const old=o.items||[]; Object.assign(o,v); if(o.buyer) o.buyer=firmCanon(o.buyer); o.items=o.items.map((it,i)=>{ const same=old[i]&&old[i].art===it.art; return {...it,recv:same?old[i].recv||0:0,routed:same?old[i].routed||0:0,dmg:same?!!old[i].dmg:false,miss:same?!!old[i].miss:false,...(same&&old[i].extra?{extra:true}:{}),price:it.price===''||it.price==null?null:+it.price}; }); put('orders',o); CUR_ORDER=null; toast('Bestellung gespeichert.'); },
     onDelete:isNew?null:()=>{ del('orders',o.id); closeSheet(); }});
 }
 const itemOpen = it=>!it.extra && (+it.recv||0) < (+it.qty||0);
@@ -5448,13 +5532,15 @@ function itemChip(it){
 }
 // Lieferschein ↔ Bestellung: Artikelnummer zuerst, sonst Wortüberschneidung der Bezeichnung
 const normNr=s=>String(s||'').replace(/[^0-9a-z]/gi,'').replace(/^0+/,'').toLowerCase();
+// Zwei Positionen mit verschiedenen Artikelnummern sind nie derselbe Artikel, auch wenn die Bezeichnung ähnlich ist (z. B. zwei Feinschraubendreher)
+const nrClash=(a,b)=>{ const x=normNr(a&&a.artNr), y=normNr(b&&b.artNr); return !!(x&&y&&x!==y); };
 const words=s=>new Set(String(s||'').toLowerCase().replace(/[^0-9a-zäöüß]+/g,' ').split(' ').filter(w=>w.length>1));
 function simWords(a,b){ const A=words(a), B=words(b); if(!A.size||!B.size) return 0; let n=0; A.forEach(w=>{ if(B.has(w)) n++; }); return n/Math.min(A.size,B.size); }
 function matchDelivery(order,dItems){
   const used=new Set(), res=[];
   (order.items||[]).forEach((it,i)=>{ if(!itemOpen(it)) return;
     const nr=normNr(it.artNr); let j=nr?dItems.findIndex((d,k)=>!used.has(k)&&normNr(d.artNr)===nr):-1;
-    if(j<0){ let best=-1, bs=0; dItems.forEach((d,k)=>{ if(used.has(k)) return; const s=simWords(it.art,d.art)+(nr&&normNr(d.art).includes(nr)?1:0); if(s>bs){ bs=s; best=k; } }); if(bs>=0.6) j=best; }
+    if(j<0){ let best=-1, bs=0; dItems.forEach((d,k)=>{ if(used.has(k)||nrClash(it,d)) return; const s=simWords(it.art,d.art)+(nr&&normNr(d.art).includes(nr)?1:0); if(s>bs){ bs=s; best=k; } }); if(bs>=0.6) j=best; }
     const openQ=(+it.qty||0)-(+it.recv||0);
     if(j<0){ res.push({i,st:'fehlt',n:0,open:openQ}); return; } used.add(j);
     const q=+dItems[j].qty||0; res.push(q>=openQ-1e-9?{i,st:'da',n:q,open:openQ}:q>0?{i,st:'teil',n:q,open:openQ}:{i,st:'fehlt',n:0,open:openQ}); });
@@ -5923,7 +6009,7 @@ async function handleInvoice(file,mail,mailFile){
       } else { mg=blank?{items:r.items,hit:0,add:r.items,chg:[],miss:[]}:ordMergeMail(o.items,r.items,kind==='re'); if(delDate) o.delivered=delDate; }
       o.items=mg.items; found=mg.add.length;
       if(!o.supplier&&r.supplier) o.supplier=String(r.supplier).slice(0,120);
-      if(!o.buyer&&r.buyer) o.buyer=String(r.buyer).slice(0,120);
+      if(!o.buyer&&r.buyer) o.buyer=firmCanon(String(r.buyer).slice(0,120));
       // Nummer: übernehmen; steht schon eine andere drin, bleiben beide stehen
       const hadNo=String(o.no||'').trim(); if(nr&&!hadNo) o.no=nr.slice(0,60); else if(nr&&!hadNo.split('/').some(n=>normNr(n)===normNr(nr))) o.no=(hadNo+' / '+nr).slice(0,80);
       // Liefertermin (geplant): Bestellung und AB legen ihn fest und ersetzen einen geschätzten. Beim Lieferschein höchstens ergänzen.
@@ -6131,6 +6217,8 @@ const UNITS=['Stk','m','Pal','Rolle','kg','VE','Set','psch'];
 const PICK_ST={offen:'offen',gepackt:'gepackt',uebergeben:'an Baustelle übergeben'};
 // Lagerware kann verschiedenen Firmen gehören (gleicher Artikel je Firma getrennt geführt)
 const FIRMS=()=>(S.config&&Array.isArray(S.config.firms)&&S.config.firms.length?S.config.firms:['nutz die Sonne GmbH','Flexvolt GmbH & Co. KG','VE Immobilien-Verwaltungs-GmbH']);
+const firmKey=s=>String(s||'').toLowerCase().replace(/[^0-9a-zäöüß]+/g,'');
+const firmCanon=s=>{ const t=String(s||'').trim(); if(!t) return t; return FIRMS().find(f=>firmKey(f)===firmKey(t))||t; };
 const firmOf=s=>(s&&s.firm)||FIRMS()[0];
 const firmShort=f=>String(f||'').replace(/\s*(GmbH|&|-Verwaltungs).*$/,'').trim()||f;
 const firmFromBuyer=b=>{ const x=String(b||'').toLowerCase(); return FIRMS().find(f=>x&&(x.includes(firmShort(f).toLowerCase())||firmShort(f).toLowerCase().includes(x.split(' ')[0])))||FIRMS()[0]; };
