@@ -3777,7 +3777,8 @@ function needAll(){ const out=[];
   return out; }
 function vDash(){
   const t=TODAY(), mon=mondayOf(t), days=[0,1,2,3,4].map(i=>addDays(mon,i));
-  if(MODE==='cloud'&&!ME) return `<div class="card"><div class="empty" style="padding:36px 20px"><b>Dein Konto ist noch keinem Mitarbeiter zugeordnet</b>Angemeldet mit ${esc(USER_EMAIL||'diesem Konto')}. Bis EP oder AvE die E-Mail unter „Team & Einstellungen“ bei deinem Namen eintragen, siehst du hier nichts.</div></div>`+hrDashStrip();
+  if(MODE==='cloud'&&!ME) return `<div class="card"><div class="empty" style="padding:36px 20px"><b>Dein Konto ist noch keinem Mitarbeiter zugeordnet</b>Angemeldet mit ${esc(USER_EMAIL||'diesem Konto')}. Bis EP oder AvE die E-Mail unter „Team & Einstellungen“ bei deinem Namen eintragen, siehst du hier nichts.
+    <div class="small" style="margin-top:12px;text-align:left;max-width:560px;margin-left:auto;margin-right:auto"><b>Ist das das Lager-Tablet?</b> Dann fehlt einer dieser Schritte:<br>1. EP oder AvE trägt genau diese Adresse am PC unter Lagerverwaltung → „🔑 Tablet-Konten“ ein und speichert.<br>2. Die Adresse gehört zur Firmen-Domain (wie die Mitarbeiter-Konten). Eine andere Domain darf die Daten nicht lesen.<br>3. Danach hier die Seite neu laden.${S.config?(tabletEmails().length?`<br><span class="muted">Eingetragene Tablet-Konten: ${tabletEmails().length}, diese Adresse ist nicht dabei.</span>`:'<br><span class="muted">Es ist noch kein Tablet-Konto eingetragen.</span>'):'<br><span class="muted">Die Einstellungen konnten mit diesem Konto nicht gelesen werden, das spricht für Punkt 2.</span>'}</div></div></div>`+hrDashStrip();
   if(!arr('projects').length) return dashHero(t)+smartDropHtml()+pinboardHtml()+nfCardHtml()+emptyStart();
   // 1) Wochenplanung Mo–Fr (eigene Einträge zuerst)
   const items=calItems(mon,days[4]).filter(x=>x.k!=='todo');
@@ -9835,21 +9836,20 @@ async function kiTelTodo(m,files,text,o={}){
   const old=arr('tasks').find(x=>x.kiKey&&x.kiKey===P.key);
   if(old){ if(!o.quiet) toast('Dieser Anruf ist schon als To-Do angelegt: „'+old.title.slice(0,60)+'“'); return old; }
   const what=P.head||P.anliegen||P.anfrage||P.sum.split(/(?<=\.)\s/)[0]||'Anruf';
-  let title=('Rückruf '+(P.name||P.tel||'Anrufer')+': '+what).slice(0,160), pid=o.pid||matchProject([P.proj,P.anliegen,P.head,P.sum,P.name].join('\n')).pid||'', who='', prio='hoch';
+  let title=('Rückruf '+(P.name||P.tel||'Anrufer')+': '+what).slice(0,160), pid=o.pid||matchProject([P.proj,P.anliegen,P.head,P.sum,P.name].join('\n')).pid||'', prio='hoch';
+  // KI-Telefon-To-Dos gehen immer an MK (Vorgabe EP), unabhängig vom Inhalt
+  const mkS=staff().find(s=>shortWho(s.name).toLowerCase()==='mk'), who=mkS?shortWho(mkS.name):'MK';
   if(SAMPLE){ toast('📞 KI-Telefon-Anruf erkannt – Claude legt das To-Do an …');
     const plist=arr('projects').filter(p=>['laufend','planung','onhold','fertig'].includes(catOf(p))).map(p=>`${p.id} | ${p.name} | ${p.nr||''} | ${String(p.place||'').replace(/\n/g,' ')} | ${p.customer||''}`).join('\n');
-    const roster=staff().map(s=>`${shortWho(s.name)} = ${s.name.replace(/\s*\([^)]*\)$/,'')} (${ROLES[s.role]||s.role})`).join('\n');
     try{ const r=await SAMPLE.json(`Heute ist ${TODAY()}. Unser KI-Telefonassistent (nutz die Sonne GmbH; PV, Speicher, Ladesäulen) hat einen Anruf entgegengenommen:
 Anrufer: ${P.name||'?'} · Tel. ${P.tel||'?'}
 ${P.extra.join('\n')}
 Zusammenfassung: ${P.head} ${P.sum}
 Projekte (ID | Name | Nummer | Ort | Kunde):\n${plist}
-Mitarbeiter (Kürzel = Name, Rolle):\n${roster}
-Mache daraus genau EIN To-Do für uns (meist Rückruf + Anliegen). Titel kurz im Imperativ mit Name des Anrufers, z. B. „Katrin Mannheim zurückrufen: Inbetriebsetzungsauftrag Westnetz“. Projekt nur bei eindeutigem Bezug (Name, Adresse – Korrekturen des Anrufers beachten –, Kunde, Nummer), sonst "". Zuständig nur, wenn klar aus der Rolle, sonst "".
-Antworte nur mit JSON: {"title":"","projectId":"","who":"Kürzel oder leer","prio":"dringend|hoch|normal"}`,{modelTier:'default'});
+Mache daraus genau EIN To-Do für uns (meist Rückruf + Anliegen). Titel kurz im Imperativ mit Name des Anrufers, z. B. „Katrin Mannheim zurückrufen: Inbetriebsetzungsauftrag Westnetz“. Projekt nur bei eindeutigem Bezug (Name, Adresse – Korrekturen des Anrufers beachten –, Kunde, Nummer), sonst "".
+Antworte nur mit JSON: {"title":"","projectId":"","prio":"dringend|hoch|normal"}`,{modelTier:'default'});
       if(r&&String(r.title||'').trim()) title=String(r.title).trim().slice(0,160);
       if(r&&r.projectId&&S.projects[r.projectId]) pid=r.projectId;
-      if(r&&r.who){ const s=staff().find(s=>shortWho(s.name).toLowerCase()===String(r.who).toLowerCase()); if(s) who=shortWho(s.name); }
       if(r&&PRIO[r.prio]) prio=r.prio; }
     catch(e){ if(e&&e.code&&e.code!=='cancelled') toast(SAMPLE_ERR[e.code]||'Claude nicht erreichbar – To-Do aus der Mail angelegt.'); } }
   const notes=['Extern: KI Telefon','Anrufer: '+[P.name,P.tel?'Tel. '+P.tel:''].filter(Boolean).join(' · '),...P.extra,(P.head||P.sum)?'Zusammenfassung: '+[P.head,P.sum].filter(Boolean).join(' – '):'',m.date?'Anruf: '+String(m.date).slice(0,25):''].filter(Boolean).join('\n');
