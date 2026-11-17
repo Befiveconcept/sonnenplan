@@ -7108,7 +7108,7 @@ function l3TplCreate(key,t){ if(!lgMgr()) return false; const pre=[], now=new Da
   const old=lgAll().filter(n=>n.v3d===key).map(n=>{ const x={...n}; delete x.v3d; return x; });
   const bins=out.filter(x=>x.kind==='platz').length;
   lgWriteMany([...all,...old]).then(ok=>{ if(ok){ if(UI.l3Tpl) delete UI.l3Tpl[key]; toast(bins+' Lagerplätze angelegt – alle leer.'); render(); } }); }
-function vLg3d(sw){ const sel=L3_AREAS.find(a=>a[0]===UI.l3Area)?UI.l3Area:'keller', q=String(UI.l3q||'').trim().toLowerCase(), mg=lgMgr();
+function vLg3d(sw){ const sel=L3_AREAS.find(a=>a[0]===UI.l3Area)?UI.l3Area:'keller', q=String(UI.l3q||'').trim().toLowerCase(), mg=lgMgr()||kAskWho(); // Tablet: Knöpfe zeigen, beim Antippen „Wer bucht?“
   const tiles=`<div class="l3-tiles">${L3_AREAS.map(([k,l])=>{ const n=l3Node(k), bins=n?lgSub(n.id).filter(lgIsBin):[], full=bins.filter(b=>binStock(b.id).length).length;
     return `<button type="button" class="l3-tile ${k===sel?'on':''}" data-act="l3Area" data-v="${k}"><b>${esc(l)}</b><span class="small muted">${n?bins.length+' Plätze · '+full+' belegt':'Vorlage (leer, noch nicht angelegt)'}</span></button>`; }).join('')}</div>`;
   const A=L3_AREAS.find(a=>a[0]===sel), node=l3Node(sel);
@@ -9748,7 +9748,7 @@ function kioskSetup(){ if(!lagerOk()) return toast('Ein Lager-Tablet einrichten 
       lsSet(KIOSK_K,JSON.stringify({on:true,pin:strHash('kiosk|'+a),askWho:$('#kask').checked,by:meK(),base:ME,at:new Date().toISOString()})); KQ=''; KWHO=''; KMODE=''; setTimeout(()=>{ render(); toast('Lager-Tablet ist eingerichtet.'); },50); }}); }
 function kioskExit(){ openSheet({title:'Tablet-Modus beenden',html:`<div class="fld full"><label for="kpx">PIN</label><input id="kpx" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></div>`,saveLabel:'Beenden',
   onSave:()=>{ const c=kioskCfg(); if(!c||strHash('kiosk|'+$('#kpx').value.trim())!==c.pin){ toast('PIN falsch.'); return false; } ME=c.base||ME; lsSet(KIOSK_K,''); KWHO=''; document.body.classList.remove('kiosk'); setTimeout(render,30); toast('Tablet-Modus beendet.'); }}); setTimeout(()=>{ const i=$('#kpx'); if(i) i.focus(); },60); }
-function kioskLogout(msg){ KWHO=''; ME=kBase(); KMODE=''; KQ=''; closeSheet(); lgCamClose(); render(); if(msg) toast(msg); }
+function kioskLogout(msg){ KWHO=''; ME=kBase(); KMODE=''; UI.l3Edit=false; UI.l3Drag=null; KQ=''; closeSheet(); lgCamClose(); render(); if(msg) toast(msg); }
 // Wer bucht? Danach mit dessen Rechten (Lager bearbeiten nötig)
 function kioskWho(then){ const c=kioskCfg()||{}; if(!c.askWho&&!isTabletAcc()){ then(); return; } if(KWHO){ then(); return; }
   const list=staff().filter(s=>!(s.exit&&s.exit<TODAY())); if(!list.length){ then(); return; }
@@ -9799,6 +9799,10 @@ function kTop(){ const c=kioskCfg()||{};
 function vKioskFull(){ const v=K_VIEW, ok=canSee(v);
   const hint=!KWHO&&isTabletAcc()?`<div class="ks-ro">Nur ansehen. Zum Ändern oben auf <b>„Wer bucht?“</b> tippen und dein Kürzel wählen.</div>`:'';
   return `<div class="ks ks-wide">${kTop()}${hint}<div class="ks-full">${ok?(v==='stock'?vStock():vOrders()):`<div class="empty">${esc(shortWho(ME)||'Diese Anmeldung')} darf diesen Bereich nicht sehen.</div>`}</div></div>`; }
+// Tablet-Konto ohne gewählte Person: Raum-Bearbeitung (Schränke ziehen, Regal anlegen, Raumgröße, Plätze anlegen) erst nach „Wer bucht?“ – dann mit deren Rechten
+const kAskWho=()=>KIOSK_ON()&&isTabletAcc()&&!KWHO;
+queueMicrotask(()=>queueMicrotask(()=>{ ['l3EditTog','l3RackAdd','l3Room','lgWiz'].forEach(k=>{ const f=A[k]; if(!f) return;
+  A[k]=(d,el)=>{ if(!kAskWho()) return f(d,el); kioskWho(()=>{ render(); setTimeout(()=>{ if(lgMgr()) f(d,el); else toast('Zum Ändern der Lagerräume fehlt dieser Person das Recht „Lager bearbeiten“.'); },60); }); }; }); }));
 queueMicrotask(()=>Object.assign(A,{ kView:d=>{ K_VIEW=d.v; lsSet('sonnenplan-kview',d.v); KIDLE=Date.now(); window.scrollTo(0,0); render(); } }));
 function vKiosk(){ const q=KQ.trim().toLowerCase(), c=kioskCfg()||{};
   const list=q?arr('stock').filter(s=>[s.art,s.artNr,firmOf(s),stockBinsTxt(s)].join(' ').toLowerCase().includes(q)).sort((a,b)=>String(a.art).localeCompare(String(b.art),'de')).slice(0,40):[];
