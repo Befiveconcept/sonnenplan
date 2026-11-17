@@ -686,7 +686,10 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 /* Lager-Tablet */
 body.kiosk .side,body.kiosk #mtop,body.kiosk #nfStrip,body.kiosk .tabbar,body.kiosk .aic-fab,body.kiosk .aic,body.kiosk .big-nav{display:none!important}
 body.kiosk .app{display:block}body.kiosk .main{padding:0}body.kiosk .wrap{max-width:1100px;margin:0 auto}
-.ks{padding:14px 16px 30px}.ks-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}.ks-logo{height:44px;background:#fff;border-radius:8px;padding:2px 6px}.ks-t{font-size:22px}
+.ks{padding:14px 16px 30px}.ks-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.ks-tabs{display:flex;gap:6px;flex-wrap:wrap}.ks-tabs button{border:1px solid var(--line);background:var(--surface);color:inherit;border-radius:999px;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer;min-height:44px}.ks-tabs button.on{background:var(--sun);border-color:var(--sun);color:#111}
+.ks-ro{background:var(--sun-soft);border-radius:10px;padding:10px 14px;margin:0 0 12px;color:#111}
+body.kiosk .wrap:has(.ks-wide){max-width:none}.ks-wide{padding-left:20px;padding-right:20px}.ks-logo{height:44px;background:#fff;border-radius:8px;padding:2px 6px}.ks-t{font-size:22px}
 .ks-who{font:inherit;font-size:17px;font-weight:600;border:2px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:10px 18px;cursor:pointer}.ks-who.on{background:#111;color:#F4DB02;border-color:#111}
 .ks-x{font-size:22px;border:0;background:none;color:var(--muted);padding:8px 10px;cursor:pointer}
 .ks-search{display:flex;gap:10px}.ks-search .inp{flex:1;font-size:20px;padding:16px 18px;border-radius:14px}.ks-search .btn{font-size:18px;padding:0 22px;border-radius:14px}
@@ -2819,7 +2822,7 @@ const isMonteurDefault=n=>{ const k=String(shortWho(n)||'').toLowerCase(); if(AD
 /* Lager-Tablet-Konto: eigene Anmeldung nur fürs Tablet (keine Person). Sieht nur die Lagerverwaltung, darf selbst NICHTS buchen –
    gebucht wird immer erst nach „Wer bucht?“ mit Kürzel und Rechten der gewählten Person. Welche E-Mails Tablet-Konten sind, legen EP/AvE fest. */
 const TAB_ME='Lager-Tablet (TAB)';
-const TAB_PERM={views:['stock'],edit:[],admin:false,ownTodos:true,role:'tablet',v2:true,nfSet:true};
+const TAB_PERM={views:['stock','orders'],edit:[],admin:false,ownTodos:true,role:'tablet',v2:true,nfSet:true};
 const tabletEmails=()=>((S.config||{}).tabletAccounts||[]).map(e=>String(e||'').trim().toLowerCase()).filter(Boolean);
 const isTabletAcc=()=>MODE==='cloud'&&!!USER_EMAIL&&tabletEmails().includes(String(USER_EMAIL).trim().toLowerCase());
 const permEff=n=>n===TAB_ME?TAB_PERM:permOf(n)||(n&&isMonteurDefault(n)?rolePerm('monteur'):null);
@@ -3742,7 +3745,7 @@ function banner(){
 function render(){ if(EXIT_LOCK) return;
   renderShell();
   if(KIOSK_ON()){ document.body.classList.add('kiosk'); const f=document.activeElement&&document.activeElement.id==='kqIn', ss=f?document.activeElement.selectionStart:0;
-    $('#view').innerHTML=vKiosk(); const i=$('#kqIn'); if(i&&f){ try{ i.focus({preventScroll:true}); i.setSelectionRange(ss,ss); }catch(e){} } return; }
+    $('#view').innerHTML=K_VIEW==='stock'||K_VIEW==='orders'?vKioskFull():vKiosk(); const i=$('#kqIn'); if(i&&f){ try{ i.focus({preventScroll:true}); i.setSelectionRange(ss,ss); }catch(e){} } return; }
   document.body.classList.remove('kiosk');
   const v = canSee(UI.view)?UI.view:'dash';
   const fn0 = {rights:vRights,dash:vDash,projects:vProjects,project:vProject,todos:vTodos,pool:vPool,meetings:vMeetings,hr:vHR,stamm:vStamm,sales:vSales,fin:vFin,week:vTeamWeek,calendar:vCalendar,activity:vActivity,files:vFiles,stock:vStock,chat:vChat,private:vPrivate,orders:vOrders,offers:vOffers,reports:vReports,templates:vTemplates,settings:vSettings}[v]||vDash;
@@ -9785,11 +9788,22 @@ Antworte nur mit JSON: {"match":"","cands":[],"read":{"art":"Hersteller + Bezeic
     <div class="small muted" style="margin-top:10px">„Neu anlegen“ öffnet das Formular mit den gelesenen Angaben – bitte kurz prüfen, Menge als Anfangsbestand und den Lagerplatz eintragen.</div></div>`,saveLabel:'Schließen',onSave:()=>{},
     extraBtn:`<button type="button" class="btn sun" data-act="kNewRead">+ Neu anlegen & einbuchen</button>`}); }
 let K_NEW=null;
+/* Tablet: oben umschalten zwischen großen Knöpfen und den vollen Seiten Lagerverwaltung / Bestellungen (wie am PC).
+   Ansehen darf jeder am Tablet; ändern erst nach „Wer bucht?“ mit den Rechten dieser Person. */
+const K_VIEWS=[['tablet','Tablet'],['stock','Lagerverwaltung'],['orders','Bestellungen & Wareneingang']];
+let K_VIEW=lsGet('sonnenplan-kview')||'tablet';
+function kTop(){ const c=kioskCfg()||{};
+  return `<div class="ks-top"><img src="${NDS_LOGO}" alt="nutz die Sonne" class="ks-logo"><b class="ks-t">Lager-Tablet</b>
+    <div class="ks-tabs" role="tablist">${K_VIEWS.map(([k,l])=>`<button type="button" role="tab" class="${K_VIEW===k?'on':''}" aria-selected="${K_VIEW===k}" data-act="kView" data-v="${k}">${l}</button>`).join('')}</div><span class="spacer"></span>
+    ${c.askWho||isTabletAcc()?`<button type="button" class="ks-who ${KWHO?'on':''}" data-act="kWho">👤 ${KWHO?esc(shortWho(KWHO))+' <small>· abmelden</small>':'Wer bucht?'}</button>`:''}<button type="button" class="ks-x" data-act="kExit" title="Tablet-Modus beenden" aria-label="Tablet-Modus beenden">⎋</button></div>`; }
+function vKioskFull(){ const v=K_VIEW, ok=canSee(v);
+  const hint=!KWHO&&isTabletAcc()?`<div class="ks-ro">Nur ansehen. Zum Ändern oben auf <b>„Wer bucht?“</b> tippen und dein Kürzel wählen.</div>`:'';
+  return `<div class="ks ks-wide">${kTop()}${hint}<div class="ks-full">${ok?(v==='stock'?vStock():vOrders()):`<div class="empty">${esc(shortWho(ME)||'Diese Anmeldung')} darf diesen Bereich nicht sehen.</div>`}</div></div>`; }
+queueMicrotask(()=>Object.assign(A,{ kView:d=>{ K_VIEW=d.v; lsSet('sonnenplan-kview',d.v); KIDLE=Date.now(); window.scrollTo(0,0); render(); } }));
 function vKiosk(){ const q=KQ.trim().toLowerCase(), c=kioskCfg()||{};
   const list=q?arr('stock').filter(s=>[s.art,s.artNr,firmOf(s),stockBinsTxt(s)].join(' ').toLowerCase().includes(q)).sort((a,b)=>String(a.art).localeCompare(String(b.art),'de')).slice(0,40):[];
   const moves=arr('stock').flatMap(s=>(s.moves||[]).filter(m=>String(m.at||'').slice(0,10)===TODAY()).map(m=>({...m,art:s.art}))).sort((a,b)=>String(b.at).localeCompare(String(a.at))).slice(0,8);
-  return `<div class="ks"><div class="ks-top"><img src="${NDS_LOGO}" alt="nutz die Sonne" class="ks-logo"><b class="ks-t">Lager-Tablet</b><span class="spacer"></span>
-      ${c.askWho?`<button type="button" class="ks-who ${KWHO?'on':''}" data-act="kWho">👤 ${KWHO?esc(shortWho(KWHO))+' <small>· abmelden</small>':'Wer bucht?'}</button>`:''}<button type="button" class="ks-x" data-act="kExit" title="Tablet-Modus beenden" aria-label="Tablet-Modus beenden">⎋</button></div>
+  return `<div class="ks">${kTop()}
     <div class="ks-search"><input id="kqIn" class="inp" value="${esc(KQ)}" placeholder="${KMODE?esc(KM_L[KMODE])+': Artikel suchen, scannen oder Schild fotografieren …':'Artikel suchen oder Code scannen …'}" autocomplete="off" autocapitalize="off" enterkeyhint="search"><button type="button" class="btn sun" data-act="kScan">📷 Scannen</button></div>
     ${KMODE?`<div class="ks-mode">Modus: <b>${esc(KM_L[KMODE])}</b> – wähle den Artikel <button type="button" class="lnk" data-act="kMode" data-m="">abbrechen</button></div>`:''}
     ${q?`<div class="ks-res">${list.length?list.map(s=>`<div class="k-res"><button type="button" class="k-res-m" data-act="kOpen" data-id="${s.id}"><b>${esc(s.art)}</b><span class="small muted">${esc([s.artNr,firmShort(firmOf(s)),LGON()?binsOf(s).slice(0,3).map(([x])=>lgCode(x)).join(', '):s.loc].filter(Boolean).join(' · '))}</span></button><span class="k-res-q">${qn(s.qty)} <small>${esc(s.unit||'')}</small></span><button type="button" class="k-sm in" data-act="kAct" data-id="${s.id}" data-m="in" aria-label="Einbuchen">⬇</button><button type="button" class="k-sm out" data-act="kAct" data-id="${s.id}" data-m="out" aria-label="Entnehmen">⬆</button></div>`).join(''):`<div class="empty">Nichts gefunden zu „${esc(KQ)}“. <button type="button" class="btn sm" data-act="kNew" data-code="">+ Neuen Artikel anlegen</button></div>`}</div>`:
