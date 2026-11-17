@@ -522,6 +522,7 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .pm .ck{width:15px;height:15px}
 .tbl.rights th.rt-h{height:130px;vertical-align:bottom;padding:4px 2px;white-space:nowrap}
 .tbl.rights th.rt-h span{display:inline-block;transform:rotate(-55deg);transform-origin:left bottom;width:22px;font-size:12px;margin-left:12px}
+body.ro-pedit [data-act="editProject"],body.ro-pedit [data-act="dySumEdit"],body.ro-pedit [data-act="msSkip"],body.ro-pedit [data-act="projStatus"],body.ro-pedit input[data-chg="msCheck"],body.ro-pnote [data-act="quickNote"],body.ro-pnote .qn-box,body.ro-pnote [id^="qn_"]{display:none!important}
 .tbl.rights th.rt-h{position:relative}.tbl.rights .rt-x{display:block;margin:6px auto 0;border:1px solid var(--line);background:var(--surface);color:inherit;border-radius:999px;font:inherit;font-size:10px;padding:2px 7px;cursor:pointer;white-space:nowrap}.tbl.rights .rt-x:hover{border-color:var(--sun)}
 .tbl.rights th.rt-on .rt-x{background:var(--sun);border-color:var(--sun);color:#111}
 .tbl.rights .rt-f{background:var(--sun-soft)}.tbl.rights th.rt-f{min-width:96px;max-width:110px;white-space:normal;vertical-align:bottom;padding:4px 6px}.tbl.rights th.rt-f span{transform:none;width:auto;margin:0;display:block;white-space:normal;line-height:1.2;text-align:center;text-transform:none;letter-spacing:0}.tbl.rights .rt-part{display:block;font-size:12px;color:#b07d00;line-height:1}.tbl.rights th.rt-f span{font-size:11px;color:var(--ink)}
@@ -2980,8 +2981,8 @@ function dupGuard(coll,obj){ if(!obj||obj._dupOk){ if(obj) delete obj._dupOk; re
     if(drop){ obj[k]=keep.join('\n'); dupToast('Diese Notiz steht schon drin – nicht doppelt gespeichert.'); } });
   return false; }
 function put(coll,obj){
-  if(!mayWrite(coll)){ toast('Keine Bearbeitungsrechte für „'+((AREAS.find(a=>a[0]===COLL_AREA[coll])||[])[1]||coll)+'“. Bitte EP oder AvE fragen.'); scheduleRender(); return; }
-  if(ME&&!isAdmin()){ const g=fineGuard(coll,obj); if(g){ toast(g); scheduleRender(); return; } } // Feinrechte (Rechteverteilung, aufklappbar)
+  if(!mayWrite(coll)){ toast('⛔ Keine Bearbeitungsrechte für „'+((AREAS.find(a=>a[0]===COLL_AREA[coll])||[])[1]||coll)+'“ – nicht gespeichert. Bitte EP oder AvE fragen.',true); TOAST_LOCK=Date.now()+2500; scheduleRender(); return false; }
+  if(ME&&!isAdmin()){ const g=fineGuard(coll,obj); if(g){ toast('⛔ '+g+' Nicht gespeichert.',true); TOAST_LOCK=Date.now()+2500; scheduleRender(); return false; } } // Feinrechte (Rechteverteilung, aufklappbar)
   if(dupGuard(coll,obj)) return; // nichts doppelt: gleiches To-Do / gleiches Update / gleiche Notiz wird nicht noch einmal gespeichert
   const prev=S[coll][obj.id], now=new Date().toISOString();
   if(coll==='tasks'||coll==='projects') msWatch(coll,prev,obj); // Neues Update, erledigtes To-Do, neue Notiz: Ist damit ein Statusschritt erreicht?
@@ -2998,7 +2999,7 @@ function put(coll,obj){
   chains[key]=(chains[key]||Promise.resolve()).then(()=>DB.collection(coll).doc(obj.id).set(body)).catch(writeErr);
 }
 function del(coll,id){
-  if(ME&&!isAdmin()&&!['seen','log'].includes(coll)&&!String(coll).startsWith('notif')&&!(coll==='tasks'?can('t_del'):coll==='files'?can('f_del'):coll==='projects'?can('p_del'):can('x_del'))){ toast('Löschen ist für dich nicht freigeschaltet. Bitte EP oder AvE fragen.'); return; }
+  if(ME&&!isAdmin()&&!['seen','log'].includes(coll)&&!String(coll).startsWith('notif')&&!(coll==='tasks'?can('t_del'):coll==='files'?can('f_del'):coll==='projects'?can('p_del'):can('x_del'))){ toast('⛔ Löschen ist für dich nicht freigeschaltet. Bitte EP oder AvE fragen.',true); TOAST_LOCK=Date.now()+2500; return false; }
   if(!mayWrite(coll)){ toast('Keine Rechte zum Löschen. Bitte EP oder AvE fragen.'); return; }
   const prev=S[coll][id];
   if(coll==='events'&&prev) nfWatch(coll,prev,null);
@@ -3392,7 +3393,13 @@ const pinSetHidden=(id,on)=>{ const s=pinHidden(); if(on) s.add(id); else s.dele
 // Abgenommen (p.off): von Admin oder Verfasser für ALLE weggenommen – bleibt unter „Alte einblenden“ und lässt sich zurückholen
 const pinIsOld=(p,h)=>!!p&&(!!p.off||(p.until&&p.until<TODAY())||(h||pinHidden()).has(p.id));
 const pinSort=(a,b)=>(!!b.top-!!a.top)||String(b.at||'').localeCompare(String(a.at||''));
-const pinsActive=()=>{ const h=pinHidden(); return arr('pins').filter(p=>p&&!pinIsOld(p,h)).sort(pinSort); };
+/* Früher (vor 17.11.2026) blendete ✕ nur für sich selbst aus. Wer einen Zettel für alle abnehmen darf (Admin, Verfasser, Feinrecht),
+   dessen damals ausgeblendete Zettel werden einmal auf diesem Gerät für alle abgenommen. */
+let PIN_MIG=false;
+function pinMigrate(){ if(PIN_MIG||!ME||!S.config||!S.pins||!Object.keys(S.pins).length) return; PIN_MIG=true; const h=pinHidden(); let n=0;
+  arr('pins').forEach(p=>{ if(!p||p.off||!h.has(p.id)||!(pinCan(p)||can('pin_off'))) return; put('pins',{...clone(p),off:true,offBy:meK(),offAt:new Date().toISOString()}); pinSetHidden(p.id,false); n++; });
+  if(n) toast(n+(n===1?' früher ausgeblendeter Zettel ist':' früher ausgeblendete Zettel sind')+' jetzt für alle abgenommen.'); }
+const pinsActive=()=>{ if(!PIN_MIG) setTimeout(pinMigrate,0); const h=pinHidden(); return arr('pins').filter(p=>p&&!pinIsOld(p,h)).sort(pinSort); };
 const pinsOld=()=>{ const h=pinHidden(); return arr('pins').filter(p=>pinIsOld(p,h)).sort((a,b)=>String(b.at||'').localeCompare(String(a.at||''))); };
 const pinText=s=>esc(String(s||'')).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>');
 function pinCard(p){ const old=pinIsOld(p), all=pinCan(p)||can('pin_off'), hid=all?!!p.off||pinHidden().has(p.id):pinHidden().has(p.id), exp=!!(p.until&&p.until<TODAY()), neu=!old&&(p.by||'')!==meK()&&String(p.at||'')>(PIN_NEW_FROM!==null?PIN_NEW_FROM:lastRead('#pins'));
@@ -3785,8 +3792,14 @@ function banner(){
   if(READONLY) return `<div class="banner">Nur Leserechte: Änderungen werden nicht gespeichert. Bitte beim Eigentümer Bearbeitungsrechte anfragen.</div>`;
   return '';
 }
+/* Feinrechte in der Oberfläche: Knöpfe zum Bearbeiten ohne passendes Recht ausblenden (CSS) und Klicks darauf abfangen.
+   Die eigentliche Sperre sitzt in put()/del(); das hier verhindert nur, dass es so aussieht, als ginge es. */
+const FINE_ACTS={editProject:'p_edit',dySumEdit:'p_edit',msSkip:'p_edit',projStatus:'p_edit',quickNote:'p_notes',assignNext:'t_new',delTask:'t_del',delFile:'f_del',delProject:'p_del'};
+const fineActOk=a=>{ const k=FINE_ACTS[a]; if(!k||!ME||isAdmin()) return true; return can(k)||(k==='p_notes'&&can('p_edit')); };
+function fineBodyCls(){ const b=document.body; if(!b) return; const lim=!!ME&&!isAdmin(); b.classList.toggle('ro-pedit',lim&&!can('p_edit')); b.classList.toggle('ro-pnote',lim&&!can('p_notes')&&!can('p_edit')); b.classList.toggle('ro-tedit',lim&&!can('t_edit')); }
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-act]'); if(!b||fineActOk(b.dataset.act)) return; e.preventDefault(); e.stopPropagation(); toast('⛔ Dafür fehlt dir das Recht. Bitte EP oder AvE fragen.',true); },true);
 function render(){ if(EXIT_LOCK) return;
-  renderShell();
+  renderShell(); fineBodyCls();
   if(KIOSK_ON()){ document.body.classList.add('kiosk'); const f=document.activeElement&&document.activeElement.id==='kqIn', ss=f?document.activeElement.selectionStart:0;
     $('#view').innerHTML=K_VIEW==='stock'||K_VIEW==='orders'?vKioskFull():vKiosk(); const i=$('#kqIn'); if(i&&f){ try{ i.focus({preventScroll:true}); i.setSelectionRange(ss,ss); }catch(e){} } return; }
   document.body.classList.remove('kiosk');
@@ -8114,7 +8127,9 @@ function showMenu(anchor,items){
     else { x.style.transition='transform .2s,opacity .2s'; x.style.transform=bt; x.style.opacity='1'; setTimeout(()=>reset(x),220); } });
   document.addEventListener('click',e=>{ if(Date.now()-SWIPED_AT<350&&e.target.closest&&e.target.closest(SEL)){ e.stopImmediatePropagation(); e.preventDefault(); } },true); })();
 var SWIPED_AT=0, WV_STRIP_HIDE='';
-let tT; function toast(msg){ let t=$('#toast'); if(!t){ t=document.createElement('div'); t.className='toast'; t.id='toast'; t.setAttribute('role','status'); document.body.appendChild(t); } t.textContent=msg; t.hidden=false; clearTimeout(tT); tT=setTimeout(()=>{ t.hidden=true; },3200); }
+// Nach einer gesperrten Änderung (fehlendes Recht) kurz keine „Gespeichert“-Meldung darüberlegen – der Sperrhinweis bleibt stehen
+let TOAST_LOCK=0;
+let tT; function toast(msg,force){ if(!force&&Date.now()<TOAST_LOCK) return; let t=$('#toast'); if(!t){ t=document.createElement('div'); t.className='toast'; t.id='toast'; t.setAttribute('role','status'); document.body.appendChild(t); } t.textContent=msg; t.hidden=false; clearTimeout(tT); tT=setTimeout(()=>{ t.hidden=true; },3200); }
 async function copyText(s,ok){ try{ await navigator.clipboard.writeText(s); toast(ok); }catch(e){ openSheet({title:'Zum Kopieren markieren',html:`<div class="fld full"><textarea id="cpy" style="min-height:120px">${esc(s)}</textarea></div>`,saveLabel:'Fertig',onSave:()=>{}}); setTimeout(()=>{ const t=$('#cpy'); t&&t.select(); },50); } }
 
 /* ========== Beispieldaten ========== */
