@@ -522,6 +522,9 @@ body.dragging,body.dragging *{cursor:grabbing!important}
 .pm .ck{width:15px;height:15px}
 .tbl.rights th.rt-h{height:130px;vertical-align:bottom;padding:4px 2px;white-space:nowrap}
 .tbl.rights th.rt-h span{display:inline-block;transform:rotate(-55deg);transform-origin:left bottom;width:22px;font-size:12px;margin-left:12px}
+.tbl.rights th.rt-h{position:relative}.tbl.rights .rt-x{display:block;margin:6px auto 0;border:1px solid var(--line);background:var(--surface);color:inherit;border-radius:999px;font:inherit;font-size:10px;padding:2px 7px;cursor:pointer;white-space:nowrap}.tbl.rights .rt-x:hover{border-color:var(--sun)}
+.tbl.rights th.rt-on .rt-x{background:var(--sun);border-color:var(--sun);color:#111}
+.tbl.rights .rt-f{background:var(--sun-soft)}.tbl.rights th.rt-f{min-width:96px;max-width:110px;white-space:normal;vertical-align:bottom;padding:4px 6px}.tbl.rights th.rt-f span{transform:none;width:auto;margin:0;display:block;white-space:normal;line-height:1.2;text-align:center;text-transform:none;letter-spacing:0}.tbl.rights .rt-part{display:block;font-size:12px;color:#b07d00;line-height:1}.tbl.rights th.rt-f span{font-size:11px;color:var(--ink)}
 .ai-b{margin-left:6px;border:1px solid #e8d670;background:#FFFBE0;color:#6b5a00;border-radius:999px;font-size:11px;font-weight:600;padding:1px 8px;cursor:pointer;vertical-align:middle}
 .ai-b:hover{background:var(--sun)}.ai-b:disabled{opacity:.6;cursor:wait}
 .ptbl{width:calc(100% - 32px);margin:8px 16px 4px;border-collapse:collapse;font-size:14px}
@@ -2801,19 +2804,20 @@ const defaultViews=n=>AREAS.map(a=>a[0]).filter(v=>(v!=='activity'||shortWho(n)=
 const permV2=(n,p,list)=>{ if(!p||p.v2) return list; const o=list.slice(); if(o.includes('todos')&&!p.ownTodos&&!o.includes('meetings')) o.push('meetings'); if(FIN_DEFAULT.includes(shortWho(n))&&!o.includes('fin')) o.push('fin'); return o; };
 // Rollen-Voreinstellungen fuer die Rechteverteilung (danach pro Person anpassbar)
 const ROLE_PRESETS={
- monteur:{l:'Monteur',views:['dash','todos','private','notif','week','orders','stock','hr'],ownTodos:true,admin:false,info:'keine Projekte, Terminplan, eigene + allgemeine To-Dos, Mitteilungen, Material & Lager, eigene Stempeluhr'},
+ monteur:{l:'Monteur',views:['dash','projects','todos','private','notif','week','orders','stock','files','hr'],noEdit:['projects','files'],ownTodos:true,admin:false,fineSet:'limited',info:'Projekte und Dateien ansehen, Dateien hochladen, eigene benennen, To-Do-Updates eintragen, nichts löschen; Terminplan, eigene + allgemeine To-Dos, Material & Lager, eigene Stempeluhr'},
  buero:{l:'Büro',views:['dash','projects','todos','private','chat','notif','week','files','offers','reports','orders','stock','sales','stamm','hr'],ownTodos:false,admin:false,info:'Projekte & Planung, Material & Lager, Verkauf, eigene HR-Seite'},
  buchhaltung:{l:'Buchhaltung',views:AREAS.map(a=>a[0]).filter(v=>!['templates','settings','activity','kfrei'].includes(v)),ownTodos:false,admin:true,info:'alles außer Vorlagen, Team & Einstellungen, Aktivität und Rechte'},
  admin:{l:'Admin',views:AREAS.map(a=>a[0]).filter(v=>v!=='kfrei'),ownTodos:false,admin:true,info:'alles (Freigabe der Kunden-Texte nur per eigenem Häkchen)'}};
 const ROLE_DEFAULT_BY_K={as:'monteur',moji:'monteur',hh:'buero',mk:'buero',js:'buero',pr:'buero',jp:'buchhaltung',ep:'admin',ave:'admin'};
-const ownTodosOnly=()=>!!ME&&!isAdmin()&&(!!(permEff(ME)||{}).ownTodos||isMonteurDefault(ME));
+const ownTodosOnly=()=>!!ME&&!isAdmin()&&!fineOf(ME,'t_all'); // Feinrecht „Alle To-Dos sehen“ (Standard aus „nur eigene To-Dos“ der Rolle)
 /* Monteure: nur eigene To-Dos + noch nicht vergebene allgemeine To-Dos */
 const taskOk=t=>!!t&&(!ownTodosOnly()||taskHas(t,ME)||(!!t.pool&&!t.who));
 /* Startseite für Monteure (z. B. Moji, ABou): ohne Projekt-Kacheln und Projekt-Timeline */
 const dashMonteur=()=>!!ME&&!isAdmin()&&(ownTodosOnly()||(permEff(ME)||{}).role==='monteur');
 // Rolle anwenden: Sehen + Bearbeiten wie die Voreinstellung, Admin-Häkchen, „nur eigene To-Dos“
 function rolePerm(role,old){ const R=ROLE_PRESETS[role]; if(!R) return {...(old||{}),role:''};
-  return {...(old||{}),role,v2:true,nfSet:true,views:R.views.slice(),edit:R.views.filter(v=>!['dash','activity','notif',...(R.noEdit||[])].includes(v)),admin:!!R.admin,ownTodos:!!R.ownTodos}; }
+  const o={...(old||{}),role,v2:true,v3:true,nfSet:true,views:R.views.slice(),edit:R.views.filter(v=>!['dash','activity','notif',...(R.noEdit||[])].includes(v)),admin:!!R.admin,ownTodos:!!R.ownTodos};
+  delete o.fine; if(R.fineSet==='limited') o.fine={...FINE_LIMITED}; return o; } // Rolle setzt auch die Einzelrechte zurück
 queueMicrotask(()=>{ A.permPresetAll=()=>CHG.permPresetAll(); }); /* Knopf „Voreinstellungen übernehmen“ (A wird weiter unten angelegt) */
 /* Mitteilungen: bei früher gespeicherten Rechten (vor dieser Spalte) eingeschaltet, bis jemand das Häkchen setzt/entfernt (nfSet) */
 const nfLegacy=(p,l)=>p.nfSet||l.includes('notif')?l:[...l,'notif'];
@@ -2826,7 +2830,7 @@ const TAB_PERM={views:['stock','orders'],edit:[],admin:false,ownTodos:true,role:
 const tabletEmails=()=>((S.config||{}).tabletAccounts||[]).map(e=>String(e||'').trim().toLowerCase()).filter(Boolean);
 const isTabletAcc=()=>MODE==='cloud'&&!!USER_EMAIL&&tabletEmails().includes(String(USER_EMAIL).trim().toLowerCase());
 const permEff=n=>n===TAB_ME?TAB_PERM:permOf(n)||(n&&isMonteurDefault(n)?rolePerm('monteur'):null);
-const viewsOf=n=>{ const p=permEff(n); return p&&Array.isArray(p.views)?nfLegacy(p,permV2(n,p,p.views)):defaultViews(n); };
+const viewsOf=n=>{ const p=permEff(n); const l=p&&Array.isArray(p.views)?nfLegacy(p,permV2(n,p,p.views)):defaultViews(n); return limitedDefault(n)?[...new Set([...l,'projects','files'])]:l; }; // Moji/ABou: Vorgabe Projekte + Dateien sehen
 const editsOf=n=>{ const p=permEff(n); return p&&Array.isArray(p.edit)?permV2(n,p,p.edit):viewsOf(n); };
 const canEdit=a=>isAdmin()||(!!ME&&editsOf(ME).includes(a)&&viewsOf(ME).includes(a));
 /* Hell/Dunkel: Schieberegler auf der Startseite, je Gerät gemerkt (Hell = bisheriger Look) */
@@ -2846,21 +2850,42 @@ document.addEventListener('pointermove',e=>{ if(document.documentElement.getAttr
   const c=e.target&&e.target.closest&&e.target.closest('.card'); if(!c) return; const r=c.getBoundingClientRect(); c.style.setProperty('--mx',(e.clientX-r.left)+'px'); c.style.setProperty('--my',(e.clientY-r.top)+'px'); },{passive:true});
 // Seitenwechsel: Karten gleiten herein (nur beim Wechsel der Seite)
 function fxPageIn(){ if(document.documentElement.getAttribute('data-theme')!=='future') return; const v=$('#view'); if(!v) return; v.classList.remove('fx-in'); void v.offsetWidth; v.classList.add('fx-in'); clearTimeout(window.__fxT); window.__fxT=setTimeout(()=>v.classList.remove('fx-in'),900); }
-/* Moji und ABou (Kürzel AS) – eingeschränkte Mitarbeit (Wunsch EP, 17.11.2026; vorher sahen sie gar keine Projekte):
-   SEHEN: Projekte und Dateien, alles ansehen.  DÜRFEN: Dateien hochladen und ihre EIGENEN Dateien benennen, neue To-Dos anlegen,
-   Updates zu To-Dos eintragen, eigene zugewiesene To-Dos abhaken.  DÜRFEN NICHT: etwas löschen, Projekte/Notizen ändern,
-   bestehende To-Dos ändern (außer Updates ergänzen / eigene abhaken), fremde Dateien umbenennen.
-   Weiter aus: „Seit deinem letzten Besuch“, Projekt-Mitteilungen, Morgen-Briefing. Gilt in der App (zentral in put/del). */
+/* Moji und ABou (Kürzel AS): kein „Seit deinem letzten Besuch“, keine Projekt-Mitteilungen, kein Morgen-Briefing (Wunsch EP). */
 const NO_PROJ_K=['moji','as'];
 const noProjUser=()=>!!ME&&(NO_PROJ_K.includes(String(meK()).toLowerCase())||/\b(moji|abou|abow)\b/i.test(String(ME)));
-// Was darf diese Person an einem BESTEHENDEN Datensatz ändern? '' = erlaubt, sonst Hinweistext
-function limitGuard(coll,obj){ const prev=S[coll]&&S[coll][obj.id]; if(!prev) return '';
-  if(coll==='files') return (prev.by||'')===meK()?'':'Du kannst nur deine eigenen Dateien umbenennen.';
-  if(coll==='tasks'){ const free=['upd2','upd','updBy','hist','at','by'], mine=taskHas(prev,ME), done=['done','doneAt','doneBy','doneNote'];
+/* ===== Feinrechte je Person: in der Rechteverteilung je Rubrik aufklappbar (config.perms[Name].fine = {Schlüssel:true|false}) =====
+   Ohne Eintrag gilt: wer die Rubrik bearbeiten darf (✎), darf alles darin; wer sie nur sieht, nichts. Admins dürfen immer alles.
+   Moji und ABou haben – bis EP/AvE bei ihnen etwas einträgt – die Vorgabe vom 17.11.2026: Projekte und Dateien sehen,
+   Dateien hochladen und eigene benennen, To-Dos anlegen, Updates eintragen, eigene abhaken, im Projekt alle To-Dos sehen; sonst nichts ändern oder löschen. */
+const FINE=[
+ ['dash','pin_off','Pinnwand: fremde Zettel für alle abnehmen'],
+ ['projects','p_notes','Notizen & Updates ergänzen'],['projects','p_edit','Projektdaten & bestehende Notizen ändern'],['projects','p_del','Projekte löschen'],
+ ['todos','t_all','Alle To-Dos sehen (sonst nur eigene + allgemeine)'],['todos','t_projall','Im Projekt alle To-Dos sehen'],['todos','t_new','To-Dos anlegen'],['todos','t_upd','Updates eintragen'],['todos','t_done','Eigene To-Dos abhaken'],['todos','t_edit','Bestehende To-Dos ändern'],['todos','t_del','To-Dos löschen'],
+ ['files','f_up','Dateien hochladen'],['files','f_ren_own','Eigene Dateien umbenennen / verschieben'],['files','f_ren_all','Fremde Dateien umbenennen / verschieben'],['files','f_del','Dateien löschen'],
+ ['allg','x_del','Sonstiges löschen (Termine, Lager, Bestellungen …)']];
+const FINE_AREAS=[...new Set(FINE.map(f=>f[0]))];
+const FINE_LIMITED={pin_off:false,p_notes:false,p_edit:false,p_del:false,t_all:false,t_projall:true,t_new:true,t_upd:true,t_done:true,t_edit:false,t_del:false,f_up:true,f_ren_own:true,f_ren_all:false,f_del:false,x_del:false};
+const isLimitedName=n=>NO_PROJ_K.includes(String(shortWho(n)||'').toLowerCase())||/\b(moji|abou|abow)\b/i.test(String(n||''));
+const limitedDefault=n=>!!n&&isLimitedName(n)&&!(permOf(n)||{}).v3; // Vorgabe gilt, bis jemand bei der Person etwas einträgt
+const admOf=n=>!!n&&(ADMINS.includes(shortWho(n))||!!(permOf(n)||{}).admin);
+function fineDefault(n,key){ const d=FINE.find(f=>f[1]===key); if(!d) return false; if(limitedDefault(n)) return !!FINE_LIMITED[key];
+  const p=permEff(n)||{}, own=!!p.ownTodos||isMonteurDefault(n);
+  if(key==='t_all'||key==='t_projall') return !own; if(key==='pin_off') return false;
+  if(d[0]==='allg') return true; return editsOf(n).includes(d[0])&&viewsOf(n).includes(d[0]); }
+function fineOf(n,key){ if(!n) return MODE!=='cloud'; if(admOf(n)) return true; const p=permEff(n)||{}; if(p.fine&&key in p.fine) return !!p.fine[key]; return fineDefault(n,key); }
+const can=key=>fineOf(ME,key);
+// Darf ich diese Änderung speichern? '' = ja, sonst Hinweistext. Neu anlegen und Ändern werden getrennt geprüft.
+function fineGuard(coll,obj){ const prev=S[coll]&&S[coll][obj.id], keys=prev?new Set([...Object.keys(prev),...Object.keys(obj)]):new Set(), diff=k=>JSON.stringify(prev[k])!==JSON.stringify(obj[k]), META0=['upd','updBy','hist','at','by'];
+  if(coll==='tasks'){ if(!prev) return can('t_new')?'':'Du darfst keine To-Dos anlegen.'; if(can('t_edit')) return '';
     const was=prev.upd2||[], now=obj.upd2||[]; if(now.length<was.length||was.some((u,i)=>JSON.stringify(u)!==JSON.stringify(now[i]))) return 'Bestehende Updates kannst du nicht ändern, nur neue ergänzen.';
-    const keys=new Set([...Object.keys(prev),...Object.keys(obj)]); for(const k of keys){ if(free.includes(k)||(mine&&done.includes(k))) continue; if(JSON.stringify(prev[k])!==JSON.stringify(obj[k])) return 'Bestehende To-Dos kannst du nicht ändern – trag bitte ein Update ein.'; } return ''; }
+    if(now.length>was.length&&!can('t_upd')) return 'Du darfst keine Updates eintragen.';
+    const mine=taskHas(prev,ME), done=['done','doneAt','doneBy','doneNote'];
+    for(const k of keys){ if(k==='upd2'||META0.includes(k)||!diff(k)) continue; if(done.includes(k)){ if(mine&&can('t_done')) continue; return 'Dieses To-Do darfst du nicht abhaken.'; } return 'Bestehende To-Dos kannst du nicht ändern – trag bitte ein Update ein.'; } return ''; }
+  if(coll==='files'){ if(!prev) return can('f_up')?'':'Du darfst keine Dateien hochladen.'; if(can('f_ren_all')) return ''; return (prev.by||'')===meK()&&can('f_ren_own')?'':'Diese Datei darfst du nicht ändern.'; }
+  if(coll==='projects'){ if(!prev) return can('p_edit')?'':'Du darfst keine Projekte anlegen.'; if(can('p_edit')) return ''; if(!can('p_notes')) return 'Du darfst dieses Projekt nicht ändern.';
+    for(const k of keys){ if(META0.includes(k)||['now','nowD'].includes(k)||!diff(k)) continue; if(k==='notes'||k==='updates'){ const a=String(prev[k]||'').replace(/\s+$/,''); if(String(obj[k]||'').startsWith(a)) continue; return 'Bestehende Notizen kannst du nicht ändern, nur neue ergänzen.'; } return 'Projektdaten darfst du nicht ändern – nur Notizen ergänzen.'; } return ''; }
   return ''; }
-function canSee(v){ if(v==='rights') return isBaseAdmin(); if(v==='hr') return true; /* Stempeln und Urlaub: für alle */ if(String(v).startsWith('f:')) v='files'; if(noProjUser()&&['projects','project','files'].includes(v)) return true; if(String(v).startsWith('st:')) v='stamm'; if(v==='fin'||String(v).startsWith('fi:')) return finOk(); if(String(v).startsWith('vk:')) v='sales'; if(v==='dash') return true; if(!ME) return MODE==='cloud'?false:v!=='activity'; /* online angemeldet, aber keinem Mitarbeiter zugeordnet: nichts außer Übersicht und eigener Stempeluhr */ const vs=viewsOf(ME);
+function canSee(v){ if(v==='rights') return isBaseAdmin(); if(v==='hr') return true; /* Stempeln und Urlaub: für alle */ if(String(v).startsWith('f:')) v='files'; if(String(v).startsWith('st:')) v='stamm'; if(v==='fin'||String(v).startsWith('fi:')) return finOk(); if(String(v).startsWith('vk:')) v='sales'; if(v==='dash') return true; if(!ME) return MODE==='cloud'?false:v!=='activity'; /* online angemeldet, aber keinem Mitarbeiter zugeordnet: nichts außer Übersicht und eigener Stempeluhr */ const vs=viewsOf(ME);
   if(v==='kview') return isAdmin()||vs.includes('kview')||kfreiOk();
   if(v==='project') return vs.includes('projects'); if(v==='pool') return vs.includes('todos'); if(v==='meetings') return vs.includes('meetings'); if(v==='calendar') return vs.includes('week'); return vs.includes(v); }
 const canSeeActivity=()=>canSee('activity');
@@ -2918,7 +2943,9 @@ function describeChange(coll,prev,o){
 const COLL_AREA={projects:'projects',tasks:'todos',orders:'orders',offers:'offers',events:'week',plan:'week',reports:'reports',files:'files',stock:'stock',picks:'stock',lager:'stock',inv:'stock',chat:'chat',meetings:'meetings',hrtime:'hr',hrabs:'hr',hrstaff:'hr',hrdocs:'hr',kunden:'stamm',lieferanten:'stamm',artikel:'stamm',artcat:'stamm',sales:'sales',fin:'fin',anlagen:'fin',kview:'kview'};
 const lagerOk=()=>isAdmin()||canEdit('stock');
 const stDelOk=k=>isAdmin()||(k==='artikel'&&lagerOk());
-function mayWrite(coll){ const a=COLL_AREA[coll]; if(noProjUser()){ if(coll==='projects'||coll==='pfold') return false; if(coll==='files'||coll==='tasks') return true; } if(a==='fin'&&ME) return finOk()&&(isAdmin()||editsOf(ME).includes('fin')); if(!a||!ME||isAdmin()) return true; if((coll==='artikel'||coll==='artcat')&&canEdit('stock')) return true; if(a==='hr') return !['hrstaff','hrdocs'].includes(coll); return canEdit(a); }
+function mayWrite(coll){ const a=COLL_AREA[coll]; if(a==='fin'&&ME) return finOk()&&(isAdmin()||editsOf(ME).includes('fin')); if(!a||!ME||isAdmin()) return true;
+  // Feinrechte: To-Dos, Dateien und Projekte sind einzeln einstellbar (genaue Prüfung in fineGuard beim Speichern)
+  if(coll==='tasks') return can('t_new')||can('t_upd')||can('t_done')||can('t_edit'); if(coll==='files') return can('f_up')||can('f_ren_own')||can('f_ren_all'); if(coll==='projects') return can('p_notes')||can('p_edit'); if(coll==='pfold'&&limitedDefault(ME)) return false; if((coll==='artikel'||coll==='artcat')&&canEdit('stock')) return true; if(a==='hr') return !['hrstaff','hrdocs'].includes(coll); return canEdit(a); }
 /* ---------- Doppelt-Sperre (greift bei JEDEM Speichern: Formular, KI, Meeting, Smart-Drop, Sprache, Belege, Handy) ---------- */
 const dupNorm=s=>String(s||'').toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').replace(/^\s*(bitte|todo|to-do|aufgabe)\s*:?\s+/,'').replace(/[^a-z0-9]+/g,' ').trim();
 // Notiz-/Update-Text ohne Datum, Uhrzeit und Kürzel davor („02.11.26 15:33 (EP): …“)
@@ -2954,7 +2981,7 @@ function dupGuard(coll,obj){ if(!obj||obj._dupOk){ if(obj) delete obj._dupOk; re
   return false; }
 function put(coll,obj){
   if(!mayWrite(coll)){ toast('Keine Bearbeitungsrechte für „'+((AREAS.find(a=>a[0]===COLL_AREA[coll])||[])[1]||coll)+'“. Bitte EP oder AvE fragen.'); scheduleRender(); return; }
-  if(noProjUser()){ const g=limitGuard(coll,obj); if(g){ toast(g); scheduleRender(); return; } } // Moji/ABou: Bestehendes nicht ändern
+  if(ME&&!isAdmin()){ const g=fineGuard(coll,obj); if(g){ toast(g); scheduleRender(); return; } } // Feinrechte (Rechteverteilung, aufklappbar)
   if(dupGuard(coll,obj)) return; // nichts doppelt: gleiches To-Do / gleiches Update / gleiche Notiz wird nicht noch einmal gespeichert
   const prev=S[coll][obj.id], now=new Date().toISOString();
   if(coll==='tasks'||coll==='projects') msWatch(coll,prev,obj); // Neues Update, erledigtes To-Do, neue Notiz: Ist damit ein Statusschritt erreicht?
@@ -2971,7 +2998,7 @@ function put(coll,obj){
   chains[key]=(chains[key]||Promise.resolve()).then(()=>DB.collection(coll).doc(obj.id).set(body)).catch(writeErr);
 }
 function del(coll,id){
-  if(noProjUser()&&coll!=='seen'){ toast('Löschen ist für dich nicht freigeschaltet. Bitte EP oder AvE fragen.'); return; }
+  if(ME&&!isAdmin()&&!['seen','log'].includes(coll)&&!String(coll).startsWith('notif')&&!(coll==='tasks'?can('t_del'):coll==='files'?can('f_del'):coll==='projects'?can('p_del'):can('x_del'))){ toast('Löschen ist für dich nicht freigeschaltet. Bitte EP oder AvE fragen.'); return; }
   if(!mayWrite(coll)){ toast('Keine Rechte zum Löschen. Bitte EP oder AvE fragen.'); return; }
   const prev=S[coll][id];
   if(coll==='events'&&prev) nfWatch(coll,prev,null);
@@ -3368,7 +3395,7 @@ const pinSort=(a,b)=>(!!b.top-!!a.top)||String(b.at||'').localeCompare(String(a.
 const pinsActive=()=>{ const h=pinHidden(); return arr('pins').filter(p=>p&&!pinIsOld(p,h)).sort(pinSort); };
 const pinsOld=()=>{ const h=pinHidden(); return arr('pins').filter(p=>pinIsOld(p,h)).sort((a,b)=>String(b.at||'').localeCompare(String(a.at||''))); };
 const pinText=s=>esc(String(s||'')).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>');
-function pinCard(p){ const old=pinIsOld(p), all=pinCan(p), hid=all?!!p.off||pinHidden().has(p.id):pinHidden().has(p.id), exp=!!(p.until&&p.until<TODAY()), neu=!old&&(p.by||'')!==meK()&&String(p.at||'')>(PIN_NEW_FROM!==null?PIN_NEW_FROM:lastRead('#pins'));
+function pinCard(p){ const old=pinIsOld(p), all=pinCan(p)||can('pin_off'), hid=all?!!p.off||pinHidden().has(p.id):pinHidden().has(p.id), exp=!!(p.until&&p.until<TODAY()), neu=!old&&(p.by||'')!==meK()&&String(p.at||'')>(PIN_NEW_FROM!==null?PIN_NEW_FROM:lastRead('#pins'));
   return `<article class="pin ${p.top&&!old?'top':''} ${old?'old':''}">${old?`<span class="pin-oldl">${p.off?'abgenommen'+(p.offBy?' von '+esc(p.offBy):''):exp?'abgelaufen':'ausgeblendet'}</span>`:''}${!p.off||all?`<button type="button" class="pin-hide" data-act="pinHide" data-id="${esc(p.id)}" data-v="${hid?'0':'1'}" title="${hid?(all?'Für alle wieder anheften':'Wieder einblenden'):(all?'Für alle abnehmen':'Für mich ausblenden')}" aria-label="${hid?(all?'Für alle wieder anheften':'Wieder einblenden'):(all?'Für alle abnehmen':'Für mich ausblenden')}">${hid?'↺':'✕'}</button>`:''}<span class="pin-n" aria-hidden="true">📌</span>${neu?'<span class="pin-new">NEU</span>':''}${p.top?'<span class="pin-imp">Wichtig</span>':''}
     <h3>${esc(p.title||'')}</h3>${p.img?`<img data-blob="${esc(p.img)}" alt="" class="pin-img">`:''}${p.text?`<div class="pin-tx">${pinText(p.text)}</div>`:''}
     <div class="pin-f"><span class="who-chip">${esc(p.by||'?')}</span><span>${esc(fmtD(String(p.at||'').slice(0,10)))}</span>${p.until?`<span title="Verschwindet danach automatisch">bis ${esc(fmtD(p.until).slice(3))}</span>`:''}${pinCan(p)?`<button type="button" class="lnk" data-act="pinEdit" data-id="${esc(p.id)}">Bearbeiten</button>`:''}</div></article>`; }
@@ -3412,7 +3439,7 @@ queueMicrotask(()=>Object.assign(A,{ pinNew:()=>pinForm(), pinEdit:d=>{ const p=
   pinOld:()=>{ UI.pinOld=!UI.pinOld; render(); },
   pinHide:d=>{ const on=d.v==='1', p=S.pins[d.id];
     // Admin oder Verfasser: für alle abnehmen bzw. wieder anheften (nicht löschen)
-    if(p&&pinCan(p)){ const x=clone(p); if(on){ x.off=true; x.offBy=meK(); x.offAt=new Date().toISOString(); } else { delete x.off; delete x.offBy; delete x.offAt; } put('pins',x); pinSetHidden(d.id,false); render();
+    if(p&&(pinCan(p)||can('pin_off'))){ const x=clone(p); if(on){ x.off=true; x.offBy=meK(); x.offAt=new Date().toISOString(); } else { delete x.off; delete x.offBy; delete x.offAt; } put('pins',x); pinSetHidden(d.id,false); render();
       toast(on?'Für alle abgenommen – unter „Alte einblenden“ wieder zu finden.':'Wieder für alle angeheftet.'); return; }
     pinSetHidden(d.id,on); render(); toast(on?'Für dich ausgeblendet – unter „Alte einblenden“ wieder zu finden.':'Wieder eingeblendet.'); } }));
 /* ---------- 🔔 Mitteilungen: Glocke und Dashboard-Feld lesen dieselbe Liste ---------- */
@@ -3621,7 +3648,7 @@ function projVis(p){ if(!projRestr(p)) return true; if(!ME) return false; const 
 const projLock=p=>{ if(!projRestr(p)) return ''; const o=projOwner(p), sh=p.vis==='me'?[]:(p.share||[]).map(shortWho); return `<span class="p-lock" title="${esc('Internes Projekt – sichtbar nur für '+[o,...sh].filter(Boolean).join(', '))}" aria-label="Internes Projekt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>`; };
 const projVisId=id=>{ const p=id&&S.projects[id]; return !p||projVis(p); };
 const PID_COLLS=new Set(['tasks','orders','events','offers','reports','sales','files','meetings','psum','pms']);
-const arr = c=>{ let v=Object.values(S[c]||{}); if(c==='tasks'&&ownTodosOnly()&&!(noProjUser()&&UI.view==='project')) v=v.filter(taskOk); /* Moji/ABou: im Projekt alle To-Dos sehen, in der To-Do-Liste nur eigene */ if(c==='projects') return v.filter(projVis); if(PID_COLLS.has(c)&&S.projects&&Object.values(S.projects).some(projRestr)) return v.filter(x=>!x||!x.pid||projVisId(x.pid)); return v; };
+const arr = c=>{ let v=Object.values(S[c]||{}); if(c==='tasks'&&ownTodosOnly()&&!(UI.view==='project'&&can('t_projall'))) v=v.filter(taskOk); /* Feinrecht „Im Projekt alle To-Dos sehen“ */ if(c==='projects') return v.filter(projVis); if(PID_COLLS.has(c)&&S.projects&&Object.values(S.projects).some(projRestr)) return v.filter(x=>!x||!x.pid||projVisId(x.pid)); return v; };
 const INTERN='intern'; // Bestellungen ohne Kundenprojekt (Lager, Büro, Werkstatt)
 const projName = id=>{ if(id===INTERN) return 'Haus intern'; const p=S.projects[id]; return p&&projVis(p)? p.name : '' };
 // Austritt: s.exit = letzter Arbeitstag. Ab dem Tag danach ist die Person aus allen Auswahllisten raus (staff), bleibt aber für Einstellungen und Personalakte erhalten (staffAll).
@@ -5371,16 +5398,19 @@ queueMicrotask(()=>{ Object.assign(A,{ /* A wird weiter unten angelegt */
   Object.assign(CHG,{ wvSnooze:(d,el)=>{ if(!el.value) return; const nd=wvDate(el.value); wvUpd(d.id,t=>{ t.wv=nd; },'Neue Wiedervorlage am '+fmtD(nd)+'.'); } }); });
 function taskForm(t,pre){
   const isNew=!t; t=t?clone(t):{id:uid(),done:false,prio:'normal',...(pre||{})};
-  openSheet({title:isNew?'Neues To-Do':'To-Do bearbeiten',value:t,fields:[
+  // Ohne Feinrecht „Bestehende To-Dos ändern“: nur ansehen + Updates eintragen; abhaken nur eigene, löschen nur mit Recht
+  const ro=!isNew&&!!ME&&!isAdmin()&&!can('t_edit'), mayDone=!ro||(taskHas(t,ME)&&can('t_done'));
+  if(ro) setTimeout(()=>{ document.querySelectorAll('.sheet input, .sheet select, .sheet textarea').forEach(el=>{ if(!el.closest('.tu-box')) el.disabled=true; }); document.querySelectorAll('.sheet [data-act="wvQuick"], .sheet [data-act="whoMore"]').forEach(b=>b.disabled=true); },40);
+  openSheet({title:isNew?'Neues To-Do':ro?'To-Do (nur Updates eintragen)':'To-Do bearbeiten',value:t,fields:[
     {k:'title',label:'To-Do',req:1,full:1},{k:'who',label:'Zuständig bei uns (verfolgt das To-Do)',list:'staffList'},{k:'who2x',label:'',type:'html',html:whoMoreHtml(t)},{k:'due',label:'Fällig am',type:'date'},
     {k:'wv',label:'Wiedervorlage am',type:'date'},{k:'wvq',label:'Schnell',type:'html',html:wvQuickHtml()},{k:'wvNote',label:'Woran erinnern? (Wiedervorlage)',ph:'z. B. nachfassen, ob Angebot angekommen ist',full:1},
     {k:'ext',label:'Liegt extern bei (Firma / Person)',ph:'leer = intern, z. B. Westnetz, Gerüstbauer, Kunde'},
     {k:'pid',label:'Projekt',type:'select',options:projOpts()},{k:'prio',label:'Dringlichkeit',type:'select',options:Object.entries(PRIO).map(([k,v])=>[k,v[0]])},{k:'notes',label:'Notiz',type:'textarea'},
     ...((t.from&&S.tasks[t.from])||(!isNew&&taskKids(t.id).length)?[{k:'linkx',label:'Verknüpfte To-Dos',type:'html',full:1,html:taskLinksHtml(t)}]:[]),
     ...(isNew?[]:[{k:'updbox',label:'Updates mit Datum',type:'html',html:taskUpdHtml(t)}])],
-    extraBtn:isNew?'':(t.done?'':`<button type="button" class="btn ok-btn" data-act="taskDoneNow" data-id="${t.id}" title="To-Do als erledigt abhaken">✓ Erledigt</button>`)+(ME?`<button type="button" class="btn" data-act="taskChat" data-id="${t.id}" title="Über dieses To-Do chatten – Person auswählen">💬 Chat</button>`:'')+`<button type="button" class="btn" data-act="taskFollow" data-id="${t.id}" title="Neues To-Do, das mit diesem verknüpft ist (Änderungen hier vorher speichern)">${ic('plus')}Folge-To-Do</button>`+(SAMPLE?`<button type="button" class="btn sun" data-act="taskAi" data-id="${t.id}" title="Fertige E-Mail, Telefonnummer mit Gesprächsleitfaden oder Lösungsweg">✨ KI-Vorschlag</button>`:''),
-    onSave:v=>{ delete v.updbox; delete v.wvq; delete v.who2x; delete v.linkx; t._wvForm=1; { const ex=[...document.querySelectorAll('#who_more .who2-in')].map(e=>e.value.trim()).filter(Boolean); if(!v.who&&ex.length) v.who=ex.shift(); const w2=[...new Set(ex.filter(n=>n!==v.who))].slice(0,2); if(w2.length) v.who2=w2; else { delete v.who2; delete t.who2; } } if(v.wv!==t.wv) delete t.wvShown; if(!v.wv) delete v.wvNote; Object.assign(t,v); const cur=S.tasks[t.id]; if(cur&&cur.upd2) t.upd2=cur.upd2; put('tasks',t); toast(isNew?'To-Do angelegt.':'Gespeichert.'); },
-    onDelete:isNew?null:()=>{ del('tasks',t.id); closeSheet(); }});
+    extraBtn:isNew?'':(t.done||!mayDone?'':`<button type="button" class="btn ok-btn" data-act="taskDoneNow" data-id="${t.id}" title="To-Do als erledigt abhaken">✓ Erledigt</button>`)+(ME?`<button type="button" class="btn" data-act="taskChat" data-id="${t.id}" title="Über dieses To-Do chatten – Person auswählen">💬 Chat</button>`:'')+`<button type="button" class="btn" data-act="taskFollow" data-id="${t.id}" title="Neues To-Do, das mit diesem verknüpft ist (Änderungen hier vorher speichern)">${ic('plus')}Folge-To-Do</button>`+(SAMPLE?`<button type="button" class="btn sun" data-act="taskAi" data-id="${t.id}" title="Fertige E-Mail, Telefonnummer mit Gesprächsleitfaden oder Lösungsweg">✨ KI-Vorschlag</button>`:''),
+    onSave:v=>{ if(ro) return; delete v.updbox; delete v.wvq; delete v.who2x; delete v.linkx; t._wvForm=1; { const ex=[...document.querySelectorAll('#who_more .who2-in')].map(e=>e.value.trim()).filter(Boolean); if(!v.who&&ex.length) v.who=ex.shift(); const w2=[...new Set(ex.filter(n=>n!==v.who))].slice(0,2); if(w2.length) v.who2=w2; else { delete v.who2; delete t.who2; } } if(v.wv!==t.wv) delete t.wvShown; if(!v.wv) delete v.wvNote; Object.assign(t,v); const cur=S.tasks[t.id]; if(cur&&cur.upd2) t.upd2=cur.upd2; put('tasks',t); toast(isNew?'To-Do angelegt.':'Gespeichert.'); },
+    onDelete:isNew||(ME&&!isAdmin()&&!can('t_del'))?null:()=>{ del('tasks',t.id); closeSheet(); }});
 }
 /* ---------- Termin → To-Dos für Mitarbeiter (z. B. „Kamil Bescheid sagen“) ---------- */
 // Im Terminfenster beliebig viele Zeilen: Wer + To-Do + Fällig. Beim Speichern werden daraus To-Dos (mit Verweis evId auf den Termin).
@@ -7298,18 +7328,27 @@ document.addEventListener('paste',e=>{ if(e.target&&e.target.id==='mailPaste') s
 document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target&&e.target.id==='privT'){ e.preventDefault(); A.privAdd(); } if(e.key==='Enter'&&!e.shiftKey&&e.target&&e.target.id==='chatIn'){ e.preventDefault(); A.chatSend(); } });
 
 /* ========== Admin: Rechte je Mitarbeiter (nur EP & AvE) ========== */
+// Aufgeklappte Feinrechte-Spalten (pro Gerät gemerkt)
+const rtOpen=k=>{ if(!UI.rtOpen){ try{ UI.rtOpen=JSON.parse(lsGet('sonnenplan-rtopen')||'[]')||[]; }catch(e){ UI.rtOpen=[]; } } return UI.rtOpen.includes(k); };
+/* Rechte einer Person „festschreiben“: heutige Wirkung (inkl. Vorgaben) als gespeicherte Werte, damit eine Änderung nichts anderes verschiebt */
+function permBase(n){ const perms={...((S.config||{}).perms||{})}, vs=viewsOf(n), es=editsOf(n), fine={}; FINE.forEach(([,k])=>{ fine[k]=fineOf(n,k); });
+  const p={...(perms[n]||{}),views:vs,edit:es,v2:true,v3:true,nfSet:true,fine}; return {perms,p}; }
+queueMicrotask(()=>{ Object.assign(A,{ rtOpen:d=>{ rtOpen(d.v); const s=new Set(UI.rtOpen); if(s.has(d.v)) s.delete(d.v); else s.add(d.v); UI.rtOpen=[...s]; lsSet('sonnenplan-rtopen',JSON.stringify(UI.rtOpen)); render(); } });
+  Object.assign(CHG,{ permFine:(d,el)=>{ if(!isBaseAdmin()) return; const {perms,p}=permBase(d.n); p.role=''; p.fine[d.v]=el.checked; perms[d.n]=p; putConfig({...(S.config||{}),perms});
+    toast(shortWho(d.n)+': „'+((FINE.find(f=>f[1]===d.v)||[])[2]||d.v)+'“ '+(el.checked?'erlaubt.':'nicht erlaubt.')); } }); });
 function vRights(){
   if(!isBaseAdmin()) return head('Rechte','')+'<div class="card"><div class="empty">Nur EP und AvE können Rechte verteilen.</div></div>';
   const st=staff();
   return head('Admin: Rechte','Wer sieht welche Rubrik – und wer darf alles bearbeiten und löschen',`<button class="btn sun" data-act="permPresetAll" title="AS (ABou), Moji = Monteur · HH, MK, JS, PR = Büro · JP = Buchhaltung · EP, AvE = Admin">Voreinstellungen übernehmen</button>`)+`<div class="card rt-presets"><div class="card-b">${Object.values(ROLE_PRESETS).map(r=>`<div><b>${esc(r.l)}</b> <span class="small muted">${esc(r.info)}</span></div>`).join('')}<div class="small muted" style="margin-top:6px">Rolle wählen setzt die Häkchen; danach kann man pro Person einzeln anpassen (dann steht dort individuell).</div></div></div>`+
    (()=>{ const o=$('#rtScroll'); if(o) UI.rtX=o.scrollLeft; const x=UI.rtX||0; if(x) setTimeout(()=>{ const s=$('#rtScroll'); if(s) s.scrollLeft=x; },0); return ''; })()+
-   `<div class="card"><div class="tbl-wrap" id="rtScroll"><table class="tbl rights"><thead><tr><th>Mitarbeiter</th><th>Rolle</th><th title="Alles bearbeiten und löschen (wie EP/AvE)">Admin</th>${AREAS.map(([k,l])=>`<th class="rt-h"><span>${esc(l)}</span></th>`).join('')}</tr></thead><tbody>
+   `<div class="card"><div class="tbl-wrap" id="rtScroll"><table class="tbl rights"><thead><tr><th>Mitarbeiter</th><th>Rolle</th><th title="Alles bearbeiten und löschen (wie EP/AvE)">Admin</th>${[...AREAS,['allg','Weitere Rechte']].map(([k,l])=>`<th class="rt-h ${rtOpen(k)?'rt-on':''}"><span>${esc(l)}</span>${FINE_AREAS.includes(k)?`<button type="button" class="rt-x" data-act="rtOpen" data-v="${k}" aria-expanded="${rtOpen(k)}" title="${rtOpen(k)?'Einzelrechte zuklappen':'Einzelrechte aufklappen'}">${rtOpen(k)?'◂':'▸'} Details</button>`:''}</th>${rtOpen(k)?FINE.filter(f=>f[0]===k).map(f=>`<th class="rt-h rt-f"><span>${esc(f[2])}</span></th>`).join(''):''}`).join('')}</tr></thead><tbody>
    ${st.map(s=>{ const base=ADMINS.includes(shortWho(s.name)), p=permEff(s.name)||{}, vs=viewsOf(s.name), es=editsOf(s.name), adm=base||p.admin;
+     const fineTds=k=>rtOpen(k)?FINE.filter(f=>f[0]===k).map(([,fk,fl])=>`<td class="c rt-f">${adm?'<span class="pm">✓</span>':`<input type="checkbox" class="ck" data-chg="permFine" data-n="${esc(s.name)}" data-v="${fk}" ${fineOf(s.name,fk)?'checked':''} aria-label="${esc(fl)}: ${esc(s.name)}">`}</td>`).join(''):'';
      return `<tr><td><b>${esc(s.name)}</b><div class="small muted">${esc(ROLES[s.role]||s.role||'')}</div></td><td>${base?'<span class="pill sun">Admin</span>':`<select class="inp rt-role" data-chg="permRole" data-n="${esc(s.name)}" aria-label="Rolle: ${esc(s.name)}"><option value="">individuell</option>${Object.entries(ROLE_PRESETS).map(([k,r])=>`<option value="${k}" ${p.role===k?'selected':''}>${esc(r.l)}</option>`).join('')}</select>`}</td>
        <td class="c">${base?'<span class="pill sun">immer</span>':`<input type="checkbox" class="ck" data-chg="permAdmin" data-n="${esc(s.name)}" ${p.admin?'checked':''} aria-label="Admin: ${esc(s.name)}">`}</td>
-       ${AREAS.map(([k,l])=>k==='dash'?'<td class="c"><span class="pm">👁 ✓</span></td>':k==='kfrei'?(shortWho(s.name)==='AvE'?'<td class="c"><span class="pill sun">immer</span></td>':`<td class="c"><label class="pm" title="darf Kunden-Texte freigeben"><input type="checkbox" class="ck" data-chg="permView" data-n="${esc(s.name)}" data-v="kfrei" ${vs.includes('kfrei')?'checked':''} aria-label="Kunden-Texte freigeben: ${esc(s.name)}">✓</label></td>`):`<td class="c"><label class="pm" title="sehen"><input type="checkbox" class="ck" data-chg="permView" data-n="${esc(s.name)}" data-v="${k}" ${vs.includes(k)?'checked':''} ${base?'disabled':''} aria-label="${esc(l)} sehen: ${esc(s.name)}">👁</label>${['private','activity','dash','notif'].includes(k)?'':`<label class="pm" title="bearbeiten / löschen"><input type="checkbox" class="ck" data-chg="permEdit" data-n="${esc(s.name)}" data-v="${k}" ${adm||es.includes(k)?'checked':''} ${adm||!vs.includes(k)?'disabled':''} aria-label="${esc(l)} bearbeiten: ${esc(s.name)}">✎</label>`}</td>`).join('')}</tr>`; }).join('')}
+       ${AREAS.map(([k,l])=>k==='dash'?'<td class="c"><span class="pm">👁 ✓</span></td>':k==='kfrei'?(shortWho(s.name)==='AvE'?'<td class="c"><span class="pill sun">immer</span></td>':`<td class="c"><label class="pm" title="darf Kunden-Texte freigeben"><input type="checkbox" class="ck" data-chg="permView" data-n="${esc(s.name)}" data-v="kfrei" ${vs.includes('kfrei')?'checked':''} aria-label="Kunden-Texte freigeben: ${esc(s.name)}">✓</label></td>`):`<td class="c"><label class="pm" title="sehen"><input type="checkbox" class="ck" data-chg="permView" data-n="${esc(s.name)}" data-v="${k}" ${vs.includes(k)?'checked':''} ${base?'disabled':''} aria-label="${esc(l)} sehen: ${esc(s.name)}">👁</label>${['private','activity','dash','notif'].includes(k)?'':`<label class="pm" title="bearbeiten / löschen"><input type="checkbox" class="ck" data-chg="permEdit" data-n="${esc(s.name)}" data-v="${k}" ${adm||es.includes(k)?'checked':''} ${adm||!vs.includes(k)?'disabled':''} aria-label="${esc(l)} bearbeiten: ${esc(s.name)}">✎</label>`}${!adm&&FINE_AREAS.includes(k)&&FINE.some(f=>f[0]===k&&!['t_all','t_projall','pin_off'].includes(f[1])&&!fineOf(s.name,f[1]))&&(es.includes(k)||FINE.some(f=>f[0]===k&&fineOf(s.name,f[1])))?'<span class="rt-part" title="Eingeschränkt – „Details“ aufklappen">◐</span>':''}</td>`+fineTds(k)).join('')}<td class="c small muted">${adm?'alles':''}</td>${fineTds('allg')}</tr>`; }).join('')}
    </tbody></table></div>
-   <div class="card-b small muted">👁 = Rubrik sehen · ✎ = in der Rubrik anlegen, ändern und löschen. Admin = darf überall alles. Änderungen gelten sofort. Die Rechte-Seite sehen nur EP und AvE. Private To-Dos bleiben immer privat. „Kunden-Ansicht: Texte freigeben“ = darf Texte für die Kundenseite freigeben (AvE immer, weitere nur per Häkchen – auch Admins).</div></div>`;
+   <div class="card-b small muted">👁 = Rubrik sehen · ✎ = in der Rubrik anlegen, ändern und löschen. „▸ Details“ klappt Einzelrechte auf (z. B. nur Updates eintragen, nur eigene Dateien umbenennen, nichts löschen) – ✎ setzt alle Einzelrechte der Rubrik auf einmal. Admin = darf überall alles. Änderungen gelten sofort. Die Rechte-Seite sehen nur EP und AvE. Private To-Dos bleiben immer privat. „Kunden-Ansicht: Texte freigeben“ = darf Texte für die Kundenseite freigeben (AvE immer, weitere nur per Häkchen – auch Admins).</div></div>`;
 }
 
 /* ========== Chat: Team-Raum und Direktnachrichten ========== */
@@ -8385,8 +8424,10 @@ function msAsk(pid,list){ if(SHEET){ setTimeout(()=>msAsk(pid,list),1200); retur
   openSheet({title:'Status abhaken? · '+p.name,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Nach dem letzten Eintrag könnte dieser Schritt erreicht sein. Bitte kurz prüfen:</div>${open.map((s,i)=>`<div class="sug sug-st"><input type="checkbox" class="ck" id="msq_c${i}" checked aria-label="abhaken"><div style="min-width:0"><b>${esc(PIPE[s.n-1])}</b>${s.why?`<div class="small muted">„${esc(s.why)}“</div>`:''}</div><input class="inp" type="date" id="msq_d${i}" value="${esc(s.date)}" aria-label="Datum"></div>`).join('')}</div>`,saveLabel:'Abhaken',
     onSave:()=>{ const c=clone(S.projects[pid]); if(!c) return; let n=0; const msgs=[], no=msNoGet(); open.forEach((s,i)=>{ if($('#msq_c'+i).checked){ const m=applyMs(c,s.n,$('#msq_d'+i).value||TODAY()); if(m) msgs.push(m); n++; } else no[pid+'|'+s.n]=TODAY(); }); lsSet('sonnenplan-msno',JSON.stringify(no)); if(n){ put('projects',c); toast('Status: '+open.filter((s,i)=>$('#msq_c'+i).checked).map(s=>PIPE[s.n-1]).join(', ')+(msgs.length?' · '+msgs.join(' '):'')); } }}); }
 const CHG = {
- permView:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; const p={...(perms[d.n]||{}),role:''}; const vs=new Set(viewsOf(d.n)); if(!p.v2&&Array.isArray(p.edit)) p.edit=editsOf(d.n); p.v2=true; p.nfSet=true; if(el.checked) vs.add(d.v); else vs.delete(d.v); p.views=[...vs]; perms[d.n]=p; putConfig({...(S.config||{}),perms}); },
- permEdit:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; const p={...(perms[d.n]||{}),views:viewsOf(d.n)}; const es=new Set(editsOf(d.n)); p.v2=true; if(el.checked) es.add(d.v); else es.delete(d.v); p.edit=[...es]; perms[d.n]=p; putConfig({...(S.config||{}),perms}); },
+ permView:(d,el)=>{ if(!isBaseAdmin()) return; const {perms,p}=permBase(d.n); p.role=''; const vs=new Set(p.views); if(el.checked) vs.add(d.v); else vs.delete(d.v); p.views=[...vs]; perms[d.n]=p; putConfig({...(S.config||{}),perms}); },
+ // ✎ setzt auch alle Einzelrechte dieser Rubrik (Details) auf einmal
+ permEdit:(d,el)=>{ if(!isBaseAdmin()) return; const {perms,p}=permBase(d.n); const es=new Set(p.edit); if(el.checked) es.add(d.v); else es.delete(d.v); p.edit=[...es];
+   FINE.filter(f=>f[0]===d.v&&!['t_all','t_projall','pin_off'].includes(f[1])).forEach(([,k])=>{ p.fine[k]=el.checked; }); perms[d.n]=p; putConfig({...(S.config||{}),perms}); },
  permRole:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; perms[d.n]=rolePerm(el.value,perms[d.n]); putConfig({...(S.config||{}),perms}); toast(shortWho(d.n)+': '+(el.value?ROLE_PRESETS[el.value].l:'individuell')+'.'); },
  permPresetAll:()=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}, done=[]; staff().forEach(s=>{ const k=String(shortWho(s.name)).toLowerCase(), r=ROLE_DEFAULT_BY_K[k]; if(!r||ADMINS.includes(shortWho(s.name))) return; perms[s.name]=rolePerm(r,perms[s.name]); done.push(shortWho(s.name)+' = '+ROLE_PRESETS[r].l); }); putConfig({...(S.config||{}),perms}); toast(done.length?'Übernommen: '+done.join(', '):'Keine passenden Kürzel gefunden.'); },
  permAdmin:(d,el)=>{ if(!isBaseAdmin()) return; const perms={...((S.config||{}).perms||{})}; perms[d.n]={...(perms[d.n]||{}),views:viewsOf(d.n),admin:el.checked}; putConfig({...(S.config||{}),perms}); toast(shortWho(d.n)+(el.checked?' ist jetzt Admin.':' ist kein Admin mehr.')); },
