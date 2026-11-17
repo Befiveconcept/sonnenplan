@@ -2846,12 +2846,21 @@ document.addEventListener('pointermove',e=>{ if(document.documentElement.getAttr
   const c=e.target&&e.target.closest&&e.target.closest('.card'); if(!c) return; const r=c.getBoundingClientRect(); c.style.setProperty('--mx',(e.clientX-r.left)+'px'); c.style.setProperty('--my',(e.clientY-r.top)+'px'); },{passive:true});
 // Seitenwechsel: Karten gleiten herein (nur beim Wechsel der Seite)
 function fxPageIn(){ if(document.documentElement.getAttribute('data-theme')!=='future') return; const v=$('#view'); if(!v) return; v.classList.remove('fx-in'); void v.offsetWidth; v.classList.add('fx-in'); clearTimeout(window.__fxT); window.__fxT=setTimeout(()=>v.classList.remove('fx-in'),900); }
-/* Moji und ABou (Kürzel AS) sehen GAR NICHTS von Projekten (Wunsch EP, 12.11.2026) – unabhängig von gespeicherten Rechten:
-   keine Projektseiten, keine Projektlisten/Suche/KI-Projektdaten, kein „Seit deinem letzten Besuch“, keine Projekt-Mitteilungen.
-   Auf ihren eigenen Einsätzen und To-Dos bleibt nur der Name der Baustelle stehen, damit sie wissen, wohin. */
+/* Moji und ABou (Kürzel AS) – eingeschränkte Mitarbeit (Wunsch EP, 17.11.2026; vorher sahen sie gar keine Projekte):
+   SEHEN: Projekte und Dateien, alles ansehen.  DÜRFEN: Dateien hochladen und ihre EIGENEN Dateien benennen, neue To-Dos anlegen,
+   Updates zu To-Dos eintragen, eigene zugewiesene To-Dos abhaken.  DÜRFEN NICHT: etwas löschen, Projekte/Notizen ändern,
+   bestehende To-Dos ändern (außer Updates ergänzen / eigene abhaken), fremde Dateien umbenennen.
+   Weiter aus: „Seit deinem letzten Besuch“, Projekt-Mitteilungen, Morgen-Briefing. Gilt in der App (zentral in put/del). */
 const NO_PROJ_K=['moji','as'];
 const noProjUser=()=>!!ME&&(NO_PROJ_K.includes(String(meK()).toLowerCase())||/\b(moji|abou|abow)\b/i.test(String(ME)));
-function canSee(v){ if(v==='rights') return isBaseAdmin(); if((v==='projects'||v==='project')&&noProjUser()) return false; if(v==='hr') return true; /* Stempeln und Urlaub: für alle */ if(String(v).startsWith('f:')) v='files'; if(String(v).startsWith('st:')) v='stamm'; if(v==='fin'||String(v).startsWith('fi:')) return finOk(); if(String(v).startsWith('vk:')) v='sales'; if(v==='dash') return true; if(!ME) return MODE==='cloud'?false:v!=='activity'; /* online angemeldet, aber keinem Mitarbeiter zugeordnet: nichts außer Übersicht und eigener Stempeluhr */ const vs=viewsOf(ME);
+// Was darf diese Person an einem BESTEHENDEN Datensatz ändern? '' = erlaubt, sonst Hinweistext
+function limitGuard(coll,obj){ const prev=S[coll]&&S[coll][obj.id]; if(!prev) return '';
+  if(coll==='files') return (prev.by||'')===meK()?'':'Du kannst nur deine eigenen Dateien umbenennen.';
+  if(coll==='tasks'){ const free=['upd2','upd','updBy','hist','at','by'], mine=taskHas(prev,ME), done=['done','doneAt','doneBy','doneNote'];
+    const was=prev.upd2||[], now=obj.upd2||[]; if(now.length<was.length||was.some((u,i)=>JSON.stringify(u)!==JSON.stringify(now[i]))) return 'Bestehende Updates kannst du nicht ändern, nur neue ergänzen.';
+    const keys=new Set([...Object.keys(prev),...Object.keys(obj)]); for(const k of keys){ if(free.includes(k)||(mine&&done.includes(k))) continue; if(JSON.stringify(prev[k])!==JSON.stringify(obj[k])) return 'Bestehende To-Dos kannst du nicht ändern – trag bitte ein Update ein.'; } return ''; }
+  return ''; }
+function canSee(v){ if(v==='rights') return isBaseAdmin(); if(v==='hr') return true; /* Stempeln und Urlaub: für alle */ if(String(v).startsWith('f:')) v='files'; if(noProjUser()&&['projects','project','files'].includes(v)) return true; if(String(v).startsWith('st:')) v='stamm'; if(v==='fin'||String(v).startsWith('fi:')) return finOk(); if(String(v).startsWith('vk:')) v='sales'; if(v==='dash') return true; if(!ME) return MODE==='cloud'?false:v!=='activity'; /* online angemeldet, aber keinem Mitarbeiter zugeordnet: nichts außer Übersicht und eigener Stempeluhr */ const vs=viewsOf(ME);
   if(v==='kview') return isAdmin()||vs.includes('kview')||kfreiOk();
   if(v==='project') return vs.includes('projects'); if(v==='pool') return vs.includes('todos'); if(v==='meetings') return vs.includes('meetings'); if(v==='calendar') return vs.includes('week'); return vs.includes(v); }
 const canSeeActivity=()=>canSee('activity');
@@ -2909,7 +2918,7 @@ function describeChange(coll,prev,o){
 const COLL_AREA={projects:'projects',tasks:'todos',orders:'orders',offers:'offers',events:'week',plan:'week',reports:'reports',files:'files',stock:'stock',picks:'stock',lager:'stock',inv:'stock',chat:'chat',meetings:'meetings',hrtime:'hr',hrabs:'hr',hrstaff:'hr',hrdocs:'hr',kunden:'stamm',lieferanten:'stamm',artikel:'stamm',artcat:'stamm',sales:'sales',fin:'fin',anlagen:'fin',kview:'kview'};
 const lagerOk=()=>isAdmin()||canEdit('stock');
 const stDelOk=k=>isAdmin()||(k==='artikel'&&lagerOk());
-function mayWrite(coll){ const a=COLL_AREA[coll]; if(a==='fin'&&ME) return finOk()&&(isAdmin()||editsOf(ME).includes('fin')); if(!a||!ME||isAdmin()) return true; if((coll==='artikel'||coll==='artcat')&&canEdit('stock')) return true; if(a==='hr') return !['hrstaff','hrdocs'].includes(coll); return canEdit(a); }
+function mayWrite(coll){ const a=COLL_AREA[coll]; if(noProjUser()){ if(coll==='projects'||coll==='pfold') return false; if(coll==='files'||coll==='tasks') return true; } if(a==='fin'&&ME) return finOk()&&(isAdmin()||editsOf(ME).includes('fin')); if(!a||!ME||isAdmin()) return true; if((coll==='artikel'||coll==='artcat')&&canEdit('stock')) return true; if(a==='hr') return !['hrstaff','hrdocs'].includes(coll); return canEdit(a); }
 /* ---------- Doppelt-Sperre (greift bei JEDEM Speichern: Formular, KI, Meeting, Smart-Drop, Sprache, Belege, Handy) ---------- */
 const dupNorm=s=>String(s||'').toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').replace(/^\s*(bitte|todo|to-do|aufgabe)\s*:?\s+/,'').replace(/[^a-z0-9]+/g,' ').trim();
 // Notiz-/Update-Text ohne Datum, Uhrzeit und Kürzel davor („02.11.26 15:33 (EP): …“)
@@ -2945,6 +2954,7 @@ function dupGuard(coll,obj){ if(!obj||obj._dupOk){ if(obj) delete obj._dupOk; re
   return false; }
 function put(coll,obj){
   if(!mayWrite(coll)){ toast('Keine Bearbeitungsrechte für „'+((AREAS.find(a=>a[0]===COLL_AREA[coll])||[])[1]||coll)+'“. Bitte EP oder AvE fragen.'); scheduleRender(); return; }
+  if(noProjUser()){ const g=limitGuard(coll,obj); if(g){ toast(g); scheduleRender(); return; } } // Moji/ABou: Bestehendes nicht ändern
   if(dupGuard(coll,obj)) return; // nichts doppelt: gleiches To-Do / gleiches Update / gleiche Notiz wird nicht noch einmal gespeichert
   const prev=S[coll][obj.id], now=new Date().toISOString();
   if(coll==='tasks'||coll==='projects') msWatch(coll,prev,obj); // Neues Update, erledigtes To-Do, neue Notiz: Ist damit ein Statusschritt erreicht?
@@ -2961,6 +2971,7 @@ function put(coll,obj){
   chains[key]=(chains[key]||Promise.resolve()).then(()=>DB.collection(coll).doc(obj.id).set(body)).catch(writeErr);
 }
 function del(coll,id){
+  if(noProjUser()&&coll!=='seen'){ toast('Löschen ist für dich nicht freigeschaltet. Bitte EP oder AvE fragen.'); return; }
   if(!mayWrite(coll)){ toast('Keine Rechte zum Löschen. Bitte EP oder AvE fragen.'); return; }
   const prev=S[coll][id];
   if(coll==='events'&&prev) nfWatch(coll,prev,null);
@@ -3351,13 +3362,14 @@ const pinCan=p=>isAdmin()||(!!ME&&(p.by||'')===meK());
 const pinHideKey=()=>'sonnenplan-pinhide-'+meK();
 const pinHidden=()=>{ try{ return new Set(JSON.parse(lsGet(pinHideKey())||'[]')); }catch(e){ return new Set(); } };
 const pinSetHidden=(id,on)=>{ const s=pinHidden(); if(on) s.add(id); else s.delete(id); lsSet(pinHideKey(),JSON.stringify([...s].slice(-500))); };
-const pinIsOld=(p,h)=>!!p&&((p.until&&p.until<TODAY())||(h||pinHidden()).has(p.id));
+// Abgenommen (p.off): von Admin oder Verfasser für ALLE weggenommen – bleibt unter „Alte einblenden“ und lässt sich zurückholen
+const pinIsOld=(p,h)=>!!p&&(!!p.off||(p.until&&p.until<TODAY())||(h||pinHidden()).has(p.id));
 const pinSort=(a,b)=>(!!b.top-!!a.top)||String(b.at||'').localeCompare(String(a.at||''));
 const pinsActive=()=>{ const h=pinHidden(); return arr('pins').filter(p=>p&&!pinIsOld(p,h)).sort(pinSort); };
 const pinsOld=()=>{ const h=pinHidden(); return arr('pins').filter(p=>pinIsOld(p,h)).sort((a,b)=>String(b.at||'').localeCompare(String(a.at||''))); };
 const pinText=s=>esc(String(s||'')).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>');
-function pinCard(p){ const old=pinIsOld(p), hid=pinHidden().has(p.id), exp=!!(p.until&&p.until<TODAY()), neu=!old&&(p.by||'')!==meK()&&String(p.at||'')>(PIN_NEW_FROM!==null?PIN_NEW_FROM:lastRead('#pins'));
-  return `<article class="pin ${p.top&&!old?'top':''} ${old?'old':''}">${old?`<span class="pin-oldl">${exp?'abgelaufen':'ausgeblendet'}</span>`:''}<button type="button" class="pin-hide" data-act="pinHide" data-id="${esc(p.id)}" data-v="${hid?'0':'1'}" title="${hid?'Wieder einblenden':'Für mich ausblenden'}" aria-label="${hid?'Wieder einblenden':'Für mich ausblenden'}">${hid?'↺':'✕'}</button><span class="pin-n" aria-hidden="true">📌</span>${neu?'<span class="pin-new">NEU</span>':''}${p.top?'<span class="pin-imp">Wichtig</span>':''}
+function pinCard(p){ const old=pinIsOld(p), all=pinCan(p), hid=all?!!p.off||pinHidden().has(p.id):pinHidden().has(p.id), exp=!!(p.until&&p.until<TODAY()), neu=!old&&(p.by||'')!==meK()&&String(p.at||'')>(PIN_NEW_FROM!==null?PIN_NEW_FROM:lastRead('#pins'));
+  return `<article class="pin ${p.top&&!old?'top':''} ${old?'old':''}">${old?`<span class="pin-oldl">${p.off?'abgenommen'+(p.offBy?' von '+esc(p.offBy):''):exp?'abgelaufen':'ausgeblendet'}</span>`:''}${!p.off||all?`<button type="button" class="pin-hide" data-act="pinHide" data-id="${esc(p.id)}" data-v="${hid?'0':'1'}" title="${hid?(all?'Für alle wieder anheften':'Wieder einblenden'):(all?'Für alle abnehmen':'Für mich ausblenden')}" aria-label="${hid?(all?'Für alle wieder anheften':'Wieder einblenden'):(all?'Für alle abnehmen':'Für mich ausblenden')}">${hid?'↺':'✕'}</button>`:''}<span class="pin-n" aria-hidden="true">📌</span>${neu?'<span class="pin-new">NEU</span>':''}${p.top?'<span class="pin-imp">Wichtig</span>':''}
     <h3>${esc(p.title||'')}</h3>${p.img?`<img data-blob="${esc(p.img)}" alt="" class="pin-img">`:''}${p.text?`<div class="pin-tx">${pinText(p.text)}</div>`:''}
     <div class="pin-f"><span class="who-chip">${esc(p.by||'?')}</span><span>${esc(fmtD(String(p.at||'').slice(0,10)))}</span>${p.until?`<span title="Verschwindet danach automatisch">bis ${esc(fmtD(p.until).slice(3))}</span>`:''}${pinCan(p)?`<button type="button" class="lnk" data-act="pinEdit" data-id="${esc(p.id)}">Bearbeiten</button>`:''}</div></article>`; }
 // Am Handy eingeklappt (nur Kopfzeile mit Anzahl und „neu“), per Antippen ausklappbar; am Laptop immer offen
@@ -3398,7 +3410,11 @@ function pinForm(p0){ const isNew=!p0, p=p0?clone(p0):{id:uid(),title:'',text:''
 document.addEventListener('change',e=>{ if(e.target.id==='pin_img') PIN_FILE=e.target.files&&e.target.files[0]||null; });
 queueMicrotask(()=>Object.assign(A,{ pinNew:()=>pinForm(), pinEdit:d=>{ const p=S.pins[d.id]; if(p&&pinCan(p)) pinForm(p); }, pinAll:()=>{ UI.pinAll=!UI.pinAll; render(); },
   pinOld:()=>{ UI.pinOld=!UI.pinOld; render(); },
-  pinHide:d=>{ const on=d.v==='1'; pinSetHidden(d.id,on); render(); toast(on?'Für dich ausgeblendet – unter „Alte einblenden“ wieder zu finden.':'Wieder eingeblendet.'); } }));
+  pinHide:d=>{ const on=d.v==='1', p=S.pins[d.id];
+    // Admin oder Verfasser: für alle abnehmen bzw. wieder anheften (nicht löschen)
+    if(p&&pinCan(p)){ const x=clone(p); if(on){ x.off=true; x.offBy=meK(); x.offAt=new Date().toISOString(); } else { delete x.off; delete x.offBy; delete x.offAt; } put('pins',x); pinSetHidden(d.id,false); render();
+      toast(on?'Für alle abgenommen – unter „Alte einblenden“ wieder zu finden.':'Wieder für alle angeheftet.'); return; }
+    pinSetHidden(d.id,on); render(); toast(on?'Für dich ausgeblendet – unter „Alte einblenden“ wieder zu finden.':'Wieder eingeblendet.'); } }));
 /* ---------- 🔔 Mitteilungen: Glocke und Dashboard-Feld lesen dieselbe Liste ---------- */
 // Jede Person hat einen eigenen Bereich in der Datenbank (Sammlung notif:<kürzel>). Geladen wird nur der eigene; mit 07_benachrichtigungen_schutz.sql erzwingt das auch der Server.
 // put()/del() melden Änderungen an nfWatch: Dort wird entschieden, wer betroffen ist. Eigene Aktionen erzeugen nichts. Die Kennung ergibt sich aus dem Ereignis, doppelt anlegen geht nicht.
@@ -3605,7 +3621,7 @@ function projVis(p){ if(!projRestr(p)) return true; if(!ME) return false; const 
 const projLock=p=>{ if(!projRestr(p)) return ''; const o=projOwner(p), sh=p.vis==='me'?[]:(p.share||[]).map(shortWho); return `<span class="p-lock" title="${esc('Internes Projekt – sichtbar nur für '+[o,...sh].filter(Boolean).join(', '))}" aria-label="Internes Projekt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>`; };
 const projVisId=id=>{ const p=id&&S.projects[id]; return !p||projVis(p); };
 const PID_COLLS=new Set(['tasks','orders','events','offers','reports','sales','files','meetings','psum','pms']);
-const arr = c=>{ let v=Object.values(S[c]||{}); if(c==='tasks'&&ownTodosOnly()) v=v.filter(taskOk); if(c==='projects'&&noProjUser()) return []; if(c==='projects') return v.filter(projVis); if(PID_COLLS.has(c)&&S.projects&&Object.values(S.projects).some(projRestr)) return v.filter(x=>!x||!x.pid||projVisId(x.pid)); return v; };
+const arr = c=>{ let v=Object.values(S[c]||{}); if(c==='tasks'&&ownTodosOnly()&&!(noProjUser()&&UI.view==='project')) v=v.filter(taskOk); /* Moji/ABou: im Projekt alle To-Dos sehen, in der To-Do-Liste nur eigene */ if(c==='projects') return v.filter(projVis); if(PID_COLLS.has(c)&&S.projects&&Object.values(S.projects).some(projRestr)) return v.filter(x=>!x||!x.pid||projVisId(x.pid)); return v; };
 const INTERN='intern'; // Bestellungen ohne Kundenprojekt (Lager, Büro, Werkstatt)
 const projName = id=>{ if(id===INTERN) return 'Haus intern'; const p=S.projects[id]; return p&&projVis(p)? p.name : '' };
 // Austritt: s.exit = letzter Arbeitstag. Ab dem Tag danach ist die Person aus allen Auswahllisten raus (staff), bleibt aber für Einstellungen und Personalakte erhalten (staffAll).
