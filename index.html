@@ -691,6 +691,7 @@ body.ro-pedit [data-act="editProject"],body.ro-pedit [data-act="dySumEdit"],body
 body.kiosk .side,body.kiosk #mtop,body.kiosk #nfStrip,body.kiosk .tabbar,body.kiosk .aic-fab,body.kiosk .aic,body.kiosk .big-nav{display:none!important}
 body.kiosk .app{display:block}body.kiosk .main{padding:0}body.kiosk .wrap{max-width:1100px;margin:0 auto}
 .ks{padding:14px 16px 30px}.ks-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.fr-det{border:1px solid var(--line);border-radius:12px;margin-top:10px;background:var(--surface)}.fr-det>summary{cursor:pointer;padding:10px 14px;font-weight:700;list-style:none;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.fr-det>summary::-webkit-details-marker{display:none}.fr-det>summary::before{content:'▸';transition:transform .15s;display:inline-block}.fr-det[open]>summary::before{transform:rotate(90deg)}.fr-body{padding:0 12px 12px}.fr-body .fr-det{margin-top:8px}.fr-q{font-style:italic;margin-top:2px}.fr-a{white-space:nowrap;text-align:right}.fr-a .btn{margin-left:4px}
 .lv-ph{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.lv-ph img{max-height:120px;max-width:180px;border-radius:10px;border:1px solid var(--line);object-fit:cover}
 .ks-tabs{display:flex;gap:6px;flex-wrap:wrap}.ks-tabs button{border:1px solid var(--line);background:var(--surface);color:inherit;border-radius:999px;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer;min-height:44px}.ks-tabs button.on{background:var(--sun);border-color:var(--sun);color:#111}
 .ks-ro{background:var(--sun-soft);border-radius:10px;padding:10px 14px;margin:0 0 12px;color:#111}
@@ -2776,8 +2777,8 @@ const ICONS = {download:'<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M
 const ic = (n,extra='')=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ${extra}>${ICONS[n]}</svg>`;
 
 /* ========== Datenhaltung (gemeinsame Datenbank, sonst lokal) ========== */
-const COLLS = ['projects','tasks','orders','offers','events','reports','plan','log','files','stock','picks','lager','inv','chat','meetings','hrtime','hrabs','hrstaff','hrdocs','sales','pins','psum','pms','kview','pfold'];
-const S = {kview:{},pfold:{},lager:{},inv:{},stock:{},picks:{},pins:{},projects:{},tasks:{},orders:{},offers:{},events:{},reports:{},plan:{},log:{},hrtime:{},hrabs:{},hrstaff:{},hrdocs:{},kunden:{},lieferanten:{},artikel:{},artcat:{},sales:{},fin:{},anlagen:{},config:{staff:[]}};
+const COLLS = ['projects','tasks','orders','offers','events','reports','plan','log','files','stock','picks','lager','inv','chat','meetings','hrtime','hrabs','hrstaff','hrdocs','sales','pins','psum','pms','kview','pfold','fristen'];
+const S = {fristen:{},kview:{},pfold:{},lager:{},inv:{},stock:{},picks:{},pins:{},projects:{},tasks:{},orders:{},offers:{},events:{},reports:{},plan:{},log:{},hrtime:{},hrabs:{},hrstaff:{},hrdocs:{},kunden:{},lieferanten:{},artikel:{},artcat:{},sales:{},fin:{},anlagen:{},config:{staff:[]}};
 let DB=null, MODE='init', READONLY=false;
 const LS_KEY='sonnenplan-v1';
 function lsGet(k){ try{ return localStorage.getItem(k) }catch(e){ return null } }
@@ -2945,7 +2946,7 @@ function describeChange(coll,prev,o){
   return out.join(' · ');
 }
 // Schreibrecht je Rubrik (Admin-Bereich „Rechte“): ohne Häkchen „bearbeiten“ wird nichts gespeichert
-const COLL_AREA={projects:'projects',tasks:'todos',orders:'orders',offers:'offers',events:'week',plan:'week',reports:'reports',files:'files',stock:'stock',picks:'stock',lager:'stock',inv:'stock',chat:'chat',meetings:'meetings',hrtime:'hr',hrabs:'hr',hrstaff:'hr',hrdocs:'hr',kunden:'stamm',lieferanten:'stamm',artikel:'stamm',artcat:'stamm',sales:'sales',fin:'fin',anlagen:'fin',kview:'kview'};
+const COLL_AREA={projects:'projects',tasks:'todos',orders:'orders',offers:'offers',events:'week',plan:'week',reports:'reports',files:'files',stock:'stock',picks:'stock',lager:'stock',inv:'stock',chat:'chat',meetings:'meetings',hrtime:'hr',hrabs:'hr',hrstaff:'hr',hrdocs:'hr',kunden:'stamm',lieferanten:'stamm',artikel:'stamm',artcat:'stamm',sales:'sales',fin:'fin',anlagen:'fin',kview:'kview',fristen:'projects'};
 const lagerOk=()=>isAdmin()||canEdit('stock');
 const stDelOk=k=>isAdmin()||(k==='artikel'&&lagerOk());
 function mayWrite(coll){ const a=COLL_AREA[coll]; if(a==='fin'&&ME) return finOk()&&(isAdmin()||editsOf(ME).includes('fin')); if(!a||!ME||isAdmin()) return true;
@@ -5430,7 +5431,7 @@ const msDate=(p,n)=>{ const v=(p.ms||{})['m'+n]; return /^\d{4}-\d{2}-\d{2}$/.te
 function addPer(d,o){ const z=new Date(d+'T12:00'), y=z.getFullYear()+(o.y||0), m=z.getMonth()+(o.m||0), last=new Date(y,m+1,0,12).getDate(); const r=new Date(y,m,Math.min(z.getDate(),last),12); r.setDate(r.getDate()+(o.d||0)); return r.getFullYear()+'-'+String(r.getMonth()+1).padStart(2,'0')+'-'+String(r.getDate()).padStart(2,'0'); }
 const perTxt=o=>o.y?o.y+' Jahre':o.m?o.m+' Monat'+(o.m>1?'e':''):o.d%7===0&&o.d>=14?(o.d/7)+' Wochen':o.d+' Tage';
 const frCfgAll=()=>((S.config||{}).fristen)||{};
-function frCfg(r){ const c=frCfgAll()[r.k]||{}; const per=r.per&&r.per.d!=null&&c.days!=null&&+c.days>0?{d:+c.days}:r.per; return {on:c.on!==false,lead:c.lead!=null&&c.lead!==''?Math.max(0,+c.lead):r.lead,who:c.who||'',per}; }
+function frCfg(r){ const c=frCfgAll()[r.k]||{}; const per=r.per&&r.per.d!=null&&c.days!=null&&+c.days>0?{d:+c.days}:r.per; return {on:c.on===true /* Regel-Fristen erst nach Einschalten durch Admin (Vorgabe EP: erstmal nur Fristen aus Notizen/To-Dos) */,lead:c.lead!=null&&c.lead!==''?Math.max(0,+c.lead):r.lead,who:c.who||'',per}; }
 const frId=(pid,k,due)=>'fr-'+strHash(pid+'|'+k+'|'+due).replace(/[^0-9a-z]/gi,'').slice(0,14)+'-'+due.replace(/-/g,'');
 const frWho=(r,p,c)=>{ if(c.who) return c.who; if(!r.fin&&p.pl) return p.pl; return r.fin?(finOk()?ME:''):(ME||''); };
 // Alle Fristen berechnen (auch erledigte, für die Übersicht)
@@ -5440,7 +5441,7 @@ function fristList(){ const t=TODAY(), out=[];
       const base=msDate(p,r.from); if(!base) return; if(r.need&&!msOn(p,r.need)) return;
       let due; if(r.yearly){ let y=1; while(addPer(base,{y})<addDays(t,-60)) y++; due=addPer(base,{y}); } else due=addPer(base,c.per);
       if(old&&!r.yearly&&due<addDays(t,-30)) return; // abgeschlossene Projekte: längst vergangene Fristen nicht mehr anzeigen
-      const id=frId(p.id,r.k,due), tk=S.tasks&&S.tasks[id];
+      const id=frId(p.id,r.k,due), tk=S.tasks&&S.tasks[id]; if((frCfgAll()._off||[]).includes(id)) return; // von EP/AvE gelöscht
       const done=(!r.yearly&&((r.dn&&msOn(p,r.dn))||(r.chk&&isChecked(p,r.chk))))||!!(tk&&tk.done);
       const st=done?'ok':due<t?'over':addDays(due,-c.lead)<=t?'soon':'later';
       out.push({p,r,c,base,due,id,tk,st}); }); });
@@ -5458,19 +5459,89 @@ function fristAuto(){ if(!ME||!isAdmin()||!mayWrite('tasks')||Date.now()-FR_RUN<
 const FR_T=setInterval(()=>{ if(!ME||MODE==='init'||(MODE==='cloud'&&!(LIVE_READY.tasks&&LIVE_READY.projects&&S.config))) return; clearInterval(FR_T); setTimeout(fristAuto,6000); },2000);
 setInterval(()=>{ try{ fristAuto(); }catch(e){} },30*60000);
 const FR_ST={over:['überfällig','bad'],soon:['bald fällig','warn'],later:['später',''],ok:['erledigt','ok']};
-function fristDashStrip(){ if(!ME) return ''; const l=fristList().filter(x=>(x.st==='over'||x.st==='soon')&&frMine(x)); if(!l.length) return ''; const ov=l.filter(x=>x.st==='over').length;
-  return `<div class="hr-strip fr-strip"><b>⏰ ${l.length} Frist${l.length>1?'en':''} ${ov?'– '+ov+' überfällig':'bald fällig'}</b><span class="small muted">${esc(l.slice(0,2).map(x=>x.r.n+' · '+x.p.name).join(' · '))}${l.length>2?' …':''}</span><span class="spacer"></span><button class="btn sun sm" data-act="fristShow">Ansehen</button></div>`; }
-function fristSheet(){ const all=fristList().filter(frMine), t=TODAY(), soon=addDays(t,90);
-  const row=x=>`<tr class="${x.st==='over'?'low':''}"><td><b>${esc(x.r.n)}</b>${x.r.law?' <span class="pill">Gesetz</span>':''}${x.r.fin?' <span class="pill">Finanzen</span>':''}<div class="small muted">${esc(x.r.t)}</div></td>
-    <td><button type="button" class="linkish" data-act="openProject" data-id="${x.p.id}">${esc(x.p.name)}</button>${x.p.pl?`<div class="small muted">PL ${esc(shortWho(x.p.pl))}</div>`:''}</td>
-    <td style="white-space:nowrap"><b>${esc(fmtD(x.due))}</b><div class="small muted">${esc(relDay(x.due))}</div></td><td><span class="pill ${FR_ST[x.st][1]}">${FR_ST[x.st][0]}</span></td>
-    <td class="small">${esc(PIPE[x.r.from-1])}<br>${esc(fmtD(x.base))}</td>
-    <td style="white-space:nowrap">${x.tk?`<button type="button" class="btn sm" data-act="editTask" data-id="${x.tk.id}">To-Do</button>`:x.st!=='ok'&&mayWrite('tasks')?`<button type="button" class="btn sm" data-act="fristTask" data-id="${x.id}">+ To-Do</button>`:''}${x.st!=='ok'&&x.r.dn&&mayWrite('projects')?` <button type="button" class="btn sm sun" data-act="fristDone" data-id="${x.id}" title="Schritt „${esc(PIPE[x.r.dn-1])}“ mit heutigem Datum setzen">✓ Erledigt</button>`:''}</td></tr>`;
-  const grp=(l,h)=>l.length?`<div class="sec-t" style="margin:12px 0 6px">${h} · ${l.length}</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Frist</th><th>Projekt</th><th>Fällig</th><th>Stand</th><th>Grundlage</th><th></th></tr></thead><tbody>${l.map(row).join('')}</tbody></table></div>`:'';
-  const ov=all.filter(x=>x.st==='over'), so=all.filter(x=>x.st==='soon'), la=all.filter(x=>x.st==='later'&&x.due<=soon), ok=all.filter(x=>x.st==='ok'&&x.due>=addDays(t,-60));
-  openSheet({title:'⏰ Fristen-Wächter',wide:1,html:`<div class="fld full"><div class="small muted">Die Fristen ergeben sich aus den Daten der Statusschritte im Projekt (z. B. Inbetriebnahme am …). Kurz vor Fälligkeit wird automatisch ein To-Do angelegt – an die Projektleitung bzw. die eingestellte Person. Fehlt ein Datum am Statusschritt, kann keine Frist berechnet werden.</div>
-    ${grp(ov,'🔴 Überfällig')}${grp(so,'🟡 Bald fällig')}${grp(la,'Nächste 90 Tage')}${grp(ok,'✓ Kürzlich erledigt')}${!(ov.length+so.length+la.length+ok.length)?'<div class="empty" style="margin-top:12px">Gerade keine Fristen.</div>':''}</div>`,
-    saveLabel:'Schließen',onSave:()=>{},extraBtn:isAdmin()?'<button type="button" class="btn" data-act="fristCfg">⚙ Regeln einstellen</button>':''}); }
+/* ---------- Fristen aus unseren Notizen & To-Dos (Vorgabe EP: nur was dort ausdrücklich steht, nichts selbst ausdenken) ----------
+   Vorfilter im Browser: nur Zeilen mit Datum oder Frist-Wort (Stempel „02.11.26 15:33 (EP):“ zählt nicht). Claude prüft, ob es eine echte Frist ist.
+   Gespeichert in der Sammlung „fristen“ (je Frist ein Eintrag). Löschen (EP/AvE) markiert off – so taucht sie beim nächsten Suchen nicht wieder auf.
+   Private To-Dos gehen nie an die KI. */
+const FN_STAMP=/^\s*\d{1,2}\.\d{1,2}\.(\d{2,4})?\s*(\d{1,2}:\d{2})?\s*(\([^)]*\))?\s*:?\s*/;
+const FN_DATE=/\b\d{1,2}\.\s?\d{1,2}\.(\s?\d{2,4})?|\b\d{4}-\d{2}-\d{2}\b|\bKW\s?\d{1,2}\b/i;
+const FN_WORD=/\b(frist|fristen|deadline|spätestens|spaetestens|ablauf|läuft\s.{0,30}\sab|gültig bis|gueltig bis|zahlungsziel|bis (zum|ende|anfang|mitte|montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|nächste|naechste|kommende))\b/i;
+const fnHit=s=>{ const b=String(s||'').replace(FN_STAMP,''); return FN_DATE.test(b)||FN_WORD.test(b); };
+// Stempeldatum einer Notizzeile (TT.MM.JJ) – für „bis Freitag“ und um alte Einträge auszulassen
+const fnStampD=s=>{ const m=String(s||'').match(/^\s*(\d{1,2})\.(\d{1,2})\.(\d{2,4})/); if(!m) return ''; let y=+m[3]; if(y<100) y+=2000; return y+'-'+String(+m[2]).padStart(2,'0')+'-'+String(+m[1]).padStart(2,'0'); };
+function fnSources(){ const out=[], lim=addDays(TODAY(),-180);
+  arr('projects').filter(p=>p&&!p.example&&catOf(p)!=='abgesagt').forEach(p=>{ [['updates','Notizen'],['notes','Notiz'],['questions','Offene Fragen']].forEach(([f,l])=>{
+    String(p[f]||'').split(/\n+/).forEach(ln=>{ ln=ln.trim(); if(ln.length<8||!fnHit(ln)) return; const sd=fnStampD(ln); if(sd&&sd<lim) return;
+      out.push({k:'p|'+p.id+'|'+f+'|'+strHash(ln),kind:'note',pid:p.id,field:f,head:'Projekt „'+p.name+'“ · '+l,text:ln.slice(0,500)}); }); }); });
+  arr('tasks').filter(t=>t&&!t.done&&!t.private).forEach(t=>{ const parts=[t.title,t.notes,...((t.upd2||[]).map(u=>u&&u.t))].filter(Boolean).join('\n'); if(!fnHit(parts)) return;
+    out.push({k:'t|'+t.id+'|'+strHash(parts),kind:'task',tid:t.id,pid:t.pid||'',head:'To-Do'+(t.pid?' im Projekt „'+projName(t.pid)+'“':'')+(t.created?' (angelegt '+fmtD(String(t.created).slice(0,10))+')':''),text:parts.slice(0,900)}); });
+  return out; }
+const FN_SEEN_K='sonnenplan-fn-seen';
+const fnSeen=()=>{ try{ return new Set(JSON.parse(localStorage.getItem(FN_SEEN_K)||'[]')); }catch(e){ return new Set(); } };
+const fnSeenSave=s=>{ try{ localStorage.setItem(FN_SEEN_K,JSON.stringify([...s].slice(-6000))); }catch(e){} };
+let FN_BUSY=false;
+async function fnScan(o){ o=o||{}; if(FN_BUSY) return; if(!SAMPLE){ if(o.loud) toast('Die Fristen-Suche braucht die KI – geht nur in der Online-App.'); return; } if(!isAdmin()||!mayWrite('fristen')){ if(o.loud) toast('Fristen suchen dürfen nur EP und AvE.'); return; }
+  const seen=o.all?new Set():fnSeen(), src=fnSources().filter(s=>!seen.has(s.k)); if(!src.length){ if(o.loud) toast('Keine neuen Einträge mit Datum in Notizen und To-Dos.'); return; }
+  FN_BUSY=true; let found=0, calls=0; const maxCalls=o.loud?12:4, t=TODAY();
+  try{ for(let i=0;i<src.length&&calls<maxCalls;){ const batch=[]; let len=0; while(i<src.length&&batch.length<60&&len<24000){ batch.push(src[i]); len+=src[i].text.length; i++; } calls++;
+      if(o.loud) toast('⏰ Suche Fristen in Notizen und To-Dos … ('+Math.min(i,src.length)+' von '+src.length+')');
+      let r; try{ r=await SAMPLE.json(`Heute ist ${t} (${new Date().toLocaleDateString('de-DE',{weekday:'long'})}). Unten stehen Auszüge aus Projekt-Notizen und To-Dos der nutz die Sonne GmbH (Solar-Installationsbetrieb).
+Finde NUR echte Fristen, die dort ausdrücklich stehen: etwas muss bis zu einem bestimmten Datum passieren oder läuft an einem Datum ab – z. B. „Frist bis 15.12.“, „Angebot gültig bis …“, „spätestens am …“, „Netzbetreiber braucht die Unterlagen bis …“, „Zahlungsziel …“, „Förderantrag bis …“, „Kündigung bis …“.
+NICHT aufnehmen: vergangene Ereignisse („am 12.11. montiert“), normale Termine/Besuche ohne Frist-Charakter, den Datumsstempel am Zeilenanfang, gesetzliche oder übliche Fristen, die nicht im Text stehen. Erfinde nichts und ergänze nichts.
+Relative Angaben („bis Freitag“, „in 2 Wochen“) vom Datum des Eintrags aus berechnen (Stempel am Zeilenanfang im Format TT.MM.JJ, sonst Anlagedatum); ohne Bezugsdatum weglassen. Fehlt beim Datum das Jahr, nimm das nächstliegende passende.
+Je Frist: "s" = Quellen-Nr., "title" = kurz, was bis dahin passieren muss (max. 10 Wörter, ohne Datum, z. B. „Unterlagen an Westnetz schicken“), "due" = JJJJ-MM-TT, "quote" = die entscheidende Stelle wörtlich (max. 160 Zeichen).
+Quellen:
+${batch.map((s,k)=>`[S${k+1}] ${s.head}: ${s.text}`).join('\n')}
+Antworte nur mit JSON: {"f":[{"s":1,"title":"","due":"","quote":""}]} – keine Frist gefunden: {"f":[]}`,{modelTier:'default',bg:!o.loud}); }
+      catch(e){ if(o.loud) toast(SAMPLE_ERR[e&&e.code]||'Claude nicht erreichbar.'); break; }
+      ((r&&Array.isArray(r.f))?r.f:[]).forEach(x=>{ const s=batch[(+x.s||0)-1], due=String(x.due||''), title=String(x.title||'').trim().slice(0,140); if(!s||!title||!/^\d{4}-\d{2}-\d{2}$/.test(due)||isNaN(new Date(due))) return; if(due<addDays(t,-400)||due>addDays(t,1100)) return;
+        const id='fn-'+String(strHash((s.pid||'')+'|'+dupNorm(title)+'|'+due)).replace(/[^0-9a-z]/gi,'').slice(0,16);
+        if(S.fristen[id]||arr('fristen').some(f=>f.due===due&&(f.pid||'')===(s.pid||'')&&f.src&&f.src.k===s.k)) return;
+        const f={id,title,due,pid:s.pid||'',quote:String(x.quote||'').slice(0,200),src:{k:s.k,kind:s.kind,...(s.tid?{tid:s.tid}:{}),...(s.field?{field:s.field}:{})},found:TODAY(),foundBy:meK()};
+        if(put('fristen',f)!==false) found++; });
+      batch.forEach(s=>seen.add(s.k)); fnSeenSave(seen); } }
+  finally{ FN_BUSY=false; }
+  if(o.loud||found) toast('⏰ '+(found?found+' neue Frist'+(found>1?'en':'')+' aus Notizen und To-Dos gefunden.':'Keine neuen Fristen gefunden.')+(src.length>0&&calls>=maxCalls?' (Es gibt noch mehr – bitte nochmal suchen.)':''));
+  if(SHEET&&SHEET.fr) setTimeout(fristSheet,80); }
+// Admin-Gerät: einmal am Tag automatisch nach neuen Einträgen suchen
+const FN_T=setInterval(()=>{ if(!ME||MODE!=='cloud'||!(LIVE_READY.tasks&&LIVE_READY.projects)) return; clearInterval(FN_T); setTimeout(()=>{ const k='sonnenplan-fn-day'; if(!isAdmin()||lsGet(k)===TODAY()) return; lsSet(k,TODAY()); fnScan().catch(()=>{}); },20000); },3000);
+function fnList(){ const t=TODAY(); return arr('fristen').filter(f=>f&&!f.off&&/^\d{4}-\d{2}-\d{2}$/.test(f.due||'')&&(!f.pid||projVisId(f.pid))).map(f=>{ const tk=f.src&&f.src.tid?S.tasks[f.src.tid]:null, ftk=f.tid?S.tasks[f.tid]:null, p=f.pid?S.projects[f.pid]:null;
+  const done=!!f.done||!!(tk&&tk.done)||!!(ftk&&ftk.done); return {f,p,tk,ftk,due:f.due,st:done?'ok':f.due<t?'over':f.due<=addDays(t,14)?'soon':'later'}; }).sort((a,b)=>a.due.localeCompare(b.due)); }
+const fnMine=x=>isAdmin()||(x.p&&briefIsMe(x.p.pl))||(x.tk&&taskHas(x.tk,ME))||(x.ftk&&taskHas(x.ftk,ME));
+// Auf- und Zuklappen merken (je Rubrik)
+const FR_OPEN_K='sonnenplan-fropen';
+const frOpen=(k,def)=>{ try{ const o=JSON.parse(localStorage.getItem(FR_OPEN_K)||'{}'); return k in o?!!o[k]:def; }catch(e){ return def; } };
+document.addEventListener('toggle',e=>{ const d=e.target; if(!d||!d.dataset||!d.dataset.fr) return; try{ const o=JSON.parse(localStorage.getItem(FR_OPEN_K)||'{}'); o[d.dataset.fr]=d.open; localStorage.setItem(FR_OPEN_K,JSON.stringify(o)); }catch(err){} },true);
+const frDet=(k,def,sum,body)=>`<details class="fr-det" data-fr="${k}" ${frOpen(k,def)?'open':''}><summary>${sum}</summary><div class="fr-body">${body}</div></details>`;
+function fristDashStrip(){ if(!ME) return ''; const l=[...fnList().filter(fnMine).map(x=>({n:x.f.title,pn:x.p?x.p.name:'',st:x.st})),...fristList().filter(frMine).map(x=>({n:x.r.n,pn:x.p.name,st:x.st}))].filter(x=>x.st==='over'||x.st==='soon'); if(!l.length) return ''; const ov=l.filter(x=>x.st==='over').length;
+  return `<div class="hr-strip fr-strip"><b>⏰ ${l.length} Frist${l.length>1?'en':''} ${ov?'– '+ov+' überfällig':'bald fällig'}</b><span class="small muted">${esc(l.slice(0,2).map(x=>x.n+(x.pn?' · '+x.pn:'')).join(' · '))}${l.length>2?' …':''}</span><span class="spacer"></span><button class="btn sun sm" data-act="fristShow">Ansehen</button></div>`; }
+function fristSheet(){ const t=TODAY(), adm=isAdmin(), w=mayWrite('fristen');
+  const st=x=>`<span class="pill ${FR_ST[x.st][1]}">${FR_ST[x.st][0]}</span>`, dueC=x=>`<b>${esc(fmtD(x.due))}</b><div class="small muted">${esc(relDay(x.due))}</div>`;
+  // Rubrik 1: aus Notizen & To-Dos
+  const fnRow=x=>{ const f=x.f, s=f.src||{}; return `<tr class="${x.st==='over'?'low':''}"><td><b>${esc(f.title)}</b>${f.quote?`<div class="small muted fr-q">„${esc(f.quote)}“</div>`:''}</td>
+    <td>${x.p?`<button type="button" class="linkish" data-act="openProject" data-id="${x.p.id}">${esc(x.p.name)}</button>`:'<span class="muted">–</span>'}</td><td style="white-space:nowrap">${dueC(x)}</td><td>${st(x)}</td>
+    <td class="small">${s.kind==='task'&&x.tk?`<button type="button" class="linkish" data-act="editTask" data-id="${x.tk.id}">To-Do</button>`:s.kind==='note'?'Notiz':'–'}</td>
+    <td class="fr-a">${x.ftk?`<button type="button" class="btn sm" data-act="editTask" data-id="${x.ftk.id}">To-Do</button>`:x.st!=='ok'&&s.kind!=='task'&&mayWrite('tasks')?`<button type="button" class="btn sm" data-act="fnTask" data-id="${f.id}">+ To-Do</button>`:''}${x.st!=='ok'&&w?`<button type="button" class="btn sm sun" data-act="fnDone" data-id="${f.id}">✓ Erledigt</button>`:''}${adm?`<button type="button" class="btn sm ghost" data-act="fnDel" data-id="${f.id}" title="Frist löschen">🗑</button>`:''}</td></tr>`; };
+  const tbl=(rows,h)=>`<div class="tbl-wrap"><table class="tbl"><thead><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  const fnAll=fnList().filter(fnMine), H1=['Frist','Projekt','Fällig','Stand','Quelle',''];
+  const sub=(pre,l,k,def,h)=>l.length?frDet(pre+k,def,`${h} <span class="cnt-b">${l.length}</span>`,tbl(l.map(fnRow).join(''),H1)):'';
+  const g=(l,s)=>l.filter(x=>x.st===s);
+  const fnBody=fnAll.length?sub('fn-',g(fnAll,'over'),'over',true,'🔴 Überfällig')+sub('fn-',g(fnAll,'soon'),'soon',true,'🟡 Bald fällig (14 Tage)')+sub('fn-',g(fnAll,'later'),'later',false,'Später')+sub('fn-',g(fnAll,'ok').filter(x=>x.due>=addDays(t,-90)),'ok',false,'✓ Erledigt')
+    :`<div class="empty">Noch keine Fristen gefunden.${adm?' Oben auf „🔄 In Notizen & To-Dos suchen“ tippen.':''}</div>`;
+  const openN=fnAll.filter(x=>x.st==='over'||x.st==='soon').length;
+  // Rubrik 2: Regel-Fristen (nur wenn ein Admin sie eingeschaltet hat)
+  const rl=fristList().filter(frMine), rOn=FRIST_RULES.some(r=>frCfg(r).on);
+  const rRow=x=>`<tr class="${x.st==='over'?'low':''}"><td><b>${esc(x.r.n)}</b>${x.r.law?' <span class="pill">Gesetz</span>':''}${x.r.fin?' <span class="pill">Finanzen</span>':''}<div class="small muted">${esc(x.r.t)}</div></td>
+    <td><button type="button" class="linkish" data-act="openProject" data-id="${x.p.id}">${esc(x.p.name)}</button></td><td style="white-space:nowrap">${dueC(x)}</td><td>${st(x)}</td><td class="small">${esc(PIPE[x.r.from-1])}<br>${esc(fmtD(x.base))}</td>
+    <td class="fr-a">${x.tk?`<button type="button" class="btn sm" data-act="editTask" data-id="${x.tk.id}">To-Do</button>`:x.st!=='ok'&&mayWrite('tasks')?`<button type="button" class="btn sm" data-act="fristTask" data-id="${x.id}">+ To-Do</button>`:''}${x.st!=='ok'&&x.r.dn&&mayWrite('projects')?`<button type="button" class="btn sm sun" data-act="fristDone" data-id="${x.id}">✓ Erledigt</button>`:''}${adm?`<button type="button" class="btn sm ghost" data-act="frDel" data-id="${x.id}" title="Frist löschen">🗑</button>`:''}</td></tr>`;
+  const rSub=(l,k,def,h)=>l.length?frDet('fr-'+k,def,`${h} <span class="cnt-b">${l.length}</span>`,tbl(l.map(rRow).join(''),['Frist','Projekt','Fällig','Stand','Grundlage',''])):'';
+  const rBody=!rOn?`<div class="small muted">Ausgeschaltet. Hier könnten zusätzlich feste Regeln laufen (z. B. Marktstammdatenregister 1 Monat nach Inbetriebnahme).${adm?' Einschalten unter „⚙ Regeln einstellen“.':''}</div>${adm?'<button type="button" class="btn sm" data-act="fristCfg" style="margin-top:8px">⚙ Regeln einstellen</button>':''}`
+    :(rSub(g(rl,'over'),'over',true,'🔴 Überfällig')+rSub(g(rl,'soon'),'soon',true,'🟡 Bald fällig')+rSub(g(rl,'later').filter(x=>x.due<=addDays(t,90)),'later',false,'Nächste 90 Tage')+rSub(g(rl,'ok').filter(x=>x.due>=addDays(t,-60)),'ok',false,'✓ Erledigt')||'<div class="small muted">Gerade keine.</div>')+(adm?'<button type="button" class="btn sm" data-act="fristCfg" style="margin-top:8px">⚙ Regeln einstellen</button>':'');
+  openSheet({title:'⏰ Fristen',wide:1,html:`<div class="fld full"><div class="small muted">Fristen, die in euren Projekt-Notizen und To-Dos stehen (z. B. „Unterlagen bis 15.12. an Westnetz“). Claude sucht sie heraus, erfindet aber keine eigenen. Alle Rubriken lassen sich auf- und zuklappen.</div>
+    ${frDet('rub-fn',true,`📝 Aus Notizen & To-Dos <span class="cnt-b">${fnAll.filter(x=>x.st!=='ok').length}</span>${openN?` <span class="pill warn">${openN} anstehend</span>`:''}`,fnBody)}
+    ${adm||rOn?frDet('rub-rule',false,`⚙ Regel-Fristen ${rOn?'<span class="cnt-b">'+rl.filter(x=>x.st!=='ok').length+'</span>':'<span class="pill">aus</span>'}`,rBody):''}</div>`,
+    saveLabel:'Schließen',onSave:()=>{},extraBtn:adm&&SAMPLE?'<button type="button" class="btn sun" data-act="fnScan">🔄 In Notizen & To-Dos suchen</button>':''});
+  if(SHEET) SHEET.fr=1; }
 function fristCfgSheet(){ if(!isAdmin()) return; const st=staff().filter(s=>!(s.exit&&s.exit<TODAY()));
   openSheet({title:'Fristen-Wächter: Regeln',wide:1,html:`<div class="fld full"><div class="small muted">Gesetzliche Fristen (MaStR, EEG) bitte nur anpassen, wenn sich die Rechtslage ändert. „Vorlauf“ = so viele Tage vor Fälligkeit kommt das To-Do.</div>
     <div class="tbl-wrap" style="margin-top:8px"><table class="tbl"><thead><tr><th>An</th><th>Frist</th><th>Dauer</th><th>Vorlauf (Tage)</th><th>Zuständig</th></tr></thead><tbody>${FRIST_RULES.map(r=>{ const c=frCfg(r), raw=frCfgAll()[r.k]||{};
@@ -5483,6 +5554,16 @@ function fristCfgSheet(){ if(!isAdmin()) return; const st=staff().filter(s=>!(s.
       putConfig({...(S.config||{}),fristen:nx}); toast('Fristen-Regeln gespeichert.'); setTimeout(fristSheet,80); }}); }
 queueMicrotask(()=>Object.assign(A,{
   fristShow:()=>fristSheet(), fristCfg:()=>{ closeSheet(); fristCfgSheet(); },
+  fnScan:()=>fnScan({loud:1}),
+  // Löschen: nur EP/AvE (Admins). Bleibt als „gelöscht“ markiert, damit die Suche sie nicht wieder anlegt.
+  fnDel:d=>{ if(!isAdmin()) return toast('Fristen löschen dürfen nur EP und AvE.'); const f=S.fristen[d.id]; if(!f) return;
+    confirmSheet('Frist „'+f.title+'“ ('+fmtD(f.due)+') löschen? Die Notiz bzw. das To-Do selbst bleibt unverändert.',()=>{ const n=clone(f); n.off=true; n.offBy=meK(); n.offAt=new Date().toISOString(); if(put('fristen',n)!==false){ toast('Frist gelöscht.'); setTimeout(fristSheet,80); } }); },
+  fnDone:d=>{ const f=S.fristen[d.id]; if(!f) return; const n=clone(f); n.done=true; n.doneBy=meK(); n.doneAt=new Date().toISOString(); if(put('fristen',n)!==false){ toast('Frist erledigt.'); setTimeout(fristSheet,80); } },
+  fnTask:d=>{ const f=S.fristen[d.id]; if(!f) return; if(f.tid&&S.tasks[f.tid]) return toast('Das To-Do gibt es schon.'); const p=f.pid&&S.projects[f.pid];
+    const t={id:uid(),title:f.title,pid:f.pid||'',done:false,prio:f.due<=addDays(TODAY(),7)?'hoch':'normal',due:f.due,src:'frist',created:TODAY(),by:meK(),notes:'⏰ Frist aus '+(f.src&&f.src.kind==='task'?'einem To-Do':'den Projekt-Notizen')+(f.quote?': „'+f.quote+'“':'')}; const who=p&&p.pl||ME; if(who) t.who=who;
+    if(dupTask(t)) return toast('Ein gleiches To-Do gibt es schon.'); if(put('tasks',t)===false) return; const n=clone(f); n.tid=t.id; put('fristen',n); toast('To-Do angelegt.'); setTimeout(fristSheet,80); },
+  frDel:d=>{ if(!isAdmin()) return toast('Fristen löschen dürfen nur EP und AvE.'); const x=fristList().find(y=>y.id===d.id); if(!x) return;
+    confirmSheet('Frist „'+x.r.n+'“ für „'+x.p.name+'“ ('+fmtD(x.due)+') löschen?',()=>{ const c=frCfgAll(); putConfig({...(S.config||{}),fristen:{...c,_off:[...(c._off||[]),x.id].slice(-2000)}}); toast('Frist gelöscht.'); setTimeout(fristSheet,80); }); },
   fristTask:d=>{ const x=fristList().find(y=>y.id===d.id); if(!x) return; if(S.tasks[x.id]) return toast('Das To-Do gibt es schon.'); const who=frWho(x.r,x.p,x.c);
     const t={id:x.id,title:x.r.t,pid:x.p.id,done:false,prio:x.st==='over'||x.r.law?'hoch':'normal',due:x.due,src:'frist',frist:x.r.k,created:TODAY(),by:meK(),notes:'⏰ Fristen-Wächter: '+x.r.n+' – fällig am '+fmtD(x.due)+'.\n'+x.r.info+'\nGrundlage: „'+PIPE[x.r.from-1]+'“ am '+fmtD(x.base)+'.'}; if(who) t.who=who;
     if(put('tasks',t)!==false){ toast('To-Do angelegt.'); setTimeout(fristSheet,80); } },
