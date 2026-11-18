@@ -4462,6 +4462,8 @@ function filterProjects(cat){
     else if(cat&&CATS[cat]&&c!==cat) return false;
     if(cat==='alle'||cat==='aktiv'||!cat){ if(UI.hide.erledigt&&c==='erledigt'&&!(p.wartung&&!UI.hide.wartung)) return false; if(UI.hide.abgesagt&&c==='abgesagt') return false; if(UI.hide.wartung&&p.wartung) return false; }
     if(UI.projType&&p.type!==UI.projType) return false;
+    // „Interne Projekte ausblenden“ gilt in jeder Ansicht – außer man filtert ausdrücklich auf den Typ „Internes Projekt“
+    if(UI.hide&&UI.hide.intern&&UI.projType!=='intern'&&(isIntern(p)||p.type==='intern')) return false;
     if(q&&![p.name,p.nr,p.pl,p.place,p.customer,p.scope].join(' ').toLowerCase().includes(q)) return false;
     return true; }).sort((SORTS[UI.sort]||SORTS.status)[1]);
 }
@@ -4532,7 +4534,7 @@ function vProjects(){
      <select class="catsel" id="projType" data-chg="projType" aria-label="Projekttyp"><option value="">Alle Typen</option>${Object.entries(TYPES).map(([k,l])=>`<option value="${k}" ${UI.projType===k?'selected':''}>${l}</option>`).join('')}</select>
      <label class="small muted" for="projSort">Sortieren</label><select class="catsel" id="projSort" data-chg="projSort">${Object.entries(SORTS).map(([k,[l]])=>`<option value="${k}" ${UI.sort===k?'selected':''}>${l}</option>`).join('')}</select></div>
    ${UI.projMode==='board'?'':`<div class="chips">${chips.map(([k,l])=>`<button class="chip ${f===k?'on':''}" data-act="projFilter" data-v="${k}">${l} <span class="mono small">${cnt(k)}</span></button>`).join('')}</div>
-   ${hideOn?`<div class="row hide-row"><span class="small muted">Ausblenden:</span>${[['erledigt','Erledigte'],['abgesagt','Abgesagte'],['wartung','Wartungsverträge']].map(([k,l])=>`<label class="tog"><input type="checkbox" data-chg="projHide" data-k="${k}" ${UI.hide[k]?'checked':''}><span>${l}</span></label>`).join('')}</div>`:''}`}
+   ${`<div class="row hide-row"><span class="small muted">Ausblenden:</span>${[...(hideOn?[['erledigt','Erledigte'],['abgesagt','Abgesagte'],['wartung','Wartungsverträge']]:[]),['intern','Interne Projekte']].map(([k,l])=>`<label class="tog"><input type="checkbox" data-chg="projHide" data-k="${k}" ${(UI.hide||{})[k]?'checked':''}><span>${l}</span></label>`).join('')}</div>`}`}
    <div id="projList">${projListHtml()}</div>`;
 }
 function board(){
