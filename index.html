@@ -20,6 +20,228 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <!-- Schriften NICHT blockierend laden: Ein Stylesheet vor den Skripten hält sonst den ganzen App-Start an, solange Google Fonts nicht antwortet -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<script>
+/* Sonnenplan · eigenständige Version: Supabase statt claude.ai
+   Stellt dieselbe Schnittstelle bereit, die die App auf claude.ai nutzt (window.claude.use: db, user, assets, sample),
+   damit der App-Code unverändert bleibt. Anmeldung mit E-Mail + Passwort über Supabase Auth. */
+(function(){
+  const SB_URL = 'https://kmdaouphvyetiekawkcg.supabase.co';
+  const SB_KEY = 'sb_publishable_CmTadUEZl37K3x9jJuyJOg_qfuiigrk';
+  const AI_ON  = true;          // true = KI über die Supabase-Funktion „claude“
+  const BUCKET = 'files';
+  const AI_FN  = 'hyper-handler';       // Name der KI-Funktion in Supabase (Edge Functions)
+
+  /* Ladezeiten nachvollziehbar machen (nur Dauer und Anzahl, keine Daten, keine Zugangsschlüssel) */
+  const T0 = performance.now(); const tlog = (what, extra) => { try{ console.info('[Sonnenplan] ' + what + ' nach ' + Math.round(performance.now() - T0) + ' ms' + (extra ? ' · ' + extra : '')); }catch(e){} };
+  window.SP_TLOG = tlog;
+  /* Supabase-Bibliothek NICHT mehr blockierend laden: Ein hängendes CDN hielt sonst den ganzen Seitenaufbau an
+     (DOMContentLoaded erst nach Minuten). Jetzt im Hintergrund, mit Zeitlimit und zweitem CDN als Ersatz. */
+  const LIBS = ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js', 'https://fastly.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js', 'https://unpkg.com/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js'];
+  function loadLib(){ return new Promise((res, rej) => { let i = 0;
+    const next = () => { if (window.supabase && window.supabase.createClient) return res(); if (i >= LIBS.length) return rej(new Error('lib'));
+      const src = LIBS[i++], s = document.createElement('script'); let done = false; s.src = src; s.async = true;
+      const t = setTimeout(() => { if (done) return; done = true; tlog('Supabase-Bibliothek antwortet nicht, versuche Ersatz', new URL(src).host); next(); }, 8000);
+      s.onload = () => { if (done) { if (window.supabase) res(); return; } done = true; clearTimeout(t); res(); };
+      s.onerror = () => { if (done) return; done = true; clearTimeout(t); tlog('Supabase-Bibliothek nicht ladbar', new URL(src).host); next(); };
+      (document.head || document.documentElement).appendChild(s); };
+    next(); }); }
+  let sb = null;
+  let session = null, readyResolve; const ready = new Promise(r => readyResolve = r);
+  const markReady = () => { tlog('Sitzung bereit'); readyResolve(); };
+
+  /* ---------- Anmeldung ---------- */
+  // Feste helle Farben (auch im Dunkelmodus von Handy/Browser/App gut lesbar)
+  const css = `#sbLogin{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:#0B0B0B;font:15px/1.5 Inter,system-ui,sans-serif;padding:16px;color-scheme:light}
+  #sbLogin form{width:100%;max-width:380px;background:#fff!important;color:#111!important;border-radius:18px;padding:28px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  #sbLogin .wm{font-family:'Work Sans',sans-serif;font-weight:800;font-size:22px;letter-spacing:.02em;color:#111!important}#sbLogin .wm span{background:#F4DB02;padding:0 5px;color:#111!important}
+  #sbLogin label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:#444!important}
+  #sbLogin input{font:inherit;padding:11px 12px;border:1.5px solid #ccc;border-radius:10px;color:#111!important;background:#fff!important;-webkit-text-fill-color:#111}
+  #sbLogin input::placeholder{color:#888!important;-webkit-text-fill-color:#888}
+  #sbLogin input:-webkit-autofill{-webkit-box-shadow:0 0 0 40px #fff inset!important;-webkit-text-fill-color:#111!important}
+  #sbLogin input:focus{outline:none;border-color:#F4DB02;box-shadow:0 0 0 3px #FBF4B8}
+  #sbLogin button{font:inherit;font-weight:600;padding:12px;border-radius:10px;border:0;background:#111!important;color:#fff!important;cursor:pointer}
+  #sbLogin .lnk{background:none!important;color:#555!important;padding:4px;font-weight:400;text-decoration:underline}
+  #sbLogin .msg{font-size:13px;min-height:1.2em}#sbLogin .msg.err{color:#C0352B}#sbLogin .msg.ok{color:#2E7D4A}`;
+  function loginScreen(mode){
+    let el = document.getElementById('sbLogin'); if(!el){ const st=document.createElement('style'); st.textContent=css; document.head.appendChild(st); el=document.createElement('div'); el.id='sbLogin'; document.body.appendChild(el); }
+    const reset = mode==='reset', newpw = mode==='newpw';
+    el.innerHTML = `<form novalidate><div class="wm"><span>NUTZ DIE</span> SONNE</div><div style="color:#555;margin-top:-6px">Projektsteuerung · ${newpw?'neues Passwort festlegen':reset?'Passwort zurücksetzen':'Anmelden'}</div>
+      ${newpw?'':`<label>E-Mail<input id="sbMail" type="email" autocomplete="username" required></label>`}
+      ${reset?'':`<label>${newpw?'Neues Passwort (mind. 8 Zeichen)':'Passwort'}<input id="sbPw" type="password" autocomplete="${newpw?'new-password':'current-password'}" required></label>`}
+      <button type="submit">${newpw?'Passwort speichern':reset?'Link zum Zurücksetzen senden':'Anmelden'}</button>
+      ${newpw?'':`<button type="button" class="lnk" id="sbSwitch">${reset?'Zurück zur Anmeldung':'Passwort vergessen?'}</button>`}
+      <div class="msg" id="sbMsg" role="status"></div></form>`;
+    const msg=(t,ok)=>{ const m=el.querySelector('#sbMsg'); m.textContent=t; m.className='msg '+(ok?'ok':'err'); };
+    const sw=el.querySelector('#sbSwitch'); if(sw) sw.onclick=()=>loginScreen(reset?'':'reset');
+    el.querySelector('form').onsubmit=async e=>{ e.preventDefault(); const mail=(el.querySelector('#sbMail')||{}).value, pw=(el.querySelector('#sbPw')||{}).value;
+      if(newpw){ if(!pw||pw.length<8) return msg('Bitte mindestens 8 Zeichen.'); const {error}=await sb.auth.updateUser({password:pw}); if(error) return msg(error.message); msg('Gespeichert.',true); setTimeout(()=>{ el.remove(); history.replaceState(null,'',location.pathname); },600); return; }
+      if(reset){ const {error}=await sb.auth.resetPasswordForEmail(mail,{redirectTo:location.origin+location.pathname}); if(error) return msg(error.message); return msg('Falls die Adresse bekannt ist, kommt gleich eine E-Mail mit einem Link.',true); }
+      msg('Anmelden …',true); const {error}=await sb.auth.signInWithPassword({email:mail,password:pw});
+      if(error) msg(/invalid/i.test(error.message)?'E-Mail oder Passwort falsch.':error.message); };
+    setTimeout(()=>{ const i=el.querySelector('input'); if(i) i.focus(); },50);
+  }
+  function libFail(){ const show=()=>{ let el=document.getElementById('sbLogin'); if(!el){ const st=document.createElement('style'); st.textContent=css; document.head.appendChild(st); el=document.createElement('div'); el.id='sbLogin'; document.body.appendChild(el); }
+      el.innerHTML='<form><div class="wm"><span>NUTZ DIE</span> SONNE</div><div class="msg err">Die Verbindung zur Datenbank-Bibliothek konnte nicht hergestellt werden (Netzwerk oder Firewall).</div><button type="button" onclick="location.reload()">Erneut versuchen</button></form>'; };
+    if(document.body) show(); else document.addEventListener('DOMContentLoaded',show); }
+  function startAuth(){
+    sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+    window.SB = sb;
+    sb.auth.onAuthStateChange((ev,s)=>{
+      if(ev==='PASSWORD_RECOVERY'){ session=s; loginScreen('newpw'); return; }
+      if(s&&!session){ session=s; const el=document.getElementById('sbLogin'); if(el&&!/type=recovery/.test(location.hash)) el.remove(); markReady(); }
+      if(!s&&session){ location.reload(); }
+    });
+    sb.auth.getSession().then(({data})=>{ if(data.session){ if(!session){ session=data.session; markReady(); } } else if(document.body) loginScreen(); else document.addEventListener('DOMContentLoaded',()=>{ if(!session) loginScreen(); }); });
+  }
+  loadLib().then(()=>{ tlog('Supabase-Bibliothek geladen'); startAuth(); }).catch(()=>{ tlog('Supabase-Bibliothek fehlgeschlagen'); libFail(); });
+  // Abmelden: auch wenn der Server gerade nicht antwortet, die Anmeldung auf diesem Gerät sicher löschen, dann neu laden (Anmeldemaske)
+  window.SB_LOGOUT = async()=>{ try{ await Promise.race([sb.auth.signOut({scope:'local'}), new Promise(r=>setTimeout(r,3000))]); }catch(e){}
+    try{ Object.keys(localStorage).filter(k=>/^sb-.*-auth-token/.test(k)).forEach(k=>localStorage.removeItem(k)); localStorage.removeItem('sonnenplan-me'); }catch(e){}
+    location.replace(location.pathname); };
+  // Live: wer ist gerade wo und tippt (Supabase Presence, nichts wird gespeichert)
+  let pres=null, presCb=null, presState={};
+  function presInit(){ if(pres||!session) return; pres=sb.channel('sonnenplan-live',{config:{presence:{key:session.user.id}}});
+    pres.on('presence',{event:'sync'},()=>{ presCb&&presCb(pres.presenceState()); }).subscribe(st=>{ if(st==='SUBSCRIBED') pres.track(presState).catch(()=>{}); }); }
+  window.SB_PRES = { set(s){ presState=s; presInit(); if(pres&&pres.state==='joined') pres.track(s).catch(()=>{}); }, on(cb){ presCb=cb; presInit(); } };
+  window.SB_SETPW = async pw=>{ const {error}=await sb.auth.updateUser({password:pw}); if(error) throw error; };
+
+  /* ---------- Datenbank (gleiche Form wie claude.ai: collection/doc/onSnapshot) ---------- */
+  const cache = {};                 // coll → Map(id → data)
+  const subs  = {};                 // coll → [callback]
+  const docSubs = {};               // 'coll/id' → [callback]
+  const snapOf = coll => ({ docs: [...(cache[coll]||new Map()).entries()].map(([id,d])=>({ id, data:()=>d, exists:true })) });
+  const emit = coll => { (subs[coll]||[]).forEach(cb=>{ try{ cb(snapOf(coll)); }catch(e){ console.error(e); } });
+    Object.keys(docSubs).filter(k=>k.startsWith(coll+'/')&&k.split('/').length===coll.split('/').length+1).forEach(k=>{ const id=k.slice(coll.length+1), d=(cache[coll]||new Map()).get(id); docSubs[k].forEach(cb=>cb({exists:!!d,id,data:()=>d})); }); };
+  const loaded = {};
+  let lastSync='';                   // neuester updated_at, den dieses Gerät kennt (für das Nachholen)
+  const seen = t => { if(t&&t>lastSync) lastSync=t; };
+  /* Eine Sammlung laden. Große Sammlungen (z. B. 4.300 Kunden): erste Seite mit Gesamtzahl, Rest parallel statt nacheinander.
+     Fehlschläge werden NICHT gemerkt – sonst blieb eine Sammlung nach einem einzigen Netzwerkfehler bis zum Neuladen leer („wird geladen …“). */
+  const PAGE = 1000, T_LOAD = 45000;
+  const withTimeout = (p, ms, what) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error('Zeitüberschreitung: ' + what), { code: 'timeout' })), ms))]);
+  async function load(coll){
+    if(loaded[coll]) return loaded[coll];
+    const t1 = performance.now();
+    loaded[coll] = withTimeout((async()=>{ const m=new Map(); const add=data=>data.forEach(r=>{ m.set(r.id,r.data); seen(r.updated_at); });
+      const first=await sb.from('docs').select('id,data,updated_at',{count:'exact'}).eq('coll',coll).order('id').range(0,PAGE-1); if(first.error) throw first.error; add(first.data||[]);
+      const total=first.count==null?(first.data||[]).length:first.count;
+      if((first.data||[]).length>=PAGE&&total>PAGE){ const pages=[]; for(let from=PAGE; from<total; from+=PAGE) pages.push(from);
+        // höchstens 4 gleichzeitig
+        for(let i=0;i<pages.length;i+=4){ const res=await Promise.all(pages.slice(i,i+4).map(from=>sb.from('docs').select('id,data,updated_at').eq('coll',coll).order('id').range(from,from+PAGE-1))); for(const r of res){ if(r.error) throw r.error; add(r.data||[]); } }
+        // Falls in der Zwischenzeit etwas dazugekommen ist: weiterblättern, bis eine Seite nicht mehr voll ist
+        let from=Math.ceil(total/PAGE)*PAGE; for(;;){ const r=await sb.from('docs').select('id,data,updated_at').eq('coll',coll).order('id').range(from,from+PAGE-1); if(r.error) throw r.error; add(r.data||[]); if((r.data||[]).length<PAGE) break; from+=PAGE; } }
+      cache[coll]=m; if(m.size>=200||performance.now()-t1>2000) tlog('„'+coll+'“ geladen', m.size+' Einträge in '+Math.round(performance.now()-t1)+' ms'); })(), T_LOAD, coll)
+      .catch(e=>{ delete loaded[coll]; tlog('„'+coll+'“ konnte nicht geladen werden', (e&&e.code)||'Fehler'); throw e; });
+    return loaded[coll];
+  }
+  window.SP_RELOAD = coll => { delete loaded[coll]; return load(coll).then(()=>emit(coll)); };
+  /* Live-Abgleich, drei Wege – damit Einträge anderer in unter einer Sekunde erscheinen:
+     1) Broadcast: wer speichert, ruft „coll/id geändert“ in den Kanal; alle anderen holen genau diesen Datensatz (schnell, auch bei großen Einträgen)
+     2) Datenbank-Änderungen (postgres_changes) wie bisher – große Datensätze werden dabei nachgeladen statt übernommen
+     3) Nachholen: beim Zurückkehren in den Tab, nach Funkloch/Standby und alle 15 s alles seit dem letzten bekannten Stand */
+  let channel=null, chReady=false, fetchQ={}, fetchT=null;
+  const pend={}; const busyDoc=(coll,id)=>pend[coll+'/'+id]>0; // eigene Speicherung läuft noch → nicht mit älterem Stand überschreiben
+  function queueFetch(coll,id){ if(!cache[coll]) return; (fetchQ[coll]=fetchQ[coll]||new Set()).add(id); clearTimeout(fetchT); fetchT=setTimeout(flushFetch,40); }
+  async function flushFetch(){ const q=fetchQ; fetchQ={};
+    for(const [coll,ids] of Object.entries(q)){ const list=[...ids]; const {data,error}=await sb.from('docs').select('id,data,updated_at').eq('coll',coll).in('id',list); if(error||!cache[coll]) continue;
+      const got=new Set(); (data||[]).forEach(r=>{ got.add(r.id); seen(r.updated_at); if(!busyDoc(coll,r.id)) cache[coll].set(r.id,r.data); }); list.forEach(id=>{ if(!got.has(id)&&!busyDoc(coll,id)) cache[coll].delete(id); }); emit(coll); } }
+  let catching=false;
+  async function catchUp(){ if(catching||!lastSync||!session) return; catching=true;
+    try{ const colls=Object.keys(cache); if(!colls.length) return; const since=new Date(new Date(lastSync).getTime()-3000).toISOString();
+      const {data,error}=await sb.from('docs').select('coll,id,data,updated_at').in('coll',colls).gt('updated_at',since).limit(1000); if(error||!data) return;
+      const touched=new Set(); data.forEach(r=>{ if(!cache[r.coll]) return; const cur=cache[r.coll].get(r.id); seen(r.updated_at); if(busyDoc(r.coll,r.id)) return; if(cur&&JSON.stringify(cur)===JSON.stringify(r.data)) return; cache[r.coll].set(r.id,r.data); touched.add(r.coll); });
+      touched.forEach(emit); }finally{ catching=false; } }
+  function live(){ if(channel) return;
+    channel = sb.channel('docs-all',{config:{broadcast:{self:false,ack:false}}})
+      .on('broadcast',{event:'chg'},m=>{ const p=m&&m.payload; if(!p||!p.coll||!cache[p.coll]) return; if(p.del){ cache[p.coll].delete(p.id); emit(p.coll); } else queueFetch(p.coll,p.id); })
+      .on('postgres_changes',{event:'*',schema:'public',table:'docs'},p=>{
+        const row=p.new&&p.new.coll?p.new:p.old; if(!row||!row.coll||!cache[row.coll]) return;
+        if(p.eventType==='DELETE'){ cache[row.coll].delete(row.id); emit(row.coll); return; }
+        if(!p.new||p.new.data==null||(p.errors&&p.errors.length)) { queueFetch(row.coll,row.id); return; } // zu groß / gekürzt → nachladen
+        seen(p.new.updated_at); if(busyDoc(row.coll,row.id)) return; cache[row.coll].set(row.id,p.new.data); emit(row.coll); })
+      .subscribe(st=>{ const was=chReady; chReady=st==='SUBSCRIBED'; if(chReady&&was===false&&lastSync) catchUp(); // nach Neuverbindung Verpasstes holen
+        if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'||st==='CLOSED'){ setTimeout(()=>{ try{ sb.removeChannel(channel); }catch(e){} channel=null; live(); },2000); } }); }
+  const ping = (coll,id,del) => { if(channel&&chReady) channel.send({type:'broadcast',event:'chg',payload:{coll,id,del:!!del}}).catch(()=>{}); };
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') catchUp(); });
+  window.addEventListener('online',()=>catchUp()); window.addEventListener('focus',()=>catchUp());
+  setInterval(()=>{ if(document.visibilityState==='visible') catchUp(); },15000);
+  const splitPath = path => { const s=path.split('/'); return { coll:s.slice(0,-1).join('/'), id:s[s.length-1] }; };
+  const stripDel = o => { if(!o||typeof o!=='object'||Array.isArray(o)) return o; const r={}; Object.entries(o).forEach(([k,v])=>{ if(v&&typeof v==='object'&&v.__delete__===true) return; r[k]=stripDel(v); }); return r; };
+  const merge = (a,b) => { const r={...(a||{})}; Object.entries(b||{}).forEach(([k,v])=>{ if(v&&typeof v==='object'&&v.__delete__===true) delete r[k]; else if(v&&typeof v==='object'&&!Array.isArray(v)&&r[k]&&typeof r[k]==='object'&&!Array.isArray(r[k])) r[k]=merge(r[k],v); else r[k]=v; }); return r; };
+  function docRef(coll,id){ return {
+    id,
+    async set(body){ const data=stripDel(JSON.parse(JSON.stringify(body))); (cache[coll]=cache[coll]||new Map()).set(id,data); emit(coll);
+      const pk=coll+'/'+id; pend[pk]=(pend[pk]||0)+1; let error; try{ ({error}=await sb.from('docs').upsert({coll,id,data})); } finally{ pend[pk]--; } if(error) throw Object.assign(new Error(error.message),{code:error.code||'write_failed'}); ping(coll,id); },
+    // Nur anlegen, nie überschreiben (Mitteilungen an andere): Gibt es den Datensatz schon, passiert nichts
+    async insert(body){ const data=stripDel(JSON.parse(JSON.stringify(body))); const {error}=await sb.from('docs').insert({coll,id,data}); if(error&&error.code!=='23505') throw Object.assign(new Error(error.message),{code:error.code||'write_failed'}); if(!error){ if(cache[coll]){ cache[coll].set(id,data); emit(coll); } ping(coll,id); } },
+    async update(part){ await load(coll); const cur=(cache[coll]||new Map()).get(id)||{}; return this.set(merge(cur,part)); },
+    async delete(){ if(cache[coll]){ cache[coll].delete(id); emit(coll); } const {error}=await sb.from('docs').delete().eq('coll',coll).eq('id',id); if(error) throw Object.assign(new Error(error.message),{code:error.code||'write_failed'}); ping(coll,id,true); },
+    async get(){ await load(coll); const d=cache[coll].get(id); return {exists:!!d,id,data:()=>d}; },
+    onSnapshot(cb,err){ const k=coll+'/'+id; (docSubs[k]=docSubs[k]||[]).push(cb); load(coll).then(()=>{ live(); const d=cache[coll].get(id); cb({exists:!!d,id,data:()=>d}); }).catch(e=>err&&err(Object.assign(e,{code:e.code||'load_failed'}))); return ()=>{ docSubs[k]=docSubs[k].filter(x=>x!==cb); }; }
+  }; }
+  const db = {
+    collection(coll){ return {
+      doc:id=>docRef(coll,id),
+      onSnapshot(cb,err){ (subs[coll]=subs[coll]||[]).push(cb); load(coll).then(()=>{ live(); cb(snapOf(coll)); }).catch(e=>err&&err(Object.assign(e,{code:e.code||'load_failed'}))); return ()=>{ subs[coll]=subs[coll].filter(x=>x!==cb); }; },
+      async get(){ await load(coll); return snapOf(coll); }
+    }; },
+    doc(path){ const {coll,id}=splitPath(path); return docRef(coll,id); },
+    // Viele Datensätze in EINER Anweisung speichern (ganz oder gar nicht)
+    async batchSet(coll,rows){ const list=rows.map(r=>({coll,id:r.id,data:stripDel(JSON.parse(JSON.stringify(r.data)))})); list.forEach(r=>{ pend[coll+'/'+r.id]=(pend[coll+'/'+r.id]||0)+1; });
+      let error; try{ ({error}=await sb.from('docs').upsert(list)); } finally{ list.forEach(r=>{ pend[coll+'/'+r.id]--; }); }
+      if(error) throw Object.assign(new Error(error.message),{code:error.code||'write_failed'});
+      const c=(cache[coll]=cache[coll]||new Map()); list.forEach(r=>c.set(r.id,r.data)); emit(coll); list.slice(0,40).forEach(r=>ping(coll,r.id)); },
+    // Viele Datensätze löschen – Reihenfolge wird eingehalten (z. B. erst Plätze, dann Regal), Pakete à 250
+    async batchDel(coll,ids){ for(let i=0;i<ids.length;i+=250){ const part=ids.slice(i,i+250); const {error}=await sb.from('docs').delete().eq('coll',coll).in('id',part); if(error) throw Object.assign(new Error(error.message),{code:error.code||'write_failed'}); if(cache[coll]) part.forEach(id=>cache[coll].delete(id)); }
+      emit(coll); ids.slice(0,40).forEach(id=>ping(coll,id,true)); }
+  };
+
+  /* ---------- Angemeldete Person ---------- */
+  const user = {
+    async me(){ return { id: session.user.id, name: session.user.email, email: session.user.email }; },
+    async id(){ return session.user.id; },
+    isOwner(){ return false; }, canEdit(){ return true; }, can(){ return true; },
+    async profiles(ids){ const o={}; (ids||[]).forEach(i=>o[i]={id:i,name:''}); return o; }
+  };
+
+  /* ---------- Dateien (Supabase Storage, privat) ---------- */
+  const extOf = (n,t) => { const m=String(n||'').match(/\.[a-z0-9]{2,5}$/i); if(m) return m[0].toLowerCase(); return {'application/pdf':'.pdf','image/jpeg':'.jpg','image/png':'.png','image/webp':'.webp'}[t]||''; };
+  const assets = {
+    async upload(blob,opts){ const type=(opts&&opts.type)||blob.type||'application/octet-stream'; if(blob.size>20*1024*1024) throw Object.assign(new Error('zu groß'),{code:'too_large'});
+      const id=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2)).replace(/-/g,'')+extOf(blob.name,type);
+      const {error}=await sb.storage.from(BUCKET).upload(id,blob,{contentType:type,upsert:false}); if(error) throw Object.assign(new Error(error.message),{code:'upload_failed'});
+      return { id, url:'/_blob/'+id, sizeBytes:blob.size, contentType:type }; },
+    async list(){ const {data}=await sb.storage.from(BUCKET).list('',{limit:1000}); return { assets:(data||[]).map(f=>({id:f.name,url:'/_blob/'+f.name,sizeBytes:(f.metadata||{}).size,contentType:(f.metadata||{}).mimetype})), usage:{} }; },
+    async delete(id){ await sb.storage.from(BUCKET).remove([id]); }
+  };
+  // Links „/_blob/<id>“ der App auf signierte Supabase-Links umleiten
+  async function signed(id){ const {data,error}=await sb.storage.from(BUCKET).createSignedUrl(id,3600); if(error) throw error; return data.signedUrl; }
+  document.addEventListener('click',async e=>{ const a=e.target.closest&&e.target.closest('a[href^="/_blob/"]'); if(!a) return; e.preventDefault(); e.stopImmediatePropagation();
+    const w=window.open('about:blank','_blank'); try{ const u=await signed(decodeURIComponent(a.getAttribute('href').slice(7))); if(w) w.location=u; else location.href=u; }catch(err){ if(w) w.close(); alert('Datei konnte nicht geöffnet werden.'); } },true);
+  const origFetch=window.fetch.bind(window);
+  window.fetch=async(input,init)=>{ const u=typeof input==='string'?input:input&&input.url; if(u&&u.startsWith('/_blob/')) return origFetch(await signed(decodeURIComponent(u.slice(7))),init); return origFetch(input,init); };
+
+  /* ---------- KI über die Supabase-Funktion „claude“ ---------- */
+  const b64 = blob => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(',')[1]); r.onerror=rej; r.readAsDataURL(blob); });
+  async function ask(input,opts){ opts=opts||{};
+    const messages=typeof input==='string'?[{role:'user',content:input}]:input;
+    const images=[]; for(const b of (opts.images||[]).slice(0,8)) images.push({type:b.type||'image/jpeg',data:await b64(b)});
+    const {data,error}=await sb.functions.invoke(AI_FN,{body:{messages,tier:opts.modelTier||'default',images}});
+    if(error){ const st=error.context&&error.context.status; throw Object.assign(new Error(error.message),{code:st===429?'rate_limited':st===401?'not_granted':'unavailable'}); }
+    const text=String(data&&data.text||''); if(opts.onText) try{ opts.onText({text,delta:text}); }catch(e){}
+    return { text, truncated: !!(data&&data.truncated) }; }
+  const sample = Object.assign(ask, {
+    async json(input,opts){ const r=await ask(input,opts); const t=r.text.replace(/^```(?:json)?\s*|\s*```$/g,'').trim(); const s=t.indexOf('{')>=0&&(t.indexOf('[')<0||t.indexOf('{')<t.indexOf('['))?t.slice(t.indexOf('{'),t.lastIndexOf('}')+1):t.slice(t.indexOf('['),t.lastIndexOf(']')+1);
+      try{ return JSON.parse(s); }catch(e){ throw Object.assign(new Error('Antwort war kein JSON'),{code:'bad_json',text:r.text}); } },
+    async limits(){ return { images:true }; }
+  });
+
+  window.claude = { async use(name){ await ready;
+    if(name==='db') return db; if(name==='user') return user; if(name==='assets') return assets; if(name==='sample') return AI_ON?sample:null; return null; } };
+})();
+
+</script>
 <script>/* Design: Hell (Standard, wie bisher) oder Dunkel (Effekt-Look) – per Schieberegler auf der Startseite, je Gerät gemerkt */try{document.documentElement.setAttribute('data-theme',['dark','future'].includes(localStorage.getItem('sonnenplan-theme'))?localStorage.getItem('sonnenplan-theme'):'light');}catch(e){document.documentElement.setAttribute('data-theme','light');}</script>
 <style>
 /* Layout: schwarze Seitenleiste (Desktop) bzw. Tab-Leiste unten (Handy); Gestaltung nach nutz-die-sonne.de: Schwarz + Sonnengelb, Work Sans + Inter */
@@ -691,6 +913,7 @@ body.ro-pedit [data-act="editProject"],body.ro-pedit [data-act="dySumEdit"],body
 body.kiosk .side,body.kiosk #mtop,body.kiosk #nfStrip,body.kiosk .tabbar,body.kiosk .aic-fab,body.kiosk .aic,body.kiosk .big-nav{display:none!important}
 body.kiosk .app{display:block}body.kiosk .main{padding:0}body.kiosk .wrap{max-width:1100px;margin:0 auto}
 .ks{padding:14px 16px 30px}.ks-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.nf-tabs{display:flex;gap:6px;padding:0 16px 8px;flex-wrap:wrap}.nf-tabs button{border:1px solid var(--line);background:transparent;color:inherit;border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}.nf-tabs button.on{background:var(--sun);border-color:var(--sun);color:#111}.cnt-b.warn{background:#f2a33a;color:#111}.fr-row .nf-t .pill{font-size:11px;margin-left:4px}
 .fr-det{border:1px solid var(--line);border-radius:12px;margin-top:10px;background:var(--surface)}.fr-det>summary{cursor:pointer;padding:10px 14px;font-weight:700;list-style:none;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.fr-det>summary::-webkit-details-marker{display:none}.fr-det>summary::before{content:'▸';transition:transform .15s;display:inline-block}.fr-det[open]>summary::before{transform:rotate(90deg)}.fr-body{padding:0 12px 12px}.fr-body .fr-det{margin-top:8px}.fr-q{font-style:italic;margin-top:2px}.fr-a{white-space:nowrap;text-align:right}.fr-a .btn{margin-left:4px}
 .lv-ph{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.lv-ph img{max-height:120px;max-width:180px;border-radius:10px;border:1px solid var(--line);object-fit:cover}
 .ks-tabs{display:flex;gap:6px;flex-wrap:wrap}.ks-tabs button{border:1px solid var(--line);background:var(--surface);color:inherit;border-radius:999px;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer;min-height:44px}.ks-tabs button.on{background:var(--sun);border-color:var(--sun);color:#111}
@@ -2251,228 +2474,6 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 <input type="file" id="fdIn" multiple hidden>
 <div id="sunLoader" class="on" aria-hidden="true"><svg viewBox="0 0 100 100"><g fill="#F4DB02"><circle cx="50" cy="50" r="19"/><g stroke="#F4DB02" stroke-width="6" stroke-linecap="round"><line x1="50" y1="6" x2="50" y2="20"/><line x1="50" y1="80" x2="50" y2="94"/><line x1="6" y1="50" x2="20" y2="50"/><line x1="80" y1="50" x2="94" y2="50"/><line x1="18.9" y1="18.9" x2="28.8" y2="28.8"/><line x1="71.2" y1="71.2" x2="81.1" y2="81.1"/><line x1="18.9" y1="81.1" x2="28.8" y2="71.2"/><line x1="71.2" y1="28.8" x2="81.1" y2="18.9"/></g></g></svg></div>
 
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<script>
-/* Sonnenplan · eigenständige Version: Supabase statt claude.ai
-   Stellt dieselbe Schnittstelle bereit, die die App auf claude.ai nutzt (window.claude.use: db, user, assets, sample),
-   damit der App-Code unverändert bleibt. Anmeldung mit E-Mail + Passwort über Supabase Auth. */
-(function(){
-  const SB_URL = 'https://kmdaouphvyetiekawkcg.supabase.co';
-  const SB_KEY = 'sb_publishable_CmTadUEZl37K3x9jJuyJOg_qfuiigrk';
-  const AI_ON  = true;          // true = KI über die Supabase-Funktion „claude“
-  const BUCKET = 'files';
-  const AI_FN  = 'hyper-handler';       // Name der KI-Funktion in Supabase (Edge Functions)
-
-  /* Ladezeiten nachvollziehbar machen (nur Dauer und Anzahl, keine Daten, keine Zugangsschlüssel) */
-  const T0 = performance.now(); const tlog = (what, extra) => { try{ console.info('[Sonnenplan] ' + what + ' nach ' + Math.round(performance.now() - T0) + ' ms' + (extra ? ' · ' + extra : '')); }catch(e){} };
-  window.SP_TLOG = tlog;
-  /* Supabase-Bibliothek NICHT mehr blockierend laden: Ein hängendes CDN hielt sonst den ganzen Seitenaufbau an
-     (DOMContentLoaded erst nach Minuten). Jetzt im Hintergrund, mit Zeitlimit und zweitem CDN als Ersatz. */
-  const LIBS = ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js', 'https://fastly.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js', 'https://unpkg.com/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js'];
-  function loadLib(){ return new Promise((res, rej) => { let i = 0;
-    const next = () => { if (window.supabase && window.supabase.createClient) return res(); if (i >= LIBS.length) return rej(new Error('lib'));
-      const src = LIBS[i++], s = document.createElement('script'); let done = false; s.src = src; s.async = true;
-      const t = setTimeout(() => { if (done) return; done = true; tlog('Supabase-Bibliothek antwortet nicht, versuche Ersatz', new URL(src).host); next(); }, 8000);
-      s.onload = () => { if (done) { if (window.supabase) res(); return; } done = true; clearTimeout(t); res(); };
-      s.onerror = () => { if (done) return; done = true; clearTimeout(t); tlog('Supabase-Bibliothek nicht ladbar', new URL(src).host); next(); };
-      (document.head || document.documentElement).appendChild(s); };
-    next(); }); }
-  let sb = null;
-  let session = null, readyResolve; const ready = new Promise(r => readyResolve = r);
-  const markReady = () => { tlog('Sitzung bereit'); readyResolve(); };
-
-  /* ---------- Anmeldung ---------- */
-  // Feste helle Farben (auch im Dunkelmodus von Handy/Browser/App gut lesbar)
-  const css = `#sbLogin{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:#0B0B0B;font:15px/1.5 Inter,system-ui,sans-serif;padding:16px;color-scheme:light}
-  #sbLogin form{width:100%;max-width:380px;background:#fff!important;color:#111!important;border-radius:18px;padding:28px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
-  #sbLogin .wm{font-family:'Work Sans',sans-serif;font-weight:800;font-size:22px;letter-spacing:.02em;color:#111!important}#sbLogin .wm span{background:#F4DB02;padding:0 5px;color:#111!important}
-  #sbLogin label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:#444!important}
-  #sbLogin input{font:inherit;padding:11px 12px;border:1.5px solid #ccc;border-radius:10px;color:#111!important;background:#fff!important;-webkit-text-fill-color:#111}
-  #sbLogin input::placeholder{color:#888!important;-webkit-text-fill-color:#888}
-  #sbLogin input:-webkit-autofill{-webkit-box-shadow:0 0 0 40px #fff inset!important;-webkit-text-fill-color:#111!important}
-  #sbLogin input:focus{outline:none;border-color:#F4DB02;box-shadow:0 0 0 3px #FBF4B8}
-  #sbLogin button{font:inherit;font-weight:600;padding:12px;border-radius:10px;border:0;background:#111!important;color:#fff!important;cursor:pointer}
-  #sbLogin .lnk{background:none!important;color:#555!important;padding:4px;font-weight:400;text-decoration:underline}
-  #sbLogin .msg{font-size:13px;min-height:1.2em}#sbLogin .msg.err{color:#C0352B}#sbLogin .msg.ok{color:#2E7D4A}`;
-  function loginScreen(mode){
-    let el = document.getElementById('sbLogin'); if(!el){ const st=document.createElement('style'); st.textContent=css; document.head.appendChild(st); el=document.createElement('div'); el.id='sbLogin'; document.body.appendChild(el); }
-    const reset = mode==='reset', newpw = mode==='newpw';
-    el.innerHTML = `<form novalidate><div class="wm"><span>NUTZ DIE</span> SONNE</div><div style="color:#555;margin-top:-6px">Projektsteuerung · ${newpw?'neues Passwort festlegen':reset?'Passwort zurücksetzen':'Anmelden'}</div>
-      ${newpw?'':`<label>E-Mail<input id="sbMail" type="email" autocomplete="username" required></label>`}
-      ${reset?'':`<label>${newpw?'Neues Passwort (mind. 8 Zeichen)':'Passwort'}<input id="sbPw" type="password" autocomplete="${newpw?'new-password':'current-password'}" required></label>`}
-      <button type="submit">${newpw?'Passwort speichern':reset?'Link zum Zurücksetzen senden':'Anmelden'}</button>
-      ${newpw?'':`<button type="button" class="lnk" id="sbSwitch">${reset?'Zurück zur Anmeldung':'Passwort vergessen?'}</button>`}
-      <div class="msg" id="sbMsg" role="status"></div></form>`;
-    const msg=(t,ok)=>{ const m=el.querySelector('#sbMsg'); m.textContent=t; m.className='msg '+(ok?'ok':'err'); };
-    const sw=el.querySelector('#sbSwitch'); if(sw) sw.onclick=()=>loginScreen(reset?'':'reset');
-    el.querySelector('form').onsubmit=async e=>{ e.preventDefault(); const mail=(el.querySelector('#sbMail')||{}).value, pw=(el.querySelector('#sbPw')||{}).value;
-      if(newpw){ if(!pw||pw.length<8) return msg('Bitte mindestens 8 Zeichen.'); const {error}=await sb.auth.updateUser({password:pw}); if(error) return msg(error.message); msg('Gespeichert.',true); setTimeout(()=>{ el.remove(); history.replaceState(null,'',location.pathname); },600); return; }
-      if(reset){ const {error}=await sb.auth.resetPasswordForEmail(mail,{redirectTo:location.origin+location.pathname}); if(error) return msg(error.message); return msg('Falls die Adresse bekannt ist, kommt gleich eine E-Mail mit einem Link.',true); }
-      msg('Anmelden …',true); const {error}=await sb.auth.signInWithPassword({email:mail,password:pw});
-      if(error) msg(/invalid/i.test(error.message)?'E-Mail oder Passwort falsch.':error.message); };
-    setTimeout(()=>{ const i=el.querySelector('input'); if(i) i.focus(); },50);
-  }
-  function libFail(){ const show=()=>{ let el=document.getElementById('sbLogin'); if(!el){ const st=document.createElement('style'); st.textContent=css; document.head.appendChild(st); el=document.createElement('div'); el.id='sbLogin'; document.body.appendChild(el); }
-      el.innerHTML='<form><div class="wm"><span>NUTZ DIE</span> SONNE</div><div class="msg err">Die Verbindung zur Datenbank-Bibliothek konnte nicht hergestellt werden (Netzwerk oder Firewall).</div><button type="button" onclick="location.reload()">Erneut versuchen</button></form>'; };
-    if(document.body) show(); else document.addEventListener('DOMContentLoaded',show); }
-  function startAuth(){
-    sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
-    window.SB = sb;
-    sb.auth.onAuthStateChange((ev,s)=>{
-      if(ev==='PASSWORD_RECOVERY'){ session=s; loginScreen('newpw'); return; }
-      if(s&&!session){ session=s; const el=document.getElementById('sbLogin'); if(el&&!/type=recovery/.test(location.hash)) el.remove(); markReady(); }
-      if(!s&&session){ location.reload(); }
-    });
-    sb.auth.getSession().then(({data})=>{ if(data.session){ if(!session){ session=data.session; markReady(); } } else if(document.body) loginScreen(); else document.addEventListener('DOMContentLoaded',()=>{ if(!session) loginScreen(); }); });
-  }
-  loadLib().then(()=>{ tlog('Supabase-Bibliothek geladen'); startAuth(); }).catch(()=>{ tlog('Supabase-Bibliothek fehlgeschlagen'); libFail(); });
-  // Abmelden: auch wenn der Server gerade nicht antwortet, die Anmeldung auf diesem Gerät sicher löschen, dann neu laden (Anmeldemaske)
-  window.SB_LOGOUT = async()=>{ try{ await Promise.race([sb.auth.signOut({scope:'local'}), new Promise(r=>setTimeout(r,3000))]); }catch(e){}
-    try{ Object.keys(localStorage).filter(k=>/^sb-.*-auth-token/.test(k)).forEach(k=>localStorage.removeItem(k)); localStorage.removeItem('sonnenplan-me'); }catch(e){}
-    location.replace(location.pathname); };
-  // Live: wer ist gerade wo und tippt (Supabase Presence, nichts wird gespeichert)
-  let pres=null, presCb=null, presState={};
-  function presInit(){ if(pres||!session) return; pres=sb.channel('sonnenplan-live',{config:{presence:{key:session.user.id}}});
-    pres.on('presence',{event:'sync'},()=>{ presCb&&presCb(pres.presenceState()); }).subscribe(st=>{ if(st==='SUBSCRIBED') pres.track(presState).catch(()=>{}); }); }
-  window.SB_PRES = { set(s){ presState=s; presInit(); if(pres&&pres.state==='joined') pres.track(s).catch(()=>{}); }, on(cb){ presCb=cb; presInit(); } };
-  window.SB_SETPW = async pw=>{ const {error}=await sb.auth.updateUser({password:pw}); if(error) throw error; };
-
-  /* ---------- Datenbank (gleiche Form wie claude.ai: collection/doc/onSnapshot) ---------- */
-  const cache = {};                 // coll → Map(id → data)
-  const subs  = {};                 // coll → [callback]
-  const docSubs = {};               // 'coll/id' → [callback]
-  const snapOf = coll => ({ docs: [...(cache[coll]||new Map()).entries()].map(([id,d])=>({ id, data:()=>d, exists:true })) });
-  const emit = coll => { (subs[coll]||[]).forEach(cb=>{ try{ cb(snapOf(coll)); }catch(e){ console.error(e); } });
-    Object.keys(docSubs).filter(k=>k.startsWith(coll+'/')&&k.split('/').length===coll.split('/').length+1).forEach(k=>{ const id=k.slice(coll.length+1), d=(cache[coll]||new Map()).get(id); docSubs[k].forEach(cb=>cb({exists:!!d,id,data:()=>d})); }); };
-  const loaded = {};
-  let lastSync='';                   // neuester updated_at, den dieses Gerät kennt (für das Nachholen)
-  const seen = t => { if(t&&t>lastSync) lastSync=t; };
-  /* Eine Sammlung laden. Große Sammlungen (z. B. 4.300 Kunden): erste Seite mit Gesamtzahl, Rest parallel statt nacheinander.
-     Fehlschläge werden NICHT gemerkt – sonst blieb eine Sammlung nach einem einzigen Netzwerkfehler bis zum Neuladen leer („wird geladen …“). */
-  const PAGE = 1000, T_LOAD = 45000;
-  const withTimeout = (p, ms, what) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error('Zeitüberschreitung: ' + what), { code: 'timeout' })), ms))]);
-  async function load(coll){
-    if(loaded[coll]) return loaded[coll];
-    const t1 = performance.now();
-    loaded[coll] = withTimeout((async()=>{ const m=new Map(); const add=data=>data.forEach(r=>{ m.set(r.id,r.data); seen(r.updated_at); });
-      const first=await sb.from('docs').select('id,data,updated_at',{count:'exact'}).eq('coll',coll).order('id').range(0,PAGE-1); if(first.error) throw first.error; add(first.data||[]);
-      const total=first.count==null?(first.data||[]).length:first.count;
-      if((first.data||[]).length>=PAGE&&total>PAGE){ const pages=[]; for(let from=PAGE; from<total; from+=PAGE) pages.push(from);
-        // höchstens 4 gleichzeitig
-        for(let i=0;i<pages.length;i+=4){ const res=await Promise.all(pages.slice(i,i+4).map(from=>sb.from('docs').select('id,data,updated_at').eq('coll',coll).order('id').range(from,from+PAGE-1))); for(const r of res){ if(r.error) throw r.error; add(r.data||[]); } }
-        // Falls in der Zwischenzeit etwas dazugekommen ist: weiterblättern, bis eine Seite nicht mehr voll ist
-        let from=Math.ceil(total/PAGE)*PAGE; for(;;){ const r=await sb.from('docs').select('id,data,updated_at').eq('coll',coll).order('id').range(from,from+PAGE-1); if(r.error) throw r.error; add(r.data||[]); if((r.data||[]).length<PAGE) break; from+=PAGE; } }
-      cache[coll]=m; if(m.size>=200||performance.now()-t1>2000) tlog('„'+coll+'“ geladen', m.size+' Einträge in '+Math.round(performance.now()-t1)+' ms'); })(), T_LOAD, coll)
-      .catch(e=>{ delete loaded[coll]; tlog('„'+coll+'“ konnte nicht geladen werden', (e&&e.code)||'Fehler'); throw e; });
-    return loaded[coll];
-  }
-  window.SP_RELOAD = coll => { delete loaded[coll]; return load(coll).then(()=>emit(coll)); };
-  /* Live-Abgleich, drei Wege – damit Einträge anderer in unter einer Sekunde erscheinen:
-     1) Broadcast: wer speichert, ruft „coll/id geändert“ in den Kanal; alle anderen holen genau diesen Datensatz (schnell, auch bei großen Einträgen)
-     2) Datenbank-Änderungen (postgres_changes) wie bisher – große Datensätze werden dabei nachgeladen statt übernommen
-     3) Nachholen: beim Zurückkehren in den Tab, nach Funkloch/Standby und alle 15 s alles seit dem letzten bekannten Stand */
-  let channel=null, chReady=false, fetchQ={}, fetchT=null;
-  const pend={}; const busyDoc=(coll,id)=>pend[coll+'/'+id]>0; // eigene Speicherung läuft noch → nicht mit älterem Stand überschreiben
-  function queueFetch(coll,id){ if(!cache[coll]) return; (fetchQ[coll]=fetchQ[coll]||new Set()).add(id); clearTimeout(fetchT); fetchT=setTimeout(flushFetch,40); }
-  async function flushFetch(){ const q=fetchQ; fetchQ={};
-    for(const [coll,ids] of Object.entries(q)){ const list=[...ids]; const {data,error}=await sb.from('docs').select('id,data,updated_at').eq('coll',coll).in('id',list); if(error||!cache[coll]) continue;
-      const got=new Set(); (data||[]).forEach(r=>{ got.add(r.id); seen(r.updated_at); if(!busyDoc(coll,r.id)) cache[coll].set(r.id,r.data); }); list.forEach(id=>{ if(!got.has(id)&&!busyDoc(coll,id)) cache[coll].delete(id); }); emit(coll); } }
-  let catching=false;
-  async function catchUp(){ if(catching||!lastSync||!session) return; catching=true;
-    try{ const colls=Object.keys(cache); if(!colls.length) return; const since=new Date(new Date(lastSync).getTime()-3000).toISOString();
-      const {data,error}=await sb.from('docs').select('coll,id,data,updated_at').in('coll',colls).gt('updated_at',since).limit(1000); if(error||!data) return;
-      const touched=new Set(); data.forEach(r=>{ if(!cache[r.coll]) return; const cur=cache[r.coll].get(r.id); seen(r.updated_at); if(busyDoc(r.coll,r.id)) return; if(cur&&JSON.stringify(cur)===JSON.stringify(r.data)) return; cache[r.coll].set(r.id,r.data); touched.add(r.coll); });
-      touched.forEach(emit); }finally{ catching=false; } }
-  function live(){ if(channel) return;
-    channel = sb.channel('docs-all',{config:{broadcast:{self:false,ack:false}}})
-      .on('broadcast',{event:'chg'},m=>{ const p=m&&m.payload; if(!p||!p.coll||!cache[p.coll]) return; if(p.del){ cache[p.coll].delete(p.id); emit(p.coll); } else queueFetch(p.coll,p.id); })
-      .on('postgres_changes',{event:'*',schema:'public',table:'docs'},p=>{
-        const row=p.new&&p.new.coll?p.new:p.old; if(!row||!row.coll||!cache[row.coll]) return;
-        if(p.eventType==='DELETE'){ cache[row.coll].delete(row.id); emit(row.coll); return; }
-        if(!p.new||p.new.data==null||(p.errors&&p.errors.length)) { queueFetch(row.coll,row.id); return; } // zu groß / gekürzt → nachladen
-        seen(p.new.updated_at); if(busyDoc(row.coll,row.id)) return; cache[row.coll].set(row.id,p.new.data); emit(row.coll); })
-      .subscribe(st=>{ const was=chReady; chReady=st==='SUBSCRIBED'; if(chReady&&was===false&&lastSync) catchUp(); // nach Neuverbindung Verpasstes holen
-        if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'||st==='CLOSED'){ setTimeout(()=>{ try{ sb.removeChannel(channel); }catch(e){} channel=null; live(); },2000); } }); }
-  const ping = (coll,id,del) => { if(channel&&chReady) channel.send({type:'broadcast',event:'chg',payload:{coll,id,del:!!del}}).catch(()=>{}); };
-  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') catchUp(); });
-  window.addEventListener('online',()=>catchUp()); window.addEventListener('focus',()=>catchUp());
-  setInterval(()=>{ if(document.visibilityState==='visible') catchUp(); },15000);
-  const splitPath = path => { const s=path.split('/'); return { coll:s.slice(0,-1).join('/'), id:s[s.length-1] }; };
-  const stripDel = o => { if(!o||typeof o!=='object'||Array.isArray(o)) return o; const r={}; Object.entries(o).forEach(([k,v])=>{ if(v&&typeof v==='object'&&v.__delete__===true) return; r[k]=stripDel(v); }); return r; };
-  const merge = (a,b) => { const r={...(a||{})}; Object.entries(b||{}).forEach(([k,v])=>{ if(v&&typeof v==='object'&&v.__delete__===true) delete r[k]; else if(v&&typeof v==='object'&&!Array.isArray(v)&&r[k]&&typeof r[k]==='object'&&!Array.isArray(r[k])) r[k]=merge(r[k],v); else r[k]=v; }); return r; };
-  function docRef(coll,id){ return {
-    id,
-    async set(body){ const data=stripDel(JSON.parse(JSON.stringify(body))); (cache[coll]=cache[coll]||new Map()).set(id,data); emit(coll);
-      const pk=coll+'/'+id; pend[pk]=(pend[pk]||0)+1; let error; try{ ({error}=await sb.from('docs').upsert({coll,id,data})); } finally{ pend[pk]--; } if(error) throw Object.assign(new Error(error.message),{code:error.code||'write_failed'}); ping(coll,id); },
-    // Nur anlegen, nie überschreiben (Mitteilungen an andere): Gibt es den Datensatz schon, passiert nichts
-    async insert(body){ const data=stripDel(JSON.parse(JSON.stringify(body))); const {error}=await sb.from('docs').insert({coll,id,data}); if(error&&error.code!=='23505') throw Object.assign(new Error(error.message),{code:error.code||'write_failed'}); if(!error){ if(cache[coll]){ cache[coll].set(id,data); emit(coll); } ping(coll,id); } },
-    async update(part){ await load(coll); const cur=(cache[coll]||new Map()).get(id)||{}; return this.set(merge(cur,part)); },
-    async delete(){ if(cache[coll]){ cache[coll].delete(id); emit(coll); } const {error}=await sb.from('docs').delete().eq('coll',coll).eq('id',id); if(error) throw Object.assign(new Error(error.message),{code:error.code||'write_failed'}); ping(coll,id,true); },
-    async get(){ await load(coll); const d=cache[coll].get(id); return {exists:!!d,id,data:()=>d}; },
-    onSnapshot(cb,err){ const k=coll+'/'+id; (docSubs[k]=docSubs[k]||[]).push(cb); load(coll).then(()=>{ live(); const d=cache[coll].get(id); cb({exists:!!d,id,data:()=>d}); }).catch(e=>err&&err(Object.assign(e,{code:e.code||'load_failed'}))); return ()=>{ docSubs[k]=docSubs[k].filter(x=>x!==cb); }; }
-  }; }
-  const db = {
-    collection(coll){ return {
-      doc:id=>docRef(coll,id),
-      onSnapshot(cb,err){ (subs[coll]=subs[coll]||[]).push(cb); load(coll).then(()=>{ live(); cb(snapOf(coll)); }).catch(e=>err&&err(Object.assign(e,{code:e.code||'load_failed'}))); return ()=>{ subs[coll]=subs[coll].filter(x=>x!==cb); }; },
-      async get(){ await load(coll); return snapOf(coll); }
-    }; },
-    doc(path){ const {coll,id}=splitPath(path); return docRef(coll,id); },
-    // Viele Datensätze in EINER Anweisung speichern (ganz oder gar nicht)
-    async batchSet(coll,rows){ const list=rows.map(r=>({coll,id:r.id,data:stripDel(JSON.parse(JSON.stringify(r.data)))})); list.forEach(r=>{ pend[coll+'/'+r.id]=(pend[coll+'/'+r.id]||0)+1; });
-      let error; try{ ({error}=await sb.from('docs').upsert(list)); } finally{ list.forEach(r=>{ pend[coll+'/'+r.id]--; }); }
-      if(error) throw Object.assign(new Error(error.message),{code:error.code||'write_failed'});
-      const c=(cache[coll]=cache[coll]||new Map()); list.forEach(r=>c.set(r.id,r.data)); emit(coll); list.slice(0,40).forEach(r=>ping(coll,r.id)); },
-    // Viele Datensätze löschen – Reihenfolge wird eingehalten (z. B. erst Plätze, dann Regal), Pakete à 250
-    async batchDel(coll,ids){ for(let i=0;i<ids.length;i+=250){ const part=ids.slice(i,i+250); const {error}=await sb.from('docs').delete().eq('coll',coll).in('id',part); if(error) throw Object.assign(new Error(error.message),{code:error.code||'write_failed'}); if(cache[coll]) part.forEach(id=>cache[coll].delete(id)); }
-      emit(coll); ids.slice(0,40).forEach(id=>ping(coll,id,true)); }
-  };
-
-  /* ---------- Angemeldete Person ---------- */
-  const user = {
-    async me(){ return { id: session.user.id, name: session.user.email, email: session.user.email }; },
-    async id(){ return session.user.id; },
-    isOwner(){ return false; }, canEdit(){ return true; }, can(){ return true; },
-    async profiles(ids){ const o={}; (ids||[]).forEach(i=>o[i]={id:i,name:''}); return o; }
-  };
-
-  /* ---------- Dateien (Supabase Storage, privat) ---------- */
-  const extOf = (n,t) => { const m=String(n||'').match(/\.[a-z0-9]{2,5}$/i); if(m) return m[0].toLowerCase(); return {'application/pdf':'.pdf','image/jpeg':'.jpg','image/png':'.png','image/webp':'.webp'}[t]||''; };
-  const assets = {
-    async upload(blob,opts){ const type=(opts&&opts.type)||blob.type||'application/octet-stream'; if(blob.size>20*1024*1024) throw Object.assign(new Error('zu groß'),{code:'too_large'});
-      const id=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2)).replace(/-/g,'')+extOf(blob.name,type);
-      const {error}=await sb.storage.from(BUCKET).upload(id,blob,{contentType:type,upsert:false}); if(error) throw Object.assign(new Error(error.message),{code:'upload_failed'});
-      return { id, url:'/_blob/'+id, sizeBytes:blob.size, contentType:type }; },
-    async list(){ const {data}=await sb.storage.from(BUCKET).list('',{limit:1000}); return { assets:(data||[]).map(f=>({id:f.name,url:'/_blob/'+f.name,sizeBytes:(f.metadata||{}).size,contentType:(f.metadata||{}).mimetype})), usage:{} }; },
-    async delete(id){ await sb.storage.from(BUCKET).remove([id]); }
-  };
-  // Links „/_blob/<id>“ der App auf signierte Supabase-Links umleiten
-  async function signed(id){ const {data,error}=await sb.storage.from(BUCKET).createSignedUrl(id,3600); if(error) throw error; return data.signedUrl; }
-  document.addEventListener('click',async e=>{ const a=e.target.closest&&e.target.closest('a[href^="/_blob/"]'); if(!a) return; e.preventDefault(); e.stopImmediatePropagation();
-    const w=window.open('about:blank','_blank'); try{ const u=await signed(decodeURIComponent(a.getAttribute('href').slice(7))); if(w) w.location=u; else location.href=u; }catch(err){ if(w) w.close(); alert('Datei konnte nicht geöffnet werden.'); } },true);
-  const origFetch=window.fetch.bind(window);
-  window.fetch=async(input,init)=>{ const u=typeof input==='string'?input:input&&input.url; if(u&&u.startsWith('/_blob/')) return origFetch(await signed(decodeURIComponent(u.slice(7))),init); return origFetch(input,init); };
-
-  /* ---------- KI über die Supabase-Funktion „claude“ ---------- */
-  const b64 = blob => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(',')[1]); r.onerror=rej; r.readAsDataURL(blob); });
-  async function ask(input,opts){ opts=opts||{};
-    const messages=typeof input==='string'?[{role:'user',content:input}]:input;
-    const images=[]; for(const b of (opts.images||[]).slice(0,8)) images.push({type:b.type||'image/jpeg',data:await b64(b)});
-    const {data,error}=await sb.functions.invoke(AI_FN,{body:{messages,tier:opts.modelTier||'default',images}});
-    if(error){ const st=error.context&&error.context.status; throw Object.assign(new Error(error.message),{code:st===429?'rate_limited':st===401?'not_granted':'unavailable'}); }
-    const text=String(data&&data.text||''); if(opts.onText) try{ opts.onText({text,delta:text}); }catch(e){}
-    return { text, truncated: !!(data&&data.truncated) }; }
-  const sample = Object.assign(ask, {
-    async json(input,opts){ const r=await ask(input,opts); const t=r.text.replace(/^```(?:json)?\s*|\s*```$/g,'').trim(); const s=t.indexOf('{')>=0&&(t.indexOf('[')<0||t.indexOf('{')<t.indexOf('['))?t.slice(t.indexOf('{'),t.lastIndexOf('}')+1):t.slice(t.indexOf('['),t.lastIndexOf(']')+1);
-      try{ return JSON.parse(s); }catch(e){ throw Object.assign(new Error('Antwort war kein JSON'),{code:'bad_json',text:r.text}); } },
-    async limits(){ return { images:true }; }
-  });
-
-  window.claude = { async use(name){ await ready;
-    if(name==='db') return db; if(name==='user') return user; if(name==='assets') return assets; if(name==='sample') return AI_ON?sample:null; return null; } };
-})();
-
-</script>
 <script>
 /* ========== Stammdaten aus den Vorlagen ========== */
 const BASE_PATH = 'IONOS HiDrive\\public\\Nutz Die Sonne GmbH\\IT\\Claude\\Vorlagen\\';
@@ -3539,8 +3540,18 @@ function nfBellHtml(){ if(!ME||!NF_INIT||!nfOn()) return ''; const c=nfUnread();
 function nfPaint(){ const s=$('#nfStrip'); if(s) s.innerHTML=newPlusHtml()+nfBellHtml(); }
 /* Ein einziger „Neu“-Knopf: klein als + oben neben der Glocke (Laptop) bzw. in der Kopfleiste (Handy) */
 function newPlusHtml(){ if(typeof KIOSK_ON==='function'&&KIOSK_ON()) return ''; return '<button type="button" class="new-plus" data-act="newMenu" aria-label="Neu anlegen" title="Neu anlegen (Projekt, To-Do, Termin, Bestellung …)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>'; }
-function nfCardHtml(){ if(!ME||!NF_INIT||!nfOn()) return ''; const l=nfList(), c=l.filter(n=>!n.read).length;
-  return `<section class="card nf-card"><div class="card-h"><h2>Mitteilungen &amp; Benachrichtigungen ${c?`<span class="cnt-b">${c} neu</span>`:''}</h2>${c?'<button class="btn ghost sm" data-act="nfAll">Alle gelesen</button>':''}<button class="btn ghost sm" data-act="nfOpen">Alle anzeigen</button></div>
+// Reiter in der Mitteilungen-Karte: Mitteilungen | ⏰ Fristen (ersetzt die frühere Fristen-Leiste auf der Startseite)
+let NF_CTAB=lsGet('sonnenplan-nftab')||'nf';
+function frOpenItems(){ if(!ME) return []; const fn=typeof fnList==='function'?fnList().filter(fnMine).map(x=>({k:'fn',id:x.f.id,n:x.f.title,p:x.p,due:x.due,st:x.st,tk:x.ftk||x.tk})):[];
+  const rl=typeof fristList==='function'?fristList().filter(frMine).map(x=>({k:'fr',id:x.id,n:x.r.n,p:x.p,due:x.due,st:x.st,tk:x.tk})):[];
+  return [...fn,...rl].filter(x=>x.st!=='ok').sort((a,b)=>a.due.localeCompare(b.due)); }
+function frCardHtml(){ const l=frOpenItems(), adm=isAdmin();
+  return l.length?`<div class="nf-list">${l.slice(0,8).map(x=>`<div class="nf-row ${x.st==='over'?'un':''} fr-row"><button type="button" class="nf-main" data-act="${x.tk?'editTask':x.p?'openProject':'fristShow'}" data-id="${esc(x.tk?x.tk.id:x.p?x.p.id:'')}"><span class="nf-ic" aria-hidden="true">⏰</span><span class="nf-b"><span class="nf-t">${esc(x.n)} <span class="pill ${FR_ST[x.st][1]}">${FR_ST[x.st][0]}</span></span><span class="nf-x mini">${esc([x.p?x.p.name:'',fmtD(x.due)+' · '+relDay(x.due)].filter(Boolean).join(' · '))}</span></span></button>${x.k==='fn'&&mayWrite('fristen')?`<button type="button" class="nf-rd" data-act="fnDone" data-id="${esc(x.id)}" title="Frist erledigt" aria-label="Frist erledigt: ${esc(x.n)}"><i></i></button>`:''}${adm?`<button type="button" class="nf-del" data-act="${x.k==='fn'?'fnDel':'frDel'}" data-id="${esc(x.id)}" title="Frist löschen" aria-label="Frist löschen: ${esc(x.n)}">✕</button>`:''}</div>`).join('')}</div>${l.length>8?`<button class="btn ghost sm more-b" data-act="fristShow">+ ${l.length-8} weitere</button>`:''}`
+    :'<div class="empty" style="padding:6px 16px 18px"><b>Keine offenen Fristen</b>Hier erscheinen Fristen aus euren Projekt-Notizen und To-Dos.</div>'; }
+function nfCardHtml(){ if(!ME||!NF_INIT||!nfOn()) return ''; const l=nfList(), c=l.filter(n=>!n.read).length, fl=frOpenItems(), fo=fl.filter(x=>x.st==='over'||x.st==='soon').length, tab=NF_CTAB==='fr'?'fr':'nf';
+  const tabs=`<div class="nf-tabs" role="tablist"><button type="button" role="tab" class="${tab==='nf'?'on':''}" aria-selected="${tab==='nf'}" data-act="nfCTab" data-v="nf">Mitteilungen${c?` <span class="cnt-b">${c}</span>`:''}</button><button type="button" role="tab" class="${tab==='fr'?'on':''}" aria-selected="${tab==='fr'}" data-act="nfCTab" data-v="fr">⏰ Fristen${fl.length?` <span class="cnt-b ${fo?'warn':''}">${fl.length}</span>`:''}</button></div>`;
+  if(tab==='fr') return `<section class="card nf-card"><div class="card-h"><h2>Mitteilungen &amp; Benachrichtigungen</h2><button class="btn ghost sm" data-act="fristShow">Alle Fristen</button></div>${tabs}${frCardHtml()}</section>`;
+  return `<section class="card nf-card"><div class="card-h"><h2>Mitteilungen &amp; Benachrichtigungen ${c?`<span class="cnt-b">${c} neu</span>`:''}</h2>${c?'<button class="btn ghost sm" data-act="nfAll">Alle gelesen</button>':''}<button class="btn ghost sm" data-act="nfOpen">Alle anzeigen</button></div>${tabs}
     ${l.length?`<div class="nf-list">${l.slice(0,6).map(n=>nfRow(n,true)).join('')}</div>`:'<div class="empty" style="padding:6px 16px 18px"><b>Alles ruhig</b>Hier erscheint, was für dich wichtig ist: neue To-Dos, Freigaben und Änderungen an deinen Vorgängen.</div>'}</section>`; }
 function nfListHtml(){ const all=nfList(), l=NF_FLT==='neu'?all.filter(n=>!n.read):all, c=all.filter(n=>!n.read).length;
   return `<div class="row nf-top"><div class="chips"><button type="button" class="chip ${NF_FLT==='alle'?'on':''}" data-act="nfFlt" data-v="alle">Alle <span class="mono small">${all.length}</span></button><button type="button" class="chip ${NF_FLT==='neu'?'on':''}" data-act="nfFlt" data-v="neu">Ungelesen <span class="mono small">${c}</span></button></div><span class="spacer"></span>${c?'<button type="button" class="btn ghost sm" data-act="nfAll">Alle als gelesen markieren</button>':''}</div>
@@ -3550,6 +3561,7 @@ setInterval(()=>{ try{ nfSub(); if(Date.now()-NF_RM_T>30*60000&&NF_INIT){ NF_RM_
 queueMicrotask(()=>Object.assign(A,{
   nfOpen:()=>{ NF_FLT='alle'; openSheet({title:'🔔 Mitteilungen',wide:1,html:`<div class="fld full" id="nfBox">${nfListHtml()}</div>`,saveLabel:'Schließen',onSave:()=>{}}); },
   nfFlt:d=>{ NF_FLT=d.v; nfListPaint(); },
+  nfCTab:d=>{ NF_CTAB=d.v; lsSet('sonnenplan-nftab',d.v); scheduleRender(); },
   nfRead:d=>{ nfMark(d.id,d.v==='1'); scheduleRender(); nfListPaint(); },
   nfHide:d=>{ nfHide(d.id); scheduleRender(); nfListPaint(); nfPaint(); },
   nfAll:()=>{ nfList().filter(n=>!n.read).forEach(n=>nfMark(n.id,true)); scheduleRender(); nfListPaint(); },
@@ -3863,7 +3875,7 @@ function vDash(){
     return `<div class="dl-row ${due?'due':''}" data-act="editOrder" data-id="${o.id}"><div class="dl-date"><b>${o.delivery?esc(fmtD(o.delivery).slice(3,9)):'–'}</b><span>${o.delivery?esc(relDay(o.delivery)):'ohne Termin'}</span></div>
       <div style="min-width:0"><div class="tt">${esc(o.supplier||'Lieferant')}</div><div class="small muted">${esc(projName(o.pid)||'ohne Projekt')} · ${(o.items||[]).length} Pos.</div></div>
       ${due?`<button class="btn sun sm" data-act="dlvYes" data-id="${o.id}">Angekommen?</button>`:`<span class="pill ${st.cls}">${esc(st.k)}</span>`}</div>`; };
-  return dashHero(t)+briefDashStrip()+hrDashStrip()+fristDashStrip()+(ordApprover()?ordApprBanner():'')+gsearchBox()+`<div class="dash-pair">${pinboardHtml()}${nfCardHtml()}</div>`+`<div class="dash-grid dash-2">
+  return dashHero(t)+briefDashStrip()+hrDashStrip()+(ordApprover()?ordApprBanner():'')+gsearchBox()+`<div class="dash-pair">${pinboardHtml()}${nfCardHtml()}</div>`+`<div class="dash-grid dash-2">
     <section class="card dash-todo"><div class="card-h"><h2>Meine offenen To-Dos <span class="cnt-b">${my.length}</span></h2>${myLate?`<span class="pill bad">${myLate} überfällig</span>`:''}<button class="btn ghost sm" data-act="myTasks">Alle</button></div>
       ${ME?(my.length?`<div class="td-tiles">${my.slice(0,10).map(tile).join('')}</div>`:'<div class="empty"><b>Alles erledigt</b>Du hast keine offenen To-Dos.</div>')+(my.length>10?`<button class="btn ghost sm more-b" data-act="myTasks">+ ${my.length-10} weitere anzeigen</button>`:''):'<div class="empty">Unten links „Wer bist du?“ wählen, dann erscheinen hier deine To-Dos.</div>'}</section>
     <section class="card dash-dl"><div class="card-h"><h2>Offene Lieferungen <span class="cnt-b">${dl.length}</span></h2><button class="btn ghost sm" data-act="nav" data-v="orders">Alle</button></div>
@@ -5557,18 +5569,21 @@ queueMicrotask(()=>Object.assign(A,{
   fnScan:()=>fnScan({loud:1}),
   // Löschen: nur EP/AvE (Admins). Bleibt als „gelöscht“ markiert, damit die Suche sie nicht wieder anlegt.
   fnDel:d=>{ if(!isAdmin()) return toast('Fristen löschen dürfen nur EP und AvE.'); const f=S.fristen[d.id]; if(!f) return;
-    confirmSheet('Frist „'+f.title+'“ ('+fmtD(f.due)+') löschen? Die Notiz bzw. das To-Do selbst bleibt unverändert.',()=>{ const n=clone(f); n.off=true; n.offBy=meK(); n.offAt=new Date().toISOString(); if(put('fristen',n)!==false){ toast('Frist gelöscht.'); setTimeout(fristSheet,80); } }); },
-  fnDone:d=>{ const f=S.fristen[d.id]; if(!f) return; const n=clone(f); n.done=true; n.doneBy=meK(); n.doneAt=new Date().toISOString(); if(put('fristen',n)!==false){ toast('Frist erledigt.'); setTimeout(fristSheet,80); } },
+    confirmSheet('Frist „'+f.title+'“ ('+fmtD(f.due)+') löschen? Die Notiz bzw. das To-Do selbst bleibt unverändert.',()=>{ const n=clone(f); n.off=true; n.offBy=meK(); n.offAt=new Date().toISOString(); if(put('fristen',n)!==false){ toast('Frist gelöscht.'); frAfter(); } }); },
+  fnDone:d=>{ const f=S.fristen[d.id]; if(!f) return; const n=clone(f); n.done=true; n.doneBy=meK(); n.doneAt=new Date().toISOString(); if(put('fristen',n)!==false){ toast('Frist erledigt.'); frAfter(); } },
   fnTask:d=>{ const f=S.fristen[d.id]; if(!f) return; if(f.tid&&S.tasks[f.tid]) return toast('Das To-Do gibt es schon.'); const p=f.pid&&S.projects[f.pid];
     const t={id:uid(),title:f.title,pid:f.pid||'',done:false,prio:f.due<=addDays(TODAY(),7)?'hoch':'normal',due:f.due,src:'frist',created:TODAY(),by:meK(),notes:'⏰ Frist aus '+(f.src&&f.src.kind==='task'?'einem To-Do':'den Projekt-Notizen')+(f.quote?': „'+f.quote+'“':'')}; const who=p&&p.pl||ME; if(who) t.who=who;
-    if(dupTask(t)) return toast('Ein gleiches To-Do gibt es schon.'); if(put('tasks',t)===false) return; const n=clone(f); n.tid=t.id; put('fristen',n); toast('To-Do angelegt.'); setTimeout(fristSheet,80); },
+    if(dupTask(t)) return toast('Ein gleiches To-Do gibt es schon.'); if(put('tasks',t)===false) return; const n=clone(f); n.tid=t.id; put('fristen',n); toast('To-Do angelegt.'); frAfter(); },
   frDel:d=>{ if(!isAdmin()) return toast('Fristen löschen dürfen nur EP und AvE.'); const x=fristList().find(y=>y.id===d.id); if(!x) return;
-    confirmSheet('Frist „'+x.r.n+'“ für „'+x.p.name+'“ ('+fmtD(x.due)+') löschen?',()=>{ const c=frCfgAll(); putConfig({...(S.config||{}),fristen:{...c,_off:[...(c._off||[]),x.id].slice(-2000)}}); toast('Frist gelöscht.'); setTimeout(fristSheet,80); }); },
+    confirmSheet('Frist „'+x.r.n+'“ für „'+x.p.name+'“ ('+fmtD(x.due)+') löschen?',()=>{ const c=frCfgAll(); putConfig({...(S.config||{}),fristen:{...c,_off:[...(c._off||[]),x.id].slice(-2000)}}); toast('Frist gelöscht.'); frAfter(); }); },
   fristTask:d=>{ const x=fristList().find(y=>y.id===d.id); if(!x) return; if(S.tasks[x.id]) return toast('Das To-Do gibt es schon.'); const who=frWho(x.r,x.p,x.c);
     const t={id:x.id,title:x.r.t,pid:x.p.id,done:false,prio:x.st==='over'||x.r.law?'hoch':'normal',due:x.due,src:'frist',frist:x.r.k,created:TODAY(),by:meK(),notes:'⏰ Fristen-Wächter: '+x.r.n+' – fällig am '+fmtD(x.due)+'.\n'+x.r.info+'\nGrundlage: „'+PIPE[x.r.from-1]+'“ am '+fmtD(x.base)+'.'}; if(who) t.who=who;
-    if(put('tasks',t)!==false){ toast('To-Do angelegt.'); setTimeout(fristSheet,80); } },
+    if(put('tasks',t)!==false){ toast('To-Do angelegt.'); frAfter(); } },
   fristDone:d=>{ const x=fristList().find(y=>y.id===d.id); if(!x||!x.r.dn) return; const p=clone(S.projects[x.p.id]); if(!p) return; p.ms={...(p.ms||{}),['m'+x.r.dn]:TODAY()};
-    if(put('projects',p)===false) return; const tk=S.tasks[x.id]; if(tk&&!tk.done){ const n=clone(tk); n.done=true; n.doneAt=new Date().toISOString(); put('tasks',n); } toast('„'+PIPE[x.r.dn-1]+'“ gesetzt.'); setTimeout(fristSheet,80); } }));
+    if(put('projects',p)===false) return; const tk=S.tasks[x.id]; if(tk&&!tk.done){ const n=clone(tk); n.done=true; n.doneAt=new Date().toISOString(); put('tasks',n); } toast('„'+PIPE[x.r.dn-1]+'“ gesetzt.'); frAfter(); } }));
+// Nach einer Aktion: aus dem Fristen-Fenster heraus → Fenster neu zeigen; aus der Mitteilungen-Karte → nur die Startseite auffrischen
+let FR_B=false; const frAfter=()=>setTimeout(()=>{ if(FR_B) fristSheet(); else scheduleRender(); },80);
+queueMicrotask(()=>queueMicrotask(()=>['fnDel','fnDone','fnTask','frDel','fristTask','fristDone'].forEach(k=>{ const fn=A[k]; if(fn) A[k]=(d,el)=>{ FR_B=!!(SHEET&&SHEET.fr); return fn(d,el); }; })));
 queueMicrotask(()=>{ Object.assign(A,{ /* A wird weiter unten angelegt */
   wvQuick:d=>{ const e=$('#f_wv'); if(e) e.value=d.k?wvDate(d.k):''; },
   wvShow:()=>wvRemind(true),
