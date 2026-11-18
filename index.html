@@ -913,8 +913,7 @@ body.ro-pedit [data-act="editProject"],body.ro-pedit [data-act="dySumEdit"],body
 body.kiosk .side,body.kiosk #mtop,body.kiosk #nfStrip,body.kiosk .tabbar,body.kiosk .aic-fab,body.kiosk .aic,body.kiosk .big-nav{display:none!important}
 body.kiosk .app{display:block}body.kiosk .main{padding:0}body.kiosk .wrap{max-width:1100px;margin:0 auto}
 .ks{padding:14px 16px 30px}.ks-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
-.nf-tabs{display:flex;gap:6px;padding:0 16px 8px;flex-wrap:wrap}.nf-tabs button{border:1px solid var(--line);background:transparent;color:inherit;border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}.nf-tabs button.on{background:var(--sun);border-color:var(--sun);color:#111}.cnt-b.warn{background:#f2a33a;color:#111}.fr-row .nf-t .pill{font-size:11px;margin-left:4px}
-.fr-det{border:1px solid var(--line);border-radius:12px;margin-top:10px;background:var(--surface)}.fr-det>summary{cursor:pointer;padding:10px 14px;font-weight:700;list-style:none;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.fr-det>summary::-webkit-details-marker{display:none}.fr-det>summary::before{content:'▸';transition:transform .15s;display:inline-block}.fr-det[open]>summary::before{transform:rotate(90deg)}.fr-body{padding:0 12px 12px}.fr-body .fr-det{margin-top:8px}.fr-q{font-style:italic;margin-top:2px}.fr-a{white-space:nowrap;text-align:right}.fr-a .btn{margin-left:4px}
+.tf-ph{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.tf-th{position:relative;width:92px;height:92px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}.tf-th img{width:100%;height:100%;object-fit:cover;cursor:zoom-in;display:block}.tf-th.pend{outline:2px dashed var(--sun);outline-offset:-2px}.tf-x{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;font-size:12px;line-height:24px;padding:0}.tf-add{width:92px;height:92px;border-radius:10px;border:1.5px dashed var(--line);background:transparent;color:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:inherit;font-size:22px}.tf-add span{font-size:11px;font-weight:600}
 .lv-ph{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.lv-ph img{max-height:120px;max-width:180px;border-radius:10px;border:1px solid var(--line);object-fit:cover}
 .ks-tabs{display:flex;gap:6px;flex-wrap:wrap}.ks-tabs button{border:1px solid var(--line);background:var(--surface);color:inherit;border-radius:999px;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer;min-height:44px}.ks-tabs button.on{background:var(--sun);border-color:var(--sun);color:#111}
 .ks-ro{background:var(--sun-soft);border-radius:10px;padding:10px 14px;margin:0 0 12px;color:#111}
@@ -2778,8 +2777,8 @@ const ICONS = {download:'<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M
 const ic = (n,extra='')=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ${extra}>${ICONS[n]}</svg>`;
 
 /* ========== Datenhaltung (gemeinsame Datenbank, sonst lokal) ========== */
-const COLLS = ['projects','tasks','orders','offers','events','reports','plan','log','files','stock','picks','lager','inv','chat','meetings','hrtime','hrabs','hrstaff','hrdocs','sales','pins','psum','pms','kview','pfold','fristen'];
-const S = {fristen:{},kview:{},pfold:{},lager:{},inv:{},stock:{},picks:{},pins:{},projects:{},tasks:{},orders:{},offers:{},events:{},reports:{},plan:{},log:{},hrtime:{},hrabs:{},hrstaff:{},hrdocs:{},kunden:{},lieferanten:{},artikel:{},artcat:{},sales:{},fin:{},anlagen:{},config:{staff:[]}};
+const COLLS = ['projects','tasks','orders','offers','events','reports','plan','log','files','stock','picks','lager','inv','chat','meetings','hrtime','hrabs','hrstaff','hrdocs','sales','pins','psum','pms','kview','pfold'];
+const S = {kview:{},pfold:{},lager:{},inv:{},stock:{},picks:{},pins:{},projects:{},tasks:{},orders:{},offers:{},events:{},reports:{},plan:{},log:{},hrtime:{},hrabs:{},hrstaff:{},hrdocs:{},kunden:{},lieferanten:{},artikel:{},artcat:{},sales:{},fin:{},anlagen:{},config:{staff:[]}};
 let DB=null, MODE='init', READONLY=false;
 const LS_KEY='sonnenplan-v1';
 function lsGet(k){ try{ return localStorage.getItem(k) }catch(e){ return null } }
@@ -2947,7 +2946,7 @@ function describeChange(coll,prev,o){
   return out.join(' · ');
 }
 // Schreibrecht je Rubrik (Admin-Bereich „Rechte“): ohne Häkchen „bearbeiten“ wird nichts gespeichert
-const COLL_AREA={projects:'projects',tasks:'todos',orders:'orders',offers:'offers',events:'week',plan:'week',reports:'reports',files:'files',stock:'stock',picks:'stock',lager:'stock',inv:'stock',chat:'chat',meetings:'meetings',hrtime:'hr',hrabs:'hr',hrstaff:'hr',hrdocs:'hr',kunden:'stamm',lieferanten:'stamm',artikel:'stamm',artcat:'stamm',sales:'sales',fin:'fin',anlagen:'fin',kview:'kview',fristen:'projects'};
+const COLL_AREA={projects:'projects',tasks:'todos',orders:'orders',offers:'offers',events:'week',plan:'week',reports:'reports',files:'files',stock:'stock',picks:'stock',lager:'stock',inv:'stock',chat:'chat',meetings:'meetings',hrtime:'hr',hrabs:'hr',hrstaff:'hr',hrdocs:'hr',kunden:'stamm',lieferanten:'stamm',artikel:'stamm',artcat:'stamm',sales:'sales',fin:'fin',anlagen:'fin',kview:'kview'};
 const lagerOk=()=>isAdmin()||canEdit('stock');
 const stDelOk=k=>isAdmin()||(k==='artikel'&&lagerOk());
 function mayWrite(coll){ const a=COLL_AREA[coll]; if(a==='fin'&&ME) return finOk()&&(isAdmin()||editsOf(ME).includes('fin')); if(!a||!ME||isAdmin()) return true;
@@ -2986,6 +2985,27 @@ function dupGuard(coll,obj){ if(!obj||obj._dupOk){ if(obj) delete obj._dupOk; re
     const keep=now.filter((b,i)=>{ if(i<was.length&&b===was[i]) return true; const d=dupBody(b); if(d&&d.length>=8&&have.has(d)){ drop++; return false; } if(d) have.add(d); return true; });
     if(drop){ obj[k]=keep.join('\n'); dupToast('Diese Notiz steht schon drin – nicht doppelt gespeichert.'); } });
   return false; }
+/* ---------- Frist aus dem Text eines NEUEN To-Dos: nur fragen, nie selbst eintragen ----------
+   Erkennt z. B. „Angebot gültig bis 15.12.“, „Zertifikat läuft am 03.02.27 ab“, „spätestens Freitag“, „Frist 30.11.“.
+   Gefragt wird nur auf dem Gerät, auf dem das To-Do angelegt wurde; „Ja“ setzt die Frist (Fälligkeit) des To-Dos. */
+const DD_KW=/(ablauf\w*|abl[äa]uft|l[äa]uft\b|verf[äa]llt|gültig\s+bis|gueltig\s+bis|gilt\s+bis|frist\w*|deadline|spätestens|spaetestens|bis\s+zum|bis\s+sp[äa]testens|endet|zahlungsziel|einzureichen\s+bis|abgabe\w*|kündigung\w*)/gi;
+const DD_WD={montag:1,dienstag:2,mittwoch:3,donnerstag:4,freitag:5,samstag:6,sonntag:0};
+function ddDate(s){ const t=TODAY(); let m=String(s).match(/\b(\d{1,2})\.\s?(\d{1,2})\.(\s?(\d{2,4}))?/); if(m){ let y=m[4]?+m[4]:+t.slice(0,4); if(y<100) y+=2000; let d=y+'-'+String(+m[2]).padStart(2,'0')+'-'+String(+m[1]).padStart(2,'0'); if(isNaN(new Date(d+'T12:00'))||+m[2]>12||+m[1]>31) return ''; if(!m[4]&&d<t) d=(y+1)+d.slice(4); return d; }
+  m=String(s).match(/\b(\d{4}-\d{2}-\d{2})\b/); if(m) return m[1];
+  m=String(s).toLowerCase().match(/\b(montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag)\b/); if(m){ const cur=new Date(t+'T12:00').getDay(); let k=(DD_WD[m[1]]-cur+7)%7; if(!k) k=7; return addDays(t,k); }
+  return ''; }
+function ddFind(txt){ const s=String(txt||''); DD_KW.lastIndex=0; let m; while((m=DD_KW.exec(s))){ const a=Math.max(0,m.index-35), win=s.slice(m.index,m.index+60), back=s.slice(a,m.index);
+    // „läuft“ allein zählt nur mit „ab“ dahinter
+    if(/^l[äa]uft$/i.test(m[1])&&!/\bab\b/i.test(s.slice(m.index,m.index+50))) continue;
+    const d=ddDate(win)||ddDate(back); if(d&&d>=TODAY()){ const ph=s.slice(Math.max(0,m.index-25),Math.min(s.length,m.index+60)).replace(/\s+/g,' ').trim(); return {d,ph}; } }
+  return null; }
+const DD_Q=[], DD_SEEN=new Set(); let DD_T=0;
+function ddAsk(o){ if(!o||!o.id||DD_SEEN.has(o.id)) return; const f=ddFind([o.title,o.notes].filter(Boolean).join('\n')); if(!f||f.d===o.due) return; DD_SEEN.add(o.id); DD_Q.push({id:o.id,...f}); clearTimeout(DD_T); DD_T=setTimeout(ddNext,700); }
+function ddNext(){ if(!DD_Q.length) return; if(SHEET){ DD_T=setTimeout(ddNext,1500); return; } const q=DD_Q.shift(), t=S.tasks[q.id]; if(!t||t.done){ ddNext(); return; }
+  openSheet({title:'⏰ Frist eintragen?',html:`<div class="fld full"><div>Im neuen To-Do <b>„${esc(t.title)}“</b> steht eine Frist:</div><div class="hint" style="margin-top:6px">„…${esc(q.ph)}…“</div></div>
+    <div class="fld"><label for="dd_d">Frist am</label><input id="dd_d" type="date" value="${esc(q.d)}"></div><div class="fld"><div class="small muted" style="margin-top:22px">${t.due?'Bisher eingetragen: '+esc(fmtD(t.due)):'Bisher ohne Frist.'}</div></div>`,saveLabel:'Ja, Frist eintragen',
+    onSave:()=>{ const d=$('#dd_d').value; if(!/^\d{4}-\d{2}-\d{2}$/.test(d)){ toast('Bitte ein Datum wählen.'); return false; } const cur=S.tasks[q.id]; if(!cur) return; const n=clone(cur); n.due=d; if(put('tasks',n)!==false) toast('Frist am '+fmtD(d)+' eingetragen.'); setTimeout(ddNext,400); }});
+  setTimeout(()=>{ const sc=$('#scrim'); if(sc){ const b=[...sc.querySelectorAll('[data-act=closeSheet]')].find(x=>x.classList.contains('btn')); if(b) b.textContent='Nein, danke'; sc.querySelectorAll('[data-act=closeSheet]').forEach(x=>x.addEventListener('click',()=>setTimeout(ddNext,400))); } },30); }
 function put(coll,obj){
   if(!mayWrite(coll)){ toast('⛔ Keine Bearbeitungsrechte für „'+((AREAS.find(a=>a[0]===COLL_AREA[coll])||[])[1]||coll)+'“ – nicht gespeichert. Bitte EP oder AvE fragen.',true); TOAST_LOCK=Date.now()+2500; scheduleRender(); return false; }
   if(ME&&!isAdmin()){ const g=fineGuard(coll,obj); if(g){ toast('⛔ '+g+' Nicht gespeichert.',true); TOAST_LOCK=Date.now()+2500; scheduleRender(); return false; } } // Feinrechte (Rechteverteilung, aufklappbar)
@@ -2996,6 +3016,7 @@ function put(coll,obj){
   const what=describeChange(coll,prev,obj);
   obj.upd=now; obj.updBy=meK(); if(!prev){ obj.at=obj.at||now; obj.by=obj.by||meK(); }
   if(coll==='tasks') wvAuto(obj); // Text wie "Wiedervorlage in 2 Wochen" setzt das Datum
+  if(coll==='tasks'&&!prev&&!obj.done&&!obj.example) ddAsk(obj); // Neues To-Do nennt ein Ablaufdatum / eine Frist → fragen, ob die Frist eingetragen werden soll
   if(coll==='orders'&&!prev&&!obj.appr&&!obj.example){ obj.appr=obj.status==='entwurf'&&!ordNoAppr()?'offen':'ok'; if(obj.appr==='offen') ordNotifyAsk(); } // nur Entwuerfe brauchen die Freigabe durch HH / AvE; wer einstellt, soll die Antwort mitbekommen
   if(what) obj.hist=(obj.hist||[]).concat([{at:now,by:meK(),a:what}]).slice(-150);
   if(NF_WATCH.includes(coll)) nfWatch(coll,prev,obj); // Mitteilungen an die Beteiligten
@@ -3540,18 +3561,8 @@ function nfBellHtml(){ if(!ME||!NF_INIT||!nfOn()) return ''; const c=nfUnread();
 function nfPaint(){ const s=$('#nfStrip'); if(s) s.innerHTML=newPlusHtml()+nfBellHtml(); }
 /* Ein einziger „Neu“-Knopf: klein als + oben neben der Glocke (Laptop) bzw. in der Kopfleiste (Handy) */
 function newPlusHtml(){ if(typeof KIOSK_ON==='function'&&KIOSK_ON()) return ''; return '<button type="button" class="new-plus" data-act="newMenu" aria-label="Neu anlegen" title="Neu anlegen (Projekt, To-Do, Termin, Bestellung …)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>'; }
-// Reiter in der Mitteilungen-Karte: Mitteilungen | ⏰ Fristen (ersetzt die frühere Fristen-Leiste auf der Startseite)
-let NF_CTAB=lsGet('sonnenplan-nftab')||'nf';
-function frOpenItems(){ if(!ME) return []; const fn=typeof fnList==='function'?fnList().filter(fnMine).map(x=>({k:'fn',id:x.f.id,n:x.f.title,p:x.p,due:x.due,st:x.st,tk:x.ftk||x.tk})):[];
-  const rl=typeof fristList==='function'?fristList().filter(frMine).map(x=>({k:'fr',id:x.id,n:x.r.n,p:x.p,due:x.due,st:x.st,tk:x.tk})):[];
-  return [...fn,...rl].filter(x=>x.st!=='ok').sort((a,b)=>a.due.localeCompare(b.due)); }
-function frCardHtml(){ const l=frOpenItems(), adm=isAdmin();
-  return l.length?`<div class="nf-list">${l.slice(0,8).map(x=>`<div class="nf-row ${x.st==='over'?'un':''} fr-row"><button type="button" class="nf-main" data-act="${x.tk?'editTask':x.p?'openProject':'fristShow'}" data-id="${esc(x.tk?x.tk.id:x.p?x.p.id:'')}"><span class="nf-ic" aria-hidden="true">⏰</span><span class="nf-b"><span class="nf-t">${esc(x.n)} <span class="pill ${FR_ST[x.st][1]}">${FR_ST[x.st][0]}</span></span><span class="nf-x mini">${esc([x.p?x.p.name:'',fmtD(x.due)+' · '+relDay(x.due)].filter(Boolean).join(' · '))}</span></span></button>${x.k==='fn'&&mayWrite('fristen')?`<button type="button" class="nf-rd" data-act="fnDone" data-id="${esc(x.id)}" title="Frist erledigt" aria-label="Frist erledigt: ${esc(x.n)}"><i></i></button>`:''}${adm?`<button type="button" class="nf-del" data-act="${x.k==='fn'?'fnDel':'frDel'}" data-id="${esc(x.id)}" title="Frist löschen" aria-label="Frist löschen: ${esc(x.n)}">✕</button>`:''}</div>`).join('')}</div>${l.length>8?`<button class="btn ghost sm more-b" data-act="fristShow">+ ${l.length-8} weitere</button>`:''}`
-    :'<div class="empty" style="padding:6px 16px 18px"><b>Keine offenen Fristen</b>Hier erscheinen Fristen aus euren Projekt-Notizen und To-Dos.</div>'; }
-function nfCardHtml(){ if(!ME||!NF_INIT||!nfOn()) return ''; const l=nfList(), c=l.filter(n=>!n.read).length, fl=frOpenItems(), fo=fl.filter(x=>x.st==='over'||x.st==='soon').length, tab=NF_CTAB==='fr'?'fr':'nf';
-  const tabs=`<div class="nf-tabs" role="tablist"><button type="button" role="tab" class="${tab==='nf'?'on':''}" aria-selected="${tab==='nf'}" data-act="nfCTab" data-v="nf">Mitteilungen${c?` <span class="cnt-b">${c}</span>`:''}</button><button type="button" role="tab" class="${tab==='fr'?'on':''}" aria-selected="${tab==='fr'}" data-act="nfCTab" data-v="fr">⏰ Fristen${fl.length?` <span class="cnt-b ${fo?'warn':''}">${fl.length}</span>`:''}</button></div>`;
-  if(tab==='fr') return `<section class="card nf-card"><div class="card-h"><h2>Mitteilungen &amp; Benachrichtigungen</h2><button class="btn ghost sm" data-act="fristShow">Alle Fristen</button></div>${tabs}${frCardHtml()}</section>`;
-  return `<section class="card nf-card"><div class="card-h"><h2>Mitteilungen &amp; Benachrichtigungen ${c?`<span class="cnt-b">${c} neu</span>`:''}</h2>${c?'<button class="btn ghost sm" data-act="nfAll">Alle gelesen</button>':''}<button class="btn ghost sm" data-act="nfOpen">Alle anzeigen</button></div>${tabs}
+function nfCardHtml(){ if(!ME||!NF_INIT||!nfOn()) return ''; const l=nfList(), c=l.filter(n=>!n.read).length;
+  return `<section class="card nf-card"><div class="card-h"><h2>Mitteilungen &amp; Benachrichtigungen ${c?`<span class="cnt-b">${c} neu</span>`:''}</h2>${c?'<button class="btn ghost sm" data-act="nfAll">Alle gelesen</button>':''}<button class="btn ghost sm" data-act="nfOpen">Alle anzeigen</button></div>
     ${l.length?`<div class="nf-list">${l.slice(0,6).map(n=>nfRow(n,true)).join('')}</div>`:'<div class="empty" style="padding:6px 16px 18px"><b>Alles ruhig</b>Hier erscheint, was für dich wichtig ist: neue To-Dos, Freigaben und Änderungen an deinen Vorgängen.</div>'}</section>`; }
 function nfListHtml(){ const all=nfList(), l=NF_FLT==='neu'?all.filter(n=>!n.read):all, c=all.filter(n=>!n.read).length;
   return `<div class="row nf-top"><div class="chips"><button type="button" class="chip ${NF_FLT==='alle'?'on':''}" data-act="nfFlt" data-v="alle">Alle <span class="mono small">${all.length}</span></button><button type="button" class="chip ${NF_FLT==='neu'?'on':''}" data-act="nfFlt" data-v="neu">Ungelesen <span class="mono small">${c}</span></button></div><span class="spacer"></span>${c?'<button type="button" class="btn ghost sm" data-act="nfAll">Alle als gelesen markieren</button>':''}</div>
@@ -3561,7 +3572,6 @@ setInterval(()=>{ try{ nfSub(); if(Date.now()-NF_RM_T>30*60000&&NF_INIT){ NF_RM_
 queueMicrotask(()=>Object.assign(A,{
   nfOpen:()=>{ NF_FLT='alle'; openSheet({title:'🔔 Mitteilungen',wide:1,html:`<div class="fld full" id="nfBox">${nfListHtml()}</div>`,saveLabel:'Schließen',onSave:()=>{}}); },
   nfFlt:d=>{ NF_FLT=d.v; nfListPaint(); },
-  nfCTab:d=>{ NF_CTAB=d.v; lsSet('sonnenplan-nftab',d.v); scheduleRender(); },
   nfRead:d=>{ nfMark(d.id,d.v==='1'); scheduleRender(); nfListPaint(); },
   nfHide:d=>{ nfHide(d.id); scheduleRender(); nfListPaint(); nfPaint(); },
   nfAll:()=>{ nfList().filter(n=>!n.read).forEach(n=>nfMark(n.id,true)); scheduleRender(); nfListPaint(); },
@@ -4415,7 +4425,7 @@ function taskLi(t){  const late=t.due&&t.due<TODAY()&&!t.done;
   // Farbe nach Dringlichkeit (sichtbar auf der Projektseite); ein überfälliges Datum bleibt in der Zeile rot
   const cf=t.done?'':'cf-'+(PRIO[t.prio]?t.prio:'normal');
   const grip=!t.done&&!bsel&&!READONLY&&mayWrite('tasks')&&(UI.view==='project'||(UI.view==='todos'&&UI.todoMode!=='board'));
-  return `<div class="li ${cf} ${t.done?'done':''} ${bsel&&SEL.has(t.id)?'sel':''}" data-drag="task:${t.id}"${t.done?'':` data-drop-task="${t.id}"`}>${bsel?`<input type="checkbox" class="sel-ck" data-chg="selTask" data-id="${t.id}" ${SEL.has(t.id)?'checked':''} aria-label="Auswählen: ${esc(t.title)}" title="Für Mehrfachbearbeitung auswählen">`:''}${grip?`<span class="td-grip" title="Ziehen, um die Reihenfolge zu ändern" aria-hidden="true">⋮⋮</span>`:''}<input type="checkbox" class="ck" data-chg="toggleTask" data-id="${t.id}" ${t.done?'checked':''} aria-label="Erledigt"><div class="body clickable" data-act="editTask" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="mt">${t.src==='kitel'?`<span class="pill ext-pill" title="Kam als Anrufzusammenfassung vom KI-Telefonassistenten">📞 Extern: KI Telefon</span>`:''}${t.ext?`<span class="pill ext-pill" title="Liegt extern">extern: ${esc(t.ext)}</span>`:''}${t.pid&&S.projects[t.pid]&&!(UI.view==='project'&&UI.pid===t.pid)?`<button type="button" class="proj-link" data-act="openProject" data-id="${esc(t.pid)}" title="Zum Projekt ${esc(projName(t.pid))}">📁 ${esc(projName(t.pid))} ↗</button>`:t.pid?`<span>${esc(projName(t.pid))}</span>`:''}${t.due?`<span class="${late?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${t.wv&&!t.done?`<span class="pill wv-pill ${t.wv<=TODAY()?'bad':''}" title="${esc(t.wvNote||'Wiedervorlage')}">🔔 WV ${t.wv<=TODAY()?(t.wv===TODAY()?'heute':'seit '+fmtD(t.wv).slice(0,6)):fmtD(t.wv).slice(0,6)}</span>`:''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?`<span class="pill ${PRIO[t.prio][2]}">${PRIO[t.prio][0]}</span>`:''}${t.pool?'<span class="pill">allgemein</span>':''}${t.from&&S.tasks[t.from]?`<span class="pill link-pill" data-act="editTask" data-id="${esc(t.from)}" title="Folgt aus: ${esc(S.tasks[t.from].title)}">↰ aus: ${esc(S.tasks[t.from].title.slice(0,32))}${S.tasks[t.from].title.length>32?'…':''}</span>`:''}${(()=>{ const k=taskKids(t.id).filter(x=>!x.done).length; return k?`<span class="pill link-pill" title="Offene Folge-To-Dos">↳ ${k} Folge-To-Do${k>1?'s':''}</span>`:''; })()}${t.by&&t.by!=='?'?`<span class="by-line">angelegt ${esc(t.by)} ${esc(fmtD((t.at||'').slice(0,10)).slice(3))}</span>`:''}${t.done?`<span class="done-by">✓ erledigt von <b>${esc(t.doneBy||t.updBy||'?')}</b>${t.doneAt?' · '+esc(stampTxt(t.doneAt)):''}${t.doneNote?' – '+esc(t.doneNote):''}</span>`:''}</div>${taskUpdInline(t)}</div>
+  return `<div class="li ${cf} ${t.done?'done':''} ${bsel&&SEL.has(t.id)?'sel':''}" data-drag="task:${t.id}"${t.done?'':` data-drop-task="${t.id}"`}>${bsel?`<input type="checkbox" class="sel-ck" data-chg="selTask" data-id="${t.id}" ${SEL.has(t.id)?'checked':''} aria-label="Auswählen: ${esc(t.title)}" title="Für Mehrfachbearbeitung auswählen">`:''}${grip?`<span class="td-grip" title="Ziehen, um die Reihenfolge zu ändern" aria-hidden="true">⋮⋮</span>`:''}<input type="checkbox" class="ck" data-chg="toggleTask" data-id="${t.id}" ${t.done?'checked':''} aria-label="Erledigt"><div class="body clickable" data-act="editTask" data-id="${t.id}"><div class="tt">${esc(t.title)}</div><div class="mt">${t.src==='kitel'?`<span class="pill ext-pill" title="Kam als Anrufzusammenfassung vom KI-Telefonassistenten">📞 Extern: KI Telefon</span>`:''}${t.ext?`<span class="pill ext-pill" title="Liegt extern">extern: ${esc(t.ext)}</span>`:''}${t.pid&&S.projects[t.pid]&&!(UI.view==='project'&&UI.pid===t.pid)?`<button type="button" class="proj-link" data-act="openProject" data-id="${esc(t.pid)}" title="Zum Projekt ${esc(projName(t.pid))}">📁 ${esc(projName(t.pid))} ↗</button>`:t.pid?`<span>${esc(projName(t.pid))}</span>`:''}${t.due?`<span class="${late?'overdue':''}">${fmtD(t.due)} · ${relDay(t.due)}</span>`:''}${tfCount(t.id)?`<span class="pill" title="Fotos am To-Do">📷 ${tfCount(t.id)}</span>`:''}${t.wv&&!t.done?`<span class="pill wv-pill ${t.wv<=TODAY()?'bad':''}" title="${esc(t.wvNote||'Wiedervorlage')}">🔔 WV ${t.wv<=TODAY()?(t.wv===TODAY()?'heute':'seit '+fmtD(t.wv).slice(0,6)):fmtD(t.wv).slice(0,6)}</span>`:''}${t.prio&&PRIO[t.prio]&&PRIO[t.prio][1]>=2?`<span class="pill ${PRIO[t.prio][2]}">${PRIO[t.prio][0]}</span>`:''}${t.pool?'<span class="pill">allgemein</span>':''}${t.from&&S.tasks[t.from]?`<span class="pill link-pill" data-act="editTask" data-id="${esc(t.from)}" title="Folgt aus: ${esc(S.tasks[t.from].title)}">↰ aus: ${esc(S.tasks[t.from].title.slice(0,32))}${S.tasks[t.from].title.length>32?'…':''}</span>`:''}${(()=>{ const k=taskKids(t.id).filter(x=>!x.done).length; return k?`<span class="pill link-pill" title="Offene Folge-To-Dos">↳ ${k} Folge-To-Do${k>1?'s':''}</span>`:''; })()}${t.by&&t.by!=='?'?`<span class="by-line">angelegt ${esc(t.by)} ${esc(fmtD((t.at||'').slice(0,10)).slice(3))}</span>`:''}${t.done?`<span class="done-by">✓ erledigt von <b>${esc(t.doneBy||t.updBy||'?')}</b>${t.doneAt?' · '+esc(stampTxt(t.doneAt)):''}${t.doneNote?' – '+esc(t.doneNote):''}</span>`:''}</div>${taskUpdInline(t)}</div>
     <div class="li-side">${t.done?'':`<button type="button" class="task-upd" data-act="taskQuickUpd" data-id="${t.id}" title="Update zu diesem To-Do eintragen" aria-label="Update eintragen: ${esc(t.title)}">${ic('plus')}Update</button>`}${(t.who2||[]).length?`<button type="button" class="who-more" data-act="taskWhoMulti" data-id="${t.id}" title="Ebenfalls zuständig: ${esc(t.who2.join(', '))} – ändern">+ ${esc(t.who2.map(shortWho).join(' '))}</button>`:''}<select class="who-sel ${t.who?'':'none'}" data-chg="taskWho" data-id="${t.id}" aria-label="Zuständig für: ${esc(t.title)}" title="Zuständigkeit ändern"><option value="">offen</option>${(()=>{ const cw=whoCanon(t.who), l=staffUniq().map(s=>s.name); if(cw&&!l.includes(cw)) l.push(cw); return l.map(n=>`<option value="${esc(n)}" ${n===cw?'selected':''}>${esc(shortWho(n))}</option>`).join(''); })()}<option value="__multi">👥 mehrere Personen …</option><option value="__ext">→ liegt extern …</option>${t.ext?'<option value="__int">→ wieder intern</option>':''}</select></div>${isAdmin()?`<button type="button" class="icon-btn task-del" title="To-Do löschen" aria-label="To-Do löschen: ${esc(t.title)}" data-act="taskDel" data-id="${t.id}">${ic('x')}</button>`:''}</div>`;
 }
 
@@ -4822,7 +4832,7 @@ function vTodos(){  const t=TODAY(), who=UI.todoWho;
   const groups=[['Überfällig',x=>x.due&&x.due<t],['Heute',x=>x.due===t],['Diese Woche',x=>x.due>t&&x.due<=addDays(t,7)],['Später',x=>x.due>addDays(t,7)],['Ohne Datum',x=>!x.due]];
   const people=(()=>{ const seen=new Set(); return [...staff().map(s=>s.name),...arr('tasks').filter(x=>!x.done).map(x=>x.who).filter(Boolean)].map(whoCanon).filter(n=>{ const k=shortWho(n).toLowerCase(); if(seen.has(k)) return false; seen.add(k); return true; }); })();
   const byPerson = people.map(n=>[n,arr('tasks').filter(x=>!x.done&&taskHas(x,n)).length]);
-  const modeSw=`<div class="seg-mode light">${[['liste','Liste'],['board','Nach Mitarbeiter']].map(([k,l])=>`<button class="${(UI.todoMode||'liste')===k?'on':''}" data-act="todoMode" data-v="${k}">${l}</button>`).join('')}</div><button class="btn ${UI.bulk?'pri':''}" data-act="bulkOn" title="To-Dos markieren und gemeinsam bearbeiten">${UI.bulk?'Mehrfachauswahl beenden':'☑ Mehrere bearbeiten'}</button><button class="btn" data-act="fristShow" title="Gesetzliche und interne Fristen aller Projekte">⏰ Fristen</button>`;
+  const modeSw=`<div class="seg-mode light">${[['liste','Liste'],['board','Nach Mitarbeiter']].map(([k,l])=>`<button class="${(UI.todoMode||'liste')===k?'on':''}" data-act="todoMode" data-v="${k}">${l}</button>`).join('')}</div><button class="btn ${UI.bulk?'pri':''}" data-act="bulkOn" title="To-Dos markieren und gemeinsam bearbeiten">${UI.bulk?'Mehrfachauswahl beenden':'☑ Mehrere bearbeiten'}</button>`;
   if(UI.todoMode==='board'){
     const cols=[...staffUniq().map(s=>s.name),'']; const all=arr('tasks').filter(x=>(UI.todoShowDone||!x.done)&&!(x.pool&&!x.who)); VIS_TASKS=all.filter(x=>!x.done).map(x=>x.id);
     return head('To-Dos', arr('tasks').filter(x=>!x.done).length+' offen · To-Do auf eine Person ziehen, um sie neu zuzuweisen', modeSw)+
@@ -5421,189 +5431,52 @@ function wvRemind(force){ const due=wvDue(null,true); if(!due.length){ if(force)
   openSheet({title:'🔔 Wiedervorlage',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Diese To-Dos hast du dir für heute (oder früher) wieder vorgelegt:</div><div id="wv_list">${due.map(wvRow).join('')}</div></div>`,saveLabel:'Schließen',onSave:()=>{}}); }
 function wvUpd(id,fn,msg){ const t=clone(S.tasks[id]); if(!t) return; fn(t); put('tasks',t); if(msg) toast(msg); const l=$('#wv_list'); if(l){ const due=wvDue(null,true); l.innerHTML=due.map(wvRow).join('')||'<div class="small muted">Alles erledigt. 👍</div>'; } }
 const WV_T=setInterval(()=>{ if(!ME||!LIVE_READY.tasks&&MODE==='cloud') return; if(MODE==='init') return; clearInterval(WV_T); setTimeout(()=>wvRemind(),4000); },1500);
-
-/* ========== Fristen-Wächter: gesetzliche und interne Fristen aus den Projekt-Statusschritten ==========
-   Grundlage ist das Datum eines erreichten Schritts (p.ms.mNN, z. B. Inbetriebnahme = m33). Erledigt, sobald der Folgeschritt gesetzt/„entfällt“ ist
-   oder das dazu angelegte To-Do abgehakt wurde. Kurz vor Fälligkeit legt ein Admin-Gerät GENAU EIN To-Do an (feste ID je Projekt + Frist + Termin).
-   fin: Zahlungs-Fristen nur für Finanzen-Berechtigte (JP, AvE, EP). Regeln (an/aus, Tage, Vorlauf, zuständig) stellen Admins ein (config.fristen). */
-const FRIST_RULES=[
- {k:'mastr',n:'Marktstammdatenregister',from:33,dn:34,per:{m:1},lead:21,law:1,t:'Anlage im Marktstammdatenregister eintragen',info:'Gesetzliche Frist: Registrierung im Marktstammdatenregister spätestens 1 Monat nach Inbetriebnahme (MaStRV). Sonst drohen Kürzung der Einspeisevergütung und Bußgeld.'},
- {k:'evu',n:'Fertigmeldung Netzbetreiber',from:33,chk:'j4',per:{d:14},lead:7,t:'Inbetriebnahme-Unterlagen / Fertigmeldung an den Netzbetreiber schicken',info:'Interne Frist: zügig nach der Inbetriebnahme, damit der Zähler gesetzt und die Vergütung gezahlt wird.'},
- {k:'netz',n:'Netzanschlusszusage',from:8,dn:58,chk:'e3',per:{d:56},lead:0,law:1,t:'Beim Netzbetreiber wegen der Netzanschlusszusage nachhaken',info:'EEG: Der Netzbetreiber muss auf ein vollständiges Netzanschlussbegehren spätestens nach 8 Wochen einen Zeitplan und die nötigen Informationen liefern.'},
- {k:'zaehler',n:'Zählersetzung',from:21,dn:27,per:{d:28},lead:0,t:'Beim Netzbetreiber wegen der Zählersetzung nachhaken',info:'Interne Frist: 4 Wochen nach dem Zählerantrag.'},
- {k:'srech',n:'Schlussrechnung stellen',from:23,dn:24,per:{d:7},lead:3,fin:1,t:'Schlussrechnung stellen',info:'Interne Frist: 1 Woche nach der Bau-Fertigstellung.'},
- {k:'szahl',n:'Zahlung Schlussrechnung',from:24,dn:25,per:{d:14},lead:0,fin:1,t:'Zahlungseingang der Schlussrechnung prüfen (ggf. mahnen)',info:'Zahlungsziel (einstellbar).'},
- {k:'anz',n:'Zahlung Anzahlung',from:9,dn:10,per:{d:14},lead:0,fin:1,t:'Zahlungseingang der Anzahlung prüfen (ggf. mahnen)',info:'Zahlungsziel (einstellbar).'},
- {k:'wart',n:'Jährliche Wartung',from:33,need:29,yearly:1,lead:30,t:'Jährliche Wartung terminieren',info:'Wartungsvertrag abgeschlossen: Wartung jedes Jahr zum Jahrestag der Inbetriebnahme.'},
- {k:'gew',n:'Ende der Gewährleistung',from:23,per:{y:5},lead:60,t:'Gewährleistung endet bald – Anlage prüfen / Begehung anbieten',info:'Annahme: 5 Jahre ab Bau-Fertigstellung (BGB, Arbeiten an einem Bauwerk). Bitte mit dem jeweiligen Vertrag abgleichen.'},
-];
-const msOn=(p,n)=>!!((p.ms||{})['m'+n])||!!((p.skip||{})['m'+n]);
-const msDate=(p,n)=>{ const v=(p.ms||{})['m'+n]; return /^\d{4}-\d{2}-\d{2}$/.test(v||'')?v:''; };
-// Monate/Jahre ohne Überlauf (31.01. + 1 Monat = 28./29.02.)
-function addPer(d,o){ const z=new Date(d+'T12:00'), y=z.getFullYear()+(o.y||0), m=z.getMonth()+(o.m||0), last=new Date(y,m+1,0,12).getDate(); const r=new Date(y,m,Math.min(z.getDate(),last),12); r.setDate(r.getDate()+(o.d||0)); return r.getFullYear()+'-'+String(r.getMonth()+1).padStart(2,'0')+'-'+String(r.getDate()).padStart(2,'0'); }
-const perTxt=o=>o.y?o.y+' Jahre':o.m?o.m+' Monat'+(o.m>1?'e':''):o.d%7===0&&o.d>=14?(o.d/7)+' Wochen':o.d+' Tage';
-const frCfgAll=()=>((S.config||{}).fristen)||{};
-function frCfg(r){ const c=frCfgAll()[r.k]||{}; const per=r.per&&r.per.d!=null&&c.days!=null&&+c.days>0?{d:+c.days}:r.per; return {on:c.on===true /* Regel-Fristen erst nach Einschalten durch Admin (Vorgabe EP: erstmal nur Fristen aus Notizen/To-Dos) */,lead:c.lead!=null&&c.lead!==''?Math.max(0,+c.lead):r.lead,who:c.who||'',per}; }
-const frId=(pid,k,due)=>'fr-'+strHash(pid+'|'+k+'|'+due).replace(/[^0-9a-z]/gi,'').slice(0,14)+'-'+due.replace(/-/g,'');
-const frWho=(r,p,c)=>{ if(c.who) return c.who; if(!r.fin&&p.pl) return p.pl; return r.fin?(finOk()?ME:''):(ME||''); };
-// Alle Fristen berechnen (auch erledigte, für die Übersicht)
-function fristList(){ const t=TODAY(), out=[];
-  arr('projects').forEach(p=>{ if(!p||p.example||isIntern(p)||catOf(p)==='abgesagt') return; const old=catOf(p)==='erledigt';
-    FRIST_RULES.forEach(r=>{ const c=frCfg(r); if(!c.on) return; if(r.fin&&!finOk()) return; if(old&&!['wart','gew','mastr'].includes(r.k)) return;
-      const base=msDate(p,r.from); if(!base) return; if(r.need&&!msOn(p,r.need)) return;
-      let due; if(r.yearly){ let y=1; while(addPer(base,{y})<addDays(t,-60)) y++; due=addPer(base,{y}); } else due=addPer(base,c.per);
-      if(old&&!r.yearly&&due<addDays(t,-30)) return; // abgeschlossene Projekte: längst vergangene Fristen nicht mehr anzeigen
-      const id=frId(p.id,r.k,due), tk=S.tasks&&S.tasks[id]; if((frCfgAll()._off||[]).includes(id)) return; // von EP/AvE gelöscht
-      const done=(!r.yearly&&((r.dn&&msOn(p,r.dn))||(r.chk&&isChecked(p,r.chk))))||!!(tk&&tk.done);
-      const st=done?'ok':due<t?'over':addDays(due,-c.lead)<=t?'soon':'later';
-      out.push({p,r,c,base,due,id,tk,st}); }); });
-  return out.sort((a,b)=>a.due.localeCompare(b.due)); }
-const frMine=x=>isAdmin()||briefIsMe(x.p.pl)||(x.tk&&taskHas(x.tk,ME));
-// To-Dos automatisch anlegen: nur Admin-Geräte, nur bald fällige / frisch überfällige (nicht rückwirkend für Altprojekte), nie doppelt
-let FR_RUN=0;
-function fristAuto(){ if(!ME||!isAdmin()||!mayWrite('tasks')||Date.now()-FR_RUN<60000) return; FR_RUN=Date.now();
-  let cfg=frCfgAll(), start=cfg._start; if(!start){ start=TODAY(); if(isBaseAdmin()) putConfig({...(S.config||{}),fristen:{...cfg,_start:start}}); }
-  let n=0; fristList().filter(x=>(x.st==='soon'||x.st==='over')&&!x.tk&&x.due>=addDays(start,-14)).forEach(x=>{ if(n>=25) return;
-    const who=frWho(x.r,x.p,x.c), t={id:x.id,title:x.r.t,pid:x.p.id,done:false,prio:x.st==='over'||x.r.law?'hoch':'normal',due:x.due,src:'frist',frist:x.r.k,created:TODAY(),by:meK(),
-      notes:'⏰ Fristen-Wächter: '+x.r.n+' – fällig am '+fmtD(x.due)+'.\n'+x.r.info+'\nGrundlage: „'+PIPE[x.r.from-1]+'“ am '+fmtD(x.base)+'.'};
-    if(who) t.who=who; if(dupTask(t)) return; if(put('tasks',t)!==false) n++; });
-  if(n) toast('⏰ Fristen-Wächter: '+n+' neue'+(n>1?' To-Dos':'s To-Do')+' angelegt.'); }
-const FR_T=setInterval(()=>{ if(!ME||MODE==='init'||(MODE==='cloud'&&!(LIVE_READY.tasks&&LIVE_READY.projects&&S.config))) return; clearInterval(FR_T); setTimeout(fristAuto,6000); },2000);
-setInterval(()=>{ try{ fristAuto(); }catch(e){} },30*60000);
-const FR_ST={over:['überfällig','bad'],soon:['bald fällig','warn'],later:['später',''],ok:['erledigt','ok']};
-/* ---------- Fristen aus unseren Notizen & To-Dos (Vorgabe EP: nur was dort ausdrücklich steht, nichts selbst ausdenken) ----------
-   Vorfilter im Browser: nur Zeilen mit Datum oder Frist-Wort (Stempel „02.11.26 15:33 (EP):“ zählt nicht). Claude prüft, ob es eine echte Frist ist.
-   Gespeichert in der Sammlung „fristen“ (je Frist ein Eintrag). Löschen (EP/AvE) markiert off – so taucht sie beim nächsten Suchen nicht wieder auf.
-   Private To-Dos gehen nie an die KI. */
-const FN_STAMP=/^\s*\d{1,2}\.\d{1,2}\.(\d{2,4})?\s*(\d{1,2}:\d{2})?\s*(\([^)]*\))?\s*:?\s*/;
-const FN_DATE=/\b\d{1,2}\.\s?\d{1,2}\.(\s?\d{2,4})?|\b\d{4}-\d{2}-\d{2}\b|\bKW\s?\d{1,2}\b/i;
-const FN_WORD=/\b(frist|fristen|deadline|spätestens|spaetestens|ablauf|läuft\s.{0,30}\sab|gültig bis|gueltig bis|zahlungsziel|bis (zum|ende|anfang|mitte|montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|nächste|naechste|kommende))\b/i;
-const fnHit=s=>{ const b=String(s||'').replace(FN_STAMP,''); return FN_DATE.test(b)||FN_WORD.test(b); };
-// Stempeldatum einer Notizzeile (TT.MM.JJ) – für „bis Freitag“ und um alte Einträge auszulassen
-const fnStampD=s=>{ const m=String(s||'').match(/^\s*(\d{1,2})\.(\d{1,2})\.(\d{2,4})/); if(!m) return ''; let y=+m[3]; if(y<100) y+=2000; return y+'-'+String(+m[2]).padStart(2,'0')+'-'+String(+m[1]).padStart(2,'0'); };
-function fnSources(){ const out=[], lim=addDays(TODAY(),-180);
-  arr('projects').filter(p=>p&&!p.example&&catOf(p)!=='abgesagt').forEach(p=>{ [['updates','Notizen'],['notes','Notiz'],['questions','Offene Fragen']].forEach(([f,l])=>{
-    String(p[f]||'').split(/\n+/).forEach(ln=>{ ln=ln.trim(); if(ln.length<8||!fnHit(ln)) return; const sd=fnStampD(ln); if(sd&&sd<lim) return;
-      out.push({k:'p|'+p.id+'|'+f+'|'+strHash(ln),kind:'note',pid:p.id,field:f,head:'Projekt „'+p.name+'“ · '+l,text:ln.slice(0,500)}); }); }); });
-  arr('tasks').filter(t=>t&&!t.done&&!t.private).forEach(t=>{ const parts=[t.title,t.notes,...((t.upd2||[]).map(u=>u&&u.t))].filter(Boolean).join('\n'); if(!fnHit(parts)) return;
-    out.push({k:'t|'+t.id+'|'+strHash(parts),kind:'task',tid:t.id,pid:t.pid||'',head:'To-Do'+(t.pid?' im Projekt „'+projName(t.pid)+'“':'')+(t.created?' (angelegt '+fmtD(String(t.created).slice(0,10))+')':''),text:parts.slice(0,900)}); });
-  return out; }
-const FN_SEEN_K='sonnenplan-fn-seen';
-const fnSeen=()=>{ try{ return new Set(JSON.parse(localStorage.getItem(FN_SEEN_K)||'[]')); }catch(e){ return new Set(); } };
-const fnSeenSave=s=>{ try{ localStorage.setItem(FN_SEEN_K,JSON.stringify([...s].slice(-6000))); }catch(e){} };
-let FN_BUSY=false;
-async function fnScan(o){ o=o||{}; if(FN_BUSY) return; if(!SAMPLE){ if(o.loud) toast('Die Fristen-Suche braucht die KI – geht nur in der Online-App.'); return; } if(!isAdmin()||!mayWrite('fristen')){ if(o.loud) toast('Fristen suchen dürfen nur EP und AvE.'); return; }
-  const seen=o.all?new Set():fnSeen(), src=fnSources().filter(s=>!seen.has(s.k)); if(!src.length){ if(o.loud) toast('Keine neuen Einträge mit Datum in Notizen und To-Dos.'); return; }
-  FN_BUSY=true; let found=0, calls=0; const maxCalls=o.loud?12:4, t=TODAY();
-  try{ for(let i=0;i<src.length&&calls<maxCalls;){ const batch=[]; let len=0; while(i<src.length&&batch.length<60&&len<24000){ batch.push(src[i]); len+=src[i].text.length; i++; } calls++;
-      if(o.loud) toast('⏰ Suche Fristen in Notizen und To-Dos … ('+Math.min(i,src.length)+' von '+src.length+')');
-      let r; try{ r=await SAMPLE.json(`Heute ist ${t} (${new Date().toLocaleDateString('de-DE',{weekday:'long'})}). Unten stehen Auszüge aus Projekt-Notizen und To-Dos der nutz die Sonne GmbH (Solar-Installationsbetrieb).
-Finde NUR echte Fristen, die dort ausdrücklich stehen: etwas muss bis zu einem bestimmten Datum passieren oder läuft an einem Datum ab – z. B. „Frist bis 15.12.“, „Angebot gültig bis …“, „spätestens am …“, „Netzbetreiber braucht die Unterlagen bis …“, „Zahlungsziel …“, „Förderantrag bis …“, „Kündigung bis …“.
-NICHT aufnehmen: vergangene Ereignisse („am 12.11. montiert“), normale Termine/Besuche ohne Frist-Charakter, den Datumsstempel am Zeilenanfang, gesetzliche oder übliche Fristen, die nicht im Text stehen. Erfinde nichts und ergänze nichts.
-Relative Angaben („bis Freitag“, „in 2 Wochen“) vom Datum des Eintrags aus berechnen (Stempel am Zeilenanfang im Format TT.MM.JJ, sonst Anlagedatum); ohne Bezugsdatum weglassen. Fehlt beim Datum das Jahr, nimm das nächstliegende passende.
-Je Frist: "s" = Quellen-Nr., "title" = kurz, was bis dahin passieren muss (max. 10 Wörter, ohne Datum, z. B. „Unterlagen an Westnetz schicken“), "due" = JJJJ-MM-TT, "quote" = die entscheidende Stelle wörtlich (max. 160 Zeichen).
-Quellen:
-${batch.map((s,k)=>`[S${k+1}] ${s.head}: ${s.text}`).join('\n')}
-Antworte nur mit JSON: {"f":[{"s":1,"title":"","due":"","quote":""}]} – keine Frist gefunden: {"f":[]}`,{modelTier:'default',bg:!o.loud}); }
-      catch(e){ if(o.loud) toast(SAMPLE_ERR[e&&e.code]||'Claude nicht erreichbar.'); break; }
-      ((r&&Array.isArray(r.f))?r.f:[]).forEach(x=>{ const s=batch[(+x.s||0)-1], due=String(x.due||''), title=String(x.title||'').trim().slice(0,140); if(!s||!title||!/^\d{4}-\d{2}-\d{2}$/.test(due)||isNaN(new Date(due))) return; if(due<addDays(t,-400)||due>addDays(t,1100)) return;
-        const id='fn-'+String(strHash((s.pid||'')+'|'+dupNorm(title)+'|'+due)).replace(/[^0-9a-z]/gi,'').slice(0,16);
-        if(S.fristen[id]||arr('fristen').some(f=>f.due===due&&(f.pid||'')===(s.pid||'')&&f.src&&f.src.k===s.k)) return;
-        const f={id,title,due,pid:s.pid||'',quote:String(x.quote||'').slice(0,200),src:{k:s.k,kind:s.kind,...(s.tid?{tid:s.tid}:{}),...(s.field?{field:s.field}:{})},found:TODAY(),foundBy:meK()};
-        if(put('fristen',f)!==false) found++; });
-      batch.forEach(s=>seen.add(s.k)); fnSeenSave(seen); } }
-  finally{ FN_BUSY=false; }
-  if(o.loud||found) toast('⏰ '+(found?found+' neue Frist'+(found>1?'en':'')+' aus Notizen und To-Dos gefunden.':'Keine neuen Fristen gefunden.')+(src.length>0&&calls>=maxCalls?' (Es gibt noch mehr – bitte nochmal suchen.)':''));
-  if(SHEET&&SHEET.fr) setTimeout(fristSheet,80); }
-// Admin-Gerät: einmal am Tag automatisch nach neuen Einträgen suchen
-const FN_T=setInterval(()=>{ if(!ME||MODE!=='cloud'||!(LIVE_READY.tasks&&LIVE_READY.projects)) return; clearInterval(FN_T); setTimeout(()=>{ const k='sonnenplan-fn-day'; if(!isAdmin()||lsGet(k)===TODAY()) return; lsSet(k,TODAY()); fnScan().catch(()=>{}); },20000); },3000);
-function fnList(){ const t=TODAY(); return arr('fristen').filter(f=>f&&!f.off&&/^\d{4}-\d{2}-\d{2}$/.test(f.due||'')&&(!f.pid||projVisId(f.pid))).map(f=>{ const tk=f.src&&f.src.tid?S.tasks[f.src.tid]:null, ftk=f.tid?S.tasks[f.tid]:null, p=f.pid?S.projects[f.pid]:null;
-  const done=!!f.done||!!(tk&&tk.done)||!!(ftk&&ftk.done); return {f,p,tk,ftk,due:f.due,st:done?'ok':f.due<t?'over':f.due<=addDays(t,14)?'soon':'later'}; }).sort((a,b)=>a.due.localeCompare(b.due)); }
-const fnMine=x=>isAdmin()||(x.p&&briefIsMe(x.p.pl))||(x.tk&&taskHas(x.tk,ME))||(x.ftk&&taskHas(x.ftk,ME));
-// Auf- und Zuklappen merken (je Rubrik)
-const FR_OPEN_K='sonnenplan-fropen';
-const frOpen=(k,def)=>{ try{ const o=JSON.parse(localStorage.getItem(FR_OPEN_K)||'{}'); return k in o?!!o[k]:def; }catch(e){ return def; } };
-document.addEventListener('toggle',e=>{ const d=e.target; if(!d||!d.dataset||!d.dataset.fr) return; try{ const o=JSON.parse(localStorage.getItem(FR_OPEN_K)||'{}'); o[d.dataset.fr]=d.open; localStorage.setItem(FR_OPEN_K,JSON.stringify(o)); }catch(err){} },true);
-const frDet=(k,def,sum,body)=>`<details class="fr-det" data-fr="${k}" ${frOpen(k,def)?'open':''}><summary>${sum}</summary><div class="fr-body">${body}</div></details>`;
-function fristDashStrip(){ if(!ME) return ''; const l=[...fnList().filter(fnMine).map(x=>({n:x.f.title,pn:x.p?x.p.name:'',st:x.st})),...fristList().filter(frMine).map(x=>({n:x.r.n,pn:x.p.name,st:x.st}))].filter(x=>x.st==='over'||x.st==='soon'); if(!l.length) return ''; const ov=l.filter(x=>x.st==='over').length;
-  return `<div class="hr-strip fr-strip"><b>⏰ ${l.length} Frist${l.length>1?'en':''} ${ov?'– '+ov+' überfällig':'bald fällig'}</b><span class="small muted">${esc(l.slice(0,2).map(x=>x.n+(x.pn?' · '+x.pn:'')).join(' · '))}${l.length>2?' …':''}</span><span class="spacer"></span><button class="btn sun sm" data-act="fristShow">Ansehen</button></div>`; }
-function fristSheet(){ const t=TODAY(), adm=isAdmin(), w=mayWrite('fristen');
-  const st=x=>`<span class="pill ${FR_ST[x.st][1]}">${FR_ST[x.st][0]}</span>`, dueC=x=>`<b>${esc(fmtD(x.due))}</b><div class="small muted">${esc(relDay(x.due))}</div>`;
-  // Rubrik 1: aus Notizen & To-Dos
-  const fnRow=x=>{ const f=x.f, s=f.src||{}; return `<tr class="${x.st==='over'?'low':''}"><td><b>${esc(f.title)}</b>${f.quote?`<div class="small muted fr-q">„${esc(f.quote)}“</div>`:''}</td>
-    <td>${x.p?`<button type="button" class="linkish" data-act="openProject" data-id="${x.p.id}">${esc(x.p.name)}</button>`:'<span class="muted">–</span>'}</td><td style="white-space:nowrap">${dueC(x)}</td><td>${st(x)}</td>
-    <td class="small">${s.kind==='task'&&x.tk?`<button type="button" class="linkish" data-act="editTask" data-id="${x.tk.id}">To-Do</button>`:s.kind==='note'?'Notiz':'–'}</td>
-    <td class="fr-a">${x.ftk?`<button type="button" class="btn sm" data-act="editTask" data-id="${x.ftk.id}">To-Do</button>`:x.st!=='ok'&&s.kind!=='task'&&mayWrite('tasks')?`<button type="button" class="btn sm" data-act="fnTask" data-id="${f.id}">+ To-Do</button>`:''}${x.st!=='ok'&&w?`<button type="button" class="btn sm sun" data-act="fnDone" data-id="${f.id}">✓ Erledigt</button>`:''}${adm?`<button type="button" class="btn sm ghost" data-act="fnDel" data-id="${f.id}" title="Frist löschen">🗑</button>`:''}</td></tr>`; };
-  const tbl=(rows,h)=>`<div class="tbl-wrap"><table class="tbl"><thead><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
-  const fnAll=fnList().filter(fnMine), H1=['Frist','Projekt','Fällig','Stand','Quelle',''];
-  const sub=(pre,l,k,def,h)=>l.length?frDet(pre+k,def,`${h} <span class="cnt-b">${l.length}</span>`,tbl(l.map(fnRow).join(''),H1)):'';
-  const g=(l,s)=>l.filter(x=>x.st===s);
-  const fnBody=fnAll.length?sub('fn-',g(fnAll,'over'),'over',true,'🔴 Überfällig')+sub('fn-',g(fnAll,'soon'),'soon',true,'🟡 Bald fällig (14 Tage)')+sub('fn-',g(fnAll,'later'),'later',false,'Später')+sub('fn-',g(fnAll,'ok').filter(x=>x.due>=addDays(t,-90)),'ok',false,'✓ Erledigt')
-    :`<div class="empty">Noch keine Fristen gefunden.${adm?' Oben auf „🔄 In Notizen & To-Dos suchen“ tippen.':''}</div>`;
-  const openN=fnAll.filter(x=>x.st==='over'||x.st==='soon').length;
-  // Rubrik 2: Regel-Fristen (nur wenn ein Admin sie eingeschaltet hat)
-  const rl=fristList().filter(frMine), rOn=FRIST_RULES.some(r=>frCfg(r).on);
-  const rRow=x=>`<tr class="${x.st==='over'?'low':''}"><td><b>${esc(x.r.n)}</b>${x.r.law?' <span class="pill">Gesetz</span>':''}${x.r.fin?' <span class="pill">Finanzen</span>':''}<div class="small muted">${esc(x.r.t)}</div></td>
-    <td><button type="button" class="linkish" data-act="openProject" data-id="${x.p.id}">${esc(x.p.name)}</button></td><td style="white-space:nowrap">${dueC(x)}</td><td>${st(x)}</td><td class="small">${esc(PIPE[x.r.from-1])}<br>${esc(fmtD(x.base))}</td>
-    <td class="fr-a">${x.tk?`<button type="button" class="btn sm" data-act="editTask" data-id="${x.tk.id}">To-Do</button>`:x.st!=='ok'&&mayWrite('tasks')?`<button type="button" class="btn sm" data-act="fristTask" data-id="${x.id}">+ To-Do</button>`:''}${x.st!=='ok'&&x.r.dn&&mayWrite('projects')?`<button type="button" class="btn sm sun" data-act="fristDone" data-id="${x.id}">✓ Erledigt</button>`:''}${adm?`<button type="button" class="btn sm ghost" data-act="frDel" data-id="${x.id}" title="Frist löschen">🗑</button>`:''}</td></tr>`;
-  const rSub=(l,k,def,h)=>l.length?frDet('fr-'+k,def,`${h} <span class="cnt-b">${l.length}</span>`,tbl(l.map(rRow).join(''),['Frist','Projekt','Fällig','Stand','Grundlage',''])):'';
-  const rBody=!rOn?`<div class="small muted">Ausgeschaltet. Hier könnten zusätzlich feste Regeln laufen (z. B. Marktstammdatenregister 1 Monat nach Inbetriebnahme).${adm?' Einschalten unter „⚙ Regeln einstellen“.':''}</div>${adm?'<button type="button" class="btn sm" data-act="fristCfg" style="margin-top:8px">⚙ Regeln einstellen</button>':''}`
-    :(rSub(g(rl,'over'),'over',true,'🔴 Überfällig')+rSub(g(rl,'soon'),'soon',true,'🟡 Bald fällig')+rSub(g(rl,'later').filter(x=>x.due<=addDays(t,90)),'later',false,'Nächste 90 Tage')+rSub(g(rl,'ok').filter(x=>x.due>=addDays(t,-60)),'ok',false,'✓ Erledigt')||'<div class="small muted">Gerade keine.</div>')+(adm?'<button type="button" class="btn sm" data-act="fristCfg" style="margin-top:8px">⚙ Regeln einstellen</button>':'');
-  openSheet({title:'⏰ Fristen',wide:1,html:`<div class="fld full"><div class="small muted">Fristen, die in euren Projekt-Notizen und To-Dos stehen (z. B. „Unterlagen bis 15.12. an Westnetz“). Claude sucht sie heraus, erfindet aber keine eigenen. Alle Rubriken lassen sich auf- und zuklappen.</div>
-    ${frDet('rub-fn',true,`📝 Aus Notizen & To-Dos <span class="cnt-b">${fnAll.filter(x=>x.st!=='ok').length}</span>${openN?` <span class="pill warn">${openN} anstehend</span>`:''}`,fnBody)}
-    ${adm||rOn?frDet('rub-rule',false,`⚙ Regel-Fristen ${rOn?'<span class="cnt-b">'+rl.filter(x=>x.st!=='ok').length+'</span>':'<span class="pill">aus</span>'}`,rBody):''}</div>`,
-    saveLabel:'Schließen',onSave:()=>{},extraBtn:adm&&SAMPLE?'<button type="button" class="btn sun" data-act="fnScan">🔄 In Notizen & To-Dos suchen</button>':''});
-  if(SHEET) SHEET.fr=1; }
-function fristCfgSheet(){ if(!isAdmin()) return; const st=staff().filter(s=>!(s.exit&&s.exit<TODAY()));
-  openSheet({title:'Fristen-Wächter: Regeln',wide:1,html:`<div class="fld full"><div class="small muted">Gesetzliche Fristen (MaStR, EEG) bitte nur anpassen, wenn sich die Rechtslage ändert. „Vorlauf“ = so viele Tage vor Fälligkeit kommt das To-Do.</div>
-    <div class="tbl-wrap" style="margin-top:8px"><table class="tbl"><thead><tr><th>An</th><th>Frist</th><th>Dauer</th><th>Vorlauf (Tage)</th><th>Zuständig</th></tr></thead><tbody>${FRIST_RULES.map(r=>{ const c=frCfg(r), raw=frCfgAll()[r.k]||{};
-      return `<tr><td><input type="checkbox" class="ck fr-on" data-k="${r.k}" ${c.on?'checked':''} aria-label="${esc(r.n)} aktiv"></td><td><b>${esc(r.n)}</b>${r.law?' <span class="pill">Gesetz</span>':''}${r.fin?' <span class="pill">Finanzen</span>':''}<div class="small muted">ab „${esc(PIPE[r.from-1])}“${r.yearly?', jährlich':''}</div></td>
-        <td>${r.per&&r.per.d!=null?`<input class="inp fr-days" type="number" min="1" style="width:76px" data-k="${r.k}" value="${esc(c.per.d)}"> Tage`:esc(r.yearly?'jedes Jahr':perTxt(r.per))}</td>
-        <td><input class="inp fr-lead" type="number" min="0" style="width:76px" data-k="${r.k}" value="${esc(c.lead)}"></td>
-        <td><select class="inp fr-who" data-k="${r.k}"><option value="">${r.fin?'– wer den Wächter ausführt (Admin) –':'Projektleitung des Projekts'}</option>${st.map(s=>`<option value="${esc(s.name)}" ${raw.who===s.name?'selected':''}>${esc(s.name)}</option>`).join('')}</select></td></tr>`; }).join('')}</tbody></table></div></div>`,saveLabel:'Speichern',
-    onSave:()=>{ const cur=frCfgAll(), nx={...cur}; FRIST_RULES.forEach(r=>{ const g=c=>document.querySelector(`.${c}[data-k="${r.k}"]`); const o={...(cur[r.k]||{})};
-        o.on=g('fr-on').checked; const dl=g('fr-days'); if(dl){ const v=+dl.value; if(v>0&&v!==r.per.d) o.days=v; else delete o.days; } const ld=+g('fr-lead').value; if(ld>=0&&ld!==r.lead) o.lead=ld; else delete o.lead; const w=g('fr-who').value; if(w) o.who=w; else delete o.who; nx[r.k]=o; });
-      putConfig({...(S.config||{}),fristen:nx}); toast('Fristen-Regeln gespeichert.'); setTimeout(fristSheet,80); }}); }
-queueMicrotask(()=>Object.assign(A,{
-  fristShow:()=>fristSheet(), fristCfg:()=>{ closeSheet(); fristCfgSheet(); },
-  fnScan:()=>fnScan({loud:1}),
-  // Löschen: nur EP/AvE (Admins). Bleibt als „gelöscht“ markiert, damit die Suche sie nicht wieder anlegt.
-  fnDel:d=>{ if(!isAdmin()) return toast('Fristen löschen dürfen nur EP und AvE.'); const f=S.fristen[d.id]; if(!f) return;
-    confirmSheet('Frist „'+f.title+'“ ('+fmtD(f.due)+') löschen? Die Notiz bzw. das To-Do selbst bleibt unverändert.',()=>{ const n=clone(f); n.off=true; n.offBy=meK(); n.offAt=new Date().toISOString(); if(put('fristen',n)!==false){ toast('Frist gelöscht.'); frAfter(); } }); },
-  fnDone:d=>{ const f=S.fristen[d.id]; if(!f) return; const n=clone(f); n.done=true; n.doneBy=meK(); n.doneAt=new Date().toISOString(); if(put('fristen',n)!==false){ toast('Frist erledigt.'); frAfter(); } },
-  fnTask:d=>{ const f=S.fristen[d.id]; if(!f) return; if(f.tid&&S.tasks[f.tid]) return toast('Das To-Do gibt es schon.'); const p=f.pid&&S.projects[f.pid];
-    const t={id:uid(),title:f.title,pid:f.pid||'',done:false,prio:f.due<=addDays(TODAY(),7)?'hoch':'normal',due:f.due,src:'frist',created:TODAY(),by:meK(),notes:'⏰ Frist aus '+(f.src&&f.src.kind==='task'?'einem To-Do':'den Projekt-Notizen')+(f.quote?': „'+f.quote+'“':'')}; const who=p&&p.pl||ME; if(who) t.who=who;
-    if(dupTask(t)) return toast('Ein gleiches To-Do gibt es schon.'); if(put('tasks',t)===false) return; const n=clone(f); n.tid=t.id; put('fristen',n); toast('To-Do angelegt.'); frAfter(); },
-  frDel:d=>{ if(!isAdmin()) return toast('Fristen löschen dürfen nur EP und AvE.'); const x=fristList().find(y=>y.id===d.id); if(!x) return;
-    confirmSheet('Frist „'+x.r.n+'“ für „'+x.p.name+'“ ('+fmtD(x.due)+') löschen?',()=>{ const c=frCfgAll(); putConfig({...(S.config||{}),fristen:{...c,_off:[...(c._off||[]),x.id].slice(-2000)}}); toast('Frist gelöscht.'); frAfter(); }); },
-  fristTask:d=>{ const x=fristList().find(y=>y.id===d.id); if(!x) return; if(S.tasks[x.id]) return toast('Das To-Do gibt es schon.'); const who=frWho(x.r,x.p,x.c);
-    const t={id:x.id,title:x.r.t,pid:x.p.id,done:false,prio:x.st==='over'||x.r.law?'hoch':'normal',due:x.due,src:'frist',frist:x.r.k,created:TODAY(),by:meK(),notes:'⏰ Fristen-Wächter: '+x.r.n+' – fällig am '+fmtD(x.due)+'.\n'+x.r.info+'\nGrundlage: „'+PIPE[x.r.from-1]+'“ am '+fmtD(x.base)+'.'}; if(who) t.who=who;
-    if(put('tasks',t)!==false){ toast('To-Do angelegt.'); frAfter(); } },
-  fristDone:d=>{ const x=fristList().find(y=>y.id===d.id); if(!x||!x.r.dn) return; const p=clone(S.projects[x.p.id]); if(!p) return; p.ms={...(p.ms||{}),['m'+x.r.dn]:TODAY()};
-    if(put('projects',p)===false) return; const tk=S.tasks[x.id]; if(tk&&!tk.done){ const n=clone(tk); n.done=true; n.doneAt=new Date().toISOString(); put('tasks',n); } toast('„'+PIPE[x.r.dn-1]+'“ gesetzt.'); frAfter(); } }));
-// Nach einer Aktion: aus dem Fristen-Fenster heraus → Fenster neu zeigen; aus der Mitteilungen-Karte → nur die Startseite auffrischen
-let FR_B=false; const frAfter=()=>setTimeout(()=>{ if(FR_B) fristSheet(); else scheduleRender(); },80);
-queueMicrotask(()=>queueMicrotask(()=>['fnDel','fnDone','fnTask','frDel','fristTask','fristDone'].forEach(k=>{ const fn=A[k]; if(fn) A[k]=(d,el)=>{ FR_B=!!(SHEET&&SHEET.fr); return fn(d,el); }; })));
 queueMicrotask(()=>{ Object.assign(A,{ /* A wird weiter unten angelegt */
   wvQuick:d=>{ const e=$('#f_wv'); if(e) e.value=d.k?wvDate(d.k):''; },
   wvShow:()=>wvRemind(true),
   wvDone:d=>wvUpd(d.id,t=>{ t.upd2=[...(t.upd2||[]),{d:TODAY(),tm:nowStamp().slice(9),by:meK(),t:'Wiedervorlage vom '+fmtD(t.wv)+' gesehen'+(t.wvNote?': '+t.wvNote:''),at:new Date().toISOString()}]; delete t.wv; delete t.wvNote; },'Wiedervorlage erledigt.'),
   wvTaskDone:d=>wvUpd(d.id,t=>{ t.done=true; t.doneAt=new Date().toISOString(); t.doneBy=meK(); delete t.wv; },'To-Do erledigt.') });
   Object.assign(CHG,{ wvSnooze:(d,el)=>{ if(!el.value) return; const nd=wvDate(el.value); wvUpd(d.id,t=>{ t.wv=nd; },'Neue Wiedervorlage am '+fmtD(nd)+'.'); } }); });
+/* ---------- Fotos am To-Do ----------
+   Gespeichert in der normalen Dateiablage (files, kind „foto“) mit tid = To-Do und pid = Projekt → erscheinen auch unter Dateien und in der Sicherung.
+   Neues To-Do: Fotos werden erst beim Speichern hochgeladen (Abbrechen = nichts gespeichert). Rechte wie bei Dateien (hochladen f_up, löschen f_del). */
+let TF_PEND=[]; let TF_C={n:-1,m:{}};
+const tfFiles=tid=>arr('files').filter(f=>f&&f.tid===tid&&/^image\//.test(f.mime||'')).sort((a,b)=>String(a.at||'').localeCompare(String(b.at||'')));
+const tfCount=tid=>{ const n=Object.keys(S.files||{}).length; if(TF_C.n!==n||TF_C.src!==S.files){ const m={}; Object.values(S.files||{}).forEach(f=>{ if(f&&f.tid&&/^image\//.test(f.mime||'')) m[f.tid]=(m[f.tid]||0)+1; }); TF_C={n,m,src:S.files}; } return TF_C.m[tid]||0; };
+const tfCanUp=()=>!!ASSETS&&mayWrite('files')&&(!ME||isAdmin()||can('f_up'));
+function tfPhotosHtml(t,isNew){ const saved=isNew?[]:tfFiles(t.id), delOk=!ME||isAdmin()||can('f_del');
+  return `<div id="tf_wrap"><div class="tf-ph">${saved.map(f=>`<div class="tf-th"><img data-blob="${esc(f.asset)}" alt="${esc(f.name||'Foto')}" title="${esc(f.name||'Foto')} – antippen zum Vergrößern" data-act="tfOpen">${delOk?`<button type="button" class="tf-x" data-act="tfDel" data-id="${esc(f.id)}" title="Foto löschen" aria-label="Foto löschen">✕</button>`:''}</div>`).join('')}${TF_PEND.map((p,i)=>`<div class="tf-th pend"><img src="${p.url}" alt="Neues Foto" data-act="tfOpen"><button type="button" class="tf-x" data-act="tfPendDel" data-i="${i}" title="Foto wieder entfernen" aria-label="Foto entfernen">✕</button></div>`).join('')}
+    ${tfCanUp()?`<button type="button" class="tf-add" data-act="tfPick" data-id="${esc(t.id)}" data-new="${isNew?1:''}">📷<span>Foto hinzufügen</span></button><input type="file" id="tf_in" accept="image/*" multiple hidden data-id="${esc(t.id)}" data-new="${isNew?1:''}">`:saved.length?'':'<span class="small muted">Keine Fotos.</span>'}</div>${TF_PEND.length?'<div class="small muted">Die neuen Fotos werden beim Speichern hochgeladen.</div>':''}</div>`; }
+const tfPaint=(t,isNew)=>{ const b=$('#tf_wrap'); if(b) b.outerHTML=tfPhotosHtml(t,isNew); };
+async function tfUpload(task,files){ if(!ASSETS||!files.length) return 0; let n=0, k=tfFiles(task.id).length; busy(1,'tfph'); toast('Foto'+(files.length>1?'s werden':' wird')+' hochgeladen …');
+  try{ for(const f of files){ try{ const blob=await mappeToJpg(f,2000); const file=new File([blob],'foto.jpg',{type:'image/jpeg'}); const r=await ASSETS.upload(file,{type:'image/jpeg'});
+      // Nummer erst jetzt vergeben (andere Uploads zum selben To-Do könnten parallel laufen)
+      k=Math.max(k,tfFiles(task.id).length)+1; const name=(String(task.title||'To-Do').replace(/[\\/:*?"<>|]+/g,' ').trim().slice(0,70)||'To-Do')+' – Foto '+k+'.jpg';
+      if(put('files',{id:uid(),name,mime:'image/jpeg',size:file.size,asset:r.id,kind:'foto',pid:task.pid||'',tid:task.id,date:TODAY(),at:new Date().toISOString(),note:'Foto zum To-Do „'+String(task.title||'').slice(0,120)+'“'})!==false) n++; }catch(e){ toast('Ein Foto konnte nicht hochgeladen werden.'); } } }
+  finally{ busy(-1,'tfph'); }
+  if(n) toast(n+' Foto'+(n>1?'s':'')+' am To-Do gespeichert.'); return n; }
+document.addEventListener('change',async e=>{ const el=e.target; if(!el||el.id!=='tf_in') return; const fl=[...(el.files||[])].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|heic|webp|gif)$/i.test(f.name||'')); el.value=''; if(!fl.length) return;
+  if(el.dataset.new){ fl.forEach(f=>TF_PEND.push({file:f,url:URL.createObjectURL(f)})); tfPaint({id:el.dataset.id},true); return; }
+  const t=S.tasks[el.dataset.id]; if(!t) return; await tfUpload(t,fl); tfPaint(t,false); });
+queueMicrotask(()=>Object.assign(A,{
+  tfPick:()=>{ const i=$('#tf_in'); if(i) i.click(); },
+  tfOpen:(d,el)=>{ if(el&&el.src) window.open(el.src,'_blank','noopener'); },
+  tfPendDel:d=>{ const p=TF_PEND.splice(+d.i,1)[0]; if(p) try{ URL.revokeObjectURL(p.url); }catch(e){} const i=$('#tf_in'); tfPaint({id:i?i.dataset.id:''},true); },
+  tfDel:(d,el)=>{ const f=S.files[d.id]; if(!f) return; const box=el.closest('.tf-th'); if(!confirm('Foto „'+(f.name||'')+'“ löschen?')) return; if(del('files',f.id)!==false&&box&&!S.files[f.id]) box.remove(); } }));
 function taskForm(t,pre){
-  const isNew=!t; t=t?clone(t):{id:uid(),done:false,prio:'normal',...(pre||{})};
+  const isNew=!t; TF_PEND=[]; t=t?clone(t):{id:uid(),done:false,prio:'normal',...(pre||{})};
   // Ohne Feinrecht „Bestehende To-Dos ändern“: nur ansehen + Updates eintragen; abhaken nur eigene, löschen nur mit Recht
   const ro=!isNew&&!!ME&&!isAdmin()&&!can('t_edit'), mayDone=!ro||(taskHas(t,ME)&&can('t_done'));
-  if(ro) setTimeout(()=>{ document.querySelectorAll('.sheet input, .sheet select, .sheet textarea').forEach(el=>{ if(!el.closest('.tu-box')) el.disabled=true; }); document.querySelectorAll('.sheet [data-act="wvQuick"], .sheet [data-act="whoMore"]').forEach(b=>b.disabled=true); },40);
+  if(ro) setTimeout(()=>{ document.querySelectorAll('.sheet input, .sheet select, .sheet textarea').forEach(el=>{ if(!el.closest('.tu-box')&&!el.closest('#tf_wrap')) el.disabled=true; }); document.querySelectorAll('.sheet [data-act="wvQuick"], .sheet [data-act="whoMore"]').forEach(b=>b.disabled=true); },40);
   openSheet({title:isNew?'Neues To-Do':ro?'To-Do (nur Updates eintragen)':'To-Do bearbeiten',value:t,fields:[
     {k:'title',label:'To-Do',req:1,full:1},{k:'who',label:'Zuständig bei uns (verfolgt das To-Do)',list:'staffList'},{k:'who2x',label:'',type:'html',html:whoMoreHtml(t)},{k:'due',label:'Fällig am',type:'date'},
     {k:'wv',label:'Wiedervorlage am',type:'date'},{k:'wvq',label:'Schnell',type:'html',html:wvQuickHtml()},{k:'wvNote',label:'Woran erinnern? (Wiedervorlage)',ph:'z. B. nachfassen, ob Angebot angekommen ist',full:1},
     {k:'ext',label:'Liegt extern bei (Firma / Person)',ph:'leer = intern, z. B. Westnetz, Gerüstbauer, Kunde'},
-    {k:'pid',label:'Projekt',type:'select',options:projOpts()},{k:'prio',label:'Dringlichkeit',type:'select',options:Object.entries(PRIO).map(([k,v])=>[k,v[0]])},{k:'notes',label:'Notiz',type:'textarea'},
+    {k:'pid',label:'Projekt',type:'select',options:projOpts()},{k:'prio',label:'Dringlichkeit',type:'select',options:Object.entries(PRIO).map(([k,v])=>[k,v[0]])},{k:'notes',label:'Notiz',type:'textarea'},{k:'photos',label:'Fotos',type:'html',full:1,html:tfPhotosHtml(t,isNew)},
     ...((t.from&&S.tasks[t.from])||(!isNew&&taskKids(t.id).length)?[{k:'linkx',label:'Verknüpfte To-Dos',type:'html',full:1,html:taskLinksHtml(t)}]:[]),
     ...(isNew?[]:[{k:'updbox',label:'Updates mit Datum',type:'html',html:taskUpdHtml(t)}])],
     extraBtn:isNew?'':(t.done||!mayDone?'':`<button type="button" class="btn ok-btn" data-act="taskDoneNow" data-id="${t.id}" title="To-Do als erledigt abhaken">✓ Erledigt</button>`)+(ME?`<button type="button" class="btn" data-act="taskChat" data-id="${t.id}" title="Über dieses To-Do chatten – Person auswählen">💬 Chat</button>`:'')+`<button type="button" class="btn" data-act="taskFollow" data-id="${t.id}" title="Neues To-Do, das mit diesem verknüpft ist (Änderungen hier vorher speichern)">${ic('plus')}Folge-To-Do</button>`+(SAMPLE?`<button type="button" class="btn sun" data-act="taskAi" data-id="${t.id}" title="Fertige E-Mail, Telefonnummer mit Gesprächsleitfaden oder Lösungsweg">✨ KI-Vorschlag</button>`:''),
-    onSave:v=>{ if(ro) return; delete v.updbox; delete v.wvq; delete v.who2x; delete v.linkx; t._wvForm=1; { const ex=[...document.querySelectorAll('#who_more .who2-in')].map(e=>e.value.trim()).filter(Boolean); if(!v.who&&ex.length) v.who=ex.shift(); const w2=[...new Set(ex.filter(n=>n!==v.who))].slice(0,2); if(w2.length) v.who2=w2; else { delete v.who2; delete t.who2; } } if(v.wv!==t.wv) delete t.wvShown; if(!v.wv) delete v.wvNote; Object.assign(t,v); const cur=S.tasks[t.id]; if(cur&&cur.upd2) t.upd2=cur.upd2; put('tasks',t); toast(isNew?'To-Do angelegt.':'Gespeichert.'); },
+    onSave:v=>{ delete v.photos; if(ro) return; delete v.updbox; delete v.wvq; delete v.who2x; delete v.linkx; t._wvForm=1; { const ex=[...document.querySelectorAll('#who_more .who2-in')].map(e=>e.value.trim()).filter(Boolean); if(!v.who&&ex.length) v.who=ex.shift(); const w2=[...new Set(ex.filter(n=>n!==v.who))].slice(0,2); if(w2.length) v.who2=w2; else { delete v.who2; delete t.who2; } } if(v.wv!==t.wv) delete t.wvShown; if(!v.wv) delete v.wvNote; Object.assign(t,v); const cur=S.tasks[t.id]; if(cur&&cur.upd2) t.upd2=cur.upd2; if(put('tasks',t)===false) return; toast(isNew?'To-Do angelegt.':'Gespeichert.'); if(isNew&&TF_PEND.length){ const pend=TF_PEND.map(p=>p.file); TF_PEND=[]; setTimeout(()=>tfUpload(S.tasks[t.id]||t,pend),50); } },
     onDelete:isNew||(ME&&!isAdmin()&&!can('t_del'))?null:()=>{ del('tasks',t.id); closeSheet(); }});
 }
 /* ---------- Termin → To-Dos für Mitarbeiter (z. B. „Kamil Bescheid sagen“) ---------- */
