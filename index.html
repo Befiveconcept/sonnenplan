@@ -3862,7 +3862,7 @@ function vDash(){
     return `<div class="dl-row ${due?'due':''}" data-act="editOrder" data-id="${o.id}"><div class="dl-date"><b>${o.delivery?esc(fmtD(o.delivery).slice(3,9)):'–'}</b><span>${o.delivery?esc(relDay(o.delivery)):'ohne Termin'}</span></div>
       <div style="min-width:0"><div class="tt">${esc(o.supplier||'Lieferant')}</div><div class="small muted">${esc(projName(o.pid)||'ohne Projekt')} · ${(o.items||[]).length} Pos.</div></div>
       ${due?`<button class="btn sun sm" data-act="dlvYes" data-id="${o.id}">Angekommen?</button>`:`<span class="pill ${st.cls}">${esc(st.k)}</span>`}</div>`; };
-  return dashHero(t)+briefDashStrip()+hrDashStrip()+(ordApprover()?ordApprBanner():'')+gsearchBox()+`<div class="dash-pair">${pinboardHtml()}${nfCardHtml()}</div>`+`<div class="dash-grid dash-2">
+  return dashHero(t)+briefDashStrip()+hrDashStrip()+fristDashStrip()+(ordApprover()?ordApprBanner():'')+gsearchBox()+`<div class="dash-pair">${pinboardHtml()}${nfCardHtml()}</div>`+`<div class="dash-grid dash-2">
     <section class="card dash-todo"><div class="card-h"><h2>Meine offenen To-Dos <span class="cnt-b">${my.length}</span></h2>${myLate?`<span class="pill bad">${myLate} überfällig</span>`:''}<button class="btn ghost sm" data-act="myTasks">Alle</button></div>
       ${ME?(my.length?`<div class="td-tiles">${my.slice(0,10).map(tile).join('')}</div>`:'<div class="empty"><b>Alles erledigt</b>Du hast keine offenen To-Dos.</div>')+(my.length>10?`<button class="btn ghost sm more-b" data-act="myTasks">+ ${my.length-10} weitere anzeigen</button>`:''):'<div class="empty">Unten links „Wer bist du?“ wählen, dann erscheinen hier deine To-Dos.</div>'}</section>
     <section class="card dash-dl"><div class="card-h"><h2>Offene Lieferungen <span class="cnt-b">${dl.length}</span></h2><button class="btn ghost sm" data-act="nav" data-v="orders">Alle</button></div>
@@ -4809,7 +4809,7 @@ function vTodos(){  const t=TODAY(), who=UI.todoWho;
   const groups=[['Überfällig',x=>x.due&&x.due<t],['Heute',x=>x.due===t],['Diese Woche',x=>x.due>t&&x.due<=addDays(t,7)],['Später',x=>x.due>addDays(t,7)],['Ohne Datum',x=>!x.due]];
   const people=(()=>{ const seen=new Set(); return [...staff().map(s=>s.name),...arr('tasks').filter(x=>!x.done).map(x=>x.who).filter(Boolean)].map(whoCanon).filter(n=>{ const k=shortWho(n).toLowerCase(); if(seen.has(k)) return false; seen.add(k); return true; }); })();
   const byPerson = people.map(n=>[n,arr('tasks').filter(x=>!x.done&&taskHas(x,n)).length]);
-  const modeSw=`<div class="seg-mode light">${[['liste','Liste'],['board','Nach Mitarbeiter']].map(([k,l])=>`<button class="${(UI.todoMode||'liste')===k?'on':''}" data-act="todoMode" data-v="${k}">${l}</button>`).join('')}</div><button class="btn ${UI.bulk?'pri':''}" data-act="bulkOn" title="To-Dos markieren und gemeinsam bearbeiten">${UI.bulk?'Mehrfachauswahl beenden':'☑ Mehrere bearbeiten'}</button>`;
+  const modeSw=`<div class="seg-mode light">${[['liste','Liste'],['board','Nach Mitarbeiter']].map(([k,l])=>`<button class="${(UI.todoMode||'liste')===k?'on':''}" data-act="todoMode" data-v="${k}">${l}</button>`).join('')}</div><button class="btn ${UI.bulk?'pri':''}" data-act="bulkOn" title="To-Dos markieren und gemeinsam bearbeiten">${UI.bulk?'Mehrfachauswahl beenden':'☑ Mehrere bearbeiten'}</button><button class="btn" data-act="fristShow" title="Gesetzliche und interne Fristen aller Projekte">⏰ Fristen</button>`;
   if(UI.todoMode==='board'){
     const cols=[...staffUniq().map(s=>s.name),'']; const all=arr('tasks').filter(x=>(UI.todoShowDone||!x.done)&&!(x.pool&&!x.who)); VIS_TASKS=all.filter(x=>!x.done).map(x=>x.id);
     return head('To-Dos', arr('tasks').filter(x=>!x.done).length+' offen · To-Do auf eine Person ziehen, um sie neu zuzuweisen', modeSw)+
@@ -5408,6 +5408,86 @@ function wvRemind(force){ const due=wvDue(null,true); if(!due.length){ if(force)
   openSheet({title:'🔔 Wiedervorlage',wide:1,html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">Diese To-Dos hast du dir für heute (oder früher) wieder vorgelegt:</div><div id="wv_list">${due.map(wvRow).join('')}</div></div>`,saveLabel:'Schließen',onSave:()=>{}}); }
 function wvUpd(id,fn,msg){ const t=clone(S.tasks[id]); if(!t) return; fn(t); put('tasks',t); if(msg) toast(msg); const l=$('#wv_list'); if(l){ const due=wvDue(null,true); l.innerHTML=due.map(wvRow).join('')||'<div class="small muted">Alles erledigt. 👍</div>'; } }
 const WV_T=setInterval(()=>{ if(!ME||!LIVE_READY.tasks&&MODE==='cloud') return; if(MODE==='init') return; clearInterval(WV_T); setTimeout(()=>wvRemind(),4000); },1500);
+
+/* ========== Fristen-Wächter: gesetzliche und interne Fristen aus den Projekt-Statusschritten ==========
+   Grundlage ist das Datum eines erreichten Schritts (p.ms.mNN, z. B. Inbetriebnahme = m33). Erledigt, sobald der Folgeschritt gesetzt/„entfällt“ ist
+   oder das dazu angelegte To-Do abgehakt wurde. Kurz vor Fälligkeit legt ein Admin-Gerät GENAU EIN To-Do an (feste ID je Projekt + Frist + Termin).
+   fin: Zahlungs-Fristen nur für Finanzen-Berechtigte (JP, AvE, EP). Regeln (an/aus, Tage, Vorlauf, zuständig) stellen Admins ein (config.fristen). */
+const FRIST_RULES=[
+ {k:'mastr',n:'Marktstammdatenregister',from:33,dn:34,per:{m:1},lead:21,law:1,t:'Anlage im Marktstammdatenregister eintragen',info:'Gesetzliche Frist: Registrierung im Marktstammdatenregister spätestens 1 Monat nach Inbetriebnahme (MaStRV). Sonst drohen Kürzung der Einspeisevergütung und Bußgeld.'},
+ {k:'evu',n:'Fertigmeldung Netzbetreiber',from:33,chk:'j4',per:{d:14},lead:7,t:'Inbetriebnahme-Unterlagen / Fertigmeldung an den Netzbetreiber schicken',info:'Interne Frist: zügig nach der Inbetriebnahme, damit der Zähler gesetzt und die Vergütung gezahlt wird.'},
+ {k:'netz',n:'Netzanschlusszusage',from:8,dn:58,chk:'e3',per:{d:56},lead:0,law:1,t:'Beim Netzbetreiber wegen der Netzanschlusszusage nachhaken',info:'EEG: Der Netzbetreiber muss auf ein vollständiges Netzanschlussbegehren spätestens nach 8 Wochen einen Zeitplan und die nötigen Informationen liefern.'},
+ {k:'zaehler',n:'Zählersetzung',from:21,dn:27,per:{d:28},lead:0,t:'Beim Netzbetreiber wegen der Zählersetzung nachhaken',info:'Interne Frist: 4 Wochen nach dem Zählerantrag.'},
+ {k:'srech',n:'Schlussrechnung stellen',from:23,dn:24,per:{d:7},lead:3,fin:1,t:'Schlussrechnung stellen',info:'Interne Frist: 1 Woche nach der Bau-Fertigstellung.'},
+ {k:'szahl',n:'Zahlung Schlussrechnung',from:24,dn:25,per:{d:14},lead:0,fin:1,t:'Zahlungseingang der Schlussrechnung prüfen (ggf. mahnen)',info:'Zahlungsziel (einstellbar).'},
+ {k:'anz',n:'Zahlung Anzahlung',from:9,dn:10,per:{d:14},lead:0,fin:1,t:'Zahlungseingang der Anzahlung prüfen (ggf. mahnen)',info:'Zahlungsziel (einstellbar).'},
+ {k:'wart',n:'Jährliche Wartung',from:33,need:29,yearly:1,lead:30,t:'Jährliche Wartung terminieren',info:'Wartungsvertrag abgeschlossen: Wartung jedes Jahr zum Jahrestag der Inbetriebnahme.'},
+ {k:'gew',n:'Ende der Gewährleistung',from:23,per:{y:5},lead:60,t:'Gewährleistung endet bald – Anlage prüfen / Begehung anbieten',info:'Annahme: 5 Jahre ab Bau-Fertigstellung (BGB, Arbeiten an einem Bauwerk). Bitte mit dem jeweiligen Vertrag abgleichen.'},
+];
+const msOn=(p,n)=>!!((p.ms||{})['m'+n])||!!((p.skip||{})['m'+n]);
+const msDate=(p,n)=>{ const v=(p.ms||{})['m'+n]; return /^\d{4}-\d{2}-\d{2}$/.test(v||'')?v:''; };
+// Monate/Jahre ohne Überlauf (31.01. + 1 Monat = 28./29.02.)
+function addPer(d,o){ const z=new Date(d+'T12:00'), y=z.getFullYear()+(o.y||0), m=z.getMonth()+(o.m||0), last=new Date(y,m+1,0,12).getDate(); const r=new Date(y,m,Math.min(z.getDate(),last),12); r.setDate(r.getDate()+(o.d||0)); return r.getFullYear()+'-'+String(r.getMonth()+1).padStart(2,'0')+'-'+String(r.getDate()).padStart(2,'0'); }
+const perTxt=o=>o.y?o.y+' Jahre':o.m?o.m+' Monat'+(o.m>1?'e':''):o.d%7===0&&o.d>=14?(o.d/7)+' Wochen':o.d+' Tage';
+const frCfgAll=()=>((S.config||{}).fristen)||{};
+function frCfg(r){ const c=frCfgAll()[r.k]||{}; const per=r.per&&r.per.d!=null&&c.days!=null&&+c.days>0?{d:+c.days}:r.per; return {on:c.on!==false,lead:c.lead!=null&&c.lead!==''?Math.max(0,+c.lead):r.lead,who:c.who||'',per}; }
+const frId=(pid,k,due)=>'fr-'+strHash(pid+'|'+k+'|'+due).replace(/[^0-9a-z]/gi,'').slice(0,14)+'-'+due.replace(/-/g,'');
+const frWho=(r,p,c)=>{ if(c.who) return c.who; if(!r.fin&&p.pl) return p.pl; return r.fin?(finOk()?ME:''):(ME||''); };
+// Alle Fristen berechnen (auch erledigte, für die Übersicht)
+function fristList(){ const t=TODAY(), out=[];
+  arr('projects').forEach(p=>{ if(!p||p.example||isIntern(p)||catOf(p)==='abgesagt') return; const old=catOf(p)==='erledigt';
+    FRIST_RULES.forEach(r=>{ const c=frCfg(r); if(!c.on) return; if(r.fin&&!finOk()) return; if(old&&!['wart','gew','mastr'].includes(r.k)) return;
+      const base=msDate(p,r.from); if(!base) return; if(r.need&&!msOn(p,r.need)) return;
+      let due; if(r.yearly){ let y=1; while(addPer(base,{y})<addDays(t,-60)) y++; due=addPer(base,{y}); } else due=addPer(base,c.per);
+      if(old&&!r.yearly&&due<addDays(t,-30)) return; // abgeschlossene Projekte: längst vergangene Fristen nicht mehr anzeigen
+      const id=frId(p.id,r.k,due), tk=S.tasks&&S.tasks[id];
+      const done=(!r.yearly&&((r.dn&&msOn(p,r.dn))||(r.chk&&isChecked(p,r.chk))))||!!(tk&&tk.done);
+      const st=done?'ok':due<t?'over':addDays(due,-c.lead)<=t?'soon':'later';
+      out.push({p,r,c,base,due,id,tk,st}); }); });
+  return out.sort((a,b)=>a.due.localeCompare(b.due)); }
+const frMine=x=>isAdmin()||briefIsMe(x.p.pl)||(x.tk&&taskHas(x.tk,ME));
+// To-Dos automatisch anlegen: nur Admin-Geräte, nur bald fällige / frisch überfällige (nicht rückwirkend für Altprojekte), nie doppelt
+let FR_RUN=0;
+function fristAuto(){ if(!ME||!isAdmin()||!mayWrite('tasks')||Date.now()-FR_RUN<60000) return; FR_RUN=Date.now();
+  let cfg=frCfgAll(), start=cfg._start; if(!start){ start=TODAY(); if(isBaseAdmin()) putConfig({...(S.config||{}),fristen:{...cfg,_start:start}}); }
+  let n=0; fristList().filter(x=>(x.st==='soon'||x.st==='over')&&!x.tk&&x.due>=addDays(start,-14)).forEach(x=>{ if(n>=25) return;
+    const who=frWho(x.r,x.p,x.c), t={id:x.id,title:x.r.t,pid:x.p.id,done:false,prio:x.st==='over'||x.r.law?'hoch':'normal',due:x.due,src:'frist',frist:x.r.k,created:TODAY(),by:meK(),
+      notes:'⏰ Fristen-Wächter: '+x.r.n+' – fällig am '+fmtD(x.due)+'.\n'+x.r.info+'\nGrundlage: „'+PIPE[x.r.from-1]+'“ am '+fmtD(x.base)+'.'};
+    if(who) t.who=who; if(dupTask(t)) return; if(put('tasks',t)!==false) n++; });
+  if(n) toast('⏰ Fristen-Wächter: '+n+' neue'+(n>1?' To-Dos':'s To-Do')+' angelegt.'); }
+const FR_T=setInterval(()=>{ if(!ME||MODE==='init'||(MODE==='cloud'&&!(LIVE_READY.tasks&&LIVE_READY.projects&&S.config))) return; clearInterval(FR_T); setTimeout(fristAuto,6000); },2000);
+setInterval(()=>{ try{ fristAuto(); }catch(e){} },30*60000);
+const FR_ST={over:['überfällig','bad'],soon:['bald fällig','warn'],later:['später',''],ok:['erledigt','ok']};
+function fristDashStrip(){ if(!ME) return ''; const l=fristList().filter(x=>(x.st==='over'||x.st==='soon')&&frMine(x)); if(!l.length) return ''; const ov=l.filter(x=>x.st==='over').length;
+  return `<div class="hr-strip fr-strip"><b>⏰ ${l.length} Frist${l.length>1?'en':''} ${ov?'– '+ov+' überfällig':'bald fällig'}</b><span class="small muted">${esc(l.slice(0,2).map(x=>x.r.n+' · '+x.p.name).join(' · '))}${l.length>2?' …':''}</span><span class="spacer"></span><button class="btn sun sm" data-act="fristShow">Ansehen</button></div>`; }
+function fristSheet(){ const all=fristList().filter(frMine), t=TODAY(), soon=addDays(t,90);
+  const row=x=>`<tr class="${x.st==='over'?'low':''}"><td><b>${esc(x.r.n)}</b>${x.r.law?' <span class="pill">Gesetz</span>':''}${x.r.fin?' <span class="pill">Finanzen</span>':''}<div class="small muted">${esc(x.r.t)}</div></td>
+    <td><button type="button" class="linkish" data-act="openProject" data-id="${x.p.id}">${esc(x.p.name)}</button>${x.p.pl?`<div class="small muted">PL ${esc(shortWho(x.p.pl))}</div>`:''}</td>
+    <td style="white-space:nowrap"><b>${esc(fmtD(x.due))}</b><div class="small muted">${esc(relDay(x.due))}</div></td><td><span class="pill ${FR_ST[x.st][1]}">${FR_ST[x.st][0]}</span></td>
+    <td class="small">${esc(PIPE[x.r.from-1])}<br>${esc(fmtD(x.base))}</td>
+    <td style="white-space:nowrap">${x.tk?`<button type="button" class="btn sm" data-act="editTask" data-id="${x.tk.id}">To-Do</button>`:x.st!=='ok'&&mayWrite('tasks')?`<button type="button" class="btn sm" data-act="fristTask" data-id="${x.id}">+ To-Do</button>`:''}${x.st!=='ok'&&x.r.dn&&mayWrite('projects')?` <button type="button" class="btn sm sun" data-act="fristDone" data-id="${x.id}" title="Schritt „${esc(PIPE[x.r.dn-1])}“ mit heutigem Datum setzen">✓ Erledigt</button>`:''}</td></tr>`;
+  const grp=(l,h)=>l.length?`<div class="sec-t" style="margin:12px 0 6px">${h} · ${l.length}</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Frist</th><th>Projekt</th><th>Fällig</th><th>Stand</th><th>Grundlage</th><th></th></tr></thead><tbody>${l.map(row).join('')}</tbody></table></div>`:'';
+  const ov=all.filter(x=>x.st==='over'), so=all.filter(x=>x.st==='soon'), la=all.filter(x=>x.st==='later'&&x.due<=soon), ok=all.filter(x=>x.st==='ok'&&x.due>=addDays(t,-60));
+  openSheet({title:'⏰ Fristen-Wächter',wide:1,html:`<div class="fld full"><div class="small muted">Die Fristen ergeben sich aus den Daten der Statusschritte im Projekt (z. B. Inbetriebnahme am …). Kurz vor Fälligkeit wird automatisch ein To-Do angelegt – an die Projektleitung bzw. die eingestellte Person. Fehlt ein Datum am Statusschritt, kann keine Frist berechnet werden.</div>
+    ${grp(ov,'🔴 Überfällig')}${grp(so,'🟡 Bald fällig')}${grp(la,'Nächste 90 Tage')}${grp(ok,'✓ Kürzlich erledigt')}${!(ov.length+so.length+la.length+ok.length)?'<div class="empty" style="margin-top:12px">Gerade keine Fristen.</div>':''}</div>`,
+    saveLabel:'Schließen',onSave:()=>{},extraBtn:isAdmin()?'<button type="button" class="btn" data-act="fristCfg">⚙ Regeln einstellen</button>':''}); }
+function fristCfgSheet(){ if(!isAdmin()) return; const st=staff().filter(s=>!(s.exit&&s.exit<TODAY()));
+  openSheet({title:'Fristen-Wächter: Regeln',wide:1,html:`<div class="fld full"><div class="small muted">Gesetzliche Fristen (MaStR, EEG) bitte nur anpassen, wenn sich die Rechtslage ändert. „Vorlauf“ = so viele Tage vor Fälligkeit kommt das To-Do.</div>
+    <div class="tbl-wrap" style="margin-top:8px"><table class="tbl"><thead><tr><th>An</th><th>Frist</th><th>Dauer</th><th>Vorlauf (Tage)</th><th>Zuständig</th></tr></thead><tbody>${FRIST_RULES.map(r=>{ const c=frCfg(r), raw=frCfgAll()[r.k]||{};
+      return `<tr><td><input type="checkbox" class="ck fr-on" data-k="${r.k}" ${c.on?'checked':''} aria-label="${esc(r.n)} aktiv"></td><td><b>${esc(r.n)}</b>${r.law?' <span class="pill">Gesetz</span>':''}${r.fin?' <span class="pill">Finanzen</span>':''}<div class="small muted">ab „${esc(PIPE[r.from-1])}“${r.yearly?', jährlich':''}</div></td>
+        <td>${r.per&&r.per.d!=null?`<input class="inp fr-days" type="number" min="1" style="width:76px" data-k="${r.k}" value="${esc(c.per.d)}"> Tage`:esc(r.yearly?'jedes Jahr':perTxt(r.per))}</td>
+        <td><input class="inp fr-lead" type="number" min="0" style="width:76px" data-k="${r.k}" value="${esc(c.lead)}"></td>
+        <td><select class="inp fr-who" data-k="${r.k}"><option value="">${r.fin?'– wer den Wächter ausführt (Admin) –':'Projektleitung des Projekts'}</option>${st.map(s=>`<option value="${esc(s.name)}" ${raw.who===s.name?'selected':''}>${esc(s.name)}</option>`).join('')}</select></td></tr>`; }).join('')}</tbody></table></div></div>`,saveLabel:'Speichern',
+    onSave:()=>{ const cur=frCfgAll(), nx={...cur}; FRIST_RULES.forEach(r=>{ const g=c=>document.querySelector(`.${c}[data-k="${r.k}"]`); const o={...(cur[r.k]||{})};
+        o.on=g('fr-on').checked; const dl=g('fr-days'); if(dl){ const v=+dl.value; if(v>0&&v!==r.per.d) o.days=v; else delete o.days; } const ld=+g('fr-lead').value; if(ld>=0&&ld!==r.lead) o.lead=ld; else delete o.lead; const w=g('fr-who').value; if(w) o.who=w; else delete o.who; nx[r.k]=o; });
+      putConfig({...(S.config||{}),fristen:nx}); toast('Fristen-Regeln gespeichert.'); setTimeout(fristSheet,80); }}); }
+queueMicrotask(()=>Object.assign(A,{
+  fristShow:()=>fristSheet(), fristCfg:()=>{ closeSheet(); fristCfgSheet(); },
+  fristTask:d=>{ const x=fristList().find(y=>y.id===d.id); if(!x) return; if(S.tasks[x.id]) return toast('Das To-Do gibt es schon.'); const who=frWho(x.r,x.p,x.c);
+    const t={id:x.id,title:x.r.t,pid:x.p.id,done:false,prio:x.st==='over'||x.r.law?'hoch':'normal',due:x.due,src:'frist',frist:x.r.k,created:TODAY(),by:meK(),notes:'⏰ Fristen-Wächter: '+x.r.n+' – fällig am '+fmtD(x.due)+'.\n'+x.r.info+'\nGrundlage: „'+PIPE[x.r.from-1]+'“ am '+fmtD(x.base)+'.'}; if(who) t.who=who;
+    if(put('tasks',t)!==false){ toast('To-Do angelegt.'); setTimeout(fristSheet,80); } },
+  fristDone:d=>{ const x=fristList().find(y=>y.id===d.id); if(!x||!x.r.dn) return; const p=clone(S.projects[x.p.id]); if(!p) return; p.ms={...(p.ms||{}),['m'+x.r.dn]:TODAY()};
+    if(put('projects',p)===false) return; const tk=S.tasks[x.id]; if(tk&&!tk.done){ const n=clone(tk); n.done=true; n.doneAt=new Date().toISOString(); put('tasks',n); } toast('„'+PIPE[x.r.dn-1]+'“ gesetzt.'); setTimeout(fristSheet,80); } }));
 queueMicrotask(()=>{ Object.assign(A,{ /* A wird weiter unten angelegt */
   wvQuick:d=>{ const e=$('#f_wv'); if(e) e.value=d.k?wvDate(d.k):''; },
   wvShow:()=>wvRemind(true),
