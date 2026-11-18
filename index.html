@@ -691,6 +691,7 @@ body.ro-pedit [data-act="editProject"],body.ro-pedit [data-act="dySumEdit"],body
 body.kiosk .side,body.kiosk #mtop,body.kiosk #nfStrip,body.kiosk .tabbar,body.kiosk .aic-fab,body.kiosk .aic,body.kiosk .big-nav{display:none!important}
 body.kiosk .app{display:block}body.kiosk .main{padding:0}body.kiosk .wrap{max-width:1100px;margin:0 auto}
 .ks{padding:14px 16px 30px}.ks-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.lv-ph{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.lv-ph img{max-height:120px;max-width:180px;border-radius:10px;border:1px solid var(--line);object-fit:cover}
 .ks-tabs{display:flex;gap:6px;flex-wrap:wrap}.ks-tabs button{border:1px solid var(--line);background:var(--surface);color:inherit;border-radius:999px;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer;min-height:44px}.ks-tabs button.on{background:var(--sun);border-color:var(--sun);color:#111}
 .ks-ro{background:var(--sun-soft);border-radius:10px;padding:10px 14px;margin:0 0 12px;color:#111}
 body.kiosk .wrap:has(.ks-wide){max-width:none}.ks-wide{padding-left:20px;padding-right:20px}.ks-logo{height:44px;background:#fff;border-radius:8px;padding:2px 6px}.ks-t{font-size:22px}
@@ -7262,7 +7263,7 @@ function vStockList(st,q,low,sw){
   const binCell=s=>{ if(!on) return esc(s.loc||''); const b=binsOf(s).sort((x,y)=>y[1]-x[1]), u=unassigned(s);
     return b.slice(0,3).map(([x,qq])=>`<button type="button" class="lg-chip" data-act="lgBin" data-id="${x}" title="${esc(lgLabel(x))}">${esc(lgCode(x))} <b>${qn(+qq)}</b></button>`).join('')+(b.length>3?`<button type="button" class="lg-chip" data-act="stockHist" data-id="${s.id}">+${b.length-3}</button>`:'')+(u>0?`<span class="lg-chip un" title="Noch keinem Lagerplatz zugeordnet">⚠ ${qn(u)} ohne Platz${s.loc?' · '+esc(s.loc):''}</span>`:'')+(u<0?'<span class="pill bad">prüfen</span>':''); };
   const w=mayWrite('stock');
-  return head('Lagerverwaltung',st.length+' Artikel'+(low?' · '+low+' unter Mindestbestand':''),lgHeadBtns()+(w?`<button class="btn" data-act="stockNew">${ic('plus')}Lagerartikel</button>`:''))+sw+
+  return head('Lagerverwaltung',st.length+' Artikel'+(low?' · '+low+' unter Mindestbestand':''),lgHeadBtns()+(w&&SAMPLE?`<button class="btn sun" data-act="lgVoice" title="Foto machen und sagen, wie viel und wohin">🎙 Per Sprache</button>`:'')+(w?`<button class="btn" data-act="stockNew">${ic('plus')}Lagerartikel</button>`:''))+sw+
    `<div class="card"><div class="card-h"><input class="inp" type="search" style="flex:1" placeholder="Artikel, Art.-Nr., Lagerplatz oder Firma suchen" value="${esc(UI.sq||'')}" data-chg="stockQ" aria-label="Suchen"></div>${chips}
     ${list.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Artikel</th><th>Firma</th><th>Art.-Nr.</th><th style="text-align:right">Gesamt</th><th>${on?'Lagerplätze':'Lagerort'}</th><th></th></tr></thead><tbody>${list.map(s=>{ const lw=s.min&&(+s.qty||0)<=s.min;
       return `<tr class="${lw?'low':''}"><td><button class="linkish" data-act="stockHist" data-id="${s.id}">${esc(s.art)}</button></td><td><span class="pill firm-pill" title="${esc(firmOf(s))}">${esc(firmShort(firmOf(s)))}</span></td><td class="mono small">${esc(s.artNr||'')}</td><td style="text-align:right;white-space:nowrap"><b>${qn(s.qty)}</b> ${esc(s.unit||'')}${lw?' <span class="pill bad">min. '+qn(s.min)+'</span>':''}</td><td class="lg-cell">${binCell(s)}</td>
@@ -9864,6 +9865,90 @@ Antworte nur mit JSON: {"match":"","cands":[],"read":{"art":"Hersteller + Bezeic
     <div class="small muted" style="margin-top:10px">„Neu anlegen“ öffnet das Formular mit den gelesenen Angaben – bitte kurz prüfen, Menge als Anfangsbestand und den Lagerplatz eintragen.</div></div>`,saveLabel:'Schließen',onSave:()=>{},
     extraBtn:`<button type="button" class="btn sun" data-act="kNewRead">+ Neu anlegen & einbuchen</button>`}); }
 let K_NEW=null;
+/* ========== Lager per Sprache: optional Foto vom Artikel + sagen, wie viel und wohin.
+   Claude ordnet zu (neu / Zugang / Entnahme / Umlagern, Artikel, Platz, Projekt) und öffnet das passende Formular vorausgefüllt.
+   Gebucht wird erst mit dem Klick im Formular – nichts wird automatisch gespeichert. ========== */
+let LV_REC=null, LV_IMG=null, LV_LAST=null;
+function lvStop(){ const x=LV_REC; LV_REC=null; try{ x&&x.stop(); }catch(e){} }
+function lgVoice(){
+  if(!SAMPLE) return toast('Die Spracheingabe im Lager braucht die KI – geht nur in der Online-App.');
+  if(!mayWrite('stock')) return toast('Keine Berechtigung für Lagerbuchungen.');
+  if(MEET_ON) return toast('Während einer Meeting-Mitschrift ist das Mikrofon belegt.');
+  closeSheet(); lvStop(); LV_IMG=null; let fin='';
+  openSheet({title:'🎙 Lager per Sprache',wide:1,html:`<div class="fld full"><div class="lv-ph"><button type="button" class="btn" data-act="lvPhoto">📷 Foto vom Artikel (optional)</button><img id="lv_img" alt="Foto vom Artikel" hidden><input type="file" id="lvPhotoIn" accept="image/*" capture="environment" hidden></div>
+    <div class="sv-rec" style="margin-top:10px">${SRec?'<span class="rec-dot"></span>':''}<span class="small">${SRec?'Mikrofon ist an – sag einfach, was passieren soll. ':'Dieser Browser kann nicht mitschreiben – bitte eintippen. '}Z. B. „Neuer Artikel, 12 Stück, kommt in Regal R01 Ebene 2 Platz 3“, „5 Stück davon für Apollo entnehmen“ oder „20 Meter Solarkabel von R01-E01-P01 nach R02-E01-P04 umlagern“. Mit „fertig“ wird ausgewertet.</span></div>
+    <textarea id="lv_tx" class="inp" rows="4" style="width:100%;margin-top:8px" placeholder="Hier erscheint, was du sagst – du kannst es auch korrigieren." oninput="this.dataset.edited=1"></textarea>
+    <div class="small muted" style="margin-top:6px">Danach öffnet sich das passende Formular schon ausgefüllt. Gebucht wird erst, wenn du dort bestätigst.</div></div>`,saveLabel:'Fertig – auswerten',
+    onSave:()=>{ const t=($('#lv_tx').value||'').replace(DICT_END,'').trim(); lvStop(); if(t.length<2&&!LV_IMG){ toast('Es wurde nichts erkannt.'); return false; } const img=LV_IMG; setTimeout(()=>lgVoiceEval(t,img),60); }});
+  setTimeout(()=>{ const sc=$('#scrim'); if(sc) sc.querySelectorAll('[data-act=closeSheet]').forEach(b=>b.addEventListener('click',lvStop)); },50);
+  if(!SRec) return;
+  const r=new SRec(); r.lang='de-DE'; r.continuous=true; r.interimResults=true; LV_REC=r;
+  r.onresult=e=>{ let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ const res=e.results[i]; if(res.isFinal) fin+=(fin?' ':'')+res[0].transcript.trim(); else interim+=res[0].transcript; }
+    const ta=$('#lv_tx'); if(!ta){ lvStop(); return; } const all=(fin+(interim?' '+interim:'')).trim();
+    if(DICT_END.test(all)){ if(!ta.dataset.edited) ta.value=all.replace(DICT_END,''); const b=document.querySelector('#scrim button[type=submit]'); if(b) b.click(); return; }
+    if(!ta.dataset.edited) ta.value=all; };
+  r.onerror=e=>{ if(['not-allowed','service-not-allowed'].includes(e.error)) toast('Kein Zugriff aufs Mikrofon – bitte im Browser erlauben.'); };
+  r.onend=()=>{ if(LV_REC!==r) return; if(!$('#lv_tx')){ LV_REC=null; return; } try{ r.start(); }catch(e){} }; // Fenster zu → Mikrofon aus
+  try{ r.start(); }catch(e){ LV_REC=null; toast('Mikrofon konnte nicht gestartet werden.'); }
+}
+document.addEventListener('change',async e=>{ if(e.target.id!=='lvPhotoIn') return; const f=(e.target.files||[])[0]; if(!f) return;
+  try{ LV_IMG=new Blob([await mappeToJpg(f,1600)],{type:'image/jpeg'}); const im=$('#lv_img'); if(im){ im.src=URL.createObjectURL(LV_IMG); im.hidden=false; } }catch(err){ LV_IMG=null; toast('Foto konnte nicht gelesen werden.'); } });
+async function lgVoiceEval(txt,img){
+  toast(img?'Claude schaut sich Foto und Ansage an …':'Claude wertet die Ansage aus …');
+  const on=LGON();
+  const st=arr('stock').slice(0,900).map(s=>`${s.id} | ${s.art} | ${s.artNr||''} | ${firmShort(firmOf(s))} | ${qn(s.qty)} ${s.unit||''}${on?' | '+(stockBinsShort(s)||'-'):''}`).join('\n');
+  const bins=on?lgAll().filter(lgIsBin).filter(b=>!lgOff(b)).slice(0,1500).map(b=>`${b.id} | ${lgCode(b.id)} | ${lgPlain(b.id)}${lgBlocked(b)?' | gesperrt':''}`).join('\n'):'';
+  const pr=arr('projects').filter(p=>!isIntern(p)&&catOf(p)==='laufend').slice(0,300).map(p=>`${p.id} | ${p.name}`).join('\n');
+  const prompt=`Ein Mitarbeiter im Lager eines Solar-Installationsbetriebs (nutz die Sonne GmbH: PV-Module, Wechselrichter, Speicher, Elektro- und Montagematerial) hat ${img?'ein Foto von einem Artikel gemacht und ':''}gesagt, was im Lager passieren soll.
+Gesagt (Spracherkennung, kann Hörfehler enthalten): """${String(txt||'(nichts gesagt)').slice(0,1500)}"""
+${img?'Foto: Lies Hersteller, Bezeichnung/Typ, Artikel- bzw. Typnummer und EAN vom Artikel, Etikett oder Karton.\n':''}Bestimme genau EINE Aktion:
+- "neu": Artikel steht noch nicht in unserer Liste → neu anlegen (Menge = Anfangsbestand, "bin" = wohin er kommt)
+- "zugang": vorhandener Artikel, Ware kommt dazu ("bin" = wohin)
+- "entnahme": vorhandener Artikel wird herausgenommen ("from" = von welchem Platz, "pid" = für welches Projekt, sonst Grund in "note")
+- "umlagern": vorhandener Artikel wechselt den Platz ("from" → "bin")
+"sid" = ID eines vorhandenen Artikels nur bei eindeutiger Übereinstimmung (gleiche Art.-Nr./EAN oder eindeutig gleicher Hersteller + Typ bzw. eindeutige Bezeichnung). Unsichere Treffer als "cands" (höchstens 3 IDs). Sagt der Mitarbeiter „neu“, der Artikel steht aber eindeutig schon in der Liste, nimm "zugang" mit dieser ID.
+"art"/"artNr" = Bezeichnung (Hersteller + Typ, kurz) und Art.-Nr./EAN, wie gesagt oder auf dem Foto gelesen.
+${on?'Lagerplätze: "bin"/"from" = ID aus der Platzliste. Gesprochene Codes wie „R eins E zwei P drei“, „Regal 1, Ebene 2, Platz 3“ oder Namen passend zuordnen – nur bei klarer Zuordnung, sonst "".\n':'Es gibt keine Lagerplätze; "bin" und "from" leer lassen, einen genannten Ort in "note" schreiben.\n'}"pid" nur aus der Projektliste bei klarer Nennung. Einheit "unit" nur aus: ${UNITS.join(', ')}. "firm" nur, wenn ausdrücklich genannt, aus: ${FIRMS().join(' | ')}.
+Was unklar bleibt (z. B. Menge fehlt, Platz nicht gefunden), kurz in "unklar".
+Lagerartikel (ID | Artikel | Art.-Nr. | Firma | Bestand${on?' | Plätze':''}):
+${st||'-'}
+${on?'Lagerplätze (ID | Code | Klartext):\n'+(bins||'-')+'\n':''}Laufende Projekte (ID | Name):
+${pr||'-'}
+Antworte nur mit JSON: {"act":"neu|zugang|entnahme|umlagern","sid":"","cands":[],"art":"","artNr":"","unit":"Stk","firm":"","qty":0,"bin":"","from":"","pid":"","note":"","said":"1 kurzer Satz, was du verstanden hast","unklar":""}`;
+  let r; try{ r=await SAMPLE.json(prompt,{modelTier:'default',...(img?{images:[img]}:{})}); }catch(e){ return toast(SAMPLE_ERR[e&&e.code]||'Claude nicht erreichbar.'); }
+  r=r||{}; const nz=x=>String(x||'').toLowerCase().replace(/[^0-9a-zäöü]/g,'');
+  // Platz: ID, voller Code oder eindeutiges Code-Ende (z. B. „R01-E02-P04“ ohne Standort-Kürzel)
+  const node=x=>{ if(!x) return null; const d=lgNode(String(x))||lgResolve(String(x)); if(d) return d; const k=nz(x); if(k.length<3) return null; const h=lgAll().filter(n=>lgIsBin(n)&&nz(lgCode(n.id)).endsWith(k)); return h.length===1?h[0]:null; };
+  const bn=node(r.bin), fn=node(r.from);
+  let sid=r.sid&&S.stock[r.sid]?r.sid:'';
+  if(!sid&&r.artNr){ const nr=normNr(r.artNr), h=nr&&arr('stock').filter(s=>normNr(s.artNr)===nr); if(h&&h.length===1) sid=h[0].id; }
+  let act=['neu','zugang','entnahme','umlagern'].includes(r.act)?r.act:(sid?'zugang':'neu'); if(act==='neu'&&sid) act='zugang';
+  const firm=FIRMS().find(f=>firmKey(f)===firmKey(r.firm||''))||'';
+  LV_LAST={q:r3(+r.qty||0),bin:bn&&lgIsBin(bn)?bn.id:'',from:fn&&lgIsBin(fn)?fn.id:'',pid:r.pid&&S.projects[r.pid]?r.pid:'',note:String(r.note||'').slice(0,200),
+    said:String(r.said||'').slice(0,240),unklar:String(r.unklar||'').slice(0,240),
+    init:{art:String(r.art||'').slice(0,120),artNr:String(r.artNr||'').slice(0,60),unit:UNITS.includes(r.unit)?r.unit:'Stk',...(firm?{firm}:{})}};
+  if(act!=='neu'&&!sid){ const cands=(Array.isArray(r.cands)?r.cands:[]).filter(x=>S.stock[x]).slice(0,3); LV_LAST.act=act;
+    openSheet({title:'Welcher Artikel?',wide:1,html:`<div class="fld full"><div class="hint">🎙 ${esc(LV_LAST.said||txt)}</div>
+      ${cands.length?`<div class="sec-t" style="margin:10px 0 6px">Ist es einer davon?</div>${cands.map(x=>`<button type="button" class="k-row" data-act="lvPick" data-id="${x}"><b>${esc(S.stock[x].art)}</b><span class="small muted">${esc(S.stock[x].artNr||'')} · ${qn(S.stock[x].qty)} ${esc(S.stock[x].unit||'')}</span></button>`).join('')}`:'<div class="small" style="margin-top:8px">Den Artikel habe ich im Lager nicht eindeutig gefunden.</div>'}</div>`,saveLabel:'Schließen',onSave:()=>{},
+      extraBtn:`<button type="button" class="btn sun" data-act="lvNew">+ Als neuen Artikel anlegen</button><button type="button" class="btn" data-act="lgVoice">🎙 Nochmal sprechen</button>`}); return; }
+  lvGo(act,sid); }
+function lvGo(act,sid){ const L=LV_LAST||{}, s=sid&&S.stock[sid];
+  const head='🎙 '+esc(L.said||'Verstanden')+(L.unklar?' · <b>Bitte prüfen:</b> '+esc(L.unklar):'');
+  const setV=(id,v)=>{ const el=$('#'+id); if(el&&v!==''&&v!=null){ el.value=v; el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true})); } };
+  if(act==='neu') stockForm(null,{init:{...L.init,qty:L.q||''},bin:L.bin});
+  else if(!s) return toast('Artikel nicht gefunden.');
+  else if(act==='zugang') stockInSheet(sid,L.bin);
+  else if(act==='entnahme') stockTakeSheet(sid,{n:L.q||'',pid:L.pid,...(L.from?{bin:L.from}:{})});
+  else if(act==='umlagern'){ if(!LGON()) return toast('Umlagern geht erst, wenn unter „Lagerorte & Plätze“ Lagerplätze angelegt sind.'); stockShiftSheet(sid,{...(L.from?{from:L.from}:{}),to:L.bin}); }
+  setTimeout(()=>{ const b=document.querySelector('#scrim .sheet-b'); if(b) b.insertAdjacentHTML('afterbegin',`<div class="fld full"><div class="hint">${head}</div></div>`);
+    if(act==='zugang'){ setV('in_n',L.q||''); setV('in_note',L.note); }
+    else if(act==='entnahme') setV('tk_note',L.note);
+    else if(act==='umlagern'){ setV('sh_n',L.q||''); setV('sh_note',L.note); } },90); }
+queueMicrotask(()=>Object.assign(A,{
+  lgVoice:()=>{ if(KIOSK_ON()) return kioskWho(()=>lgVoice()); lgVoice(); },
+  lvPhoto:()=>{ const f=$('#lvPhotoIn'); if(f){ f.value=''; f.click(); } },
+  lvPick:d=>{ closeSheet(); lvGo((LV_LAST||{}).act||'zugang',d.id); },
+  lvNew:()=>{ closeSheet(); lvGo('neu',''); } }));
 /* Tablet: oben umschalten zwischen großen Knöpfen und den vollen Seiten Lagerverwaltung / Bestellungen (wie am PC).
    Ansehen darf jeder am Tablet; ändern erst nach „Wer bucht?“ mit den Rechten dieser Person. */
 const K_VIEWS=[['tablet','Tablet'],['stock','Lagerverwaltung'],['orders','Bestellungen & Wareneingang']];
@@ -9887,7 +9972,7 @@ function vKiosk(){ const q=KQ.trim().toLowerCase(), c=kioskCfg()||{};
     <div class="ks-search"><input id="kqIn" class="inp" value="${esc(KQ)}" placeholder="${KMODE?esc(KM_L[KMODE])+': Artikel suchen, scannen oder Schild fotografieren …':'Artikel suchen oder Code scannen …'}" autocomplete="off" autocapitalize="off" enterkeyhint="search"><button type="button" class="btn sun" data-act="kScan">📷 Scannen</button></div>
     ${KMODE?`<div class="ks-mode">Modus: <b>${esc(KM_L[KMODE])}</b> – wähle den Artikel <button type="button" class="lnk" data-act="kMode" data-m="">abbrechen</button></div>`:''}
     ${q?`<div class="ks-res">${list.length?list.map(s=>`<div class="k-res"><button type="button" class="k-res-m" data-act="kOpen" data-id="${s.id}"><b>${esc(s.art)}</b><span class="small muted">${esc([s.artNr,firmShort(firmOf(s)),LGON()?binsOf(s).slice(0,3).map(([x])=>lgCode(x)).join(', '):s.loc].filter(Boolean).join(' · '))}</span></button><span class="k-res-q">${qn(s.qty)} <small>${esc(s.unit||'')}</small></span><button type="button" class="k-sm in" data-act="kAct" data-id="${s.id}" data-m="in" aria-label="Einbuchen">⬇</button><button type="button" class="k-sm out" data-act="kAct" data-id="${s.id}" data-m="out" aria-label="Entnehmen">⬆</button></div>`).join(''):`<div class="empty">Nichts gefunden zu „${esc(KQ)}“. <button type="button" class="btn sm" data-act="kNew" data-code="">+ Neuen Artikel anlegen</button></div>`}</div>`:
-    `<div class="ks-tiles"><button type="button" class="k-tile" data-act="kScan"><i>📷</i><b>Scannen</b><span>QR-Code am Lagerplatz oder Barcode</span></button>
+    `<div class="ks-tiles">${SAMPLE?'<button type="button" class="k-tile ai k-voice" data-act="lgVoice"><i>🎙</i><b>Foto + Sprache</b><span>z. B. „12 Stück, kommt in R01-E02-P03“ – KI füllt alles aus</span></button>':''}<button type="button" class="k-tile" data-act="kScan"><i>📷</i><b>Scannen</b><span>QR-Code am Lagerplatz oder Barcode</span></button>
       <button type="button" class="k-tile ai" data-act="kPhoto"><i>🏷️</i><b>Artikelschild fotografieren</b><span>KI prüft, ob der Artikel schon erfasst ist</span></button>
       <button type="button" class="k-tile in" data-act="kMode" data-m="in"><i>⬇</i><b>Einbuchen</b><span>Ware ins Lager</span></button>
       <button type="button" class="k-tile out" data-act="kMode" data-m="out"><i>⬆</i><b>Entnehmen</b><span>für ein Projekt / eine Baustelle</span></button>
@@ -12137,7 +12222,7 @@ window.addEventListener('beforeunload',()=>{ if(MEET_ON) meetSave(MEET_ON,true);
 
 /* ========== Diktieren in jedes Textfeld: Mikrofon-Knopf am aktiven Feld, Claude macht den Text sauber ========== */
 // Ein schwebender Knopf folgt dem Feld mit Fokus (statt in jedes Formular einen eigenen einzubauen).
-const VOICE_OK=t=>t&&(t.tagName==='TEXTAREA'||(t.tagName==='INPUT'&&['text','search',''].includes((t.getAttribute('type')||'').toLowerCase())))&&!t.readOnly&&!t.disabled&&t.id!=='mt_tx'&&t.id!=='gSearch'&&t.id!=='sv_tx'&&t.id!=='aic_tx';
+const VOICE_OK=t=>t&&(t.tagName==='TEXTAREA'||(t.tagName==='INPUT'&&['text','search',''].includes((t.getAttribute('type')||'').toLowerCase())))&&!t.readOnly&&!t.disabled&&t.id!=='mt_tx'&&t.id!=='gSearch'&&t.id!=='sv_tx'&&t.id!=='aic_tx'&&t.id!=='lv_tx';
 let VOICE_EL=null, VOICE_REC=null, VOICE_BUF='', VOICE_BASE='', VOICE_POS=0;
 const voiceBtn=(()=>{ const b=document.createElement('button'); b.type='button'; b.className='vm-btn'; b.title='Diktieren (Mikrofon)'; b.setAttribute('aria-label','Diktieren'); b.textContent='🎙'; b.hidden=true; document.body.appendChild(b); return b; })();
 function voicePlace(){ const t=VOICE_EL; if(!t||!document.body.contains(t)||!SRec){ if(!VOICE_REC) voiceBtn.hidden=true; return; }
