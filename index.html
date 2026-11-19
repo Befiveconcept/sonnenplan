@@ -2150,6 +2150,7 @@ button.link-ms:hover{color:var(--ink)}
 .l3-plate:hover .f-t,.l3-plate:focus .f-t,.l3-plate.hit .f-t{fill:#F4DB02;stroke:#111}
 .l3-hit{cursor:pointer}.l3-hit polygon{fill:transparent;stroke:none}.l3-hit:hover polygon{fill:rgba(244,219,2,.22)}
 .l3-ware.l3-box .f-t,.l3-ware.l3-load .f-t{fill:#d9a35f}.l3-ware.l3-box .f-l,.l3-ware.l3-load .f-l{fill:#c48d4c}.l3-ware.l3-box .f-r,.l3-ware.l3-load .f-r{fill:#ad7a3e}.l3-ware{cursor:pointer}.l3-ware.hit .f-t{fill:#F4DB02}
+.l3-stage{position:relative}.l3-rot{position:absolute;top:10px;right:10px;z-index:3;display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 6px;box-shadow:0 2px 8px rgba(0,0,0,.08)}.l3-rot button{width:38px;height:38px;border-radius:50%;border:0;background:transparent;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:inherit}.l3-rot button:hover{background:var(--sun);color:#111}.l3-rot svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.l3-rot span{min-width:44px;text-align:center;font-weight:600}
 .sf-ai{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.sf-ic{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:18px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}.sf-ic:hover{background:var(--sun);border-color:var(--sun)}.sf-ic.on{background:#e53935;border-color:#e53935;animation:recp 1.2s infinite}#sf_ai_t{flex:1;min-width:180px}@keyframes recp{50%{opacity:.6}}
 .rf-f{margin-bottom:12px}.rf-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.rf-n{display:flex;align-items:center;gap:8px;white-space:nowrap}.rf-n .btn{min-width:38px;font-size:18px;font-weight:700}.lg-chip.full{background:#f3e7a6}
 .l3-door .f-t{fill:#8a5a2b}.l3-door .f-l{fill:#7a4d22}.l3-door .f-r{fill:#6a421c}.l3-door.arc polygon{fill:rgba(138,90,43,.10);stroke:#8a5a2b;stroke-width:.8;stroke-dasharray:4 3}.l3-door.drag{cursor:grab;touch-action:none}.l3-door.drag:hover .f-t,.l3-door.drag:hover .f-l{fill:#F4DB02}.l3-door.def .f-l,.l3-door.def .f-t{opacity:.75}.l3-t.door-t{font-weight:700;fill:#8a5a2b;font-size:11px;pointer-events:none}
@@ -7025,13 +7026,27 @@ const l3Node=k=>lgAll().find(n=>n.v3d===k)||null;
 const L3S=24, l3c=.866;
 // Zwei Blickwinkel: Draufsicht (isometrisch, für den Keller) und Frontansicht mit etwas Tiefe (für Regale und Schränke – wie auf den Fotos)
 let L3_FRONT=false;
-const l3P=(x,y,z)=>L3_FRONT?[(x-y*.42)*L3S*1.6,(-z+y*.32)*L3S*1.6]:[(x-y)*l3c*L3S,(x+y)*.5*L3S-z*L3S];
-const l3K=(x,y,z,w,d)=>L3_FRONT?(y+d/2)*100+(x+w/2)+z*.01:x+w/2+y+d/2+z*.02;
+// Drehen der Ansicht in 90°-Schritten (nur Draufsicht): Punkte um die Raummitte drehen; Quader bleiben achsparallel (Ecken drehen, neu ordnen)
+let L3_ROT=0, L3_RC={cx:0,cy:0};
+const l3R=(x,y)=>{ if(!L3_ROT||L3_FRONT) return [x,y]; const u=x-L3_RC.cx, v=y-L3_RC.cy; return L3_ROT===1?[L3_RC.cx-v,L3_RC.cy+u]:L3_ROT===2?[L3_RC.cx-u,L3_RC.cy-v]:[L3_RC.cx+v,L3_RC.cy-u]; };
+const l3Rinv=(x,y)=>{ if(!L3_ROT||L3_FRONT) return [x,y]; const u=x-L3_RC.cx, v=y-L3_RC.cy; return L3_ROT===1?[L3_RC.cx+v,L3_RC.cy-u]:L3_ROT===2?[L3_RC.cx-u,L3_RC.cy-v]:[L3_RC.cx-v,L3_RC.cy+u]; };
+const l3RB=(x,y,w,d)=>{ if(!L3_ROT||L3_FRONT) return [x,y,w,d]; const a=l3R(x,y), b=l3R(x+w,y+d); return [Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.abs(b[0]-a[0]),Math.abs(b[1]-a[1])]; };
+const l3P0=(x,y,z)=>L3_FRONT?[(x-y*.42)*L3S*1.6,(-z+y*.32)*L3S*1.6]:[(x-y)*l3c*L3S,(x+y)*.5*L3S-z*L3S];
+const l3P=(x,y,z)=>{ const r=l3R(x,y); return l3P0(r[0],r[1],z); };
+const l3RotOf=k=>((UI.l3Rot||{})[k]||0)%4;
+const l3K0=(x,y,z,w,d)=>L3_FRONT?(y+d/2)*100+(x+w/2)+z*.01:x+w/2+y+d/2+z*.02;
+const l3K=(x,y,z,w,d)=>{ const b=l3RB(x,y,w,d); return l3K0(b[0],b[1],z,b[2],b[3]); };
 const l3pts=a=>a.map(p=>{ const q=l3P(...p); return q[0].toFixed(1)+','+q[1].toFixed(1); }).join(' ');
+const l3pts0=a=>a.map(p=>{ const q=l3P0(...p); return q[0].toFixed(1)+','+q[1].toFixed(1); }).join(' ');
 // Quader: sichtbar sind Oberseite, Seite bei großem y (links vorne) und Seite bei großem x (rechts vorne)
-function l3Box(x,y,z,w,d,h,cl,ex){ const t=[[x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h]], l=[[x,y+d,z],[x+w,y+d,z],[x+w,y+d,z+h],[x,y+d,z+h]], r=[[x+w,y,z],[x+w,y+d,z],[x+w,y+d,z+h],[x+w,y,z+h]];
-  return {k:l3K(x,y,z,w,d), b:[x,y,z,w,d,h], svg:`<g class="${cl}"${ex||''}><polygon class="f-l" points="${l3pts(l)}"/><polygon class="f-r" points="${l3pts(r)}"/><polygon class="f-t" points="${l3pts(t)}"/></g>`}; }
-function l3Flat(x,y,z,w,d,cl,ex,inner){ return {k:l3K(x,y,z,w,d)-.5, b:[x,y,z,w,d,0], svg:`<g class="${cl}"${ex||''}><polygon class="f-t" points="${l3pts([[x,y,z],[x+w,y,z],[x+w,y+d,z],[x,y+d,z]])}"/>${inner||''}</g>`}; }
+function l3Box(x0,y0,z,w0,d0,h,cl,ex){ const [x,y,w,d]=l3RB(x0,y0,w0,d0), t=[[x,y,z+h],[x+w,y,z+h],[x+w,y+d,z+h],[x,y+d,z+h]], l=[[x,y+d,z],[x+w,y+d,z],[x+w,y+d,z+h],[x,y+d,z+h]], r=[[x+w,y,z],[x+w,y+d,z],[x+w,y+d,z+h],[x+w,y,z+h]];
+  return {k:l3K0(x,y,z,w,d), b:[x0,y0,z,w0,d0,h], svg:`<g class="${cl}"${ex||''}><polygon class="f-l" points="${l3pts0(l)}"/><polygon class="f-r" points="${l3pts0(r)}"/><polygon class="f-t" points="${l3pts0(t)}"/></g>`}; }
+function l3Flat(x0,y0,z,w0,d0,cl,ex,inner){ const [x,y,w,d]=l3RB(x0,y0,w0,d0); return {k:l3K0(x,y,z,w,d)-.5, b:[x0,y0,z,w0,d0,0], svg:`<g class="${cl}"${ex||''}><polygon class="f-t" points="${l3pts0([[x,y,z],[x+w,y,z],[x+w,y+d,z],[x,y+d,z]])}"/>${inner||''}</g>`}; }
+// Raumwände immer an den beiden hinteren Seiten der aktuellen Ansicht (sonst verdecken sie nach dem Drehen alles)
+function l3Walls(x0,y0,X,Y,h,th,items,brick){ const [rx,ry,rw,rd]=l3RB(x0,y0,X,Y), save=L3_ROT; L3_ROT=0;
+  try{ items.push({...l3Box(rx,ry-th,0,rw,th,h,'l3-wall'+(brick?' brick':'')),k:-98}); items.push({...l3Box(rx-th,ry-th,0,th,rd+th,h,'l3-wall'),k:-98}); } finally{ L3_ROT=save; }
+  // Ausdehnung für den Bildausschnitt: Ecken in Original-Koordinaten zurückrechnen
+  const c=[l3Rinv(rx-th,ry-th),l3Rinv(rx+rw,ry+rd)]; items[items.length-1].b=[Math.min(c[0][0],c[1][0]),Math.min(c[0][1],c[1][1]),0,Math.abs(c[1][0]-c[0][0]),Math.abs(c[1][1]-c[0][1]),h]; items[items.length-2].b=items[items.length-1].b; }
 const l3Txt=(x,y,z,t,cl)=>{ const p=l3P(x,y,z); return `<text class="${cl||'l3-t'}" x="${p[0].toFixed(1)}" y="${p[1].toFixed(1)}" text-anchor="middle">${esc(t)}</text>`; };
 function l3Svg(items,labels,extra){ const xs=[], ys=[]; items.forEach(i=>{ const [x,y,z,w,d,h]=i.b; [[x,y,z],[x+w,y,z],[x,y+d,z],[x+w,y+d,z],[x,y,z+h],[x+w,y+d,z+h],[x+w,y,z+h],[x,y+d,z+h]].forEach(p=>{ const q=l3P(...p); xs.push(q[0]); ys.push(q[1]); }); });
   const m=30, x0=Math.min(...xs)-m, y0=Math.min(...ys)-m, W=Math.max(...xs)-x0+m, H=Math.max(...ys)-y0+m;
@@ -7054,13 +7069,13 @@ function l3Slot(bin,x,y,z,w,d,q,big){ const st=binStock(bin.id), n=st.length, hi
     out.push(l3Box(x+m*1.6,y+m*1.6,z+ph,w-3.2*m,d-3.2*m,hh,(small?'l3-box':'l3-load')+(hit?' hit':''),ex)); }
   return out; }
 // Keller: Halle mit Mittelgang, links und rechts Nischen zwischen Pfeilern, Bodenstellplätze in den Nischen
-function l3Keller(root,q){ L3_FRONT=false; const zones=lgKids(root.id).filter(n=>n.kind!=='platz'), loose=lgKids(root.id).filter(lgIsBin);
+function l3Keller(root,q){ L3_FRONT=false; L3_ROT=l3RotOf(root.v3d||'keller'); const zones=lgKids(root.id).filter(n=>n.kind!=='platz'), loose=lgKids(root.id).filter(lgIsBin);
   const side=z=>z.side||(/^l/i.test(z.seg||'')?'L':/^r/i.test(z.seg||'')?'R':'');
   let L=zones.filter(z=>side(z)==='L'), R=zones.filter(z=>side(z)==='R'); const rest=zones.filter(z=>!side(z)); rest.forEach((z,i)=>(i%2?R:L).push(z));
   if(loose.length) L.push({id:root.id,seg:'',name:'ohne Nische',_bins:loose});
-  const BW=3.4, RD=3.2, A=4, n=Math.max(1,L.length,R.length), X=n*BW, items=[], lab=[];
+  const BW=3.4, RD=3.2, A=4, n=Math.max(1,L.length,R.length), X=n*BW, items=[], lab=[]; L3_RC={cx:X/2,cy:(RD*2+A)/2};
   items.push({k:-99,b:[0,0,0,X,RD*2+A,0],svg:`<polygon class="l3-floor" points="${l3pts([[0,0,0],[X,0,0],[X,RD*2+A,0],[0,RD*2+A,0]])}"/><polygon class="l3-aisle" points="${l3pts([[0,RD,0],[X,RD,0],[X,RD+A,0],[0,RD+A,0]])}"/>`});
-  items.push({...l3Box(0,-.25,0,X,.25,2.8,'l3-wall brick'),k:-98}); items.push({...l3Box(-.25,-.25,0,.25,RD*2+A+.25,2.8,'l3-wall'),k:-98});
+  l3Walls(0,0,X,RD*2+A,2.8,.25,items,true);
   const row=(list,y0,yP,lbl)=>list.forEach((z,i)=>{ const x0=i*BW, bins=(z._bins||lgSub(z.id).filter(lgIsBin)).sort((a,b)=>lgCode(a.id).localeCompare(lgCode(b.id),'de',{numeric:true}));
       const k=bins.length, cols=k<=2?k||1:Math.ceil(Math.sqrt(k)), rows=Math.max(1,Math.ceil(k/cols)), cw=(BW-.6)/cols, cd=(RD-.5)/rows;
       bins.forEach((b,j)=>{ const cx=x0+.3+(j%cols)*cw, cy=y0+.25+Math.floor(j/cols)*cd; items.push(...l3Slot(b,cx+.05,cy+.05,0,cw-.1,cd-.1,q)); lab.push(l3Txt(cx+cw/2,cy+cd/2,.02,String(b.seg||''),'l3-t sm')); });
@@ -7091,11 +7106,11 @@ function l3Rack(rg,x0,Y,st,q,items,lab){ const fields=lgKids(rg.id).filter(n=>n.
   lab.push(l3Txt(x0+X/2,Y+D+(pal?1.4:.7),0,pal?(rg.name||lgStLabel(rg))+(rg.seg?' '+rg.seg:''):(rg.seg||rg.name||''),'l3-t zl'));
   return {w:X,h:H,d:D}; }
 // Hochregal (ein Regal)
-function l3Regal(rg,q){ L3_FRONT=true; const items=[], lab=[], Y=.6, r=l3Rack(rg,0,Y,'pal',q,items,lab);
+function l3Regal(rg,q){ const rot=l3RotOf(rg.v3d||UI.l3Area); L3_FRONT=!rot; L3_ROT=rot; const items=[], lab=[], Y=.6; { const d0=l3Rack(rg,0,Y,'pal',q,[],[]); L3_RC={cx:d0.w/2,cy:(Y+d0.d+2.2)/2}; } const r=l3Rack(rg,0,Y,'pal',q,items,lab);
   items.push({k:-99,b:[0,0,0,r.w,Y+r.d+2.2,0],svg:`<polygon class="l3-floor" points="${l3pts([[0,0,0],[r.w,0,0],[r.w,Y+r.d+2.2,0],[0,Y+r.d+2.2,0]])}"/>`});
-  items.push(l3Box(0,-.25,0,r.w,.25,r.h+.6,'l3-wall brick')); return l3Svg(items,lab); }
+  if(rot) l3Walls(0,0,r.w,Y+r.d+2.2,r.h+.6,.25,items,true); else items.push(l3Box(0,-.25,0,r.w,.25,r.h+.6,'l3-wall brick')); return l3Svg(items,lab); }
 // Raum in 3D (Draufsicht wie Keller): Regale/Schränke an Wand hinten (Rückwand), links (Stirnwand) und rechts (vorne, offen gezeichnet)
-function l3Room(root,q,edit){ L3_FRONT=false; const racks=lgKids(root.id).filter(n=>n.kind==='regal').sort((a,b)=>String(a.seg).localeCompare(String(b.seg),'de',{numeric:true}));
+function l3Room(root,q,edit){ L3_FRONT=false; L3_ROT=l3RotOf(root.v3d||UI.l3Area); const racks=lgKids(root.id).filter(n=>n.kind==='regal').sort((a,b)=>String(a.seg).localeCompare(String(b.seg),'de',{numeric:true}));
   const wallOf=r=>['links','hinten','rechts'].includes(r.wall)?r.wall:'hinten', items=[], lab=[];
   const dims=r=>{ const fields=lgKids(r.id).filter(n=>n.kind==='feld'), F=fields.length?fields:[r], pal=r.stype==='hochregal';
     const lev=f=>{ const es=lgKids(f.id).filter(n=>n.kind==='ebene'); return es.length?es.map(e=>({e,bins:lgKids(e.id).filter(lgIsBin)})):[{e:f,bins:lgKids(f.id).filter(lgIsBin)}]; };
@@ -7114,9 +7129,9 @@ function l3Room(root,q,edit){ L3_FRONT=false; const racks=lgKids(root.id).filter
   P.forEach(p=>{ const d=UI.l3Drag&&UI.l3Drag.id===p.r.id?UI.l3Drag:p.r.pos; if(d&&isFinite(+d.x)&&isFinite(+d.y)){ p.x=+d.x; p.y=+d.y; if(['back','left','front','right'].includes(d.o)) p.o=d.o; } });
   const foot=p=>{ const {L,D}=p.m; return p.o==='back'?[p.x,p.y,L,D]:p.o==='front'?[p.x,p.y-D,L,D]:p.o==='left'?[p.x,p.y,D,L]:[p.x-D,p.y,D,L]; };
   if(!room) P.forEach(p=>{ const f=foot(p); X=Math.max(X,f[0]+f[2]+.3); Y=Math.max(Y,f[1]+f[3]+.3); });
-  L3_ROOM={X,Y,id:root.id};
+  L3_ROOM={X,Y,id:root.id}; L3_RC={cx:X/2,cy:Y/2};
   items.push({k:-99,b:[0,0,0,X,Y,0],svg:`<polygon class="l3-floor" points="${l3pts([[0,0,0],[X,0,0],[X,Y,0],[0,Y,0]])}"/>`});
-  items.push({...l3Box(0,-.2,0,X,.2,2.6,'l3-wall brick'),k:-98}); items.push({...l3Box(-.2,-.2,0,.2,Y+.2,2.6,'l3-wall'),k:-98});
+  l3Walls(0,0,X,Y,2.6,.2,items,true);
   // Ein Regal/Schrank in lokalen Koordinaten (u = entlang der Rückseite, v = Abstand zur Rückseite) zeichnen und in den Raum drehen
   const place=p=>{ const {r:x,m,o}=p, ox=p.x, oy=p.y;
     const map=(u,v,z,lw,ld,h,cl,ex)=>o==='left'?l3Box(ox+v,oy+u,z,ld,lw,h,cl,ex):o==='right'?l3Box(ox-v-ld,oy+u,z,ld,lw,h,cl,ex):o==='front'?l3Box(ox+u,oy-v-ld,z,lw,ld,h,cl,ex):l3Box(ox+u,oy+v,z,lw,ld,h,cl,ex);
@@ -7135,7 +7150,7 @@ function l3Room(root,q,edit){ L3_FRONT=false; const racks=lgKids(root.id).filter
     // Anordnen-Modus: ganzer Schrank ist Griff (ziehen = verschieben, Klick = bearbeiten)
     if(edit){ const f=foot(p), g=l3Box(f[0],f[1],0,f[2],f[3],H+.05,'l3-grab',` data-rack="${esc(x.id)}" data-seg="${esc(x.seg||'')}" role="button" tabindex="0" aria-label="${esc((x.name||'')+' '+(x.seg||''))} verschieben oder bearbeiten"`); g.svg=g.svg.replace('>',`><title>${esc((x.name||'')+' '+(x.seg||''))} – ziehen zum Verschieben, klicken zum Bearbeiten</title>`); items.push({...g,k:1e6}); } };
   P.forEach(p=>{ L3_POS[p.r.id]={x:p.x,y:p.y,o:p.o,L:p.m.L,D:p.m.D}; }); P.forEach(place);
-  if(!edit){ if(groups.hinten.length&&!groups.hinten.some(g=>g.r.pos)) lab.push(l3Txt(dL+.5+sum(groups.hinten)/2,-.3,2.9,'Wand hinten','l3-t wl'));
+  if(!edit&&!L3_ROT){ if(groups.hinten.length&&!groups.hinten.some(g=>g.r.pos)) lab.push(l3Txt(dL+.5+sum(groups.hinten)/2,-.3,2.9,'Wand hinten','l3-t wl'));
     if(groups.links.length&&!groups.links.some(g=>g.r.pos)) lab.push(l3Txt(-.3,dB+.5+sum(groups.links)/2,2.9,'Wand links','l3-t wl')); }
   const loose=lgKids(root.id).filter(lgIsBin); loose.forEach((b,j)=>{ items.push(...l3Slot(b,dL+.8+j*1.1,dB+1,0,1,1,q)); lab.push(l3Txt(dL+1.3+j*1.1,dB+1.5,.02,String(b.seg||''),'l3-t sm')); });
   if(edit) lab.push(l3Txt(X/2,Y+.8,0,'Raum '+nf(X,1)+' × '+nf(Y,1)+' m','l3-t big'));
@@ -7178,7 +7193,7 @@ function l3DoorItems(root,X,Y,key){ const d0=(UI.l3DoorDrag&&UI.l3DoorDrag.key==
   const ex=mg?` data-door="1" role="button" tabindex="0" aria-label="Tür – ziehen zum Verschieben"`:'', ttl=`<title>Tür${mg?' – ziehen, um sie an die richtige Stelle zu setzen':''}</title>`, cl='l3-door'+(mg?' drag':'')+(d0.def?' def':'');
   // Türblatt in der Wand (hinten/links sichtbar), vorne/rechts als Schwelle + Öffnungsbogen auf dem Boden
   const leaf=w==='back'?l3Box(a-h,-.24,0,L3_DW,.26,2.05,cl,ex):w==='left'?l3Box(-.24,a-h,0,.26,L3_DW,2.05,cl,ex):w==='front'?l3Box(a-h,Y-.02,0,L3_DW,.12,.08,cl,ex):l3Box(X-.02,a-h,0,.12,L3_DW,.08,cl,ex);
-  leaf.svg=leaf.svg.replace('>','>'+ttl); leaf.k=w==='back'||w==='left'?-97:1e5;
+  leaf.svg=leaf.svg.replace('>','>'+ttl); if(!L3_ROT) leaf.k=w==='back'||w==='left'?-97:1e5;
   // Öffnungsbogen (Viertelkreis) auf dem Boden, Scharnier an der einen Türkante
   const pts=[]; for(let i=0;i<=8;i++){ const t=i/8*Math.PI/2, c=Math.cos(t)*L3_DW, s=Math.sin(t)*L3_DW; pts.push(w==='back'?[a-h+c,s,0]:w==='front'?[a-h+c,Y-s,0]:w==='left'?[s,a-h+c,0]:[X-s,a-h+c,0]); }
   const hinge=w==='back'?[a-h,0,0]:w==='front'?[a-h,Y,0]:w==='left'?[0,a-h,0]:[X,a-h,0];
@@ -7201,6 +7216,10 @@ const L3_ORI=[['back','Rückseite an Wand hinten'],['left','Rückseite an Wand l
 const l3IsVirt=key=>!l3Node(key);
 const l3RoomArea=k=>k==='klein'||k==='werkzeug';
 function l3AreaSvg(){ const key=UI.l3Area, n=l3Node(key), q=String(UI.l3q||'').trim().toLowerCase(), ed=!!UI.l3Edit&&lgMgr()&&l3RoomArea(key); if(!n) return l3Virtual(key,ed); return n.kind==='regal'?l3Regal(n,q):key==='keller'?l3Keller(n,q):l3Room(n,q,ed); }
+// Dreh-Pfeile über der 3D-Ansicht (je Bereich gemerkt)
+const l3RotBtns=k=>{ const r=l3RotOf(k), isReg=(L3_AREAS.find(a=>a[0]===k)||[])[2]==='regal'; return `<div class="l3-rot" role="group" aria-label="Ansicht drehen"><button type="button" data-act="l3Rot" data-v="${k}" data-d="-1" title="Ansicht nach links drehen" aria-label="Ansicht nach links drehen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2"/><path d="M4 4v5h5"/></svg></button><span class="small">${isReg&&!r?'Front':['Vorne','Rechts','Hinten','Links'][r]}</span><button type="button" data-act="l3Rot" data-v="${k}" data-d="1" title="Ansicht nach rechts drehen" aria-label="Ansicht nach rechts drehen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-3-6.2"/><path d="M20 4v5h-5"/></svg></button></div>`; };
+try{ UI.l3Rot=JSON.parse(lsGet('sonnenplan-l3rot')||'{}')||{}; }catch(e){ UI.l3Rot={}; }
+queueMicrotask(()=>Object.assign(A,{ l3Rot:d=>{ const k=d.v, r=((l3RotOf(k)+(+d.d||1))%4+4)%4; UI.l3Rot={...(UI.l3Rot||{}),[k]:r}; lsSet('sonnenplan-l3rot',JSON.stringify(UI.l3Rot)); UI.l3Drag=null; UI.l3DoorDrag=null; render(); } }));
 function l3Redraw(){ const w=document.querySelector('.l3-card .l3-wrap'); if(w) w.innerHTML=l3AreaSvg(); }
 // Fußabdruck je Ausrichtung → im Raum halten
 function l3Clamp(p){ const {X,Y}=L3_ROOM, f=p.o==='back'?[0,0,p.L,p.D]:p.o==='front'?[0,-p.D,p.L,p.D]:p.o==='left'?[0,0,p.D,p.L]:[-p.D,0,p.D,p.L];
@@ -7208,7 +7227,7 @@ function l3Clamp(p){ const {X,Y}=L3_ROOM, f=p.o==='back'?[0,0,p.L,p.D]:p.o==='fr
 function l3SaveRack(key,id,seg,patch,msg){ if(!lgMgr()) return;
   if(l3IsVirt(key)){ const t=l3Tpl(key), r=(t.racks||[]).find(r=>r.seg===seg); if(!r) return; Object.assign(r,patch); UI.l3Tpl={...(UI.l3Tpl||{}),[key]:t}; render(); if(msg) toast(msg+' (Vorlage – noch nicht gespeichert)'); return; }
   const n=lgNode(id); if(!n) return; const x={...n,...patch}; lgWriteMany([x]).then(ok=>{ if(ok&&msg) toast(msg); }); }
-function l3Floor(svg,cx,cy){ const pt=svg.createSVGPoint(); pt.x=cx; pt.y=cy; const p=pt.matrixTransform(svg.getScreenCTM().inverse()), a=p.x/(l3c*L3S), b=p.y/(.5*L3S); return {x:(a+b)/2,y:(b-a)/2}; }
+function l3Floor(svg,cx,cy){ const pt=svg.createSVGPoint(); pt.x=cx; pt.y=cy; const p=pt.matrixTransform(svg.getScreenCTM().inverse()), a=p.x/(l3c*L3S), b=p.y/(.5*L3S), o=l3Rinv((a+b)/2,(b-a)/2); return {x:o[0],y:o[1]}; }
 let L3D=null;
 document.addEventListener('pointerdown',e=>{ const g=e.target.closest&&e.target.closest('.l3-grab'); if(!g||!UI.l3Edit||e.button) return; const svg=g.closest('svg'), p0=L3_POS[g.dataset.rack]; if(!svg||!p0) return; e.preventDefault();
   L3D={id:g.dataset.rack,seg:g.dataset.seg,key:UI.l3Area,f0:l3Floor(svg,e.clientX,e.clientY),p0:{...p0},moved:false}; },true);
@@ -7260,7 +7279,7 @@ function l3RoomSheet(key){ if(!lgMgr()) return; const virt=l3IsVirt(key), root=l
     onSave:()=>{ const w=+$('#rm_w').value, d=+$('#rm_d').value; if(!(w>=2&&d>=2)){ toast('Bitte Breite und Tiefe ab 2 m.'); return false; } const room={w:Math.round(w*10)/10,d:Math.round(d*10)/10};
       if(virt){ t.room=room; UI.l3Tpl={...(UI.l3Tpl||{}),[key]:t}; render(); } else lgWriteMany([{...root,room}]); }}); }
 // Frontansicht (alte Darstellung, für Regale mit vielen Fächern weiter verfügbar)
-function l3RoomFront(root,q){ L3_FRONT=true; const W={links:0,hinten:1,rechts:2}, racks=lgKids(root.id).filter(n=>n.kind==='regal').sort((a,b)=>(W[a.wall]??1)-(W[b.wall]??1)||String(a.seg).localeCompare(String(b.seg),'de',{numeric:true}));
+function l3RoomFront(root,q){ L3_FRONT=true; L3_ROT=0; const W={links:0,hinten:1,rechts:2}, racks=lgKids(root.id).filter(n=>n.kind==='regal').sort((a,b)=>(W[a.wall]??1)-(W[b.wall]??1)||String(a.seg).localeCompare(String(b.seg),'de',{numeric:true}));
   const loose=lgKids(root.id).filter(lgIsBin), items=[], lab=[], Y=.35; let x=0, lastW=null;
   racks.forEach(rg=>{ const wl=rg.wall||''; if(lastW!==null&&wl!==lastW) x+=.8; if(wl&&wl!==lastW) lab.push(l3Txt(x+.6,-.4,2.9,'Wand '+wl,'l3-t wl')); lastW=wl;
     const pal=rg.stype==='hochregal', r=l3Rack(rg,x,Y,pal?'pal':'cab',q,items,lab); x+=r.w+.35; });
@@ -7360,7 +7379,7 @@ function vLg3d(sw){ const sel=L3_AREAS.find(a=>a[0]===UI.l3Area)?UI.l3Area:'kell
         <button class="btn sm" data-act="l3TplOpen" data-v="${sel}">${mg?'Vorlage anpassen':'Werte ansehen'}</button>${mg?`<button class="btn sun sm" data-act="l3TplOpen" data-v="${sel}">Struktur anlegen</button>`:''}</span></div>
       <div class="small muted" style="padding:0 16px 8px">Leere Ansicht nach den Fotos. Mit „Struktur anlegen“ werden daraus echte, leere Lagerplätze, die ihr dann nach und nach befüllt. Später lässt sich alles über den Assistenten und unter „Lagerorte & Plätze“ ändern.</div>
       ${mg&&l3RoomArea(sel)?`<div class="l3-tb"><button class="btn sm ${UI.l3Edit?'sun':''}" data-act="l3EditTog" aria-pressed="${!!UI.l3Edit}">✋ ${UI.l3Edit?'Anordnen beenden':'Anordnen'}</button><button class="btn sm" data-act="l3RackAdd">${ic('plus')}Schrank / Regal</button><button class="btn sm" data-act="l3Room">Raumgröße</button>${UI.l3Edit?'<span class="small muted">Schrank ziehen = verschieben · anklicken = Name, Ausrichtung, Drehen, Entfernen</span>':''}</div>`:''}
-      <div class="l3-wrap l3-virt">${l3Virtual(sel,!!UI.l3Edit&&mg&&l3RoomArea(sel))}</div>
+      <div class="l3-stage">${l3RotBtns(sel)}<div class="l3-wrap l3-virt">${l3Virtual(sel,!!UI.l3Edit&&mg&&l3RoomArea(sel))}</div></div>
       ${mg&&cand.length?`<div class="row small" style="gap:8px;flex-wrap:wrap;padding:0 16px 14px"><span class="muted">Schon angelegt?</span><select class="inp" id="l3_link" style="max-width:320px"><option value="">– vorhandenes ${A[2]==='regal'?'Regal':'Bereich'} wählen –</option>${cand.map(n=>`<option value="${esc(n.id)}">${esc(lgPlain(n.id))}</option>`).join('')}</select><button class="btn sm" data-act="l3Link" data-v="${sel}">Verknüpfen</button></div>`:''}</div>`; }
   else { const bins=lgSub(node.id).filter(lgIsBin);
     const room=sel==='klein'||sel==='werkzeug', racks=room?lgKids(node.id).filter(n=>n.kind==='regal'):[];
@@ -7370,7 +7389,7 @@ function vLg3d(sw){ const sel=L3_AREAS.find(a=>a[0]===UI.l3Area)?UI.l3Area:'kell
         <input class="inp" type="search" placeholder="Artikel im Bereich suchen …" value="${esc(UI.l3q||'')}" data-chg="l3q" aria-label="Artikel im Bereich suchen" style="max-width:220px">
         ${mg&&sel==='keller'?`<button class="btn sm" data-act="l3KellerWiz">+ Nischen</button>`:''}${mg?`<button class="btn ghost sm" data-act="l3Unlink" data-v="${sel}" title="Zuordnung zu dieser Ansicht lösen (Lagerplätze bleiben)">Zuordnung lösen</button>`:''}</span></div>
       ${mg&&l3RoomArea(sel)?`<div class="l3-tb"><button class="btn sm ${UI.l3Edit?'sun':''}" data-act="l3EditTog" aria-pressed="${!!UI.l3Edit}">✋ ${UI.l3Edit?'Anordnen beenden':'Anordnen'}</button><button class="btn sm" data-act="l3RackAdd">${ic('plus')}Schrank / Regal</button><button class="btn sm" data-act="l3Room">Raumgröße</button>${UI.l3Edit?'<span class="small muted">Schrank ziehen = verschieben · anklicken = Name, Ausrichtung, Drehen, Entfernen</span>':''}</div>`:''}
-      ${UI.l3Edit?'':wallEd}<div class="l3-wrap">${svg}</div>
+      ${UI.l3Edit?'':wallEd}<div class="l3-stage">${bins.length?l3RotBtns(sel):""}<div class="l3-wrap">${svg}</div></div>
       <div class="l3-leg small"><span><i class="lg-e"></i>leer</span><span><i class="lg-f"></i>belegt</span>${q?'<span><i class="lg-h"></i>Suchtreffer</span>':''}<span class="muted">Platz anklicken: Inhalt ansehen, einlagern, entnehmen, umlagern</span></div></div>`; }
   return head('Lagerverwaltung','3D-Lager · Bereich wählen, Platz anklicken',lgHeadBtns())+sw+tiles+body; }
 // Assistent Keller: Nischen links/rechts mit je n Bodenstellplätzen (Vorschau, dann alles auf einmal anlegen)
