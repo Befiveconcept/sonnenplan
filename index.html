@@ -2151,7 +2151,7 @@ button.link-ms:hover{color:var(--ink)}
 .l3-hit{cursor:pointer}.l3-hit polygon{fill:transparent;stroke:none}.l3-hit:hover polygon{fill:rgba(244,219,2,.22)}
 .l3-ware.l3-box .f-t,.l3-ware.l3-load .f-t{fill:#d9a35f}.l3-ware.l3-box .f-l,.l3-ware.l3-load .f-l{fill:#c48d4c}.l3-ware.l3-box .f-r,.l3-ware.l3-load .f-r{fill:#ad7a3e}.l3-ware{cursor:pointer}.l3-ware.hit .f-t{fill:#F4DB02}
 .lg-prev{display:flex;flex-direction:column;gap:4px}.lg-pv{display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px dashed var(--line);border-radius:10px;color:#9a9890;background:rgba(0,0,0,.015)}.lg-pv-t{flex:1;min-width:0;display:flex;flex-direction:column}.lg-pv-t b{font-weight:600;color:#8d8b84}.lg-pv-b{color:#8d8b84;font-size:16px}.lg-pv-b:hover{color:#111;background:var(--sun)}
-.l3-ico{pointer-events:none}.l3-ico .b{fill:#fff;stroke:#a58552;stroke-width:1.1}.l3-ico .p *{fill:none;stroke:#2b2b2b;stroke-width:1.35;stroke-linejoin:round;stroke-linecap:round}
+.l3-ico{pointer-events:none}.l3-ico .b{fill:#fff;stroke:#a58552;stroke-width:1.1}.l3-ico.hit .b{fill:#F4DB02;stroke:#b89f00}.l3-ico .p *{fill:none;stroke:#2b2b2b;stroke-width:1.35;stroke-linejoin:round;stroke-linecap:round}
 [data-theme="future"] .l3-ico .b{fill:#1b2129;stroke:#F4DB02}[data-theme="future"] .l3-ico .p *{stroke:#F4DB02}
 .l3-stage{position:relative}.l3-rot{position:absolute;top:10px;right:10px;z-index:3;display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 6px;box-shadow:0 2px 8px rgba(0,0,0,.08)}.l3-rot button{width:38px;height:38px;border-radius:50%;border:0;background:transparent;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:inherit}.l3-rot button:hover{background:var(--sun);color:#111}.l3-rot svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.l3-rot span{min-width:44px;text-align:center;font-weight:600}.l3-rot .l3-sep{min-width:0;width:1px;height:24px;background:var(--line);margin:0 2px}.l3-rot .l3-zoom-n{min-width:46px;font-size:12px}.l3-rot button{font-size:20px;font-weight:700}
 .sf-ai{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.sf-ic{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:18px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}.sf-ic:hover{background:var(--sun);border-color:var(--sun)}.sf-ic.on{background:#e53935;border-color:#e53935;animation:recp 1.2s infinite}#sf_ai_t{flex:1;min-width:180px}@keyframes recp{50%{opacity:.6}}
@@ -7155,9 +7155,8 @@ function l3Slot(bin,x,y,z,w,d,q,big){ const st=binStock(bin.id), n=st.length, hi
     const hb=l3Box(x,y,z+.005,w,d,Math.max(.08,Math.min(big*.5,.5)),'l3-hit'+(hit?' hit':''),ex); hb.svg=hb.svg.replace('>',`><title>${tip}</title>`); out.push(hb); }
   else out.push(l3Flat(x,y,z+.01,w,d,cls+' l3-pad',ex,`<title>${tip}</title>`));
   // Ware: steht sichtbar AUF dem Boden und passt in die Fachhöhe (nicht mehr durch den Boden darüber)
-  if(n&&big>0){ const pal=big>=1&&d>=.8, m=pal?.08:Math.min(.05,w*.08), cap=Math.max(.08,big-.06), ph=pal?Math.min(.14,cap*.2):0, hh=Math.max(.06,Math.min(cap-ph,(pal?.45:.16)+n*(pal?.18:.07)));
-    if(ph) out.push(l3Box(x+m,y+m,z,w-2*m,d-2*m,ph,'l3-pal'+(hit?' hit':''),ex));
-    out.push(l3Box(x+m*1.6,y+m*1.6,z+ph,w-3.2*m,d-3.2*m,hh,(pal?'l3-load':'l3-box')+' l3-ware'+(hit?' hit':''),ex)); out.push(...l3Icons(st,bin.id,x,y,z+ph+hh,w,d)); return out; }
+  // Belegt: nur das Produkt-Symbol direkt auf dem Boden, keine Kiste/Palette darunter
+  if(n&&big>0){ out.push(...l3Icons(st,bin.id,x,y,z,w,d,hit)); return out; }
   if(n){ const small=w<1||d<.8, ph=small?0:.14, hh=small?Math.min(.28,.12+n*.05):Math.min(1.3,.45+n*.18), m=small?.04:.08;
     if(ph) out.push(l3Box(x+m,y+m,z,w-2*m,d-2*m,ph,'l3-pal'+(hit?' hit':''),ex));
     out.push(l3Box(x+m*1.6,y+m*1.6,z+ph,w-3.2*m,d-3.2*m,hh,(small?'l3-box':'l3-load')+(hit?' hit':''),ex)); out.push(...l3Icons(st,bin.id,x,y,z+ph+hh,w,d)); }
@@ -7194,11 +7193,11 @@ const ART_SVG={
  werkzeug:'<path d="M-6 6.5l7-7a3.6 3.6 0 1 1 2.2 2.2l-7 7z"/>',
  box:'<path d="M-6.5 -3l6.5-3.2 6.5 3.2v7.4l-6.5 3.2-6.5-3.2z"/><path d="M-6.5 -3l6.5 3.2 6.5-3.2M0 .2v7.4"/>'};
 const artIco=s=>{ const t=(String(s.art||'')+' '+String(s.cat||s.kat||'')).toLowerCase(); const f=ART_ICO.find(([,re])=>re.test(t)); return f?f[0]:'box'; };
-function l3Icons(st,binId,x,y,ztop,w,d){ if(!st.length) return [];
+function l3Icons(st,binId,x,y,ztop,w,d,hit){ if(!st.length) return [];
   // bis zu 2 verschiedene Symbole: nach Menge auf diesem Platz
   const ks=[...new Set(st.slice().sort((a,b)=>(+((b.bins||{})[binId])||0)-(+((a.bins||{})[binId])||0)).map(artIco))].slice(0,2);
   const p=l3P(x+w/2,y+d/2,ztop), sc=Math.max(.26,Math.min(.48,Math.min(w,.9)*l3c*L3S*.5/19)), gap=19*sc*.55;
-  return ks.map((k,i)=>{ const dx=ks.length>1?(i?gap:-gap):0; return {k:9e5,b:[x,y,ztop,w,d,0],svg:`<g class="l3-ico" transform="translate(${(p[0]+dx).toFixed(1)} ${(p[1]-9*sc).toFixed(1)}) scale(${sc.toFixed(2)})"><circle class="b" r="9.5"/><g class="p">${ART_SVG[k]||ART_SVG.box}</g></g>`}; }); }
+  return ks.map((k,i)=>{ const dx=ks.length>1?(i?gap:-gap):0; return {k:9e5,b:[x,y,ztop,w,d,0],svg:`<g class="l3-ico${hit?' hit':''}" transform="translate(${(p[0]+dx).toFixed(1)} ${(p[1]-9*sc).toFixed(1)}) scale(${sc.toFixed(2)})"><circle class="b" r="9.5"/><g class="p">${ART_SVG[k]||ART_SVG.box}</g></g>`}; }); }
 // Keller: Halle mit Mittelgang, links und rechts Nischen zwischen Pfeilern, Bodenstellplätze in den Nischen
 function l3Keller(root,q){ L3_FRONT=false; L3_ROT=l3RotOf(root.v3d||'keller'); const zones=lgKids(root.id).filter(n=>n.kind!=='platz'), loose=lgKids(root.id).filter(lgIsBin);
   const side=z=>z.side||(/^l/i.test(z.seg||'')?'L':/^r/i.test(z.seg||'')?'R':'');
