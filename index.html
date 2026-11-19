@@ -2143,6 +2143,17 @@ button.link-ms:hover{color:var(--ink)}
 .l3-cab .f-t{fill:#e3e1db}.l3-cab .f-l{fill:#d6d3cc}.l3-cab .f-r{fill:#c7c4bd}.l3-cab.back .f-l{fill:#ecebe6}
 .l3-board .f-t{fill:#fbfaf7}.l3-board .f-l{fill:#e7e5df}.l3-board .f-r{fill:#dedbd4}
 .l3-slot{cursor:pointer;outline:none}
+/* Böden statt Wände antippen: Wände, Pfosten, Traversen und Bretter lassen Klicks durch; Bodenplatte je Platz, Tippbereich darüber, Dach */
+.l3-cab,.l3-up,.l3-beam,.l3-board,.l3-wall,.l3-pillar{pointer-events:none}.l3-cab.l3-roof{pointer-events:auto;cursor:pointer}
+.l3-plate .f-t{fill:#fbfaf7;stroke:#b9b6ae;stroke-width:.4}.l3-plate .f-l{fill:#e7e5df}.l3-plate .f-r{fill:#dedbd4}
+.l3-plate.full .f-t{fill:#f3e7a6}.l3-plate.full .f-l{fill:#e2d48c}.l3-plate.off .f-t{fill:#cfcfcf}
+.l3-plate:hover .f-t,.l3-plate:focus .f-t,.l3-plate.hit .f-t{fill:#F4DB02;stroke:#111}
+.l3-hit{cursor:pointer}.l3-hit polygon{fill:transparent;stroke:none}.l3-hit:hover polygon{fill:rgba(244,219,2,.22)}
+.l3-ware.l3-box .f-t,.l3-ware.l3-load .f-t{fill:#d9a35f}.l3-ware.l3-box .f-l,.l3-ware.l3-load .f-l{fill:#c48d4c}.l3-ware.l3-box .f-r,.l3-ware.l3-load .f-r{fill:#ad7a3e}.l3-ware{cursor:pointer}.l3-ware.hit .f-t{fill:#F4DB02}
+.sf-ai{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.sf-ic{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:18px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}.sf-ic:hover{background:var(--sun);border-color:var(--sun)}.sf-ic.on{background:#e53935;border-color:#e53935;animation:recp 1.2s infinite}#sf_ai_t{flex:1;min-width:180px}@keyframes recp{50%{opacity:.6}}
+.rf-f{margin-bottom:12px}.rf-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.rf-n{display:flex;align-items:center;gap:8px;white-space:nowrap}.rf-n .btn{min-width:38px;font-size:18px;font-weight:700}.lg-chip.full{background:#f3e7a6}
+.l3-door .f-t{fill:#8a5a2b}.l3-door .f-l{fill:#7a4d22}.l3-door .f-r{fill:#6a421c}.l3-door.arc polygon{fill:rgba(138,90,43,.10);stroke:#8a5a2b;stroke-width:.8;stroke-dasharray:4 3}.l3-door.drag{cursor:grab;touch-action:none}.l3-door.drag:hover .f-t,.l3-door.drag:hover .f-l{fill:#F4DB02}.l3-door.def .f-l,.l3-door.def .f-t{opacity:.75}.l3-t.door-t{font-weight:700;fill:#8a5a2b;font-size:11px;pointer-events:none}
+.l3-roof:hover .f-t,.l3-roof:focus .f-t{fill:#F4DB02!important}.l3-roof.pal polygon{fill:rgba(43,76,155,.12);stroke:#2b4c9b;stroke-width:.5;stroke-dasharray:3 2}.l3-roof.pal{cursor:pointer}
 .l3-slot.l3-pad .f-t{fill:rgba(255,255,255,.55);stroke:#8a8a8a;stroke-dasharray:3 2}
 .l3-slot.full.l3-pad .f-t{fill:rgba(244,219,2,.18);stroke:#6b6b6b;stroke-dasharray:none}
 .l3-slot:hover .f-t,.l3-slot:focus .f-t{fill:rgba(244,219,2,.55);stroke:#111}
@@ -6508,6 +6519,7 @@ function lgCamClose(){ if(LG_CAM){ try{ LG_CAM.stream.getTracks().forEach(x=>x.s
 // Scan-Ergebnis außerhalb eines Formulars: Platz öffnen, sonst Artikel (Art.-Nr.) suchen. Rechte werden dabei geprüft.
 function lgScanResult(code){ if(!canSee('stock')) return toast('Keine Berechtigung für das Lager.'); const n=lgResolve(code);
   if(n){ if(lgIsBin(n)) return lgBinSheet(n.id); closeSheet(); UI.stockTab='plaetze'; UI.lgq=''; const c={...(UI.lgCol||{})}; lgPath(n.id).forEach(p=>c[p.id]=false); UI.lgCol=c; go('stock'); toast(LG_KINDS[n.kind]+': '+lgFullName(n.id)); return; }
+  { const aq=artByQr(code); if(aq) return stockHist(aq.id); }
   const nr=normNr(code), s=nr&&arr('stock').find(x=>normNr(x.artNr)===nr); if(s) return stockHist(s.id); toast('Kein Lagerplatz und kein Artikel mit dem Code „'+String(code).slice(0,40)+'“.'); }
 function lgScanSheet(){ closeSheet(); openSheet({title:'Scannen',html:`<div class="fld full"><div class="small muted" style="margin-bottom:8px">QR-Code eines Lagerplatzes scannen (Kamera oder Handscanner) – oder den Platzcode / die Art.-Nr. eintippen und Enter drücken.</div><div class="bp"><input class="inp" id="sc_in" placeholder="z. B. R01-E02-P03" autocomplete="off" autocapitalize="characters" style="flex:1"><button type="button" class="btn sun" data-act="lgCamGo">${LG_SCAN_IC}Kamera</button></div></div>`,saveLabel:'Öffnen',onSave:()=>{ const v=$('#sc_in').value.trim(); if(!v){ toast('Bitte einen Code eingeben.'); return false; } setTimeout(()=>lgScanResult(v),30); }});
   setTimeout(()=>{ const i=$('#sc_in'); if(i) i.focus(); },60); }
@@ -6521,11 +6533,11 @@ function lgBinSheet(id){ const n=lgNode(id); if(!n) return toast('Lagerplatz nic
     extraBtn:`${w&&use?`<button type="button" class="btn sun" data-act="lgBinIn" data-id="${id}">${ic('plus')}Einlagern</button>`:''}${w?`<button type="button" class="btn" data-act="invNew" data-id="${id}">Inventur</button>`:''}<button type="button" class="btn" data-act="lgPrintOne" data-id="${id}">Etikett</button>`}); }
 function lgBinInSheet(bin){ if(!mayWrite('stock')) return toast('Keine Berechtigung für Lagerbuchungen.'); if(!lgUsable(lgNode(bin))) return toast('Dieser Platz ist gesperrt oder stillgelegt.'); closeSheet();
   const st=arr('stock').sort((a,b)=>String(a.art).localeCompare(String(b.art),'de'));
-  openSheet({title:'Einlagern auf '+lgCode(bin),html:`<div class="fld full"><label for="bi_s">Artikel</label><select id="bi_s" class="inp"><option value="">– Artikel wählen –</option>${st.map(s=>`<option value="${s.id}">${esc(s.art)}${s.artNr?' · '+esc(s.artNr):''} · ${esc(firmShort(firmOf(s)))}${unassigned(s)>0&&LGON()?' · '+qn(unassigned(s))+' ohne Platz':''}</option>`).join('')}<option value="__new">+ Neuer Lagerartikel …</option></select></div>
+  openSheet({title:'Einlagern auf '+lgCode(bin),html:`<div class="fld full"><label for="bi_s">Artikel</label><select id="bi_s" class="inp"><option value="">– Artikel wählen –</option>${st.map(s=>`<option value="${s.id}">${esc(s.art)}${s.artNr?' · '+esc(s.artNr):''} · ${esc(firmShort(firmOf(s)))}${unassigned(s)>0&&LGON()?' · '+qn(unassigned(s))+' ohne Platz':''}</option>`).join('')}<option value="__new" selected>+ Neuer Lagerartikel …</option></select></div>
     <div class="fld"><label for="bi_n">Menge</label><input id="bi_n" type="number" step="any" min="0" inputmode="decimal"></div>
-    <div class="fld"><label for="bi_from">Woher</label><select id="bi_from" class="inp"><option value="zugang">Neue Ware (Zugang)</option><option value="un">Bisher ohne Platz („nicht zugeordnet“)</option></select></div>
+    <div class="fld"><label for="bi_from">Woher</label><select id="bi_from" class="inp"><option value="zugang">Neue Ware (Zugang)</option><option value="un" selected>Bisher ohne Platz („nicht zugeordnet“)</option></select></div>
     <div class="fld full"><label for="bi_note">Bemerkung</label><input id="bi_note"></div>`,saveLabel:'Einlagern',
-    onSave:()=>{ const sid=$('#bi_s').value; if(sid==='__new'){ setTimeout(()=>stockForm(null,{bin}),60); return; } if(!sid){ toast('Bitte einen Artikel wählen.'); return false; }
+    onSave:()=>{ const sid=$('#bi_s').value; if(sid==='__new'){ const q0=r3($('#bi_n').value); setTimeout(()=>stockForm(null,{bin,init:q0>0?{qty:q0}:{}}),60); return; } if(!sid){ toast('Bitte einen Artikel wählen.'); return false; }
       const n=r3($('#bi_n').value), s=S.stock[sid]; if(n<=0){ toast('Bitte eine Menge eintragen.'); return false; } const note=$('#bi_note').value.trim(), ss=clone(s);
       if($('#bi_from').value==='un'){ const u=Math.max(0,unassigned(s)); if(n>u){ toast('Ohne Platz sind nur '+qn(u)+' '+(s.unit||'')+' gebucht.'); return false; } stockShift(ss,'',bin,n,note||'Einlagerung'); }
       else stockMove(ss,n,note||'Zugang','','',{t:'zugang',bin});
@@ -6654,7 +6666,7 @@ function lgNodeSave(n,v){ const parent=v.parent||'', par=lgNode(parent), name=St
   const c={...(UI.lgCol||{})}; lgPathIn(M,out[0].id).forEach(p=>{ c[p.id]=false; }); UI.lgCol=c; UI.lgHi=out[0].id;
   lgWriteMany(out).then(ok=>{ if(ok) toast(n?'Gespeichert.'+(out.length>1?' '+(out.length-1)+' Platzcode(s) darunter haben sich geändert – Etiketten neu drucken.':''):out.length===1?'Angelegt: '+(out[0].kind==='platz'?lgCodeIn(M,out[0].id):lgPlainIn(M,out[0].id)):out.length+' Einträge angelegt.'); }); }
 // Löschen – auch ganze Bereiche/Regale mit allem darunter. Gesperrt, solange irgendwo darunter Ware liegt oder eine Inventur läuft. Alles in einem Schreibvorgang.
-function lgNodeDel(id){ const n=lgNode(id); if(!n||!lgMgr()) return; const all=[n,...lgSub(id)], bins=all.filter(lgIsBin), ids=new Set(all.map(x=>x.id));
+function lgNodeDel(id,after){ const n=lgNode(id); if(!n||!lgMgr()) return; const all=[n,...lgSub(id)], bins=all.filter(lgIsBin), ids=new Set(all.map(x=>x.id));
   const full=bins.filter(b=>binStock(b.id).length); if(full.length) return toast('Auf '+full.length+' Platz/Plätzen darunter liegt noch Ware ('+full.slice(0,3).map(b=>lgCode(b.id)).join(', ')+(full.length>3?' …':'')+'). Bitte zuerst umlagern.');
   if(arr('inv').some(x=>['offen','pruefen'].includes(x.status)&&(x.bins||[]).some(b=>ids.has(b)))) return toast('Ein Platz darunter ist Teil einer laufenden Inventur.');
   const used=arr('stock').some(s=>(s.moves||[]).some(m=>ids.has(m.from)||ids.has(m.to)||(m.auto||[]).some(a=>ids.has(a.bin))));
@@ -6663,7 +6675,7 @@ function lgNodeDel(id){ const n=lgNode(id); if(!n||!lgMgr()) return; const all=[
   confirmSheet(lgStLabel(n)+' „'+lgPlain(id)+'“'+(all.length>1?' mit allem darunter ('+what+(bins.length?'; insgesamt '+bins.length+' Lagerplätze':'')+')':'')+' wirklich löschen? Das lässt sich nicht rückgängig machen.'+(used?' Hinweis: Auf '+(all.length>1?'diesen Plätzen':'diesem Platz')+' gab es früher Buchungen – im Verlauf steht danach „unbekannter Platz“. Wenn der Verlauf lesbar bleiben soll, besser „deaktiviert“ wählen.':''),
     ()=>{ const order=all.map(x=>({id:x.id,d:lgPath(x.id).length})).sort((a,b)=>b.d-a.d).map(x=>x.id), label=lgStLabel(n)+' „'+lgPlain(id)+'“';
       lgWriteMany([],order).then(ok=>{ if(!ok) return; const l={id:'d'+uid(),at:new Date().toISOString(),by:meK(),a:'Gelöscht: Lager '+label+(all.length>1?' mit '+(all.length-1)+' Elementen darunter ('+bins.length+' Lagerplätze)':''),coll:'lager',pid:''}; S.log[l.id]=l; if(MODE==='cloud') DB.collection('log').doc(l.id).set(l).catch(()=>{}); else saveLocal();
-        closeSheet(); toast(all.length>1?all.length+' Elemente gelöscht.':'Gelöscht.'); }); }); }
+        closeSheet(); toast(all.length>1?all.length+' Elemente gelöscht.':'Gelöscht.'); if(after) setTimeout(after,150); }); }); }
 /* ---------- Anlage-Assistent: ganze Regale, Palettenzonen, Kleinteileschränke auf einmal – erst Vorschau, dann alles oder nichts ---------- */
 const WZ_T={regal:{l:'Regal / Hochregal',d:'Regal mit Regalfeldern, Ebenen und Stellplätzen. Beispiel: R01 links – 8 Felder × 3 Ebenen × 3 Paletten = 72 Lagerplätze.'},zone:{l:'Palettenzone / Bodenlager',d:'Zone mit nummerierten Stell- oder Bodenplätzen. Beispiel: Keller → Palettenzone mit 20 Stellplätzen.'},schrank:{l:'Kleinteileschrank',d:'Schrank mit Schubladen und Fächern. Beispiel: Schraubenschrank – 6 Schubladen × 8 Fächer.'}};
 var WZ=null;
@@ -6930,21 +6942,69 @@ queueMicrotask(()=>{ Object.assign(A,{
   lblPick:(d,el)=>{ const s=new Set(UI.lblSel||[]); if(el.checked) s.add(el.value); else s.delete(el.value); UI.lblSel=[...s]; render(); },
   lgMgrSet:(d,el)=>{ if(!isAdmin()) return; const l=new Set(((S.config||{}).lagerMgr||[])); if(el.checked) l.add(el.value); else l.delete(el.value); putConfig({...(S.config||{}),lagerMgr:[...l]}); toast(el.value+(el.checked?' darf jetzt Lagerorte verwalten.':' darf keine Lagerorte mehr verwalten.')); } }); });
 
+/* ---------- Lagerartikel: QR-Code je Artikel, Schild-Foto und Ansage im Formular „Lagerartikel anlegen“ ---------- */
+// QR-Inhalt: „NDS-A“ + Kennung des Artikels (ändert sich nie, auch wenn Name oder Art.-Nr. geändert werden)
+const artQr=s=>'NDS-A'+String(s.id||'').toUpperCase().replace(/[^0-9A-Z]/g,'').slice(0,14);
+const artByQr=code=>{ const c=String(code||'').trim().toUpperCase(); return c?arr('stock').find(s=>(s.qr||artQr(s))===c)||null:null; };
+function sfFill(r,src){ if(!r) return; const set=(id,v)=>{ const el=$('#'+id); if(el&&v!=null&&String(v).trim()!==''){ el.value=String(v).trim(); el.dispatchEvent(new Event('input',{bubbles:true})); el.classList.add('wv-flash'); setTimeout(()=>el.classList.remove('wv-flash'),1500); } };
+  set('f_art',String(r.art||'').slice(0,120)); set('f_artNr',String(r.ean||r.artNr||'').slice(0,60)); if(UNITS.includes(r.unit)) set('f_unit',r.unit); if(+r.qty>0) set('f_qty',r3(+r.qty));
+  const nr=normNr(r.ean||r.artNr), dup=nr&&arr('stock').find(x=>normNr(x.artNr)===nr), t=$('#sf_ai_t');
+  if(t) t.innerHTML=dup?`⚠ Diesen Artikel gibt es schon: <b>${esc(dup.art)}</b> (${esc(dup.artNr||'')}) – <button type="button" class="lnk" data-act="sfUseOld" data-id="${esc(dup.id)}">stattdessen dort einlagern</button>`:`✓ ${esc(src)} übernommen – bitte kurz prüfen.`; }
+async function sfPhoto(file){ if(!file||!SAMPLE) return; const t=$('#sf_ai_t'); if(t) t.textContent='Claude liest das Artikelschild …'; let img; try{ img=new Blob([await mappeToJpg(file,1600)],{type:'image/jpeg'}); }catch(e){ if(t) t.textContent='Foto konnte nicht gelesen werden.'; return; }
+  try{ const r=await SAMPLE.json(`Foto eines Artikelschilds, Typenschilds, Etiketts oder Kartons aus dem Lager eines Solar-Installationsbetriebs (PV-Module, Wechselrichter, Speicher, Elektro- und Montagematerial). Lies Hersteller, Bezeichnung/Typ, Artikel- bzw. Typnummer, EAN/GTIN und die Einheit. Nur was wirklich zu lesen ist, nichts erfinden.
+Antworte nur mit JSON: {"art":"Hersteller + Bezeichnung + Typ, kurz","artNr":"Art.-Nr. oder Typnummer","ean":"","unit":"${UNITS.join('|')}","qty":0}`,{modelTier:'default',images:[img]}); sfFill(r,'Vom Schild');
+    if(!r||!(r.art||r.artNr||r.ean)){ if(t) t.textContent='Auf dem Foto war nichts Lesbares – bitte näher ran oder eintippen.'; } }
+  catch(e){ if(t) t.textContent=SAMPLE_ERR[e&&e.code]||'Claude nicht erreichbar.'; } }
+let SF_DICT=null;
+function sfVoice(btn){ if(!SRec) return toast('Dieser Browser kann nicht mitschreiben – bitte Chrome oder Edge verwenden.'); if(SF_DICT){ try{ SF_DICT.stop(true); }catch(e){} return; } const t=$('#sf_ai_t');
+  btn.classList.add('on'); if(t) t.textContent='🎙 Sprich jetzt – z. B. „Kabelbinder 300 mm schwarz, Artikelnummer KB 300, 100 Stück“ … am Ende „fertig“ oder nochmal antippen.';
+  const r=new SRec(); r.lang='de-DE'; r.continuous=true; r.interimResults=true; let fin='', done=false;
+  const finish=async()=>{ if(done) return; done=true; SF_DICT=null; btn.classList.remove('on'); try{ r.stop(); }catch(e){} const txt=fin.replace(DICT_END,'').trim(); if(txt.length<2){ if(t) t.textContent='Es wurde nichts erkannt.'; return; }
+    if(t) t.textContent='Claude ordnet zu: „'+txt.slice(0,120)+'“ …';
+    try{ const res=await SAMPLE.json(`Ein Lagermitarbeiter eines Solar-Installationsbetriebs hat einen neuen Lagerartikel angesagt (Spracherkennung, kann Hörfehler enthalten; Zahlen/Buchstaben einer Artikelnummer ggf. zusammenziehen): """${txt.slice(0,600)}"""
+Antworte nur mit JSON: {"art":"Bezeichnung kurz","artNr":"Art.-Nr. falls genannt","unit":"${UNITS.join('|')}","qty":0}`,{modelTier:'quick'}); sfFill(res,'Aus der Ansage'); }
+    catch(e){ if(t) t.textContent=SAMPLE_ERR[e&&e.code]||'Claude nicht erreichbar.'; } };
+  r.onresult=e=>{ let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ const x=e.results[i]; if(x.isFinal) fin+=(fin?' ':'')+x[0].transcript.trim(); else interim+=x[0].transcript; } if(t&&!done) t.textContent='🎙 '+(fin+' '+interim).trim(); if(DICT_END.test(fin)) finish(); };
+  r.onerror=e=>{ if(['not-allowed','service-not-allowed'].includes(e.error)){ toast('Kein Zugriff aufs Mikrofon – bitte im Browser erlauben.'); done=true; SF_DICT=null; btn.classList.remove('on'); } };
+  r.onend=()=>{ if(!done) finish(); };
+  SF_DICT={stop:()=>finish()}; try{ r.start(); }catch(e){ SF_DICT=null; btn.classList.remove('on'); toast('Mikrofon konnte nicht gestartet werden.'); } }
+document.addEventListener('change',e=>{ if(e.target&&e.target.id==='sfPhotoIn'){ const f=(e.target.files||[])[0]; e.target.value=''; if(f) sfPhoto(f); } });
+// QR-Etikett(en) für Lagerartikel – gleiche Etikettengrößen wie bei den Lagerplätzen
+async function artPrint(ids){ const list=(ids||[]).map(id=>S.stock[id]).filter(Boolean); if(!list.length) return;
+  try{ if(!window.qrcode) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'); }catch(e){ return toast('Der Etiketten-Baustein konnte nicht geladen werden. Bitte die Internetverbindung prüfen.'); }
+  // fehlende QR-Kennung jetzt speichern, damit der Code beim Scannen gefunden wird
+  list.forEach(s=>{ if(!s.qr&&mayWrite('stock')){ const c=clone(s); c.qr=artQr(s); put('stock',c); } });
+  const sz=LBL_SIZES[UI.lblSize]||LBL_SIZES.r_50x30, W=sz.w, H=sz.h, pad=Math.max(1.5,H*.07), qs=Math.min(H-2*pad,W*.4);
+  const qrSvg=t=>{ const q=qrcode(0,'M'); q.addData(t); q.make(); return q.createSvgTag({cellSize:4,margin:0,scalable:true}); };
+  const one=s=>{ const code=s.qr||artQr(s), plc=binsOf(s).map(([b])=>lgCode(b)).slice(0,2).join(', ');
+    return `<div class="l"><div class="in" style="padding:${pad}mm"><div class="q" style="width:${qs.toFixed(2)}mm;height:${qs.toFixed(2)}mm">${qrSvg(code)}</div><div class="t"><div class="a" style="font-size:${Math.max(2,Math.min(H*.13,3.6)).toFixed(2)}mm">${esc(s.art)}</div>${s.artNr?`<div class="n" style="font-size:${Math.max(1.8,H*.09).toFixed(2)}mm">Art.-Nr. ${esc(s.artNr)}</div>`:''}${plc?`<div class="n" style="font-size:${Math.max(1.8,H*.09).toFixed(2)}mm">Platz ${esc(plc)}</div>`:''}<div class="id">${esc(code)}</div></div></div></div>`; };
+  const css=`*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,Helvetica,sans-serif;color:#000}.l{width:${W}mm;height:${H}mm;overflow:hidden;break-inside:avoid;background:#fff}.in{display:flex;gap:${pad.toFixed(2)}mm;height:100%;align-items:center}.q{flex:none}.q svg{width:100%;height:100%;display:block}.t{flex:1;min-width:0;display:flex;flex-direction:column;gap:.6mm;overflow:hidden}.a{font-weight:700;line-height:1.1;overflow-wrap:anywhere}.n{line-height:1.1}.id{font-size:1.8mm;color:#444}
+    ${sz.cols?`@page{size:A4;margin:0}.pg{width:210mm;height:297mm;padding:${((297-sz.rows*H)/2).toFixed(2)}mm ${((210-sz.cols*W)/2).toFixed(2)}mm;display:grid;grid-template-columns:repeat(${sz.cols},${W}mm);grid-auto-rows:${H}mm;align-content:start;break-after:page}`:`@page{size:${W}mm ${H}mm;margin:0}@media print{.l{break-after:page}}`}`;
+  let body=''; if(sz.cols){ const per=sz.cols*sz.rows; for(let i=0;i<list.length;i+=per) body+=`<div class="pg">${list.slice(i,i+per).map(one).join('')}</div>`; } else body=list.map(one).join('');
+  const f=document.createElement('iframe'); f.setAttribute('aria-hidden','true'); f.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0'; document.body.appendChild(f);
+  const d=f.contentDocument; d.open(); d.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Artikel-Etiketten</title><style>${css}</style></head><body>${body}</body></html>`); d.close();
+  setTimeout(()=>{ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){ toast('Drucken nicht möglich.'); } setTimeout(()=>f.remove(),120000); },350); }
+queueMicrotask(()=>Object.assign(A,{
+  sfPhoto:()=>{ const i=$('#sfPhotoIn'); if(i) i.click(); },
+  sfVoice:(d,el)=>sfVoice(el),
+  sfUseOld:d=>{ const b=(SHEET&&SHEET._bin)||''; closeSheet(); setTimeout(()=>stockInSheet(d.id,b),60); },
+  artPrint:d=>artPrint([d.id]) }));
 function stockForm(s,pre){ pre=pre||{};
   const isNew=!s; s=s?clone(s):{id:uid(),unit:'Stk',qty:0,loc:'',min:0,firm:UI.sfirm||FIRMS()[0],...(pre.init||{})}; if(!s.firm) s.firm=FIRMS()[0]; const on=LGON();
-  openSheet({title:isNew?'Lagerartikel anlegen':'Lagerartikel bearbeiten',value:s,fields:[{k:'art',label:'Artikel',req:1,full:1},{k:'firm',label:'Ware gehört',type:'select',options:FIRMS().map(f=>[f,f])},{k:'artNr',label:'Art.-Nr. / EAN'},{k:'unit',label:'Einheit',type:'select',options:UNITS.map(u=>[u,u])},
+  openSheet({title:isNew?'Lagerartikel anlegen':'Lagerartikel bearbeiten',value:s,fields:[...(isNew&&SAMPLE?[{k:'sfai',label:'',type:'html',full:1,html:`<div class="sf-ai"><button type="button" class="sf-ic" data-act="sfPhoto" title="Artikelschild fotografieren – Name und Art.-Nr. werden übernommen" aria-label="Artikelschild fotografieren">📷</button><button type="button" class="sf-ic" data-act="sfVoice" title="Sprechen – z. B. „Kabelbinder 300 mm schwarz, Art.-Nr. KB300, 100 Stück“" aria-label="Artikel ansagen">🎙</button><span class="small muted" id="sf_ai_t">Schild fotografieren oder ansagen – Name und Art.-Nr. werden ausgefüllt.</span><input type="file" id="sfPhotoIn" accept="image/*" capture="environment" hidden></div>`}]:[]),{k:'art',label:'Artikel',req:1,full:1},{k:'firm',label:'Ware gehört',type:'select',options:FIRMS().map(f=>[f,f])},{k:'artNr',label:'Art.-Nr. / EAN'},{k:'unit',label:'Einheit',type:'select',options:UNITS.map(u=>[u,u])},
     ...(isNew?[{k:'qty',label:'Anfangsbestand',type:'number',step:'any'},...(on?[{k:'binx',label:'Lagerplatz für den Anfangsbestand',type:'html',full:1,html:binPick('nb_bin',pre.bin||'',{allowNone:true,noneLabel:'– ohne Platz (nicht zugeordnet) –'})}]:[])]:isAdmin()?[{k:'qty',label:'Gesamtbestand (Korrektur, nur EP/AvE – besser über Inventur)',type:'number',step:'any'}]:[]),
     {k:'loc',label:on?'Alter Lagerort (Freitext, nur zur Info)':'Lagerort',list:'locList'},{k:'min',label:'Mindestbestand (Warnung)',type:'number',step:'any'},{k:'notes',label:'Notiz',type:'textarea'}],
-    onSave:v=>{ const q=v.qty===''||v.qty==null?null:+v.qty, old=+s.qty||0, b=$('#nb_bin')?$('#nb_bin').value:''; delete v.qty; delete v.binx; if(b&&!lgUsable(lgNode(b))){ toast('Dieser Lagerplatz ist gesperrt oder stillgelegt.'); return false; } Object.assign(s,v);
+    onSave:v=>{ const q=v.qty===''||v.qty==null?null:+v.qty, old=+s.qty||0, b=$('#nb_bin')?$('#nb_bin').value:''; delete v.qty; delete v.binx; delete v.sfai; if(!s.qr) s.qr=artQr(s); /* eigener QR-Code je Artikel (zum späteren Ausdrucken fürs Regalfach) */ if(b&&!lgUsable(lgNode(b))){ toast('Dieser Lagerplatz ist gesperrt oder stillgelegt.'); return false; } Object.assign(s,v);
       if(isNew){ s.qty=0; s.moves=[]; s.bins={}; if(q) stockMove(s,q,'Anfangsbestand','','',{t:'anfang',bin:b}); } else if(q!=null&&q!==old&&isAdmin()) stockMove(s,q-old,'Bestandskorrektur','','',{t:'korrektur'});
       s.min=+s.min||0; put('stock',s); toast('Lagerartikel gespeichert.'); if(pre.bin) setTimeout(()=>lgBinSheet(pre.bin),80); if(pre.after) setTimeout(()=>pre.after(s),80); },
     onDelete:isNew||!lagerOk()?null:()=>{ del('stock',s.id); closeSheet(); }});
+  if(SHEET&&pre.bin) SHEET._bin=pre.bin;
 }
 function stockHist(id){ const s=S.stock[id]; if(!s) return; closeSheet(); const u=unassigned(s), b=binsOf(s).sort((x,y)=>y[1]-x[1]), w=mayWrite('stock'), on=LGON();
   openSheet({title:s.art,wide:1,html:`<div class="fld full"><div class="small muted">${esc([firmOf(s),s.artNr].filter(Boolean).join(' · '))}</div></div>
     <div class="fld full"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Lagerplatz</th><th style="text-align:right">Bestand</th></tr></thead><tbody>${b.map(([x,q])=>`<tr><td><button type="button" class="linkish" data-act="lgBin" data-id="${x}">${esc(lgLabel(x))}</button>${lgBlocked(lgNode(x))?' <span class="pill bad">gesperrt</span>':''}</td><td style="text-align:right">${qn(+q)} ${esc(s.unit||'')}</td></tr>`).join('')}${u>0||!b.length?`<tr class="${on&&u>0?'low':''}"><td>${on?'⚠ Nicht zugeordnet':'Lager'}${s.loc?' <span class="small muted">('+esc(s.loc)+')</span>':''}</td><td style="text-align:right">${qn(Math.max(0,u))} ${esc(s.unit||'')}</td></tr>`:''}${u<0?`<tr class="low"><td colspan="2">Achtung: Auf den Plätzen liegt rechnerisch mehr (${qn(-u)}) als der Gesamtbestand – bitte per Inventur prüfen.</td></tr>`:''}<tr><td><b>Gesamtbestand</b></td><td style="text-align:right"><b>${qn(s.qty)}</b> ${esc(s.unit||'')}</td></tr></tbody></table></div></div>
     <div class="fld full"><h4 style="margin:6px 0">Bewegungen</h4><div class="tbl-wrap"><table class="tbl mv-tbl"><thead><tr><th>Zeit</th><th>Art</th><th style="text-align:right">Menge</th><th>Von</th><th>Nach</th><th>Projekt / Beleg</th><th>Wer</th><th>Bemerkung</th></tr></thead><tbody>${(s.moves||[]).slice().reverse().map(m=>mvRow(m,null)).join('')||'<tr><td colspan="8"><div class="empty">Noch keine Bewegungen.</div></td></tr>'}</tbody></table></div></div>`,
-    extraBtn:w?`<button type="button" class="btn" data-act="stockIn" data-id="${s.id}">+ Zugang</button><button type="button" class="btn sun" data-act="stockTake" data-id="${s.id}" ${(+s.qty||0)>0?'':'disabled'}>Entnehmen</button>${on?`<button type="button" class="btn" data-act="stockShift" data-id="${s.id}">Umlagern</button>`:''}`:'',
+    extraBtn:(w?`<button type="button" class="btn" data-act="stockIn" data-id="${s.id}">+ Zugang</button><button type="button" class="btn sun" data-act="stockTake" data-id="${s.id}" ${(+s.qty||0)>0?'':'disabled'}>Entnehmen</button>${on?`<button type="button" class="btn" data-act="stockShift" data-id="${s.id}">Umlagern</button>`:''}`:'')+`<button type="button" class="btn" data-act="artPrint" data-id="${s.id}" title="QR-Etikett für diesen Artikel drucken (z. B. fürs Regalfach)">▦ QR-Etikett</button>`,
     saveLabel:isAdmin()?'Bearbeiten':'Schließen',onSave:()=>{ if(isAdmin()) setTimeout(()=>stockForm(S.stock[id]),60); }});
 }
 function pickCard(pk,inProject){
@@ -6980,9 +7040,15 @@ function l3Svg(items,labels,extra){ const xs=[], ys=[]; items.forEach(i=>{ const
 function l3Slot(bin,x,y,z,w,d,q,big){ const st=binStock(bin.id), n=st.length, hit=q&&st.some(s=>[s.art,s.artNr].join(' ').toLowerCase().includes(q)), code=lgCode(bin.id);
   const tip=esc(code+(n?' – '+st.slice(0,4).map(s=>s.art+' '+qn(s.bins[bin.id])+' '+(s.unit||'')).join(', ')+(n>4?' …':''):' – leer'));
   const ex=` data-act="lg3dBin" data-id="${esc(bin.id)}" role="button" tabindex="0" aria-label="${tip}"`, cls='l3-slot'+(n?' full':'')+(hit?' hit':'')+(lgUsable(bin)?'':' off'), out=[];
-  // big = Höhe des Fachs (Regal/Schrank): ganzes Fach als durchsichtiger Quader → große Klickfläche vorne; sonst Bodenfläche
-  if(big>0){ const bx=l3Box(x,y,z+.01,w,d,big,cls+' l3-fach',ex); bx.svg=bx.svg.replace('>',`><title>${tip}</title>`); out.push({...bx,k:l3K(x,y,z,w,d)-.001}); }
+  // big = Höhe des Fachs (Regal/Schrank/Hochregal): Der BODEN des Fachs ist die Tippfläche (Bodenplatte je Platz, ersetzt das durchgehende Brett),
+  // dazu ein unsichtbarer flacher Tippbereich direkt über dem Boden. Wände und Pfosten reagieren nicht. Sonst (Keller): Bodenfläche.
+  if(big>0){ const pl=l3Box(x,y,z-.03,w,d,.03,cls+' l3-plate',ex); pl.svg=pl.svg.replace('>',`><title>${tip}</title>`); out.push(pl);
+    const hb=l3Box(x,y,z+.005,w,d,Math.max(.08,Math.min(big*.5,.5)),'l3-hit'+(hit?' hit':''),ex); hb.svg=hb.svg.replace('>',`><title>${tip}</title>`); out.push(hb); }
   else out.push(l3Flat(x,y,z+.01,w,d,cls+' l3-pad',ex,`<title>${tip}</title>`));
+  // Ware: steht sichtbar AUF dem Boden und passt in die Fachhöhe (nicht mehr durch den Boden darüber)
+  if(n&&big>0){ const pal=big>=1&&d>=.8, m=pal?.08:Math.min(.05,w*.08), cap=Math.max(.08,big-.06), ph=pal?Math.min(.14,cap*.2):0, hh=Math.max(.06,Math.min(cap-ph,(pal?.45:.16)+n*(pal?.18:.07)));
+    if(ph) out.push(l3Box(x+m,y+m,z,w-2*m,d-2*m,ph,'l3-pal'+(hit?' hit':''),ex));
+    out.push(l3Box(x+m*1.6,y+m*1.6,z+ph,w-3.2*m,d-3.2*m,hh,(pal?'l3-load':'l3-box')+' l3-ware'+(hit?' hit':''),ex)); return out; }
   if(n){ const small=w<1||d<.8, ph=small?0:.14, hh=small?Math.min(.28,.12+n*.05):Math.min(1.3,.45+n*.18), m=small?.04:.08;
     if(ph) out.push(l3Box(x+m,y+m,z,w-2*m,d-2*m,ph,'l3-pal'+(hit?' hit':''),ex));
     out.push(l3Box(x+m*1.6,y+m*1.6,z+ph,w-3.2*m,d-3.2*m,hh,(small?'l3-box':'l3-load')+(hit?' hit':''),ex)); }
@@ -7002,6 +7068,7 @@ function l3Keller(root,q){ L3_FRONT=false; const zones=lgKids(root.id).filter(n=
       items.push(l3Box(x0,yP,0,.35,.35,2.8,'l3-pillar'+(lbl==='R'?' ghost':''))); if(i===list.length-1) items.push(l3Box(x0+BW-.35,yP,0,.35,.35,2.8,'l3-pillar'+(lbl==='R'?' ghost':''))); });
   row(L,0,RD-.35,'L'); row(R,RD+A,RD+A,'R');
   lab.push(l3Txt(X/2,RD+A/2,0,'Mittelgang','l3-t big'));
+  { const dr=l3DoorItems(root,X,RD*2+A,root.v3d||'keller'); items.push(...dr.items); lab.push(dr.lab); }
   return l3Svg(items,lab); }
 // Ein Regal/Schrank ab Position x0: Felder × Ebenen × Plätze (Ebene 1 = unten).
 // Stil „pal“ = Hochregal (blaue Rahmen, gelbe Traversen); „cab“ = Wandregal/Schrank (hellgrauer Korpus, weiße Böden).
@@ -7012,13 +7079,15 @@ function l3Rack(rg,x0,Y,st,q,items,lab){ const fields=lgKids(rg.id).filter(n=>n.
     if(!pal) items.push(l3Box(fx,Y-.02,0,FW,.04,H,'l3-cab back'));
     L.forEach((lv,e)=>{ const z=e*LH+(pal?0:.05), bins=lv.bins, k=Math.max(1,bins.length), sw=(FW-(pal?.3:.12))/k;
       if(pal&&e>0){ items.push(l3Box(fx+.1,Y+D-.12,z-.14,FW-.1,.12,.14,'l3-beam')); items.push(l3Box(fx+.1,Y,z-.14,FW-.1,.12,.14,'l3-beam back')); }
-      if(!pal) items.push(l3Box(fx+.03,Y,z-.03,FW-.06,D,.03,'l3-board'));
-      bins.forEach((b,j)=>{ items.push(...l3Slot(b,fx+(pal?.2:.06)+j*sw,Y+.04,z,sw-(pal?.08:.04),D-.08,q,LH-(pal?.32:.1))); lab.push(l3Txt(fx+(pal?.2:.06)+j*sw+sw/2,Y+D/2,z+.02,String(b.seg||''),'l3-t sm')); });
+      if(!pal&&!bins.length) items.push(l3Box(fx+.03,Y,z-.03,FW-.06,D,.03,'l3-board'));
+      const bw=(FW-.06)/k; // Schrank: Bodenplatte je Platz ersetzt das Brett
+      bins.forEach((b,j)=>{ items.push(...(pal?l3Slot(b,fx+.2+j*sw,Y+.04,z,sw-.08,D-.08,q,LH-.32):l3Slot(b,fx+.03+j*bw,Y,z,bw,D,q,LH-.1))); lab.push(l3Txt(fx+(pal?.2:.06)+j*sw+sw/2,Y+D/2,z+.02,String(b.seg||''),'l3-t sm')); });
       if(lv.e.seg) lab.push(l3Txt(fx+FW+.05,Y+D+(pal?.35:.15),z+LH*.3,lv.e.seg,'l3-t xs')); });
     if(f!==rg) lab.push(l3Txt(fx+FW/2,Y+D+(pal?.9:.5),0,f.seg||'','l3-t xs')); });
   const X=F.length*FW;
-  if(pal){ for(let i=0;i<=F.length;i++){ items.push(l3Box(x0+i*FW,Y,0,.1,.1,H,'l3-up')); items.push(l3Box(x0+i*FW,Y+D-.1,0,.1,.1,H,'l3-up')); } }
-  else { items.push(l3Box(x0-.04,Y,0,.04,D,H,'l3-cab')); items.push(l3Box(x0+X,Y,0,.04,D,H,'l3-cab')); items.push(l3Box(x0,Y,H,X,D,.04,'l3-cab')); }
+  const roofEx=` data-act="l3Roof" data-id="${esc(rg.id)}" data-seg="${esc(rg.seg||'')}" role="button" tabindex="0" aria-label="${esc((rg.name||'')+' '+(rg.seg||''))}: Böden bearbeiten"`, roofT=`<title>${esc((rg.name||'')+' '+(rg.seg||''))} – oben antippen: Böden hinzufügen, entfernen oder teilen</title>`;
+  if(pal){ for(let i=0;i<=F.length;i++){ items.push(l3Box(x0+i*FW,Y,0,.1,.1,H,'l3-up')); items.push(l3Box(x0+i*FW,Y+D-.1,0,.1,.1,H,'l3-up')); } const rf=l3Box(x0,Y,H,X,D,.06,'l3-roof pal',roofEx); rf.svg=rf.svg.replace('>','>'+roofT); items.push(rf); }
+  else { items.push(l3Box(x0-.04,Y,0,.04,D,H,'l3-cab')); items.push(l3Box(x0+X,Y,0,.04,D,H,'l3-cab')); const rf=l3Box(x0,Y,H,X,D,.04,'l3-cab l3-roof',roofEx); rf.svg=rf.svg.replace('>','>'+roofT); items.push(rf); }
   lab.push(l3Txt(x0+X/2,Y+D+(pal?1.4:.7),0,pal?(rg.name||lgStLabel(rg))+(rg.seg?' '+rg.seg:''):(rg.seg||rg.name||''),'l3-t zl'));
   return {w:X,h:H,d:D}; }
 // Hochregal (ein Regal)
@@ -7055,11 +7124,13 @@ function l3Room(root,q,edit){ L3_FRONT=false; const racks=lgKids(root.id).filter
     const txt=(u,v,z,t,cl)=>o==='left'?l3Txt(ox+v,oy+u,z,t,cl):o==='right'?l3Txt(ox-v,oy+u,z,t,cl):o==='front'?l3Txt(ox+u,oy-v,z,t,cl):l3Txt(ox+u,oy+v,z,t,cl);
     const {F,lev,FW,D,LH,H,L,pal}=m, open=o==='front'||o==='right';
     if(!open) items.push(map(0,0,0,L,.04,H,'l3-cab back'));
-    F.forEach((f,i)=>{ const fu=i*FW; lev(f).forEach((lv,e)=>{ const z=e*LH+.04, k=Math.max(1,lv.bins.length), sw=(FW-.1)/k;
-        items.push(map(fu+.03,.04,z-.03,FW-.06,D-.04,.03,pal?'l3-beam':'l3-board'));
-        lv.bins.forEach((b,j)=>{ items.push(...slot(b,fu+.05+j*sw,.06,z,sw-.04,D-.1,LH-.08)); }); }); });
+    F.forEach((f,i)=>{ const fu=i*FW; lev(f).forEach((lv,e)=>{ const z=e*LH+.04, k=Math.max(1,lv.bins.length), bw=(FW-.06)/k;
+        // Boden: je Platz eine eigene Bodenplatte (antippbar); ohne Plätze ein normales Brett
+        if(!lv.bins.length) items.push(map(fu+.03,.04,z-.03,FW-.06,D-.04,.03,pal?'l3-beam':'l3-board'));
+        lv.bins.forEach((b,j)=>{ items.push(...slot(b,fu+.03+j*bw,.04,z,bw,D-.04,LH-.08)); }); }); });
     [0,L].forEach(u=>{ items.push(map(u-.03,0,0,.06,.06,H,pal?'l3-up':'l3-cab')); items.push(map(u-.03,D-.06,0,.06,.06,H,pal?'l3-up':'l3-cab')); });
-    items.push(map(0,0,H,L,D,.03,'l3-cab'));
+    // Dach antippen → Böden hinzufügen / weniger / Böden teilen (nicht im Anordnen-Modus, da ist der ganze Schrank Griff)
+    { const rf=map(0,0,H,L,D,.03,'l3-cab l3-roof',edit?'':` data-act="l3Roof" data-id="${esc(x.id)}" data-seg="${esc(x.seg||'')}" role="button" tabindex="0" aria-label="${esc((x.name||'')+' '+(x.seg||''))}: Böden bearbeiten"`); if(!edit) rf.svg=rf.svg.replace('>',`><title>${esc((x.name||'')+' '+(x.seg||''))} – Dach antippen: Böden hinzufügen, entfernen oder teilen</title>`); items.push(rf); }
     lab.push(txt(L/2,D+.35,0,x.seg||x.name||'','l3-t zl'));
     // Anordnen-Modus: ganzer Schrank ist Griff (ziehen = verschieben, Klick = bearbeiten)
     if(edit){ const f=foot(p), g=l3Box(f[0],f[1],0,f[2],f[3],H+.05,'l3-grab',` data-rack="${esc(x.id)}" data-seg="${esc(x.seg||'')}" role="button" tabindex="0" aria-label="${esc((x.name||'')+' '+(x.seg||''))} verschieben oder bearbeiten"`); g.svg=g.svg.replace('>',`><title>${esc((x.name||'')+' '+(x.seg||''))} – ziehen zum Verschieben, klicken zum Bearbeiten</title>`); items.push({...g,k:1e6}); } };
@@ -7068,13 +7139,68 @@ function l3Room(root,q,edit){ L3_FRONT=false; const racks=lgKids(root.id).filter
     if(groups.links.length&&!groups.links.some(g=>g.r.pos)) lab.push(l3Txt(-.3,dB+.5+sum(groups.links)/2,2.9,'Wand links','l3-t wl')); }
   const loose=lgKids(root.id).filter(lgIsBin); loose.forEach((b,j)=>{ items.push(...l3Slot(b,dL+.8+j*1.1,dB+1,0,1,1,q)); lab.push(l3Txt(dL+1.3+j*1.1,dB+1.5,.02,String(b.seg||''),'l3-t sm')); });
   if(edit) lab.push(l3Txt(X/2,Y+.8,0,'Raum '+nf(X,1)+' × '+nf(Y,1)+' m','l3-t big'));
+  { const dr=l3DoorItems(root,X,Y,root.v3d||UI.l3Area); items.push(...dr.items); lab.push(dr.lab); }
   return l3Svg(items,lab); }
 var L3_ROOM={X:0,Y:0,id:''}, L3_POS={};
+/* ---------- Dach eines Regals/Schranks antippen: Böden hinzufügen, entfernen, teilen (mehr/weniger Plätze je Boden) ----------
+   Neue Böden kommen oben drauf, neue Plätze rechts dazu – vorhandene Codes und Etiketten bleiben gleich. Entfernt wird nur, was leer ist (Prüfung wie beim Löschen unter „Lagerorte & Plätze“). */
+const l3SegSort=(a,b)=>String(a.seg||'').localeCompare(String(b.seg||''),'de',{numeric:true});
+const l3Levels=f=>lgKids(f.id).filter(n=>n.kind==='ebene').sort(l3SegSort);
+const l3Bins=e=>lgKids(e.id).filter(lgIsBin).sort(l3SegSort);
+function l3NextSeg(list,pre){ const used=new Set(list.map(x=>String(x.seg||'').toUpperCase())); const last=list[list.length-1]; let s=last&&/\d+$/.test(last.seg||'')?lgInc(last.seg,1,2):pre+'01', i=1; while(used.has(String(s).toUpperCase())&&i<200){ s=last?lgInc(last.seg,++i,2):pre+String(++i).padStart(2,'0'); } return s; }
+function l3RoofSheet(id){ if(!lgMgr()) return toast('Böden ändern dürfen Admins und alle mit „Lagerverwaltung – Bearbeiten“.'); const rg=lgNode(id); if(!rg) return; closeSheet();
+  const F=lgKids(id).filter(n=>n.kind==='feld').sort(l3SegSort), FS=F.length?F:[rg], sch=rg.stype==='schrank';
+  const lvRow=(e,i,n)=>{ const bins=l3Bins(e), last=bins[bins.length-1], full=bins.filter(b=>binStock(b.id).length).length, lastFull=last&&binStock(last.id).length;
+    return `<div class="rf-row"><div class="rf-l"><b>${esc(e.seg||'')}</b> <span class="small muted">${i===n-1?'oberster ':i===0?'unterster ':''}Boden</span><div class="small muted">${bins.map(b=>`<span class="lg-chip ${binStock(b.id).length?'full':''}">${esc(b.seg||'')}</span>`).join(' ')||'keine Plätze'}${full?' · '+full+' belegt':''}</div></div>
+      <div class="rf-n"><button type="button" class="btn sm" data-act="l3BinLess" data-id="${esc(e.id)}" data-rg="${esc(id)}" ${bins.length<=1||lastFull?'disabled':''} title="${bins.length<=1?'Ein Boden braucht mindestens einen Platz':lastFull?'Auf dem letzten Platz liegt Ware':'Letzten Platz entfernen'}" aria-label="Weniger Plätze">−</button><span><b>${bins.length}</b> Pl${bins.length===1?'atz':'ätze'}</span><button type="button" class="btn sm" data-act="l3BinMore" data-id="${esc(e.id)}" data-rg="${esc(id)}" title="Boden teilen: einen Platz mehr" aria-label="Mehr Plätze">+</button></div></div>`; };
+  const fld=f=>{ const L=l3Levels(f), top=L[L.length-1], topFull=top&&l3Bins(top).some(b=>binStock(b.id).length);
+    return `<div class="rf-f">${f!==rg?`<div class="sec-t">Feld ${esc(f.seg||'')}</div>`:''}${L.slice().reverse().map(e=>lvRow(e,L.indexOf(e),L.length)).join('')||'<div class="small muted">Noch keine Böden.</div>'}
+      <div class="row" style="gap:6px;margin-top:6px"><button type="button" class="btn sm sun" data-act="l3LevMore" data-id="${esc(f.id)}" data-rg="${esc(id)}">${ic('plus')}Boden oben hinzufügen</button><button type="button" class="btn sm" data-act="l3LevLess" data-id="${esc(f.id)}" data-rg="${esc(id)}" ${!top||topFull||L.length<=1?'disabled':''} title="${topFull?'Auf dem obersten Boden liegt Ware':'Obersten Boden entfernen'}">− Obersten Boden entfernen</button></div></div>`; };
+  openSheet({title:'Böden: '+((rg.name||lgStLabel(rg))+' '+(rg.seg||'')).trim(),wide:1,html:`<div class="fld full"><div class="small muted">Böden von oben nach unten. „+ / −“ teilt einen Boden in mehr oder weniger Plätze. Neue Böden und Plätze kommen dazu, ohne dass sich vorhandene Codes ändern (Etiketten bleiben gültig). Entfernt wird nur, was leer ist.</div></div>
+    <div class="fld full">${FS.map(fld).join('')}</div>`,saveLabel:'Fertig',onSave:()=>{}}); }
+function l3AddNodes(list,msg,rg){ const M={...(S.lager||{})}; list.forEach(x=>M[x.id]=x); const dup=lgDupBin(M); if(dup){ toast('Der Lagerplatzcode „'+dup+'“ gäbe es doppelt.'); return; }
+  const now=new Date().toISOString(); list.forEach(x=>{ x.by=meK(); x.at=now; }); lgWriteMany(list).then(ok=>{ if(ok){ toast(msg); render(); setTimeout(()=>l3RoofSheet(rg),120); } }); }
+queueMicrotask(()=>Object.assign(A,{
+  l3Roof:d=>{ if(String(d.id).startsWith('v3_')) return l3RackSheet(UI.l3Area,d.id,d.seg); l3RoofSheet(d.id); },
+  l3BinMore:d=>{ const e=lgNode(d.id); if(!e||!lgMgr()) return; const bins=l3Bins(e), last=bins[bins.length-1];
+    l3AddNodes([lgCleanNode({id:uid()+'b',parent:e.id,kind:'platz',name:'',seg:l3NextSeg(bins,'P'),ltype:last&&last.ltype||'fach'})],'Platz hinzugefügt – Boden '+(e.seg||'')+' ist jetzt geteilt in '+(bins.length+1)+'.',d.rg); },
+  l3BinLess:d=>{ const e=lgNode(d.id); if(!e) return; const bins=l3Bins(e), last=bins[bins.length-1]; if(bins.length<=1) return toast('Ein Boden braucht mindestens einen Platz.'); if(binStock(last.id).length) return toast('Auf '+lgCode(last.id)+' liegt noch Ware – bitte zuerst umlagern.'); lgNodeDel(last.id,()=>l3RoofSheet(d.rg)); },
+  l3LevMore:d=>{ const f=lgNode(d.id); if(!f||!lgMgr()) return; const L=l3Levels(f), top=L[L.length-1], tb=top?l3Bins(top):[], n=Math.max(1,tb.length||1), id0=uid()+'e';
+    const E=lgCleanNode({id:id0,parent:f.id,kind:'ebene',name:'',seg:l3NextSeg(L,'E'),stype:top&&top.stype||'boden'}), out=[E];
+    for(let i=0;i<n;i++) out.push(lgCleanNode({id:id0+'p'+i,parent:E.id,kind:'platz',name:'',seg:tb[i]&&tb[i].seg||'P'+String(i+1).padStart(2,'0'),ltype:tb[i]&&tb[i].ltype||'fach'}));
+    l3AddNodes(out,'Neuer Boden '+E.seg+' oben mit '+n+' Pl'+(n===1?'atz':'ätzen')+' angelegt.',d.rg); },
+  l3LevLess:d=>{ const f=lgNode(d.id); if(!f) return; const L=l3Levels(f), top=L[L.length-1]; if(!top||L.length<=1) return toast('Mindestens ein Boden bleibt.'); if(l3Bins(top).some(b=>binStock(b.id).length)) return toast('Auf dem obersten Boden liegt noch Ware – bitte zuerst umlagern.'); lgNodeDel(top.id,()=>l3RoofSheet(d.rg)); } }));
+/* ---------- Tür im Raum (nur zur Orientierung). door = {w:'back'|'left'|'front'|'right', a: Mitte in m entlang der Wand}. Wer Lagerorte verwalten darf, zieht sie an jede Wand. ---------- */
+const L3_DW=1.0; let L3_DOORCTX=null;
+function l3DoorItems(root,X,Y,key){ const d0=(UI.l3DoorDrag&&UI.l3DoorDrag.key===key)?UI.l3DoorDrag:(root.door||{w:'front',a:X/2,def:1}), w=['back','left','front','right'].includes(d0.w)?d0.w:'front';
+  const len=w==='back'||w==='front'?X:Y, a=Math.max(L3_DW/2,Math.min(len-L3_DW/2,+d0.a||len/2)), h=L3_DW/2, mg=lgMgr()||kAskWho();
+  L3_DOORCTX={key,X,Y,rootId:root.id};
+  const ex=mg?` data-door="1" role="button" tabindex="0" aria-label="Tür – ziehen zum Verschieben"`:'', ttl=`<title>Tür${mg?' – ziehen, um sie an die richtige Stelle zu setzen':''}</title>`, cl='l3-door'+(mg?' drag':'')+(d0.def?' def':'');
+  // Türblatt in der Wand (hinten/links sichtbar), vorne/rechts als Schwelle + Öffnungsbogen auf dem Boden
+  const leaf=w==='back'?l3Box(a-h,-.24,0,L3_DW,.26,2.05,cl,ex):w==='left'?l3Box(-.24,a-h,0,.26,L3_DW,2.05,cl,ex):w==='front'?l3Box(a-h,Y-.02,0,L3_DW,.12,.08,cl,ex):l3Box(X-.02,a-h,0,.12,L3_DW,.08,cl,ex);
+  leaf.svg=leaf.svg.replace('>','>'+ttl); leaf.k=w==='back'||w==='left'?-97:1e5;
+  // Öffnungsbogen (Viertelkreis) auf dem Boden, Scharnier an der einen Türkante
+  const pts=[]; for(let i=0;i<=8;i++){ const t=i/8*Math.PI/2, c=Math.cos(t)*L3_DW, s=Math.sin(t)*L3_DW; pts.push(w==='back'?[a-h+c,s,0]:w==='front'?[a-h+c,Y-s,0]:w==='left'?[s,a-h+c,0]:[X-s,a-h+c,0]); }
+  const hinge=w==='back'?[a-h,0,0]:w==='front'?[a-h,Y,0]:w==='left'?[0,a-h,0]:[X,a-h,0];
+  const arc={k:-96,b:[0,0,0,0,0,0],svg:`<g class="${cl} arc"${ex}>${ttl}<polygon points="${l3pts([hinge,...pts])}"/></g>`};
+  const lp=w==='back'?[a,-.1,2.35]:w==='left'?[-.1,a,2.35]:w==='front'?[a,Y+.55,0]:[X+.55,a,0];
+  return {items:[arc,leaf],lab:l3Txt(lp[0],lp[1],lp[2],'Tür','l3-t door-t')}; }
+function l3DoorSave(key,door){ if(!lgMgr()) return; const virt=l3IsVirt(key);
+  if(virt){ const t=l3Tpl(key); t.door=door; UI.l3Tpl={...(UI.l3Tpl||{}),[key]:t}; render(); toast('Tür verschoben (Vorlage – noch nicht gespeichert).'); return; }
+  const root=l3Node(key); if(!root) return; lgWriteMany([{...root,door}]).then(ok=>{ if(ok) toast('Tür verschoben.'); }); }
+let L3DD=null;
+document.addEventListener('pointerdown',e=>{ const g=e.target.closest&&e.target.closest('[data-door]'); if(!g||e.button||!L3_DOORCTX) return; const svg=g.closest('svg'); if(!svg) return; e.preventDefault(); e.stopPropagation();
+  if(kAskWho()) return kioskWho(()=>render()); L3DD={ctx:{...L3_DOORCTX},svg,moved:false}; },true);
+document.addEventListener('pointermove',e=>{ if(!L3DD) return; const {X,Y,key}=L3DD.ctx, f=l3Floor(L3DD.svg,e.clientX,e.clientY);
+  const dist=[['back',f.y],['front',Y-f.y],['left',f.x],['right',X-f.x]].sort((a,b)=>a[1]-b[1]), w=dist[0][0], len=w==='back'||w==='front'?X:Y, raw=w==='back'||w==='front'?f.x:f.y;
+  UI.l3DoorDrag={key,w,a:Math.round(Math.max(L3_DW/2,Math.min(len-L3_DW/2,raw))*10)/10}; L3DD.moved=true;
+  if(!L3DD.raf) L3DD.raf=requestAnimationFrame(()=>{ if(L3DD){ L3DD.raf=0; const s=document.querySelector('.l3-card .l3-wrap svg'); if(s){ l3Redraw(); L3DD.svg=document.querySelector('.l3-card .l3-wrap svg')||L3DD.svg; } } }); });
+document.addEventListener('pointerup',()=>{ if(!L3DD) return; const d=L3DD; L3DD=null; if(d.moved&&UI.l3DoorDrag){ const dr=UI.l3DoorDrag; l3DoorSave(d.ctx.key,{w:dr.w,a:dr.a}); setTimeout(()=>{ UI.l3DoorDrag=null; },500); } else toast('Tür mit gedrückter Maus bzw. Finger an die richtige Wand ziehen.'); });
 /* ---------- Anordnen: Schränke ziehen, drehen, anlegen, entfernen; Raumgröße ---------- */
 const L3_ORI=[['back','Rückseite an Wand hinten'],['left','Rückseite an Wand links'],['front','Rückseite an Wand vorne'],['right','Rückseite an Wand rechts']];
 const l3IsVirt=key=>!l3Node(key);
 const l3RoomArea=k=>k==='klein'||k==='werkzeug';
-function l3AreaSvg(){ const key=UI.l3Area, n=l3Node(key), ed=!!UI.l3Edit&&lgMgr()&&l3RoomArea(key); return n?l3Room(n,String(UI.l3q||'').trim().toLowerCase(),ed):l3Virtual(key,ed); }
+function l3AreaSvg(){ const key=UI.l3Area, n=l3Node(key), q=String(UI.l3q||'').trim().toLowerCase(), ed=!!UI.l3Edit&&lgMgr()&&l3RoomArea(key); if(!n) return l3Virtual(key,ed); return n.kind==='regal'?l3Regal(n,q):key==='keller'?l3Keller(n,q):l3Room(n,q,ed); }
 function l3Redraw(){ const w=document.querySelector('.l3-card .l3-wrap'); if(w) w.innerHTML=l3AreaSvg(); }
 // Fußabdruck je Ausrichtung → im Raum halten
 function l3Clamp(p){ const {X,Y}=L3_ROOM, f=p.o==='back'?[0,0,p.L,p.D]:p.o==='front'?[0,-p.D,p.L,p.D]:p.o==='left'?[0,0,p.D,p.L]:[-p.D,0,p.D,p.L];
@@ -7158,7 +7284,7 @@ function l3Build(key,t,parent,idf){ const out=[]; let n=0; const pad=(i,m)=>Stri
     F.forEach(fd=>{ for(let i=1;i<=e;i++){ const E=mk('ebene',fd.id,'','E'+pad(i,e),{stype:st==='schrank'?'boden':'ebene'}); for(let j=1;j<=p;j++) mk('platz',E.id,'','P'+pad(j,p),{ltype:LG_TYPES[r.lt]?r.lt:'fach'}); } }); return R; };
   let root;
   if(t.kind==='regal') root=rack(t.racks[0],parent);
-  else { root=mk('bereich',parent,t.name,t.seg,{stype:t.st,...(t.room?{room:t.room}:{})});
+  else { root=mk('bereich',parent,t.name,t.seg,{stype:t.st,...(t.room?{room:t.room}:{}),...(t.door?{door:t.door}:{})});
     if(key==='keller') [['L',+t.l||0,'links'],['R',+t.r||0,'rechts']].forEach(([s,c,w])=>{ for(let i=1;i<=c;i++){ const Z=mk('regal',root.id,'Nische '+w+' '+i,s+pad(i,c),{stype:'palzone',side:s}); for(let j=1;j<=(+t.p||1);j++) mk('platz',Z.id,'','P'+pad(j,+t.p||1),{ltype:LG_TYPES[t.lt]?t.lt:'boden'}); } });
     else (t.racks||[]).forEach(r=>rack(r,root.id)); }
   root.v3d=key; return {out,root}; }
@@ -9870,7 +9996,7 @@ function kioskSetup(){ if(!lagerOk()) return toast('Ein Lager-Tablet einrichten 
   openSheet({title:'Dieses Gerät als Lager-Tablet einrichten',html:`<div class="fld full"><div class="small">Danach zeigt <b>dieses Gerät</b> nur noch die Lagerverwaltung mit großen Knöpfen: Suchen, Scannen, Artikelschild fotografieren, Einbuchen, Entnehmen (auch für Projekte), Umlagern und neue Artikel anlegen. Alles andere (Projekte, Finanzen, Chat …) ist auf diesem Gerät ausgeblendet. Andere Geräte ändern sich nicht.</div></div>
     <div class="fld"><label for="kp1">PIN zum Beenden (4–8 Ziffern)</label><input id="kp1" type="password" inputmode="numeric" autocomplete="new-password" maxlength="8"></div>
     <div class="fld"><label for="kp2">PIN wiederholen</label><input id="kp2" type="password" inputmode="numeric" autocomplete="new-password" maxlength="8"></div>
-    <div class="fld full"><label class="tog-sw"><input type="checkbox" id="kask" checked> Vor dem Buchen fragen „Wer bucht?“ (Kürzel antippen; nach 3 Minuten ohne Eingabe wieder abgemeldet)</label></div>
+    <div class="fld full"><label class="tog-sw"><input type="checkbox" id="kask" checked> Vor dem Buchen fragen „Wer bucht?“ (Kürzel antippen; nach 10 Minuten ohne Eingabe wieder abgemeldet)</label></div>
     <div class="fld full"><div class="small muted">Tipp: Am Tablet die App über „Zum Startbildschirm hinzufügen“ als Vollbild öffnen. Ein Handscanner (USB/Bluetooth) funktioniert direkt im Suchfeld.</div></div>`,saveLabel:'Tablet-Modus starten',
     onSave:()=>{ const a=$('#kp1').value.trim(), b=$('#kp2').value.trim(); if(!/^\d{4,8}$/.test(a)){ toast('Bitte eine PIN aus 4–8 Ziffern.'); return false; } if(a!==b){ toast('Die PINs stimmen nicht überein.'); return false; }
       lsSet(KIOSK_K,JSON.stringify({on:true,pin:strHash('kiosk|'+a),askWho:$('#kask').checked,by:meK(),base:ME,at:new Date().toISOString()})); KQ=''; KWHO=''; KMODE=''; setTimeout(()=>{ render(); toast('Lager-Tablet ist eingerichtet.'); },50); }}); }
@@ -9890,6 +10016,7 @@ function kioskArticle(sid,head){ const s=S.stock[sid]; if(!s) return; if(KMODE&&
     <div class="k-acts"><button type="button" class="k-big in" data-act="kAct" data-id="${s.id}" data-m="in">⬇<b>Einbuchen</b><span>Zugang ins Lager</span></button><button type="button" class="k-big out" data-act="kAct" data-id="${s.id}" data-m="out">⬆<b>Entnehmen</b><span>für Projekt / Baustelle</span></button>${on?`<button type="button" class="k-big" data-act="kAct" data-id="${s.id}" data-m="shift">⇄<b>Umlagern</b><span>anderer Lagerplatz</span></button>`:''}</div></div>`,saveLabel:'Schließen',onSave:()=>{}}); }
 function kioskCode(code){ code=String(code||'').trim(); if(!code) return; KIDLE=Date.now();
   const n=lgResolve(code); if(n){ if(lgIsBin(n)) return kioskWho(()=>lgBinSheet(n.id)); toast(LG_KINDS[n.kind]+': '+lgFullName(n.id)); return; }
+  { const aq=artByQr(code); if(aq) return kioskArticle(aq.id); }
   const nr=normNr(code), hits=arr('stock').filter(x=>nr&&normNr(x.artNr)===nr);
   if(hits.length===1) return kioskArticle(hits[0].id);
   if(hits.length>1){ KQ=code; render(); return; }
@@ -10013,7 +10140,7 @@ function vKioskFull(){ const v=K_VIEW, ok=canSee(v);
   return `<div class="ks ks-wide">${kTop()}${hint}<div class="ks-full">${ok?(v==='stock'?vStock():vOrders()):`<div class="empty">${esc(shortWho(ME)||'Diese Anmeldung')} darf diesen Bereich nicht sehen.</div>`}</div></div>`; }
 // Tablet-Konto ohne gewählte Person: Raum-Bearbeitung (Schränke ziehen, Regal anlegen, Raumgröße, Plätze anlegen) erst nach „Wer bucht?“ – dann mit deren Rechten
 const kAskWho=()=>KIOSK_ON()&&isTabletAcc()&&!KWHO;
-queueMicrotask(()=>queueMicrotask(()=>{ ['l3EditTog','l3RackAdd','l3Room','lgWiz'].forEach(k=>{ const f=A[k]; if(!f) return;
+queueMicrotask(()=>queueMicrotask(()=>{ ['l3EditTog','l3RackAdd','l3Room','lgWiz','l3Roof'].forEach(k=>{ const f=A[k]; if(!f) return;
   A[k]=(d,el)=>{ if(!kAskWho()) return f(d,el); kioskWho(()=>{ render(); setTimeout(()=>{ if(lgMgr()) f(d,el); else toast('Zum Ändern der Lagerräume fehlt dieser Person das Recht „Lager bearbeiten“.'); },60); }); }; }); }));
 queueMicrotask(()=>Object.assign(A,{ kView:d=>{ K_VIEW=d.v; lsSet('sonnenplan-kview',d.v); KIDLE=Date.now(); window.scrollTo(0,0); render(); } }));
 function vKiosk(){ const q=KQ.trim().toLowerCase(), c=kioskCfg()||{};
@@ -10035,7 +10162,7 @@ document.addEventListener('input',e=>{ if(e.target.id!=='kqIn') return; KQ=e.tar
 document.addEventListener('keydown',e=>{ if(e.target.id==='kqIn'&&e.key==='Enter'){ e.preventDefault(); const v=e.target.value.trim(); if(!v) return; const nr=normNr(v); if(lgResolve(v)||(nr&&arr('stock').some(x=>normNr(x.artNr)===nr))){ KQ=''; kioskCode(v); render(); } else { KQ=v; render(); } } });
 document.addEventListener('change',e=>{ if(e.target.id==='kPhotoIn'){ const f=(e.target.files||[])[0]; if(f) kioskPhoto(f); } });
 ['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,()=>{ KIDLE=Date.now(); },true));
-setInterval(()=>{ if(KIOSK_ON()&&KWHO&&Date.now()-KIDLE>180000) kioskLogout('Abgemeldet – 3 Minuten keine Eingabe.'); },15000);
+setInterval(()=>{ if(KIOSK_ON()&&KWHO&&Date.now()-KIDLE>600000) kioskLogout('Abgemeldet – 10 Minuten keine Eingabe.'); },15000);
 queueMicrotask(()=>Object.assign(A,{
   kSetup:()=>kioskSetup(), kExit:()=>kioskExit(), kTabAcc:()=>tabletAccSheet(),
   kWho:()=>{ if(KWHO) kioskLogout('Abgemeldet.'); else kioskWho(()=>{}); },
