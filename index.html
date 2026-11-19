@@ -6064,6 +6064,10 @@ function parseMailLocal(text){
     const desc=before.slice(-2); const qm=parts[k].match(/^([\d.,]+)\s*([A-Za-zÄÖÜäöü.]*)/); if(!qm) continue;
     let artNr='', head=(desc.length>1?desc[0]:'').replace(/^\d{1,3}\s+/,''), art=(desc[desc.length-1]||'').replace(/^\d{1,3}\s+(?=\D)/,'');
     const hm=head.match(/^(.+?)\s+-\s+([\w\-./]+)$/); if(hm){ artNr=hm[2]; art=hm[1]+' '+art; } else if(head) art=head+' '+art;
+    // Zusammengezogene Zeilen (kopierter Mailtext): letztes „Hersteller - Nummer Bezeichnung“ vor „Menge:“ nehmen, Signatur und Kopf davor verwerfen
+    if(!artNr){ const flat=prev.replace(/\s+/g,' ').trim(), all=[...flat.matchAll(/\s-\s(\d{4,}[\w\-./]*)\s/g)], fm=all.length?all[all.length-1]:null;
+      if(fm){ const rest=flat.slice(fm.index+fm[0].length).trim(), mw=flat.slice(0,fm.index).split(' ').slice(-2).filter(w=>/[A-Za-zÄÖÜäöü]/.test(w)&&!/^(Bestellpositionen|Pos\.?|Artikel|Brutto|€)$/i.test(w)&&!/:$/.test(w));
+        if(rest.length>=3){ artNr=fm[1]; art=(mw.length===2&&/^[a-zäöü]/.test(mw[0])?mw.slice(1):mw).join(' ')+' '+rest; } } }
     const pm=parts[k].match(/\bPE:\s*([\d.,]+)\s*€?\s*\/\s*([\d.,]+)/i), wm=parts[k].match(/Positionswert:\s*([\d.,]+)/i);
     const qty=deNum(qm[1])||1; let price=pm?deNum(pm[1])/(deNum(pm[2])||1):wm?deNum(wm[1])/qty:null;
     if(art.trim()) items.push({qty,unit:unitOf(qm[2]),art:art.replace(/\s+/g,' ').trim().slice(0,200),artNr,price:isNaN(price)?null:Math.round(price*100)/100});
@@ -6096,7 +6100,10 @@ function parseMailLocal(text){
   let projectId=''; if(komm){ const kw=words(komm); const hits=arr('projects').filter(p=>catOf(p)==='laufend').filter(p=>[...words(p.name)].some(w=>w.length>3&&!GEN.has(w)&&kw.has(w))); if(hits.length===1) projectId=hits[0].id; }
   const SUP=['Sonepar','Rexel','Krannich','BayWa r.e.','Memodo','Eldra','Hornbach','Würth','Elektro Wagner','Alzmetall','Fega & Schmitt','Zeitler','Obeta','Gienger','Solarmarkt','Wattkraft','IBC Solar','Segen Solar','Phoenix Contact','Conrad'];
   const supplier=SUP.find(s=>new RegExp('\\b'+s.replace(/[.&]/g,'\\$&')+'\\b','i').test(t))||'';
-  return {items:markExtras(items.map(i=>({...i,recv:0,miss:false,dmg:false}))),buyer,docNo,projectId,supplier,orderDate,delivery};
+  // Großhändler-Format mit „Menge:“ und Artikelnummer je Position ist eindeutig: dann gilt die lokale Erkennung
+  const structured=parts.length>1&&items.length===parts.length-1&&items.every(i=>i.artNr&&i.art.length<=120);
+  const docType=/Bestell(?:eingangs)?best[äa]tigung|Auftragsbest[äa]tigung/i.test(t)?'AB':'';
+  return {items:markExtras(items.map(i=>({...i,recv:0,miss:false,dmg:false}))),buyer,docNo,projectId,supplier,orderDate,delivery,structured,docType};
 }
 const SAMPLE_ERR={not_granted:'Claude-Zugriff wurde nicht erlaubt. Positionen bitte von Hand eintragen.',sampling_disabled:'Claude ist für dieses Konto nicht verfügbar.',rate_limited:'Gerade zu viele Anfragen. Bitte in ein paar Minuten erneut versuchen.',image_rejected:'Das Bild konnte nicht gelesen werden. Bitte ein schärferes Foto oder ein PDF nehmen.',images_unavailable:'Gescannte Belege kann diese Ansicht nicht an Claude schicken. Bitte ein PDF mit Text nehmen oder Positionen von Hand eintragen.',invalid_json:'Claude hat keine Positionen erkannt. Bitte erneut versuchen oder von Hand eintragen.',nothing:'Im Beleg wurde kein Text gefunden.',refused:'Claude hat diesen Beleg nicht verarbeitet.'};
 async function handleInvoice(file,mail,mailFile){
@@ -6120,11 +6127,11 @@ async function handleInvoice(file,mail,mailFile){
   const loc=mail?parseMailLocal(mail.text):null;
   if(loc){ loc.supplier=String(mail.from||'').replace(/<[^>]*>|\S+@\S+/g,'').replace(/["']/g,'').trim().split(/\s{2,}/)[0]||loc.supplier; loc.delivery=loc.delivery||''; }
   // lokale Erkennung nur nehmen, wenn sie plausibel ist (sonst Claude, falls verfügbar)
-  const useLocal=loc&&loc.items.length&&!file&&(!SAMPLE||loc.items.every(i=>i.art.length<=90));
+  const useLocal=loc&&loc.items.length&&(loc.structured||!file&&(!SAMPLE||loc.items.every(i=>i.art.length<=90)));
   if(SAMPLE||useLocal){
     if(!useLocal) st('Claude liest die Positionen aus … das dauert meist 20–60 Sekunden.');
     try{
-      let r; if(useLocal) r=loc; else { try{ r=await extractInvoice(file,mailText); if(loc&&loc.items.length&&!(r.items||[]).length) r={...r,items:loc.items}; }catch(e){ if(loc&&loc.items.length) r=loc; else throw e; } }
+      let r; if(useLocal) r=loc; else { try{ r=await extractInvoice(file,mailText); if(loc&&loc.items.length&&(r.items||[]).length<(loc.structured?loc.items.length:1)) r={...r,items:loc.items}; }catch(e){ if(loc&&loc.items.length) r=loc; else throw e; } }
       // 1) Was ist das für ein Beleg? Davon hängt ab, was die Zahlen und Daten bedeuten.
       const kind=ordDocKind(r,mail), dv=s=>/^\d{4}-\d{2}-\d{2}$/.test(s||'')?s:'', mailD=(()=>{ const x=mail&&mail.date?new Date(mail.date):null; return x&&!isNaN(x)?iso(x):''; })(), isReal=['best','ab','ls','re'].includes(kind);
       // 2) Bestellnummer: beim Lieferschein und bei der Rechnung ist die Belegnummer nicht die Bestellnummer
