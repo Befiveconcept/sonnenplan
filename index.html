@@ -2405,6 +2405,8 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 .sec-t{grid-column:1/-1;font-family:var(--f-display);font-size:16px;font-weight:600;margin-top:6px;border-bottom:1px solid var(--line);padding-bottom:4px}
 .lines{display:flex;flex-direction:column;gap:6px}
 .lrow{display:grid;gap:6px;align-items:center}
+.lcalc{text-align:right;font-variant-numeric:tabular-nums;padding:6px 4px;color:var(--ink,inherit);white-space:nowrap}
+.lfoot{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.ltot{margin-left:auto;font-variant-numeric:tabular-nums;padding-right:40px}
 .lrow input,.lrow select{border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:6px 8px;width:100%;min-width:0}
 .lhead{font-size:11px;color:var(--muted);font-weight:600}
 .form-ck{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed var(--line)}
@@ -4988,7 +4990,7 @@ const retCan=o=>mayWrite('orders')&&((o.items||[]).some(i=>+i.recv>0)||(o.return
 function retSheet(id){ const o=S.orders[id]; if(!o) return; const its=(o.items||[]).filter(i=>String(i.art||'').trim()), R=o.returns||[];
   const old=R.length?`<div class="sec-t" style="margin:0 0 6px">Bisherige Retouren</div>${R.map((r,j)=>`<div class="ret-old"><div><b>${fmtD(r.date)}</b> <span class="small muted">${esc([r.by,r.rma?'RMA '+r.rma:'',r.why].filter(Boolean).join(' · '))}</span><div class="small">${r.lines.map(l=>esc(nf(l.qty)+' '+(l.unit||'')+' '+l.art)).join('<br>')}</div></div><select class="inp" id="ret_s${j}" aria-label="Status der Retoure">${Object.entries(RET_ST).map(([k,l])=>`<option value="${k}" ${r.st===k?'selected':''}>${l}</option>`).join('')}</select></div>`).join('')}<div class="sec-t" style="margin:12px 0 6px">Neue Retoure</div>`:'';
   openSheet({title:'Retoure · '+(o.supplier||'Lieferant'),wide:1,html:`<div class="fld full">${old}
-    <div class="ret-list">${its.map((i,k)=>`<label class="ret-row"><input type="checkbox" class="ck" id="ret_c${k}"><span>${esc(i.art)}${i.artNr?` <span class="small muted">${esc(i.artNr)}</span>`:''}<span class="small muted"> · bestellt ${nf(+i.qty||0)}, geliefert ${nf(+i.recv||0)}</span></span><input class="inp" type="number" min="0" step="any" id="ret_q${k}" value="${+i.recv||+i.qty||1}" aria-label="Menge zurück"><span class="small">${esc(i.unit||'Stk')}</span></label>`).join('')||'<div class="empty">Keine Positionen.</div>'}</div>
+    <div class="ret-list">${its.map((i,k)=>`<label class="ret-row"><input type="checkbox" class="ck" id="ret_c${k}"><span>${esc(artFull(i))}${i.artNr?` <span class="small muted">${esc(i.artNr)}</span>`:''}<span class="small muted"> · bestellt ${nf(+i.qty||0)}, geliefert ${nf(+i.recv||0)}</span></span><input class="inp" type="number" min="0" step="any" id="ret_q${k}" value="${+i.recv||+i.qty||1}" aria-label="Menge zurück"><span class="small">${esc(i.unit||'Stk')}</span></label>`).join('')||'<div class="empty">Keine Positionen.</div>'}</div>
     <div class="grid2" style="margin-top:8px"><label class="info-f"><span>Grund</span><input class="inp" id="ret_why" placeholder="z. B. falsch geliefert, beschädigt, zu viel bestellt"></label><label class="info-f"><span>Retouren-Nr. (RMA) vom Lieferanten</span><input class="inp" id="ret_rma"></label></div>
     <label class="info-f" style="margin-top:8px"><span>Status</span><select class="inp" id="ret_st">${Object.entries(RET_ST).map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select></label>
     <div class="small muted" style="margin-top:6px">Der Lagerbestand wird dabei nicht geändert. Liegt die Ware schon im Lager, bitte dort ausbuchen.</div></div>`,saveLabel:'Speichern',
@@ -5283,11 +5285,19 @@ Schreibe einen kurzen, sachlichen Vorschlag auf Deutsch in der Sprache des Betri
 }
 function linesHtml(f,rows){
   const tpl=f.cols.map(c=>c.w||'1fr').join(' ')+' 32px';
-  const row=(r)=>`<div class="lrow" style="grid-template-columns:${tpl}">${f.cols.map(c=>c.type==='check'?`<input data-c="${c.k}" type="checkbox" class="ck" ${r[c.k]?'checked':''} aria-label="erledigt">`:c.options?`<input data-c="${c.k}" list="dl_${f.k}_${c.k}" value="${esc(r[c.k]??'')}" placeholder="${esc(c.label)}">`:`<input data-c="${c.k}" type="${c.type||'text'}" ${c.type==='number'?'step="any" inputmode="decimal"':''} value="${esc(r[c.k]??'')}" placeholder="${esc(c.label)}">`).join('')}<button type="button" class="icon-btn" data-act="lineDel" aria-label="Zeile entfernen">${ic('x')}</button></div>`;
+  const row=(r)=>`<div class="lrow" style="grid-template-columns:${tpl}">${f.cols.map(c=>c.type==='calc'?`<output class="lcalc" data-calc="${c.k}">${linesCalcFmt(c.calc(r))}</output>`:c.type==='check'?`<input data-c="${c.k}" type="checkbox" class="ck" ${r[c.k]?'checked':''} aria-label="erledigt">`:c.options?`<input data-c="${c.k}" list="dl_${f.k}_${c.k}" value="${esc(r[c.k]??'')}" placeholder="${esc(c.label)}">`:`<input data-c="${c.k}" type="${c.type||'text'}" ${c.type==='number'?'step="any" inputmode="decimal"':''} value="${esc(r[c.k]??'')}" placeholder="${esc(c.label)}">`).join('')}<button type="button" class="icon-btn" data-act="lineDel" aria-label="Zeile entfernen">${ic('x')}</button></div>`;
   return `<div class="lines" id="f_${f.k}" data-lines="${f.k}"><div class="lrow lhead" style="grid-template-columns:${tpl}">${f.cols.map(c=>`<span>${c.label}</span>`).join('')}<span></span></div>${(rows.length?rows:[{}]).map(row).join('')}
     ${f.cols.filter(c=>c.options).map(c=>`<datalist id="dl_${f.k}_${c.k}">${c.options.map(o=>`<option value="${esc(o)}">`).join('')}</datalist>`).join('')}
-    <template>${row({})}</template><div><button type="button" class="btn ghost sm" data-act="lineAdd">${ic('plus')}Zeile</button></div></div>`;
+    <template>${row({})}</template><div class="lfoot"><button type="button" class="btn ghost sm" data-act="lineAdd">${ic('plus')}Zeile</button>${f.cols.some(c=>c.type==='calc')?`<span class="ltot" data-ltot>${linesTotHtml(f,rows)}</span>`:''}</div></div>`;
 }
+// Berechnete Spalten (z. B. Gesamt = Menge × EP): nur Anzeige, wird nicht gespeichert
+const linesCalcFmt=v=>v==null||isNaN(v)?'':nf(v,2);
+function linesTotHtml(f,rows){ const c=f.cols.find(x=>x.type==='calc'); let s=0, n=0; (rows||[]).forEach(r=>{ const v=c.calc(r); if(v!=null&&!isNaN(v)){ s+=v; n++; } }); return n?'Summe netto: <b>'+nf(s,2)+' €</b>':''; }
+function linesRecalc(box){ const k=box.dataset.lines, f=SHEET&&(SHEET.fields||[]).find(x=>x.k===k); if(!f||!f.cols.some(c=>c.type==='calc')) return;
+  const rows=[...box.querySelectorAll('.lrow:not(.lhead)')].filter(r=>!r.closest('template')).map(el=>{ const o={}; el.querySelectorAll('[data-c]').forEach(i=>o[i.dataset.c]=i.value); return {el,o}; });
+  rows.forEach(({el,o})=>f.cols.filter(c=>c.type==='calc').forEach(c=>{ const out=el.querySelector(`[data-calc="${c.k}"]`); if(out) out.textContent=linesCalcFmt(c.calc(o)); }));
+  const t=box.querySelector('[data-ltot]'); if(t) t.innerHTML=linesTotHtml(f,rows.map(x=>x.o)); }
+document.addEventListener('input',e=>{ const box=e.target.closest&&e.target.closest('.lines[data-lines]'); if(box) linesRecalc(box); });
 function openSheet(o){
   SHEET=o; closeMenu();
   const el=document.createElement('div'); el.className='scrim'; el.id='scrim';
@@ -5591,7 +5601,9 @@ function eventForm(e,pre){
     onSave:v=>{ if(v.kind==='ho'){ if(!v.title) v.title='Homeoffice'; if(!v.date) v.date=e.date||TODAY(); } delete v.evtd; delete v.whox; delete v.kmx; delete v.linkx; v.link=evLinkVal(); if(!v.link){ delete v.link; delete e.link; } const pl=String(v.place||'').trim(); if(EV_KM&&pl&&EV_KM.addr===pl){ v.km=EV_KM.km; v.min=EV_KM.min; } else { delete e.km; delete e.min; } const sel=[...document.querySelectorAll('.ev-who:checked')].map(x=>x.value), main=sel.includes(e.who)?e.who:(sel[0]||''), rest=sel.filter(n=>n!==main); Object.assign(e,v); e.who=main; if(rest.length) e.who2=rest; else delete e.who2; put('events',e); const n=evTodoSave(e); toast('Termin gespeichert'+(n?' · '+n+' To-Do'+(n>1?'s':'')+' angelegt':'')+'.'); },
     onDelete:isNew?null:()=>{ del('events',e.id); closeSheet(); }});
 }
-const ORDER_COLS=[{k:'qty',label:'Menge',type:'number',w:'64px'},{k:'unit',label:'Einh.',w:'58px',options:['Stk','m','kWp','Pal','psch']},{k:'artNr',label:'Art.-Nr.',w:'0.45fr'},{k:'art',label:'Artikel',w:'1fr',options:[...MAT_DC,...MAT_AC,...MAT_KABEL,'PV-Module','Wechselrichter','Unterkonstruktion','Speichersystem','Ladesäule','Zählerschrank','Wandlermessschrank','Trafostation','EZA-Regler']},{k:'price',label:'EP netto €',type:'number',w:'86px'},{k:'extra',label:'Zusatz',type:'check',w:'48px'}];
+// Artikelname mit Hersteller (Bestellpositionen führen den Hersteller in eigener Spalte)
+const artFull=i=>{ const a=String(i&&i.art||'').trim(), m=String(i&&i.mfr||'').trim(); return m&&!a.toLowerCase().startsWith(m.toLowerCase())?m+' '+a:a; };
+const ORDER_COLS=[{k:'qty',label:'Menge',type:'number',w:'64px'},{k:'unit',label:'Einh.',w:'58px',options:['Stk','m','kWp','Pal','psch']},{k:'artNr',label:'Art.-Nr.',w:'0.45fr'},{k:'mfr',label:'Hersteller',w:'0.5fr'},{k:'art',label:'Artikel',w:'1fr',options:[...MAT_DC,...MAT_AC,...MAT_KABEL,'PV-Module','Wechselrichter','Unterkonstruktion','Speichersystem','Ladesäule','Zählerschrank','Wandlermessschrank','Trafostation','EZA-Regler']},{k:'price',label:'EP netto €',type:'number',w:'86px'},{k:'sum',label:'Gesamt €',type:'calc',w:'92px',calc:r=>{ const q=+String(r.qty??'').replace(',','.'), p=+String(r.price??'').replace(',','.'); return q&&p?q*p:null; }},{k:'extra',label:'Zusatz',type:'check',w:'48px'}];
 // Zusätze (Versand, Fracht, Zuschläge …) sind keine Ware: stehen in der Bestellung, werden bei der Warenannahme nicht gebucht
 const EXTRA_RX=/versand|fracht|porto|transport|anlieferung|lieferkosten|zuschlag|mindermenge|maut|pfand|verpackung|palette(ntausch|ngebühr)|gebühr|bearbeitung|express|skonto|rabatt|nachlass/i;
 const markExtras=items=>items.map(i=>({...i,extra:i.extra||EXTRA_RX.test(String(i.art||''))}));
@@ -5606,7 +5618,7 @@ function docsHtml(o){
 var ORD_MAIL_RES=''; // Ergebnis des letzten Abgleichs mit einer Bestell-Mail (nur zur Anzeige im offenen Formular)
 // Echte Bestell-Mail mit vorhandenen Positionen abgleichen: gleiche Artikel (Nummer, sonst Bezeichnung) ergänzen statt doppelt anlegen. Die Mail gilt als der tatsächliche Stand.
 // Beleg ↔ vorhandene Bestellung. Nummer oder Hinweis der KI = sicher. Sonst Lieferant gleich und mindestens die Hälfte der Positionen gleich. Mehrere oder schwache Treffer: fragen. Bei einer eigenen neuen Bestellung (best) zählt nur die Nummer.
-var ORD_HINT='', ORD_PICK='';
+var ORD_HINT='', ORD_PICK='', ORD_DIAG='';
 function ordFindMatch(r,selfId,nr,hint,kind){ const live=x=>x.id!==selfId&&x.status!=='storniert'&&x.appr!=='storno', all=arr('orders').filter(live);
   // Vorschlag aus der Ablage nur nehmen, wenn die Bestellnummer nicht widerspricht (sonst landen fremde Positionen als „schon da“ in einer anderen Bestellung)
   if(hint&&S.orders[hint]&&live(S.orders[hint])){ const hn=String(S.orders[hint].no||'').split('/').map(normNr).filter(Boolean); if(!nr||!hn.length||hn.includes(normNr(nr))) return {hit:S.orders[hint]}; }
@@ -5628,7 +5640,7 @@ function ordMergeMail(old,neu,keepQty){ const out=(old||[]).map(i=>({...i})), us
     if(j<0){ let best=-1, bs=0; out.forEach((x,k)=>{ if(used.has(k)||nrClash(x,n)) return; const s=simWords(x.art,n.art); if(s>bs){ bs=s; best=k; } }); if(bs>=0.6) j=best; }
     if(j<0){ out.push({...n}); used.add(out.length-1); add.push(n); return; }
     used.add(j); hit++; const x=out[j], label=x.art||n.art;
-    if(!x.artNr&&n.artNr) x.artNr=n.artNr;
+    if(!x.artNr&&n.artNr) x.artNr=n.artNr; if(!x.mfr&&n.mfr) x.mfr=n.mfr;
     if(n.qty&&+x.qty!==+n.qty){ if(keepQty) chg.push(`${label}: Beleg nennt Menge ${qn(+n.qty)}, bestellt ${qn(+x.qty||0)} (bleibt)`); else { chg.push(`${label}: Menge ${qn(+x.qty||0)} → ${qn(+n.qty)}`); x.qty=n.qty; } }
     if(n.price!=null&&n.price!==''){ const had=x.price!=null&&x.price!==''; if(had&&Math.abs(+x.price-+n.price)>=0.005) chg.push(`${label}: Preis ${nf(+x.price,2)} € → ${nf(+n.price,2)} €`); x.price=n.price; } });
   const miss=(old||[]).filter((i,k)=>!used.has(k)&&String(i.art||'').trim());
@@ -5707,7 +5719,7 @@ function receiveForm(id,pre){
   const items=o.items||[], open=items.filter(itemOpen).length;
   const pf=i=>pre&&pre.res.find(x=>x.i===i);
   const rows=items.map((it,i)=>{ const done=!itemOpen(it), p=pf(i);
-    return `<div class="rcv ${done?'done':''}"><div class="rcv-t"><b>${esc(it.art||'–')}</b><span class="small muted">${nf(it.qty,1)} ${esc(it.unit||'')}${it.artNr?' · '+esc(it.artNr):''}${+it.recv&&!done?' · bisher '+nf(it.recv,1):''}</span></div>
+    return `<div class="rcv ${done?'done':''}"><div class="rcv-t"><b>${esc(artFull(it)||'–')}</b><span class="small muted">${nf(it.qty,1)} ${esc(it.unit||'')}${it.artNr?' · '+esc(it.artNr):''}${+it.recv&&!done?' · bisher '+nf(it.recv,1):''}</span></div>
      ${done?itemChip(it):`<div class="seg" role="radiogroup" aria-label="${esc(it.art)}">
        <label><input type="radio" name="st_${i}" value="da" ${p&&p.st==='da'?'checked':''}><span>Da</span></label>
        <label><input type="radio" name="st_${i}" value="fehlt" ${p&&p.st==='fehlt'?'checked':''}><span>Nicht da</span></label>
@@ -5733,7 +5745,7 @@ function receiveForm(id,pre){
       if(st==='da'){ it.recv=+it.qty||0; it.miss=false; lines.push({art:it.art,st:'da'}); }
       else if(st==='fehlt'){ it.miss=true; lines.push({art:it.art,st:'fehlt'}); }
       else { const n=+$('#rc_'+i).value||0; if(!n){ toast('Bitte bei „'+it.art+'“ die erhaltene Menge eintragen.'); return false; } it.recv=Math.min(+it.qty||0,(+it.recv||0)+n); it.miss=itemOpen(it); lines.push({art:it.art,st:'teil',n}); }
-      const n=(+it.recv||0)-prev; if(n>0) got.push({i,art:it.art,artNr:it.artNr||'',unit:it.unit||'Stk',qty:n}); }
+      const n=(+it.recv||0)-prev; if(n>0) got.push({i,art:artFull(it),artNr:it.artNr||'',unit:it.unit||'Stk',qty:n}); }
     if(items.length&&!touched){ toast('Bitte mindestens eine Position als Da, Nicht da oder Teilweise markieren.'); return false; }
     o.receipts=(o.receipts||[]).concat([{date:$('#rc_date').value,by:$('#rc_by').value.trim(),ls:$('#rc_ls').value.trim(),where:$('#rc_where').value.trim(),note:$('#rc_note').value.trim(),dmg,lines}]); if($('#rc_date').value) o.delivered=$('#rc_date').value;
     put('orders',o); const miss=lines.filter(l=>l.st!=='da').length;
@@ -6025,7 +6037,8 @@ Regeln:
 - Keine Zwischensummen, Gesamtsummen, MwSt-, Rabatt- oder Skontozeilen als Position.
 - Fracht/Versand/Palettenpfand nur, wenn als eigene Position mit Betrag aufgeführt (dann unit "psch").
 - qty als Zahl (deutsches Komma in Punkt umwandeln). unit wie im Beleg (Stk, m, Pal, kg, Rolle, psch …), Standard "Stk".
-- art: Artikelbezeichnung, kurz aber eindeutig (Hersteller/Typ/Leistung behalten, z. B. "JA Solar JAM54D40 450 Wp").
+- mfr: Hersteller der Ware (z. B. "Siemens", "JA Solar", "Klauke"), sonst "".
+- art: Artikelbezeichnung ohne den Hersteller, kurz aber eindeutig (Typ/Leistung behalten, z. B. "JAM54D40 450 Wp").
 - artNr: Artikelnummer des Lieferanten, sonst "".
 - price: Einzelpreis netto als Zahl (deutsches Format "1.234,50" → 1234.5). Ist nur der Gesamtpreis der Position genannt, durch die Menge teilen. Brutto-Preise durch 1,19 teilen. Bei Großhändlern (Sonepar, Rexel, Krannich …) ist „PE: 5,96 € / 1 Stück“ der Einzelpreis; „Brutto“ dort ist der Listenpreis, nicht verwenden. Sonst null.
 - docType: Prüfe zuerst genau, was das Dokument ist. "Lieferschein" = Ware wurde geliefert oder versendet (Lieferschein, Versandbestätigung, Packzettel). "Rechnung" = Rechnung. "AB" = der Lieferant oder Shop bestätigt eine Bestellung (Auftragsbestätigung, Bestellbestätigung, „vielen Dank für Ihre Bestellung“). "Bestellung" = wir bestellen selbst beim Lieferanten. "Angebot" = Preisangebot, noch nicht bestellt. "Anfrage" = Bedarf oder Bitte zu bestellen, noch nicht bestellt.
@@ -6036,14 +6049,14 @@ Regeln:
 - deliveredDate: das Datum, an dem tatsächlich geliefert wurde („Lieferdatum“, „Leistungsdatum“, „Versanddatum“) als YYYY-MM-DD. Nicht genannt: "". Der geplante Liefertermin gehört in "delivery", nicht hierher.
 - Mengen genau aus dem Beleg lesen, nichts schätzen oder runden. qty ist bei einem Lieferschein die in dieser Lieferung gelieferte Menge, sonst die bestellte Menge. qtyOrdered ist die bestellte Menge, wenn der Lieferschein sie zusätzlich nennt (z. B. „bestellt 10, geliefert 6“), sonst null.
 - buyer: die bestellende Firma (Kunde des Lieferanten), z. B. aus „Vielen Dank für Ihre Bestellung, Flexvolt GmbH & Co. KG“, Rechnungs-/Auftraggeber oder Kundenanschrift. Vollständiger Firmenname mit Rechtsform, sonst "".
-- Bei Großhändler-Mails „Hersteller - Artikelnummer“ (z. B. „Siemens - 0657050“): Hersteller in art aufnehmen, Nummer als artNr. „Kommissionstext“ / „Bestellzeichen“ zur Projektzuordnung nutzen.
+- Bei Großhändler-Mails „Hersteller - Artikelnummer“ (z. B. „Siemens - 0657050“): Hersteller als mfr, Nummer als artNr. „Kommissionstext“ / „Bestellzeichen“ zur Projektzuordnung nutzen.
 Antworte nur mit JSON in genau dieser Form:
-{"supplier":"","buyer":"","docNo":"","orderNo":"","docType":"Lieferschein|Rechnung|AB|Bestellung|Angebot|Anfrage","date":"YYYY-MM-DD","orderDate":"","deliveredDate":"","delivery":"","projectId":"","items":[{"qty":1,"qtyOrdered":null,"unit":"Stk","art":"","artNr":"","price":null}]}
+{"supplier":"","buyer":"","docNo":"","orderNo":"","docType":"Lieferschein|Rechnung|AB|Bestellung|Angebot|Anfrage","date":"YYYY-MM-DD","orderDate":"","deliveredDate":"","delivery":"","projectId":"","items":[{"qty":1,"qtyOrdered":null,"unit":"Stk","mfr":"","art":"","artNr":"","price":null}]}
 ${text.trim()?'\nBelegtext (aus dem PDF gelesen):\n'+text:images.length?'\nDer Beleg ist in den angehängten Bildern.':''}`;
   const opts={modelTier:'default'}; if(images.length) opts.images=images;
   const r=await SAMPLE.json(prompt,opts);
   if(!r||!Array.isArray(r.items)) throw {code:'invalid_json'};
-  r.items=r.items.filter(i=>i&&String(i.art||'').trim()).map(i=>({qty:+String(i.qty??'').replace(',','.')||1,unit:String(i.unit||'Stk').slice(0,12),art:String(i.art).trim().slice(0,200),artNr:String(i.artNr||'').trim().slice(0,60),price:i.price==null||isNaN(+i.price)?null:+i.price,qtyOrdered:i.qtyOrdered==null||isNaN(+String(i.qtyOrdered).replace(',','.'))?null:+String(i.qtyOrdered).replace(',','.'),recv:0,miss:false,dmg:false}));
+  r.items=r.items.filter(i=>i&&String(i.art||'').trim()).map(i=>({qty:+String(i.qty??'').replace(',','.')||1,unit:String(i.unit||'Stk').slice(0,12),mfr:String(i.mfr||'').trim().slice(0,60),art:String(i.art).trim().slice(0,200),artNr:String(i.artNr||'').trim().slice(0,60),price:i.price==null||isNaN(+i.price)?null:+i.price,qtyOrdered:i.qtyOrdered==null||isNaN(+String(i.qtyOrdered).replace(',','.'))?null:+String(i.qtyOrdered).replace(',','.'),recv:0,miss:false,dmg:false}));
   r.items=markExtras(r.items);
   return r;
 }
@@ -6060,17 +6073,17 @@ function parseMailLocal(text){
   for(let k=1;k<parts.length;k++){
     // Text vor „Menge:“ – ab dem letzten Preisfeld der Vorposition, damit nur die Bezeichnung bleibt
     const prev=parts[k-1].replace(/^[\s\S]*\b(?:Brutto|PE|Positionswert|Warenwert)\s*:\s*[\d.,]+\s*€?(?:\s*\/\s*[\d.,]+\s*[A-Za-zÄÖÜäöü.]*)?/i,'');
-    const before=prev.split('\n').map(l=>l.replace(/\t/g,' ').replace(/\s+/g,' ').trim()).filter(l=>l&&!/^\d+$/.test(l)&&!/^(Brutto|Positionswert|Warenwert|PE|Gesamt|Bestellpositionen|Pos\.?|Artikel)\b/i.test(l));
+    const before=prev.split('\n').map(l=>l.replace(/\t/g,' ').replace(/\s+/g,' ').trim()).filter(l=>l&&!/^\d+$/.test(l)&&!/^(Brutto|Positionswert|Warenwert|Metallkosten|PE|Gesamt|Bestellpositionen|Pos\.?|Artikel|Positionstext|Kommissionstext)\b/i.test(l));
     const desc=before.slice(-2); const qm=parts[k].match(/^([\d.,]+)\s*([A-Za-zÄÖÜäöü.]*)/); if(!qm) continue;
-    let artNr='', head=(desc.length>1?desc[0]:'').replace(/^\d{1,3}\s+/,''), art=(desc[desc.length-1]||'').replace(/^\d{1,3}\s+(?=\D)/,'');
-    const hm=head.match(/^(.+?)\s+-\s+([\w\-./]+)$/); if(hm){ artNr=hm[2]; art=hm[1]+' '+art; } else if(head) art=head+' '+art;
+    let artNr='', mfr='', head=(desc.length>1?desc[0]:'').replace(/^\d{1,3}\s+/,''), art=(desc[desc.length-1]||'').replace(/^\d{1,3}\s+(?=\D)/,'');
+    const hm=head.match(/^(.+?)\s+-\s+([\w\-./]+)$/); if(hm){ artNr=hm[2]; mfr=hm[1].trim(); } else if(head) art=head+' '+art;
     // Zusammengezogene Zeilen (kopierter Mailtext): letztes „Hersteller - Nummer Bezeichnung“ vor „Menge:“ nehmen, Signatur und Kopf davor verwerfen
     if(!artNr){ const flat=prev.replace(/\s+/g,' ').trim(), all=[...flat.matchAll(/\s-\s(\d{4,}[\w\-./]*)\s/g)], fm=all.length?all[all.length-1]:null;
       if(fm){ const rest=flat.slice(fm.index+fm[0].length).trim(), mw=flat.slice(0,fm.index).split(' ').slice(-2).filter(w=>/[A-Za-zÄÖÜäöü]/.test(w)&&!/^(Bestellpositionen|Pos\.?|Artikel|Brutto|€)$/i.test(w)&&!/:$/.test(w));
-        if(rest.length>=3){ artNr=fm[1]; art=(mw.length===2&&/^[a-zäöü]/.test(mw[0])?mw.slice(1):mw).join(' ')+' '+rest; } } }
+        if(rest.length>=3){ artNr=fm[1]; mfr=(mw.length===2&&/^[a-zäöü]/.test(mw[0])?mw.slice(1):mw).join(' '); art=rest.replace(/\s*\b(?:Positions|Kommissions)text:.*$/i,''); } } }
     const pm=parts[k].match(/\bPE:\s*([\d.,]+)\s*€?\s*\/\s*([\d.,]+)/i), wm=parts[k].match(/Positionswert:\s*([\d.,]+)/i);
     const qty=deNum(qm[1])||1; let price=pm?deNum(pm[1])/(deNum(pm[2])||1):wm?deNum(wm[1])/qty:null;
-    if(art.trim()) items.push({qty,unit:unitOf(qm[2]),art:art.replace(/\s+/g,' ').trim().slice(0,200),artNr,price:isNaN(price)?null:Math.round(price*100)/100});
+    if(art.trim()) items.push({qty,unit:unitOf(qm[2]),mfr:mfr.slice(0,60),art:art.replace(/\s+/g,' ').trim().slice(0,200),artNr,price:isNaN(price)||price==null?null:Math.round(price*10000)/10000});
   }
   // 2) Zeilen: „20 Stk JA Solar 450 Wp je 89,50 EUR“, „3 x Kabel 6mm² à 1,20 €“
   if(!items.length){ const rx=new RegExp('^\\s*(?:\\d+[.)]\\s+)?(\\d+(?:[.,]\\d+)?)\\s*('+UNIT_RX+')\\s+(.+?)(?:\\s+(?:je|à|a|@|zu|EP)\\s*([\\d.]*\\d(?:,\\d{1,2})?)\\s*(?:€|EUR|Euro))?\\s*$','i');
@@ -6121,7 +6134,7 @@ async function handleInvoice(file,mail,mailFile){
   }
   // Die Original-Mail (.msg/.eml) als Beleg an der Bestellung behalten – aber nicht zweimal, wenn sie erneut abgelegt wird
   if(mailFile&&ASSETS){ try{ const mfp=await fileFp(mailFile); if(!(o.docs||[]).some(d=>d.fp===mfp)){ const ext=(String(mailFile.name||'').match(/\.(msg|eml)$/i)||['.eml'])[0], base=String(mail&&mail.subject||String(mailFile.name||'').replace(/\.(msg|eml)$/i,'')||'E-Mail').replace(/[\\/:*?"<>|]+/g,' ').trim().slice(0,90); const r=await ASSETS.upload(mailFile,{type:mailFile.type||'application/octet-stream'}); o.docs=(o.docs||[]).concat([{id:r.id,name:base+ext,type:r.contentType,date:TODAY(),kind:'E-Mail',fp:mfp,size:mailFile.size||0}]); } }catch(e){ /* Text und Positionen werden trotzdem übernommen */ } }
-  let found=0, info='', res='', autoSave=false; const hint=ORD_HINT; ORD_HINT='';
+  let found=0, info='', res='', autoSave=false; const hint=ORD_HINT; ORD_HINT=''; const diag=ORD_DIAG; ORD_DIAG='';
   let hadItems=(o.items||[]).some(i=>String(i.art||'').trim()), confirm=!CUR_ORDER_NEW; // bestehende Bestellung: Die Mail bestätigt sie, sie ist keine neue Liste
   const mailText=mail?[mail.subject&&'Betreff: '+mail.subject,mail.from&&'Von: '+mail.from,mail.date&&'Datum: '+mail.date,mail.text].filter(Boolean).join('\n'):'';
   const loc=mail?parseMailLocal(mail.text):null;
@@ -6175,6 +6188,9 @@ async function handleInvoice(file,mail,mailFile){
         res=`<b>Erkannt: ${esc(KN[kind]||'Beleg')} – ${autoSave?'automatisch zugeordnet und gespeichert':'bitte prüfen und speichern'}</b>${linked?`<br>${esc('Gehört zur vorhandenen Bestellung bei '+linked+', keine zweite angelegt.')}`:''}<br>${esc(facts.join(' · '))}${stMsg?'<br>'+esc(stMsg):''}${lsMsg.length?'<br>'+esc(lsMsg.join(' ')):''}${mg.chg.length?`<div>${isLs?'Teillieferung:':'Geändert:'}</div>`+li(mg.chg):''}${mg.add.length&&hadItems?`<div>${isLs?'Geliefert, aber nicht bestellt:':'Neu aus dem Beleg:'}</div>`+li(mg.add.map(i=>i.art)):''}${mg.miss.length?`<div>${isLs?'Noch nicht geliefert:':'Bei uns, aber nicht im Beleg (bleibt stehen):'}</div>`+li(mg.miss.map(i=>i.art)):''}`; }
     }catch(e){ info=SAMPLE_ERR[e&&e.code]||(e&&e.code==='cancelled'?'':'Auslesen fehlgeschlagen. Positionen bitte von Hand eintragen.'); }
   } else info=mail?'Im Mailtext wurden keine Positionen erkannt. Bitte von Hand eintragen.':'Beleg gespeichert. Positionen bitte von Hand eintragen.';
+  // Nichts gefunden: zeigen, was tatsächlich angekommen ist, damit man den Weg nachvollziehen kann
+  if(!found&&!(o.items||[]).some(i=>String(i.art||'').trim())){ const dg='Technik: '+[diag,mail?'Mailtext '+String(mail.text||'').length+' Zeichen, lokal erkannt '+(loc?loc.items.length:0):'keine Mail gelesen'].filter(Boolean).join(' · ');
+    res=(res?res+'<br>':'')+`<span class="small muted">${esc(dg)}</span>`; try{ console.warn('[Bestellung]',dg); }catch(e){} }
   if(mail&&!found&&!res){ info=(info?info+' ':'')+'Angekommen sind '+String(mail.text||'').length+' Zeichen Mailtext – unten unter „Gelesener Mailtext“ prüfen.'; }
   const wasNew=CUR_ORDER_NEW;
   if(!wasNew){ /* Beleg und Mail sofort an der gespeicherten Bestellung sichern; Mengen und Daten erst nach dem Prüfen mit „Speichern“ */ const saved=S.orders[o.id]; if(saved){ let so=clone(saved); if(autoSave){ so=clone(o); delete so.otype; } so.docs=o.docs; if(o.mail) so.mail=o.mail; put('orders',so); } }
@@ -6320,19 +6336,32 @@ document.addEventListener('paste',e=>{
 const isImgAtt=a=>/^image\//i.test(a.type||'')||/\.(jpe?g|png|gif|webp|bmp|tiff?|heic)$/i.test(a.name||'');
 function mailDocAtt(att){ const l=att||[]; return l.find(x=>/pdf/i.test(x.type)||/\.pdf$/i.test(x.name))||l.filter(x=>isImgAtt(x)&&x.blob.size>=50000).sort((a,b)=>b.blob.size-a.blob.size)[0]||null; }
 async function ordersFromDrop(files,text,pid){
-  let file=null, mail=null, mailFile=null;
+  let file=null, mail=null, mailFile=null; const diag=[];
   for(const f of [...(files||[])]){
-    const n=(f.name||'').toLowerCase();
-    if(n.endsWith('.eml')||n.endsWith('.msg')||f.type==='message/rfc822') mailFile=mailFile||f;
-    const isMailF=n.endsWith('.eml')||n.endsWith('.msg')||f.type==='message/rfc822', ab0=isMailF?await f.arrayBuffer():null, ole=ab0&&isOleMsg(ab0);
+    const n=(f.name||'').toLowerCase(), media=/pdf|image\//.test(f.type)||/\.(pdf|jpe?g|png|webp|gif|heic)$/i.test(n);
+    // Inhalt prüfen statt Name/Typ: aus Outlook gezogene Dateien kommen mit wechselnden Namen und Typen an
+    let ab0=null, rdErr=''; if(!media){ try{ ab0=await f.arrayBuffer(); }catch(e){ rdErr=e&&e.name||'Lesefehler'; } }
+    const ole=!!ab0&&isOleMsg(ab0), emlLike=!!ab0&&!ole&&(n.endsWith('.eml')||f.type==='message/rfc822'||/^(?:[\w-]+:[^\n]*\r?\n)*?(?:From|Subject|Received|Date|MIME-Version|Return-Path):/i.test(latin1(new Uint8Array(ab0,0,Math.min(2000,ab0.byteLength)))));
+    diag.push('„'+(f.name||'ohne Namen')+'“ · Typ '+(f.type||'leer')+' · '+(f.size||0)+' Byte'+(ole?' · Outlook-Datei':emlLike?' · E-Mail':'')+(rdErr?' · nicht lesbar ('+rdErr+')':''));
+    if(ole||emlLike) mailFile=mailFile||f;
+    const isMailF=emlLike;
     if(isMailF&&!ole){ const m=parseEml(ab0); mail=m; const at=mailDocAtt(m.att); if(at&&!file) file=new File([at.blob],at.name||'Anhang.pdf',{type:at.type==='application/octet-stream'&&/\.pdf$/i.test(at.name)?'application/pdf':at.type}); }
     else if(ole){ const ab=ab0; let pm=null; try{ pm=parseMsg(ab); }catch(e){ pm=null; }
       if(pm&&(pm.text.trim()||pm.att.length)){ mail={...pm,subject:pm.subject||f.name.replace(/\.msg$/i,'')}; const at=mailDocAtt(pm.att); if(at&&!file) file=new File([at.blob],at.name,{type:/\.pdf$/i.test(at.name)?'application/pdf':at.type}); continue; }
       const m=parseMsgLoose(ab); mail={...m,subject:f.name.replace(/\.msg$/i,'')}; if(m.pdf&&!file) file=new File([m.pdf],f.name.replace(/\.msg$/i,'')+'.pdf',{type:'application/pdf'}); }
-    else if(/pdf|image\//.test(f.type)||/\.(pdf|jpe?g|png|webp)$/i.test(n)){ if(!file) file=f; }
+    else if(media){ if(!file) file=f; }
   }
+  if(!(files||[]).length) diag.push('keine Datei angekommen');
+  if(text) diag.push('Text '+text.length+' Zeichen: „'+text.replace(/\s+/g,' ').trim().slice(0,90)+'“');
+  ORD_DIAG=diag.join(' · ');
+  // Outlook hat eine leere oder nicht lesbare Datei übergeben: nicht „0 Positionen“, sondern sagen, was zu tun ist
+  if(!file&&(files||[]).length&&!(mail&&String(mail.text||'').trim())&&[...files].every(f=>!f.size||/nicht lesbar/.test(ORD_DIAG))){ mail=null; mailFile=null;
+    const hint='Outlook hat die Mail leer an den Browser übergeben. Bitte die Mail zuerst auf den Desktop ziehen und dann die Datei vom Desktop hier ablegen – oder Mail öffnen, Strg+A, Strg+C und hier einfügen. (Technik: '+ORD_DIAG+')';
+    if(SHEET&&CUR_ORDER){ const m=$('#ordMzMsg')||$('#docStatus'); if(m) m.textContent=hint; } toast(hint); return; }
+  // Nur kurzer Text ohne Datei (z. B. Zeile aus der Outlook-Liste in beliebiger Spaltenfolge): keine Mail, sondern Hinweis
+  const rowOnly=!!text&&text.length<600&&/\t/.test(text)&&!/\b(Menge|Stk|Stück)\b/i.test(text)&&text.split('\n').filter(l=>l.trim()).length<=4;
   // Outlook gibt beim Ziehen in den Browser oft nur die Zeile aus der Mailliste weiter (Von / Betreff / Erhalten / Größe), nicht die Mail selbst
-  if(!file&&!mail&&text&&isOutlookRow(text)){ if(SHEET&&CUR_ORDER){ const m=$('#ordMzMsg')||$('#docStatus'), inp=$('#mailPaste'); if(m) m.textContent='Outlook hat nur die Betreffzeile geschickt. Mail öffnen, Strg+A, Strg+C und unten bei „E-Mail- oder Bestelltext einfügen“ mit Strg+V einfügen. Oder die Mail erst auf den Desktop ziehen und die Datei hier ablegen.'; if(inp) inp.focus(); return; } outlookHelp(pid,text); return; }
+  if(!file&&!mail&&text&&(isOutlookRow(text)||rowOnly)){ if(SHEET&&CUR_ORDER){ const m=$('#ordMzMsg')||$('#docStatus'), inp=$('#mailPaste'); if(m) m.textContent='Outlook hat nur die Betreffzeile geschickt. Mail öffnen, Strg+A, Strg+C und unten bei „E-Mail- oder Bestelltext einfügen“ mit Strg+V einfügen. Oder die Mail erst auf den Desktop ziehen und die Datei hier ablegen. (Technik: '+ORD_DIAG+')'; if(inp) inp.focus(); return; } outlookHelp(pid,text); return; }
   if(!file&&text&&text.trim().length>20) mail={subject:'',from:'',date:'',text};
   if(!file&&!mail){ toast('Bitte PDF, Foto, E-Mail (.eml/.msg) oder E-Mail-Text ablegen.'); return; }
   if(SHEET&&CUR_ORDER){ handleInvoice(file,mail,mailFile); return; }
@@ -6400,7 +6429,7 @@ function addToPick(pid,items,meta){ let pk=arr('picks').find(x=>x.pid===pid&&x.s
 function projSelOpts(cur,withIntern){ return `<option value="">– Projekt wählen –</option>${withIntern?`<option value="${INTERN}" ${cur===INTERN?'selected':''}>Haus intern</option>`:''}`+arr('projects').filter(p=>!isIntern(p)).filter(p=>catOf(p)==='laufend'||p.id===cur).sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${p.id}" ${p.id===cur?'selected':''}>${esc(p.name)}</option>`).join(''); }
 function staffOpts(cur){ return `<option value="">– offen –</option>`+staff().map(s=>`<option value="${esc(s.name)}" ${s.name===cur?'selected':''}>${esc(s.name)}</option>`).join(''); }
 // Angenommene, aber noch nicht verteilte Mengen einer Bestellung
-function unrouted(o){ return (o.items||[]).map((it,i)=>({i,art:it.art,artNr:it.artNr||'',unit:it.unit||'Stk',qty:Math.round(((+it.recv||0)-(+it.routed||0))*1000)/1000,extra:it.extra})).filter(g=>!g.extra&&g.qty>0&&String(g.art||'').trim()); }
+function unrouted(o){ return (o.items||[]).map((it,i)=>({i,art:artFull(it),artNr:it.artNr||'',unit:it.unit||'Stk',qty:Math.round(((+it.recv||0)-(+it.routed||0))*1000)/1000,extra:it.extra})).filter(g=>!g.extra&&g.qty>0&&String(g.art||'').trim()); }
 // Nach dem Wareneingang: je Position Baustelle (Kommissionierliste) oder Lager
 function routeSheet(oid,got){
   const o=S.orders[oid]; if(!o) return; const toSite=o.pid&&o.pid!==INTERN, LGON=lgAll().some(lgIsBin);
@@ -8578,7 +8607,7 @@ const A = {
  matStd:d=>{ const L={dc:MAT_DC,ac:MAT_AC,tool:['Benning PV1-1 (DC-Messung)','Benning IT200 (AC-Messung)','Akkuschrauber + Bits','Leiter','PSA / Absturzsicherung','Crimpzange MC4','Abisolierwerkzeug','Fotodoku: Handy geladen']}[d.v]||[]; addMatRows(L.map(a=>({art:a,unit:'Stk'}))); },
  matFromOrder:()=>{ const pid=($('#f_pid')||{}).value; if(!pid){ toast('Bitte zuerst Kunde / Projekt wählen.'); return; }
    const os=arr('orders').filter(o=>o.pid===pid); if(!os.length){ toast('Für dieses Projekt gibt es noch keine Bestellung.'); return; }
-   const rows=[]; os.forEach(o=>(o.items||[]).forEach(i=>{ const rest=(+i.recv||0)>0?+i.recv:+i.qty; rows.push({qty:rest||i.qty,unit:i.unit||'Stk',art:i.art}); }));
+   const rows=[]; os.forEach(o=>(o.items||[]).forEach(i=>{ const rest=(+i.recv||0)>0?+i.recv:+i.qty; rows.push({qty:rest||i.qty,unit:i.unit||'Stk',art:artFull(i)}); }));
    addMatRows(rows); toast(rows.length+' Positionen aus '+os.length+' Bestellung(en) übernommen.'); },
  copyWeek:()=>{ const ws=weekStart(), prev=addDays(ws,-7), src=S.plan['w-'+prev];
    if(!src||!(src.entries||[]).length){ toast('In der Vorwoche ist nichts geplant.'); return; }
@@ -8706,7 +8735,7 @@ const A = {
  exportJson:()=>copyText(JSON.stringify({exportiert:new Date().toISOString(),...S},null,1),'Sicherung in die Zwischenablage kopiert.'),
  closeSheet:()=>closeSheet(), sheetDelete:()=>{ SHEET&&SHEET.onDelete&&SHEET.onDelete(); },
  lineAdd:(d,el)=>{ const box=el.closest('.lines'); const tp=box.querySelector('template'); el.parentElement.before(tp.content.firstElementChild.cloneNode(true)); },
- lineDel:(d,el)=>{ const row=el.closest('.lrow'); const box=row.parentElement; if(box.querySelectorAll('.lrow:not(.lhead)').length>1) row.remove(); else row.querySelectorAll('input').forEach(i=>i.value=''); },
+ lineDel:(d,el)=>{ const row=el.closest('.lrow'); const box=row.parentElement; if(box.querySelectorAll('.lrow:not(.lhead)').length>1) row.remove(); else row.querySelectorAll('input').forEach(i=>i.value=''); linesRecalc(box); },
 };
 const mondayOf = s=>{ const d=new Date(s+'T12:00'); return addDays(s, -((d.getDay()+6)%7)); };
 const weekStart = ()=>UI.week||mondayOf(TODAY());
