@@ -6268,6 +6268,8 @@ function rtfText(rtf){
 const htmlToText=t=>t.replace(/<(style|script|head)[\s\S]*?<\/\1>/gi,'').replace(/<br\s*\/?>|<\/p>|<\/div>|<\/tr>|<\/li>|<\/h\d>/gi,'\n').replace(/<\/t[dh]>/gi,'\t').replace(/<[^>]+>/g,' ')
   .replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&euro;/g,'€').replace(/&#(\d+);/g,(m,n)=>String.fromCharCode(+n))
   .replace(/[ \t]*\t[ \t]*/g,'\t').replace(/[ ]{2,}/g,' ').replace(/\n[ \t]+/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+// Outlook-Datei am Inhalt erkennen, nicht am Typ: Beim Ziehen direkt aus Outlook meldet der Browser .msg oft als „message/rfc822“
+const isOleMsg=buf=>{ const u=new Uint8Array(buf,0,Math.min(8,buf.byteLength)); return u.length>=4&&u[0]===0xD0&&u[1]===0xCF&&u[2]===0x11&&u[3]===0xE0; };
 function parseMsg(buf){
   const cf=cfbRead(buf); if(!cf) return null;
   const top=cf.kids(0), get=(list,id)=>{ const e=list.find(x=>x.name.toUpperCase()==='__SUBSTG1.0_'+id); return e?cf.data(e):null; };
@@ -6322,8 +6324,9 @@ async function ordersFromDrop(files,text,pid){
   for(const f of [...(files||[])]){
     const n=(f.name||'').toLowerCase();
     if(n.endsWith('.eml')||n.endsWith('.msg')||f.type==='message/rfc822') mailFile=mailFile||f;
-    if(n.endsWith('.eml')||f.type==='message/rfc822'){ const m=parseEml(await f.arrayBuffer()); mail=m; const at=mailDocAtt(m.att); if(at&&!file) file=new File([at.blob],at.name||'Anhang.pdf',{type:at.type==='application/octet-stream'&&/\.pdf$/i.test(at.name)?'application/pdf':at.type}); }
-    else if(n.endsWith('.msg')){ const ab=await f.arrayBuffer(); let pm=null; try{ pm=parseMsg(ab); }catch(e){ pm=null; }
+    const isMailF=n.endsWith('.eml')||n.endsWith('.msg')||f.type==='message/rfc822', ab0=isMailF?await f.arrayBuffer():null, ole=ab0&&isOleMsg(ab0);
+    if(isMailF&&!ole){ const m=parseEml(ab0); mail=m; const at=mailDocAtt(m.att); if(at&&!file) file=new File([at.blob],at.name||'Anhang.pdf',{type:at.type==='application/octet-stream'&&/\.pdf$/i.test(at.name)?'application/pdf':at.type}); }
+    else if(ole){ const ab=ab0; let pm=null; try{ pm=parseMsg(ab); }catch(e){ pm=null; }
       if(pm&&(pm.text.trim()||pm.att.length)){ mail={...pm,subject:pm.subject||f.name.replace(/\.msg$/i,'')}; const at=mailDocAtt(pm.att); if(at&&!file) file=new File([at.blob],at.name,{type:/\.pdf$/i.test(at.name)?'application/pdf':at.type}); continue; }
       const m=parseMsgLoose(ab); mail={...m,subject:f.name.replace(/\.msg$/i,'')}; if(m.pdf&&!file) file=new File([m.pdf],f.name.replace(/\.msg$/i,'')+'.pdf',{type:'application/pdf'}); }
     else if(/pdf|image\//.test(f.type)||/\.(pdf|jpe?g|png|webp)$/i.test(n)){ if(!file) file=f; }
@@ -7933,7 +7936,7 @@ async function ingestFiles(files,text,pidHint){
   for(const f of [...(files||[])]){ const n=(f.name||'').toLowerCase();
     if(n.endsWith('.eml')||n.endsWith('.msg')||f.type==='message/rfc822'){
       const ab=await f.arrayBuffer(); let m=null;
-      if(n.endsWith('.msg')){ try{ m=parseMsg(ab); }catch(e){} if(!m){ const l=parseMsgLoose(ab); m={...l,att:l.pdf?[{name:f.name.replace(/\.msg$/i,'')+'.pdf',type:'application/pdf',blob:l.pdf}]:[]}; } }
+      if(isOleMsg(ab)){ try{ m=parseMsg(ab); }catch(e){} if(!m){ const l=parseMsgLoose(ab); m={...l,att:l.pdf?[{name:f.name.replace(/\.msg$/i,'')+'.pdf',type:'application/pdf',blob:l.pdf}]:[]}; } }
       else m=parseEml(ab);
       const ctx=[m.subject,m.from,m.text].join('\n');
       const mail=mk({name:m.subject||f.name,subject:m.subject||'',from:m.from||'',mime:'message/rfc822',text:String(m.text||'').slice(0,8000),kind:'mail',atts:(m.att||[]).map(a=>a.name),fp:await fileFp(f),size:f.size||0});
@@ -10360,7 +10363,7 @@ Antworte nur mit JSON: {"title":"","projectId":"","prio":"dringend|hoch|normal"}
 async function readMail(files,text){
   const f=[...(files||[])].find(x=>/\.(msg|eml)$/i.test(x.name||'')||x.type==='message/rfc822');
   if(f){ const ab=await f.arrayBuffer(); let m=null;
-    if(/\.msg$/i.test(f.name)){ try{ m=parseMsg(ab); }catch(e){} if(!m){ const l=parseMsgLoose(ab); m={...l,att:[]}; } } else m=parseEml(ab);
+    if(isOleMsg(ab)){ try{ m=parseMsg(ab); }catch(e){} if(!m){ const l=parseMsgLoose(ab); m={...l,att:[]}; } } else m=parseEml(ab);
     return {subject:m.subject||f.name,from:m.from||'',date:m.date||'',text:String(m.text||''),att:(m.att||[]).map(a=>a.name),file:f}; }
   const t=String(text||'').trim(); if(t.length<20) return null; const lines=t.split('\n');
   const val=rx=>(lines.find(l=>rx.test(l))||'').replace(/^[^:]+:\s*/,'');
