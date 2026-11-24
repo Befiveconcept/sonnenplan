@@ -3444,9 +3444,9 @@ if(window.speechSynthesis){ try{ speechSynthesis.getVoices(); speechSynthesis.on
 // App bleibt über Nacht offen? Beim Zurückkommen und alle 30 Min. prüfen, ob schon das heutige Briefing dran war
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&SINCE_DONE&&!SHEET) setTimeout(()=>briefAuto().catch(()=>{}),1200); });
 setInterval(()=>{ if(document.visibilityState==='visible'&&SINCE_DONE&&!SHEET&&(!BRIEF||BRIEF.d!==TODAY())) briefAuto().catch(()=>{}); },30*60000);
-// Beim ersten Öffnen des Tages (auf irgendeinem Gerät) automatisch – danach nur noch über den Knopf
-async function briefAuto(){ if(!briefOn()||!SAMPLE||BRIEF_RUN||CAR.on) return; if(BRIEF&&BRIEF.d===TODAY()&&BRIEF.seen) return;
-  BRIEF=await briefLoad(); if(BRIEF&&BRIEF.d===TODAY()&&BRIEF.seen) return; if(SHEET){ setTimeout(()=>briefAuto().catch(()=>{}),3000); return; } briefShow(); }
+// Kein automatisches Aufploppen mehr (Wunsch EP, 24.11.2026): Das Briefing öffnet sich nur noch über den Knopf „☀️ Morgen-Briefing“.
+// Hier wird nur das schon erstellte Briefing von heute (z. B. vom Handy) still nachgeladen, damit der Knopf es sofort zeigt – keine KI, kein Fenster.
+async function briefAuto(){ if(!briefOn()||BRIEF_RUN||CAR.on) return; if(BRIEF&&BRIEF.d===TODAY()) return; const b=await briefLoad(); if(b) BRIEF=b; }
 /* ---------- 📌 Pinnwand auf der Startseite: News für alle, keine To-Dos ---------- */
 // Sammlung pins: {id,title,text,img,until,top,by,at}. Jeder darf anheften; bearbeiten/abnehmen nur, wer es angeheftet hat, oder Admins.
 // „Angeheftet bis“ (optional): danach verschwindet der Zettel von selbst von der Startseite.
