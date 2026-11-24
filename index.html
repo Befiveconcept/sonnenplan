@@ -10687,6 +10687,9 @@ const SMART_ACTS={
   todos:{l:'To-Dos daraus erstellen',d:'To-Dos, Zuständige und Fristen erkennen, mit bestehenden To-Dos abgleichen'},
   event:{l:'Termin daraus erstellen',d:'Titel, Datum, Uhrzeit und Ort übernehmen – im Termin-Fenster noch prüfen und speichern'},
   note:{l:'Notiz daraus erstellen',d:'Als Notiz ins Projekt (mit Datum und Kürzel) – Text lässt sich vorher anpassen; Dateien landen zusätzlich in den Projekt-Dateien'},
+  finOut:{l:'💶 Als Ausgabe in „Finanzen“ einbuchen',d:'Eingangsrechnung: Lieferant, Nummer, Beträge, Fälligkeit, Kategorie auslesen – im Formular prüfen und speichern. Die Datei kommt zusätzlich in die Datenablage.'},
+  finIn:{l:'💶 Als Einnahme in „Finanzen“ einbuchen',d:'Ausgangsrechnung von uns: Kunde, Nummer, Beträge auslesen – im Formular prüfen und speichern. Die Datei kommt zusätzlich in die Datenablage.'},
+  saleOffer:{l:'📄 Als Angebot in „Verkauf“ übernehmen',d:'Eigenes Angebot: Kunde und alle Positionen auslesen – im Angebots-Formular prüfen und speichern. Die Datei kommt zusätzlich in die Datenablage.'},
   file:{l:'In der Datenablage ablegen',d:'Einheitlich benennen, Art und Projekt zuordnen (Mails unter Korrespondenz)'},
   none:{l:'Sonst nichts – nur die bestehenden To-Dos aktualisieren',d:'Nur die oben markierten To-Do-Updates speichern'}};
 const SMART_TYPES={bestellung:'Bestellung',ab:'Auftragsbestätigung',rechnung:'Rechnung',lieferschein:'Lieferschein',todos:'To-Do-Liste',termin:'Termin',notiz:'Notiz / Stand zum Projekt',angebot:'Angebot',korrespondenz:'Korrespondenz (E-Mail)',plan:'Plan / Zeichnung',foto:'Foto',vertrag:'Vertrag',sonst:'Sonstiges'};
@@ -10717,7 +10720,7 @@ async function smartDrop(files,text){
   if(/^image\//.test((f&&f.type)||'')&&/liefer|ls[-_ ]?\d/i.test(f.name)) type='lieferschein';
   const curP=gsProj(), cx=gsCtx(); // auf der Projektseite abgelegt → gehört im Zweifel zu diesem Projekt; in To-Dos/Kalender → eher To-Dos/Termin
   if(cx.type&&!files.length&&!mail) type=cx.type;
-  let pid=curP?curP.id:(matchProject(all).pid||''), orderId='', summary='', why='', related=null, event=null;
+  let pid=curP?curP.id:(matchProject(all).pid||''), orderId='', summary='', why='', related=null, event=null, dir='';
   const openOrders=arr('orders').filter(o=>orderState(o).open||(ordDraft(o)&&o.appr!=='storno'));
   if(SAMPLE){
     const plist=arr('projects').filter(p=>['laufend','planung','onhold'].includes(catOf(p))).map(p=>`${p.id} | ${p.name} | ${p.nr||''} | ${String(p.place||'').replace(/\n/g,' ')} | ${p.customer||''}`).join('\n');
@@ -10737,23 +10740,30 @@ Was ist das? Wähle genau einen Typ:
 ${cx.ai?'WO ABGELEGT: '+cx.ai+'\n':''}${curP?`Es wurde im geöffneten Projekt „${curP.name}“ (ID ${curP.id}) abgelegt: projectId = ${curP.id}, außer der Inhalt gehört eindeutig zu einem anderen Projekt.\n`:''}Bei type "termin" zusätzlich "event": {"title":"kurz","date":"JJJJ-MM-TT","time":"HH:MM oder leer","end":"JJJJ-MM-TT oder leer","place":"Ort oder leer"}.
 Ordne ein Projekt zu, wenn eindeutig (Projektname, Nummer, Kommission, Adresse, Kunde); Lager/Büro: "intern"; sonst "". Bei Lieferschein/AB/Rechnung: passende offene Bestellung (orderId), falls Lieferant + Nummer/Positionen passen, sonst "".
 Prüfe außerdem: Ist das eine Rückmeldung, ein Fortschritt oder eine Erledigung zu einem der offenen To-Dos (gleiche Sache, nicht nur gleiches Projekt)? Dann in "related" aufnehmen: relation "update" (neue Info) oder "erledigt" (die Sache ist damit erledigt), update = 1 kurzer Satz, was neu ist. Sonst related leer.
-Antworte nur mit JSON: {"type":"","projectId":"","orderId":"","summary":"1 Satz, was es ist und worum es geht","why":"kurz","related":[{"id":"To-Do-ID","relation":"update|erledigt","update":"kurz"}]}`;
+Bei "rechnung", "angebot" und "ab" zusätzlich "richtung": "eingang" = von einem Lieferanten/Dienstleister AN uns; "ausgang" = VON uns (${FIRMS().join(' / ')}) an einen Kunden. Entscheidend ist der Absender/Briefkopf des Belegs.
+Antworte nur mit JSON: {"type":"","richtung":"","projectId":"","orderId":"","summary":"1 Satz, was es ist und worum es geht","why":"kurz","related":[{"id":"To-Do-ID","relation":"update|erledigt","update":"kurz"}]}`;
     try{ const r=await SAMPLE.json(prompt,{modelTier:'default',...(imgs.length?{images:imgs}:{})});
-      if(r&&SMART_TYPES[r.type]) type=r.type; if(r&&r.projectId&&(S.projects[r.projectId]||r.projectId===INTERN)) pid=r.projectId; if(r&&r.orderId&&S.orders[r.orderId]) orderId=r.orderId; summary=r&&r.summary||''; why=r&&r.why||''; related=(r&&Array.isArray(r.related)?r.related:[]).filter(x=>x&&S.tasks[x.id]&&!S.tasks[x.id].done).slice(0,5).map(x=>({id:x.id,relation:x.relation==='erledigt'?'erledigt':'update',update:String(x.update||summary||'').slice(0,300),by:'Claude'}));
+      if(r&&SMART_TYPES[r.type]) type=r.type; if(r&&['eingang','ausgang'].includes(r.richtung)) dir=r.richtung; if(r&&r.projectId&&(S.projects[r.projectId]||r.projectId===INTERN)) pid=r.projectId; if(r&&r.orderId&&S.orders[r.orderId]) orderId=r.orderId; summary=r&&r.summary||''; why=r&&r.why||''; related=(r&&Array.isArray(r.related)?r.related:[]).filter(x=>x&&S.tasks[x.id]&&!S.tasks[x.id].done).slice(0,5).map(x=>({id:x.id,relation:x.relation==='erledigt'?'erledigt':'update',update:String(x.update||summary||'').slice(0,300),by:'Claude'}));
       if(r&&r.event&&typeof r.event==='object'){ const ev=r.event, okD=s=>/^\d{4}-\d{2}-\d{2}$/.test(s||'')?s:''; event={title:String(ev.title||summary||'').slice(0,120),date:okD(ev.date),time:/^\d{1,2}:\d{2}$/.test(ev.time||'')?ev.time.padStart(5,'0'):'',end:okD(ev.end),place:String(ev.place||'').slice(0,160)}; } }
     catch(e){ if(e&&e.code&&e.code!=='cancelled') toast(SAMPLE_ERR[e.code]||'Claude nicht erreichbar – einfache Erkennung.'); } }
   // Bestellung oder Bestellbestätigung erkannt: ohne Rückfrage direkt weiter, Zuordnung zur vorhandenen Bestellung passiert beim Auslesen
-  if(SAMPLE&&['ab','bestellung'].includes(type)&&!SHEET){ ORD_HINT=orderId||''; ordersFromDrop(files,text,pid===INTERN?INTERN:pid); return; }
+  if(SAMPLE&&['ab','bestellung'].includes(type)&&dir!=='ausgang'&&!SHEET){ ORD_HINT=orderId||''; ordersFromDrop(files,text,pid===INTERN?INTERN:pid); return; }
   if(!orderId&&type==='lieferschein'){ const sup=openOrders.find(o=>o.supplier&&all.toLowerCase().includes(String(o.supplier).toLowerCase().split(' ')[0])&&(!pid||o.pid===pid)); if(sup) orderId=sup.id; }
   if(files.length>1&&!mail) type=type==='lieferschein'?type:'sonst';
   // Ohne Claude: Wortvergleich mit offenen To-Dos (schwache Treffer werden nur angezeigt, nicht vorausgewählt)
   if(!related){ const head=(mail?mail.subject+' '+mail.text.slice(0,300):body.slice(0,300))||(f&&f.name)||''; const fr=findRelated({title:head,projectId:pid});
     related=fr?[{id:fr.id,relation:'update',update:(mail?mail.subject:body.replace(/\s+/g,' ').slice(0,160))||'',by:'Wortvergleich',weak:!fr.strong}]:[]; }
-  smartSheet({files,text,type,pid,orderId,summary,why,mail,related,event,many:files.length>1});
+  // Ohne KI-Antwort: Richtung aus dem Briefkopf raten – steht unser Firmenname ganz oben, ist es ein Beleg von uns
+  if(!dir&&['rechnung','angebot','ab'].includes(type)){ const top=all.replace(/^(PDF|Foto|Datei)[^\n]*\n/,'').slice(0,500).toLowerCase(); dir=FIRMS().some(fm=>fm&&top.includes(String(fm).toLowerCase().split(/\s+/).slice(0,2).join(' ')))?'ausgang':'eingang'; }
+  smartSheet({files,text,type,pid,orderId,summary,why,mail,related,event,dir,many:files.length>1});
 }
 function smartSheet(c){
-  const rec=c.many&&c.type!=='lieferschein'?'file':SMART_MAP[c.type]||'file';
-  const rel=c.related||[], acts=Object.keys(SMART_ACTS).filter(k=>!(k==='delivery'&&!c.files.length&&!c.text)&&!(k==='none'&&!rel.length));
+  // Kaufmännisch (Wunsch EP, 24.11.2026): Rechnungen → Finanzen (Ausgabe/Einnahme), eigene Angebote → Verkauf. Nur mit den passenden Rechten.
+  const kfm={finOut:finOk()&&c.files.length>0,finIn:finOk()&&c.files.length>0,saleOffer:mayWrite('sales')&&c.files.length>0};
+  let rec=c.many&&c.type!=='lieferschein'?'file':SMART_MAP[c.type]||'file';
+  if(!c.many||c.files.length===1){ if(c.type==='rechnung'&&c.dir==='ausgang'&&kfm.finIn) rec='finIn'; else if(c.type==='rechnung'&&kfm.finOut&&!c.orderId) rec='finOut'; else if(c.type==='angebot'&&c.dir==='ausgang'&&kfm.saleOffer) rec='saleOffer'; }
+  const kfmShow=k=>kfm[k]&&(['rechnung','angebot','ab','sonst'].includes(c.type)||k===rec);
+  const rel=c.related||[], acts=Object.keys(SMART_ACTS).filter(k=>!(k==='delivery'&&!c.files.length&&!c.text)&&!(k==='none'&&!rel.length)&&(!(k in kfm)||kfmShow(k)));
   const openOrders=arr('orders').filter(o=>orderState(o).open).sort((a,b)=>(a.supplier||'').localeCompare(b.supplier||''));
   const what=c.files.length?c.files.map(f=>f.name).slice(0,4).join(', ')+(c.files.length>4?' …':''):(c.mail?'Kopierte E-Mail':'Kopierter Text');
   // Vorschlag für den Notiztext: eigener Text, bei Mails Absender + Betreff + Kern, bei Dateien die Zusammenfassung
@@ -10787,6 +10797,10 @@ function smartSheet(c){
         saveNote(pid,'updates',nt,c.mail&&c.mail.from?mailFromShort(c.mail.from):''); const rest=c.files.filter(f=>!(c.mail&&($('#sm_keep')||{}).checked&&(/\.(msg|eml)$/i.test(f.name||'')||f.type==='message/rfc822'))); if(rest.length) setTimeout(()=>ingestFiles(rest,'',pid),120); return; }
       if(act==='delivery'){ const oid=($('#sm_order')||{}).value; if(!oid){ toast('Bitte die offene Bestellung wählen.'); return false; } const file=c.files[0];
         setTimeout(()=>{ A.receive({id:oid}); if(file) setTimeout(()=>scanDeliveryNote(oid,file),400); else toast('Bitte im Wareneingang die Mengen prüfen.'); },50); return; }
+      if(['finOut','finIn','saleOffer'].includes(act)){ const bel=c.files; const pp=pid&&S.projects[pid]?pid:'';
+        setTimeout(async()=>{ if(act==='saleOffer'){ for(const f of bel){ await saleFromFile(f,pp); await new Promise(res=>{ const iv=setInterval(()=>{ if(!SHEET){ clearInterval(iv); res(); } },400); }); } }
+          else await finIngest(bel,act==='finIn'?'einnahme':'ausgabe',pp);
+          ingestFiles(c.files,'',pid); },50); return; }
       setTimeout(()=>{ if(act==='order') ordersFromDrop(c.files,c.text,pid===INTERN?INTERN:pid);
         else if(act==='todos') mailToTodos(c.files,c.text);
         else ingestFiles(c.files,c.text,pid); },50); }});
@@ -12307,16 +12321,16 @@ function finAssetForm(a){ const isNew=!a; a=a?clone(a):{id:uid(),date:TODAY(),li
     {k:'life',label:'Nutzungsdauer (Jahre, lt. AfA-Tabelle)',type:'number'},{k:'cat',label:'Anlagenkonto',type:'select',options:[['0420','0420 Technische Anlagen / Maschinen'],['0320','0320 Pkw'],['0350','0350 Lkw / Transporter'],['0440','0440 Werkzeuge'],['0490','0490 Betriebs- und Geschäftsausstattung'],['0410','0410 Büroeinrichtung'],['0027','0027 Software']]},{k:'supplier',label:'Lieferant'},{k:'disposal',label:'Abgang / Verkauf am',type:'date'},{k:'notes',label:'Notiz',type:'textarea',full:1}],
     onSave:v=>{ put('anlagen',{...a,...v,cost:r2(+String(v.cost).replace(',','.')),life:+v.life||1}); toast('Gespeichert.'); },onDelete:isNew?null:()=>confirmSheet('Anlagegut löschen?',()=>{ del('anlagen',a.id); closeSheet(); })}); }
 // Eingangsrechnungen: ablegen, doppelt prüfen, KI liest aus, Formular zum Prüfen
-async function finIngest(files){ if(!finOk()) return; files=[...(files||[])]; if(!files.length) return;
+async function finIngest(files,kind,pidHint){ if(!finOk()) return; files=[...(files||[])]; if(!files.length) return; kind=kind==='einnahme'?'einnahme':'ausgabe';
   for(const file of files){ const fp=await fileFp(file), dup=finAll().find(f=>f.fp&&f.fp===fp);
     if(dup){ askPop('⚠️ <b>Schon erfasst:</b> '+esc(file.name)+'<br><span style="opacity:.8">'+esc('Abgelegt unter: Finanzen → '+(dup.kind==='einnahme'?'Einnahmen':'Ausgaben / Eingangsrechnungen')+' → '+[dup.partner,dup.docNr].filter(Boolean).join(' ')+' vom '+dDE(dup.date)+' · Dateiname: „'+(dup.fileName||file.name)+'“')+'</span>'); continue; }
     let up=null; if(ASSETS){ try{ const type=file.type||(/\.pdf$/i.test(file.name)?'application/pdf':''); const r=await ASSETS.upload(file,type?{type}:undefined); up=r.id; }catch(e){} }
-    let f={id:uid(),kind:'ausgabe',date:TODAY(),vatRate:19,acc:'Bank',status:'offen',fp,fileName:file.name,asset:up||'',partner:'',cat:'waren'};
-    if(SAMPLE){ toast('KI liest „'+file.name+'“ …'); try{ const x=await finExtract(file); f={...f,...x,ai:true}; }catch(e){ toast(SAMPLE_ERR[e&&e.code]||'Beleg konnte nicht automatisch gelesen werden – bitte ausfüllen.'); } }
-    // gleiche Rechnung (Lieferant + Nummer) schon vorhanden?
-    const same=f.docNr&&finAll().find(y=>y.kind==='ausgabe'&&y.docNr===f.docNr&&stNorm(y.partner)===stNorm(f.partner)); if(same) f.aiNote=(f.aiNote||'')+' Achtung: Rechnung '+f.docNr+' von '+same.partner+' ist schon erfasst!';
-    await new Promise(res=>{ finForm(f,'ausgabe',true); const iv=setInterval(()=>{ if(!SHEET){ clearInterval(iv); res(); } },400); }); } }
-async function finExtract(file){ let text='', images=[];
+    let f={id:uid(),kind,date:TODAY(),vatRate:19,acc:'Bank',status:'offen',fp,fileName:file.name,asset:up||'',partner:'',cat:kind==='einnahme'?'erloes19':'waren',...(pidHint&&S.projects[pidHint]?{pid:pidHint}:{})};
+    if(SAMPLE){ toast('KI liest „'+file.name+'“ …'); try{ const x=await finExtract(file,kind); f={...f,...x,...(!x.pid&&f.pid?{pid:f.pid}:{}),ai:true}; }catch(e){ toast(SAMPLE_ERR[e&&e.code]||'Beleg konnte nicht automatisch gelesen werden – bitte ausfüllen.'); } }
+    // gleiche Rechnung (Partner + Nummer) schon vorhanden?
+    const same=f.docNr&&finAll().find(y=>y.kind===kind&&y.docNr===f.docNr&&stNorm(y.partner)===stNorm(f.partner)); if(same) f.aiNote=(f.aiNote||'')+' Achtung: Rechnung '+f.docNr+' '+(kind==='einnahme'?'an ':'von ')+same.partner+' ist schon erfasst!';
+    await new Promise(res=>{ finForm(f,kind,true); const iv=setInterval(()=>{ if(!SHEET){ clearInterval(iv); res(); } },400); }); } }
+async function finExtract(file,kind){ if(kind==='einnahme') return finExtractOut(file); let text='', images=[];
   if(/\.(msg|eml)$/i.test(file.name)){ const m=await readMail([file],''); text=m?('E-Mail „'+m.subject+'“ von '+m.from+'\n'+m.text):''; if(m&&m.att&&m.att.length){ const pdf=m.att.find(a=>/pdf/i.test(a.type)||/\.pdf$/i.test(a.name)); if(pdf){ const rr=await readInvoiceFile(new File([pdf.blob],pdf.name,{type:'application/pdf'})); text+='\n'+rr.text; images=rr.images; } } }
   else { const rr=await readInvoiceFile(file); text=rr.text; images=rr.images; }
   if(images.length&&!(SLIM&&SLIM.images)) images=[]; if(!text.trim()&&!images.length) throw {code:'nothing'};
@@ -12331,6 +12345,39 @@ Antworte nur mit JSON: {"partner":"","docNr":"","date":"YYYY-MM-DD","due":"","ne
   const o={partner:String(r.partner||'').trim(),docNr:String(r.docNr||'').trim(),date:/^\d{4}-\d{2}-\d{2}$/.test(r.date||'')?r.date:TODAY(),due:/^\d{4}-\d{2}-\d{2}$/.test(r.due||'')?r.due:'',net:r2(r.net),vat:r2(r.vat),gross:r2(r.gross),vatRate:[19,7,0].includes(+r.vatRate)?+r.vatRate:19,rc:!!r.rc,cat:FIN_CAT[r.cat]?r.cat:'sonst',pid:S.projects[r.pid]?r.pid:'',text:String(r.text||'').slice(0,120),aiNote:String(r.note||'').slice(0,200)};
   const lf=stLief(o.partner); if(lf) o.partner=lf.name; if(r.paid){ o.status='bezahlt'; o.paidDate=/^\d{4}-\d{2}-\d{2}$/.test(r.paidDate||'')?r.paidDate:o.date; }
   return o; }
+// Text (und ggf. Bilder) eines Belegs lesen – PDF, Foto oder Mail mit PDF-Anhang
+async function belegRead(file){ let text='', images=[];
+  if(/\.(msg|eml)$/i.test(file.name)||file.type==='message/rfc822'){ const m=await readMail([file],''); text=m?('E-Mail „'+m.subject+'“ von '+m.from+'\n'+m.text):''; const pdf=m&&(m.att||[]).find(a=>a&&a.blob&&(/pdf/i.test(a.type)||/\.pdf$/i.test(a.name))); if(pdf){ const rr=await readInvoiceFile(new File([pdf.blob],pdf.name,{type:'application/pdf'})); text+='\n'+rr.text; images=rr.images; } }
+  else { const rr=await readInvoiceFile(file); text=rr.text; images=rr.images; }
+  if(images.length&&!(SLIM&&SLIM.images)) images=[]; if(!String(text).trim()&&!images.length) throw {code:'nothing'}; return {text,images}; }
+// Ausgangsrechnung (von uns an einen Kunden) → Einnahme in Finanzen (Wunsch EP, 24.11.2026)
+async function finExtractOut(file){ const {text,images}=await belegRead(file);
+  const cats=Object.entries(FIN_INC).map(([k,v])=>k+' = '+v[0]).join('; '), plist=arr('projects').filter(p=>!isIntern(p)).map(p=>p.id+' | '+p.name+' | '+(p.nr||'')+' | '+(p.place||'')+' | '+(p.customer||'')).join('\n');
+  const r=await SAMPLE.json(`Lies diese AUSGANGSRECHNUNG (von uns – ${FIRMS().join(' / ')} – an einen Kunden) für die Buchhaltung aus. Heute ist ${TODAY()}.
+${text?'Text des Belegs:\n"""'+text.slice(0,20000)+'"""':'(Beleg als Bild beigefügt)'}
+Kategorien: ${cats}
+Projekte (id | Name | Nr | Ort | Kunde):
+${plist}
+Regeln: partner = Kunde (Rechnungsempfänger). Beträge als Zahl. net = Summe netto, vat = MwSt., gross = Rechnungsbetrag brutto (bei Schlussrechnung den Rechnungsbetrag VOR Abzug geleisteter Abschläge, Abzüge in note nennen). vatRate 19, 7 oder 0. cat: PV-Anlage mit 0 % nach § 12 Abs. 3 = erloes0, sonst erloes19 bzw. erloes7. pid = Projekt-id, wenn Kunde/Bauvorhaben eindeutig passt. text = kurze Leistungsbeschreibung (max. 80 Zeichen). paid nur, wenn der Beleg sagt, dass schon bezahlt wurde.
+Antworte nur mit JSON: {"partner":"","docNr":"","date":"YYYY-MM-DD","net":0,"vat":0,"gross":0,"vatRate":19,"cat":"erloes19","pid":"","text":"","paid":false,"note":""}`,{modelTier:'default',...(images.length?{images}:{})});
+  const o={partner:String(r.partner||'').trim(),docNr:String(r.docNr||'').trim(),date:/^\d{4}-\d{2}-\d{2}$/.test(r.date||'')?r.date:TODAY(),net:r2(r.net),vat:r2(r.vat),gross:r2(r.gross),vatRate:[19,7,0].includes(+r.vatRate)?+r.vatRate:19,cat:FIN_INC[r.cat]?r.cat:'erloes19',pid:S.projects[r.pid]?r.pid:'',text:String(r.text||'').slice(0,120),aiNote:String(r.note||'').slice(0,200)};
+  if(r.paid){ o.status='bezahlt'; o.paidDate=o.date; } return o; }
+// Eigenes Angebot (z. B. aus dem alten ERP als PDF) → als Angebot unter „Verkauf“ übernehmen, mit Positionen; im Formular prüfen und speichern
+async function saleFromFile(file,pidHint){ if(!mayWrite('sales')) return toast('Keine Berechtigung für den Verkauf.'); let s=saleNew('angebot',{status:'versendet',...(pidHint&&S.projects[pidHint]?{pid:pidHint}:{})});
+  if(SAMPLE){ toast('KI liest das Angebot „'+file.name+'“ …'); try{ const {text,images}=await belegRead(file);
+      const plist=arr('projects').filter(p=>!isIntern(p)).map(p=>p.id+' | '+p.name+' | '+(p.customer||'')+' | '+(p.place||'')).join('\n');
+      const r=await SAMPLE.json(`Lies dieses ANGEBOT (von uns – ${FIRMS().join(' / ')} – an einen Kunden) aus, um es in unsere Verkaufs-Software zu übernehmen.
+${text?'Text:\n"""'+text.slice(0,20000)+'"""':'(Beleg als Bild beigefügt)'}
+Projekte (id | Name | Kunde | Ort):
+${plist}
+Regeln: cust = Kunde mit Anschrift (addr mehrzeilig mit \\n). nr = Angebotsnummer, date = Angebotsdatum (JJJJ-MM-TT). subject = Betreff/Bauvorhaben. items = alle Positionen der Reihe nach: art = Bezeichnung (kurz), desc = Beschreibung (optional), qty Zahl, unit (Stk., m, psch., h …), price = Einzelpreis NETTO als Zahl, vat "19", "7", "0p" (PV-Nullsteuersatz § 12 Abs. 3) oder "0", opt true bei Alternativ-/Bedarfspositionen. pid = Projekt-id, wenn eindeutig.
+Antworte nur mit JSON: {"cust":{"name":"","addr":""},"nr":"","date":"","subject":"","pid":"","items":[{"art":"","desc":"","qty":1,"unit":"Stk.","price":0,"vat":"19","opt":false}]}`,{modelTier:'default',...(images.length?{images}:{})});
+      const okV=v=>['19','7','0p','0r','0'].includes(String(v))?String(v):'19';
+      s={...s,cust:{name:String(r.cust&&r.cust.name||'').trim(),addr:String(r.cust&&r.cust.addr||'').trim()},date:/^\d{4}-\d{2}-\d{2}$/.test(r.date||'')?r.date:s.date,subject:String(r.subject||'').slice(0,200),extNr:String(r.nr||'').trim(),pid:S.projects[r.pid]?r.pid:s.pid,
+        items:(Array.isArray(r.items)?r.items:[]).slice(0,200).map(i=>({k:'pos',art:String(i.art||'').slice(0,200),desc:String(i.desc||'').slice(0,1000),qty:+i.qty||1,unit:String(i.unit||'Stk.').slice(0,12),price:r2(+String(i.price).replace(',','.')),vat:okV(i.vat),...(i.opt?{opt:true}:{})}))};
+      if(s.extNr) s.subject=(s.subject?s.subject+' · ':'')+'übernommen aus Angebot '+s.extNr; }
+    catch(e){ toast(SAMPLE_ERR[e&&e.code]||'Angebot konnte nicht automatisch gelesen werden – bitte ausfüllen.'); } }
+  saleForm(s); }
 // Kontoauszug-CSV (z. B. FINOM, Sparkasse): Datum, Betrag, Name, Verwendungszweck erkennen; Rechnungen/Ausgaben automatisch zuordnen
 async function finCsvImport(file){ const txt=await file.text(), lines=txt.split(/\r?\n/).filter(l=>l.trim()); if(lines.length<2) return toast('Datei ist leer.');
   const sep=(lines[0].match(/;/g)||[]).length>=(lines[0].match(/,/g)||[]).length?';':',', split=l=>{ const o=[]; let c='',q=false; for(const ch of l){ if(ch==='"'){ q=!q; continue; } if(ch===sep&&!q){ o.push(c); c=''; } else c+=ch; } o.push(c); return o.map(x=>x.trim()); };
