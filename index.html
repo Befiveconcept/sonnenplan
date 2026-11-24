@@ -3233,14 +3233,27 @@ Für jedes Projekt:
 - "ampel": "gruen" (läuft), "gelb" (etwas hakt oder lange nichts passiert) oder "rot" (überfällig, blockiert, dringend).
 ${chunk.map((p,i)=>`### ${i+1}. ${p.name}\n${briefFacts(p,t)}`).join('\n\n')}
 Antworte nur mit JSON: {"p":[{"i":1,"ampel":"gruen","stand":"…","tun":["…"]}]}`,{modelTier:'default'});
-  const parts=[]; for(let i=0;i<ps.length;i+=10) parts.push(ps.slice(i,i+10));
-  const res=parts.length?await Promise.all(parts.map(c=>ask(c).catch(()=>null))):[];
-  const out=[]; res.forEach((r,k)=>{ (r&&Array.isArray(r.p)?r.p:[]).forEach(x=>{ const p=parts[k][(+x.i||0)-1]; if(p) out.push({id:p.id,ampel:['gruen','gelb','rot'].includes(x.ampel)?x.ampel:'gelb',stand:String(x.stand||'').slice(0,600),tun:(Array.isArray(x.tun)?x.tun:[]).map(s=>String(s).slice(0,240)).slice(0,5)}); }); });
-  if(ps.length&&!out.length) throw new Error('Die KI hat keine Antwort geliefert.');
+  // Robuster (24.11.2026): kleinere Pakete, höchstens 2 gleichzeitig, bei Fehler/leerer Antwort einmal neu versuchen.
+  // Kommt für ein Paket gar nichts, wird es ohne KI aus den Fakten zusammengestellt – das Briefing bricht nicht mehr ab.
+  const parts=[]; for(let i=0;i<ps.length;i+=6) parts.push(ps.slice(i,i+6));
+  let lastErr=null; const FATAL=['not_granted','sampling_disabled'], wait=ms=>new Promise(r=>setTimeout(r,ms));
+  const tryAsk=async c=>{ for(let a=0;a<3;a++){ try{ const r=await ask(c); if(r&&Array.isArray(r.p)&&r.p.length) return r; }catch(e){ lastErr=e; if(FATAL.includes(e&&e.code)) return null; } await wait(e2ms(lastErr,a)); } return null; };
+  const e2ms=(e,a)=>(e&&e.code==='rate_limited'?6000:1500)*(a+1);
+  const res=[]; for(let i=0;i<parts.length;i+=2){ const rr=await Promise.all(parts.slice(i,i+2).map(tryAsk)); res.push(...rr); }
+  const out=[], miss=[]; res.forEach((r,k)=>{ const got=new Set(); (r&&Array.isArray(r.p)?r.p:[]).forEach(x=>{ const p=parts[k][(+x.i||0)-1]; if(p&&!got.has(p.id)){ got.add(p.id); out.push({id:p.id,ampel:['gruen','gelb','rot'].includes(x.ampel)?x.ampel:'gelb',stand:String(x.stand||'').slice(0,600),tun:(Array.isArray(x.tun)?x.tun:[]).map(s=>String(s).slice(0,240)).slice(0,5)}); } }); parts[k].forEach(p=>{ if(!got.has(p.id)) miss.push(p); }); });
+  if(ps.length&&!out.length&&FATAL.includes(lastErr&&lastErr.code)) throw new Error(SAMPLE_ERR[lastErr.code]||'Claude ist gerade nicht verfügbar.');
+  miss.forEach(p=>out.push(briefLocal(p,t)));
+  const noAi=miss.length;
   const funkP=briefFunkMake(out,mineTxt).catch(()=>null);
   let top={}; try{ top=await SAMPLE.json(`${out.length?`Hier sind kurze Zusammenfassungen ${briefAll()?'aller laufenden und geplanten':'der eigenen'} Solar-Projekte von ${nm} (Ampel, Stand, To-dos):\n${out.map(x=>'- '+(S.projects[x.id]||{}).name+' ['+x.ampel+']: '+x.stand+' To-do: '+x.tun.join('; ')).join('\n')}\n`:'Es gibt keine eigenen laufenden oder geplanten Projekte.\n'}Persönlich für ${nm} (heute ${fmtD(t)}):\n${mineTxt}\n${briefAud()}\nSchreibe für ${nm} einen freundlichen Satz Begrüßung mit Gesamtbild ("gruss") und die 3 wichtigsten Dinge für heute ("top", je ein kurzer, verständlicher Satz; eigene Einsätze, Termine und überfällige eigene To-Dos zuerst). Erfinde nichts. Nur JSON: {"gruss":"…","top":["…","…","…"]}`,{modelTier:'quick'})||{}; }catch(e){}
   const funk=await funkP;
-  return {d:t,at:new Date().toISOString(),data:{gruss:String(top.gruss||'').slice(0,400),top:(Array.isArray(top.top)?top.top:[]).map(s=>String(s).slice(0,240)).slice(0,3),p:out,funk,mine,all:briefAll()}}; }
+  return {d:t,at:new Date().toISOString(),data:{gruss:String(top.gruss||'').slice(0,400),top:(Array.isArray(top.top)?top.top:[]).map(s=>String(s).slice(0,240)).slice(0,3),p:out,funk,mine,all:briefAll(),...(noAi?{noAi,noAiWhy:lastErr&&(SAMPLE_ERR[lastErr.code]||lastErr.message)||'keine Antwort'}:{})}}; }
+// Ersatz ohne KI für ein Projekt: nur nachprüfbare Fakten (letzter Stand, offene/überfällige To-Dos)
+function briefLocal(p,t){ const ot=openTasks(p.id).slice().sort(byDue), late=ot.filter(x=>x.due&&x.due<t), nw=nowOf(p), pp=pipe(p);
+  const old=nw&&nw.d&&nw.d<addDays(t,-21);
+  return {id:p.id,ampel:late.length?'rot':!nw||old?'gelb':'gruen',local:1,
+    stand:(nw?'Letzter Stand'+(nw.d?' vom '+fmtD(nw.d):'')+': '+String(nw.t||'').replace(/\s+/g,' ').slice(0,280):'Kein Stand notiert.')+(pp.label?' Zuletzt erledigter Schritt: '+pp.label+'.':''),
+    tun:ot.slice(0,4).map(x=>x.title+' ('+(x.ext?'extern: '+x.ext:x.who?shortWho(x.who):'niemand zugeteilt')+(x.due?(x.due<t?', überfällig seit ':', fällig ')+fmtD(x.due):'')+')')}; }
 // 🎙 Hörfassung: dieselben Fakten, aber als gesprochene Sendung geschrieben – fließender Text statt Listen, Namen statt Kürzel
 const briefOrder=p=>(p||[]).filter(x=>S.projects[x.id]).map(x=>({x,c:catOf(S.projects[x.id])})).filter(o=>['laufend','planung'].includes(o.c)).sort((a,b)=>(a.c===b.c?0:a.c==='laufend'?-1:1)||({rot:0,gelb:1,gruen:2}[a.x.ampel]-{rot:0,gelb:1,gruen:2}[b.x.ampel])).map(o=>o.x);
 async function briefFunkMake(list,mineTxt){ const xs=briefOrder(list); if(!xs.length&&!mineTxt) return null; const first=String(ME||'').replace(/\s*\([^)]*\)$/,'').split(' ')[0], t=TODAY();
@@ -3283,6 +3296,7 @@ function briefHtml(b){ if(!b) return `<div class="brief-wait">☀️ Dein Briefi
   const grp=c=>d.p.filter(x=>S.projects[x.id]&&catOf(S.projects[x.id])===c).sort((a,b)=>({rot:0,gelb:1,gruen:2}[a.ampel]-{rot:0,gelb:1,gruen:2}[b.ampel]));
   const cnt=a=>['rot','gelb','gruen'].map(k=>{ const n=d.p.filter(x=>x.ampel===k).length; return n?AMP[k][0]+' '+n+' '+AMP[k][1]:''; }).filter(Boolean).join(' · ');
   return `<div class="brief">${d.gruss?`<div class="brief-hi">${esc(d.gruss)}</div>`:''}<div class="small muted">${esc(cnt())} · erstellt ${esc(new Date(b.at).toLocaleString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}))}</div>
+    ${d.noAi?`<div class="small warn-t" style="margin-top:6px">⚠️ Für ${d.noAi} Projekt${d.noAi>1?'e':''} hat die KI nicht geantwortet (${esc(d.noAiWhy||'')}) – dort stehen nur die Fakten aus dem Plan. „↻ Neu erstellen“ versucht es noch einmal.</div>`:''}
     ${d.top&&d.top.length?`<div class="brief-top"><div class="brief-h">Heute am wichtigsten</div><ol>${d.top.map(s=>`<li>${esc(s)}</li>`).join('')}</ol></div>`:''}
     ${d.mine?(()=>{ const m=d.mine, dd=x=>(m.day&&m.day[x.d])||fmtD(x.d), li=(x,pre)=>`<li${x.late?' class="overdue"':''}>${pre?`<b>${esc(pre)}</b> `:''}${esc(x.txt)}${x.proj?` <span class="small muted">· ${esc(x.proj)}</span>`:''}</li>`;
       const rows=[...m.einsatz.map(x=>li(x,'Einsatz '+dd(x)+':')),...m.termine.map(x=>li(x,'Termin '+dd(x)+':')),...m.aufgaben.map(x=>li(x,x.late?'Überfällig:':'Fällig '+dd(x)+':')),...m.lief.map(x=>li(x,dd(x)+':'))];
@@ -7987,6 +8001,16 @@ async function pdfText(file){
   try{ const lib=await pdfLib(); const pdf=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false,isOffscreenCanvasSupported:false,disableFontFace:true}).promise; let t='';
     for(let i=1;i<=Math.min(pdf.numPages,3);i++){ const tc=await (await pdf.getPage(i)).getTextContent(); t+=tc.items.map(x=>x.str).join(' ')+'\n'; } return t.slice(0,20000); }catch(e){ return ''; }
 }
+/* Datum für den Dateinamen (Wunsch EP, 20.11.2026): zuerst das Datum, das IM Dokument steht (Rechnungs-, Angebots-, Beleg-, Auftragsdatum …),
+   nur wenn dort keins steht das Datum der E-Mail, sonst heute. Gesucht wird nur nach beschrifteten Daten („Rechnungsdatum: …“, „Bonn, den …“). */
+const DOC_MON={januar:1,jan:1,februar:2,feb:2,'märz':3,maerz:3,mrz:3,april:4,apr:4,mai:5,juni:6,jun:6,juli:7,jul:7,august:8,aug:8,september:9,sep:9,sept:9,oktober:10,okt:10,november:11,nov:11,dezember:12,dez:12};
+function docDateParse(s){ s=String(s||'').trim(); let m=s.match(/^(\d{1,2})\.\s?(\d{1,2})\.\s?(\d{2,4})/), y,mo,d;
+  if(m){ d=+m[1]; mo=+m[2]; y=+m[3]; } else if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})/))){ y=+m[1]; mo=+m[2]; d=+m[3]; } else if((m=s.match(/^(\d{1,2})\.?\s+([A-Za-zäÄ]+)\.?\s+(\d{4})/))&&DOC_MON[m[2].toLowerCase()]){ d=+m[1]; mo=DOC_MON[m[2].toLowerCase()]; y=+m[3]; } else return '';
+  if(y<100) y+=2000; if(y<2000||y>2100||mo<1||mo>12||d<1||d>31) return ''; const iso=y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0'); return iso<=addDays(TODAY(),60)?iso:''; }
+function docDateOf(text){ const t=String(text||'').replace(/\s+/g,' ').slice(0,12000); if(!t) return '';
+  const D='(\\d{1,2}\\.\\s?\\d{1,2}\\.\\s?\\d{2,4}|\\d{4}-\\d{2}-\\d{2}|\\d{1,2}\\.?\\s+[A-Za-zäÄ]+\\.?\\s+\\d{4})';
+  const rx=[new RegExp('(?:Rechnungs|Angebots|Beleg|Auftrags|Bestell|Gutschrift|Vertrags|Lieferschein|Dokument|Ausstellungs|Druck)[-\\s]?datum\\s*[:.]?\\s*'+D,'i'),new RegExp('\\b(?:Datum|Date|vom)\\s*[:.]?\\s*'+D,'i'),new RegExp('[A-ZÄÖÜ][a-zäöüß-]+,\\s*(?:den\\s+)?'+D)];
+  for(const r of rx){ const m=t.match(r); if(m){ const v=docDateParse(m[1]); if(v) return v; } } return ''; }
 async function aiClassify(rec){
   if(!SAMPLE) return null;
   const plist=arr('projects').filter(p=>catOf(p)!=='abgesagt').map(p=>`${p.id} | ${p.name} | ${p.nr||''} | ${p.place||''} | ${p.customer||''}`).join('\n');
@@ -7997,7 +8021,8 @@ Dokument: ${rec.name}${rec.subject?'\nBetreff: '+rec.subject:''}${rec.from?'\nVo
 Text:
 """${String(rec.text||'').slice(0,4000)}"""
 Nur zuordnen, wenn Kommission, Projektname, Projektnummer, Adresse oder Kunde eindeutig passen. Material für Lager/Büro ohne Kundenbezug: "intern". Sonst "".
-Antworte nur mit JSON: {"projectId":"","kind":"angebot|rechnung|ab|bestellung|lieferschein|mail|vertrag|plan|foto|sonst","why":"kurz"}`;
+"docDate": das Datum, das im Dokument selbst steht (Rechnungs-, Angebots-, Beleg- oder Auftragsdatum), als JJJJ-MM-TT – bei E-Mails und wenn keins drinsteht "".
+Antworte nur mit JSON: {"projectId":"","kind":"angebot|rechnung|ab|bestellung|lieferschein|mail|vertrag|plan|foto|sonst","docDate":"","why":"kurz"}`;
   try{ return await SAMPLE.json(prompt,{modelTier:'quick'}); }catch(e){ return null; }
 }
 // Doppelt hochgeladen? Fingerabdruck je Datei (SHA-256 des Inhalts) als fp am Datei-Eintrag bzw. Beleg;
@@ -8028,8 +8053,9 @@ async function ingestFiles(files,text,pidHint){
   const recs=[], mailImgs=[], imgQ=[], stamp=new Date().toISOString();
   const mk=(o)=>({id:uid(),date:TODAY(),at:stamp,...o});
   const upload=async f=>{ if(!ASSETS) return null; try{ const type=f.type||(/\.pdf$/i.test(f.name)?'application/pdf':''); const r=await ASSETS.upload(f,type?{type}:undefined); return {asset:r.id,mime:r.contentType}; }catch(e){ return {err:e&&e.code||'Fehler'}; } };
-  const addFile=async(f,parent,ctx)=>{ const up=await upload(f); const isPdf=/pdf/.test(f.type)||/\.pdf$/i.test(f.name); const txt=isPdf?await pdfText(f):'';
-    const rec=mk({name:f.name||'Datei',mime:f.type||'',size:f.size||0,text:txt.slice(0,6000),parent:parent||'',kind:guessKind(f.name||'',txt,false,f.type),fp:await fileFp(f)});
+  const addFile=async(f,parent,ctx,mailDate)=>{ const up=await upload(f); const isPdf=/pdf/.test(f.type)||/\.pdf$/i.test(f.name); const txt=isPdf?await pdfText(f):'';
+    const dd=docDateOf(txt); // Datum aus dem Dokument → sonst Mail-Datum → sonst heute
+    const rec=mk({name:f.name||'Datei',mime:f.type||'',size:f.size||0,text:txt.slice(0,6000),parent:parent||'',kind:guessKind(f.name||'',txt,false,f.type),fp:await fileFp(f),...(dd?{date:dd,dateSrc:'doc'}:mailDate?{date:mailDate,dateSrc:'mail'}:{})});
     if(parent){ const h=findDup(rec.fp,f.name,f.size); if(h) dupWarn('Anhang „'+(f.name||'Datei')+'“',h); }
     if(up&&up.asset){ rec.asset=up.asset; rec.mime=up.mime||rec.mime; } else if(up&&up.err) rec.note='Datei nicht hochgeladen ('+up.err+'), nur Eintrag';
     const m=matchProject([f.name,txt,ctx].join('\n')); rec.pid=m.pid; rec.why=m.why; recs.push(rec); if(isImgRec(rec)) imgQ.push([rec.id,f]); return rec; };
@@ -8050,7 +8076,7 @@ async function ingestFiles(files,text,pidHint){
       for(const a of (m.att||[])){
         // Bilder aus Mails sind oft Logos und Signaturen: nur auf Nachfrage übernehmen (sehr kleine gar nicht anbieten). In der Original-Mail bleiben sie erhalten.
         if(isImgAtt(a)){ if(a.blob.size>=15000) mailImgs.push({a,mail,ctx}); continue; }
-        const r=await addFile(new File([a.blob],a.name,{type:a.type}),mail.id,ctx); if(!r.pid){ r.pid=mail.pid; r.why=mail.why?'aus der Mail':''; } }
+        const r=await addFile(new File([a.blob],a.name,{type:a.type}),mail.id,ctx,mail.date!==TODAY()||m.date?mail.date:''); if(!r.pid){ r.pid=mail.pid; r.why=mail.why?'aus der Mail':''; } }
     } else await addFile(f,'','');
   }
   if(!recs.length&&text&&text.trim().length>20){ const lines=text.trim().split('\n'); const subj=(lines.find(l=>/^(Betreff|Subject)\s*:/i.test(l))||'').replace(/^[^:]+:\s*/,'')||lines[0].slice(0,90);
@@ -8058,15 +8084,16 @@ async function ingestFiles(files,text,pidHint){
   if(!recs.length){ toast('Bitte Dateien, E-Mails (.msg/.eml) oder kopierten Mailtext ablegen.'); return; }
   if(pidHint) recs.forEach(r=>{ r.pid=pidHint; r.why='in der Projektakte abgelegt'; });
   recs.forEach(r=>{ if(!STD2_RX.test(r.name)){ r.orig=r.orig||r.name; r.name=fileStdName(r,recs); r.autoName=r.name; } });
-  recs.forEach(r=>{ r.auto=r.pid?'regel':''; put('files',r); });
+  recs.forEach(r=>{ r.auto=r.pid?'regel':''; pfApply(r); put('files',r); });
+  { const fo=recs.filter(r=>r.folderAuto); if(fo.length) setTimeout(()=>toast('Ablage-Vorschlag: '+fo.slice(0,3).map(r=>'„'+String(r.name).slice(0,30)+'“ → '+((pfById(r.folder,r.pid)||{}).name||'')).join(' · ')+(fo.length>3?' · und '+(fo.length-3)+' weitere':'')+' – verschieben über „📂 In Ordner“.'),1600); }
   // KI-Telefon-Mails direkt in der Datenablage abgelegt: To-Do trotzdem anlegen (schon vorhandenes wird erkannt)
   recs.filter(r=>r.kind==='mail'&&!r.parent&&isKiTel(r)).forEach(r=>setTimeout(()=>kiTelTodo({subject:r.subject,from:r.from,text:r.text},null,'',{noFile:1,quiet:1,pid:r.pid}),150));
   const n=recs.filter(r=>r.pid).length;
   toast(recs.length+' Eintr'+(recs.length===1?'ag':'äge')+' abgelegt · '+n+' einem Projekt zugeordnet'+(recs.length-n&&SAMPLE?' · Claude prüft den Rest …':''));
   if(pidHint&&pidHint!==INTERN&&SAMPLE) setTimeout(()=>fileCheck(pidHint,recs),300);
   if(mailImgs.length) mailImgAsk(mailImgs,async sel=>{ const start=recs.length;
-    for(const {a,mail,ctx} of sel){ const r=await addFile(new File([a.blob],a.name,{type:a.type}),mail.id,ctx); const pm=(S.files[mail.id]||mail).pid; if(pidHint){ r.pid=pidHint; r.why='in der Projektakte abgelegt'; } else if(!r.pid&&pm){ r.pid=pm; r.why='aus der Mail'; } }
-    recs.slice(start).forEach(r=>{ if(!STD2_RX.test(r.name)){ r.orig=r.orig||r.name; r.name=fileStdName(r,recs); r.autoName=r.name; } r.auto=r.pid?'regel':''; put('files',r); });
+    for(const {a,mail,ctx} of sel){ const r=await addFile(new File([a.blob],a.name,{type:a.type}),mail.id,ctx,mail.date); const pm=(S.files[mail.id]||mail).pid; if(pidHint){ r.pid=pidHint; r.why='in der Projektakte abgelegt'; } else if(!r.pid&&pm){ r.pid=pm; r.why='aus der Mail'; } }
+    recs.slice(start).forEach(r=>{ if(!STD2_RX.test(r.name)){ r.orig=r.orig||r.name; r.name=fileStdName(r,recs); r.autoName=r.name; } r.auto=r.pid?'regel':''; pfApply(r); put('files',r); });
     toast(sel.length+' Bild'+(sel.length===1?'':'er')+' übernommen'+(SAMPLE?' · Claude benennt sie …':'.')); const q=imgQ.splice(0); if(SAMPLE&&q.length) aiImgNameAll(q.slice(0,20)); });
   // Bilder: Claude schaut sie an und benennt sie (ordnet dabei auch das Projekt zu)
   const imgs1=imgQ.splice(0); if(SAMPLE&&imgs1.length){ if(imgs1.length>1) toast(imgs1.length+' Bilder abgelegt · Claude benennt sie …'); aiImgNameAll(imgs1.slice(0,20)).then(n=>{ if(n&&imgs1.length>1) toast(n+' Bild'+(n===1?'':'er')+' benannt.'); }); }
@@ -8075,8 +8102,10 @@ async function ingestFiles(files,text,pidHint){
   for(const r of recs.filter(r=>!r.pid&&!imgIds.has(r.id))){ const a=await aiClassify(r); if(!a) continue; const cur=S.files[r.id]; if(!cur||cur.pid) continue; const nu=clone(cur);
     if(a.projectId&&(S.projects[a.projectId]||a.projectId===INTERN)){ nu.pid=a.projectId; nu.why='Claude: '+String(a.why||'').slice(0,120); nu.auto='claude'; }
     if(FILE_KINDS[a.kind]&&nu.kind==='sonst') nu.kind=a.kind;
+    { const ad=nu.kind!=='mail'&&nu.dateSrc!=='doc'?docDateParse(a.docDate):''; if(ad){ nu.date=ad; nu.dateSrc='doc'; } } // Datum aus dem Dokument (Claude) schlägt Mail-Datum/heute
     if(cur.autoName&&cur.name===cur.autoName){ nu.name=fileStdName(nu); nu.autoName=nu.name; } // automatisch vergebener Name: Projekt/Art nachziehen
-    if(nu.pid!==cur.pid||nu.kind!==cur.kind){ put('files',nu); if(nu.pid) toast('„'+nu.name.slice(0,40)+'“ → '+projName(nu.pid)); } }
+    if(nu.pid&&!nu.folder) pfApply(nu); // jetzt mit Projekt: zuerst Ordner 01–08 vorschlagen
+    if(nu.pid!==cur.pid||nu.kind!==cur.kind||nu.date!==cur.date||nu.folder!==cur.folder){ put('files',nu); if(nu.pid) toast('„'+nu.name.slice(0,40)+'“ → '+projName(nu.pid)+(nu.folder?' → '+((pfById(nu.folder,nu.pid)||{}).name||''):'')); } }
 }
 // Im Projekt abgelegte Dateien/Mails: Claude prüft, ob etwas davon in die Notizen gehört, ein neues To-Do ist
 // oder ein Update zu einem offenen To-Do – sonst bleibt es nur in der Datenablage
@@ -9554,6 +9583,30 @@ const PFOLDERS=[['mail','Korrespondenz'],['angebot','Angebote'],['ab','Auftragsb
 const PF_STD=['01 - Aufmaß Pläne & Bilder','02 - Planung, PV Sol & Berichte','03 - Kostenplanung','04 - ERP Dokumente Angebote & Rechnungen','05 - Lieferanten','06 - Baumappe & Bilder','07 - EVU, ASA, IBN','08 - Abnahme & Dokumentation'];
 const pfStd=pid=>PF_STD.map(n=>({id:'std:'+n.slice(0,2),pid,name:n,std:true}));
 const pfOf=pid=>pfStd(pid).concat(arr('pfold').filter(x=>x.pid===pid).sort((a,b)=>String(a.name).localeCompare(String(b.name),'de',{numeric:true})));
+/* Ablage-Vorschlag (Wunsch EP, 20.11.2026): Jede neue Projektdatei zuerst gegen die Ordner 01–08 prüfen und dort ablegen.
+   Nur wenn keiner passt, bleibt sie in den automatischen Ordnern nach Art. Inhalt/Name/Betreff zählt vor der Dokumentart. */
+const PF_RULES=[
+  ['std:07',/\b(EVU|ASA|IBN)\b|netz\s?anmeld|netzbetreiber|netzanschluss|anschlussanfrage|einspeis|inbetriebnahme|inbetriebsetz|marktstammdaten|mastr|zählerantrag|zählersetz|zählerwechsel|westnetz|rheinnetz|netze\s?bw|\be\.on\b|\bsyna\b|bayernwerk|avacon|stromnetz/i],
+  ['std:08',/abnahme|übergabe|dokumentation|messprotokoll|prüfprotokoll|prüfbericht|e-?check|vde\s?0100|garantie|gewährleistung|zertifikat|konformität/i],
+  ['std:02',/pv\s?\*?\s?sol|simulation|ertrags(prognose|berechnung)|wirtschaftlichkeit|statik|belegungsplan|string(plan|ung)|schaltplan|stromlaufplan|planungsbericht|gutachten|lastgang|verschattung/i],
+  ['std:03',/kalkulation|kostenplan|kostenschätz|budget|preisvergleich|kostenaufstellung|deckungsbeitrag/i],
+  ['std:01',/aufmaß|aufmass|grundriss|dachplan|lageplan|bestandsplan|vor-?ort-?termin|besichtigung/i]];
+const PF_SUPPLIER_RX=/sonepar|rexel|eld?ektro\s?groß|großhandel|krannich|baywa|memodo|wagner\s?solar|segen|alma\s?solar|fronius|sma\b|huawei|byd|kostal|enphase|schletter|k2\s?systems|würth|hager|obo\b/i;
+function pfSuggest(r){ if(!r||!r.pid||r.pid===INTERN||!S.projects[r.pid]) return ''; const hay=[r.name,r.orig,r.subject,r.aiTitle,String(r.text||'').slice(0,3000)].filter(Boolean).join(' ');
+  const head=[r.name,r.orig,r.subject,r.aiTitle].filter(Boolean).join(' ');
+  // 1) Titel/Betreff/Dateiname sind am verlässlichsten, danach der Text
+  for(const [id,rx] of PF_RULES) if(rx.test(head)) return id;
+  const k=r.kind||'sonst', firm=String(r.aiFirm||r.from||'')+' '+head, own=(FIRMS()||[]).some(f=>f&&firm.toLowerCase().includes(String(f).toLowerCase().split(/\s+/)[0]));
+  const supplier=!own&&(PF_SUPPLIER_RX.test(firm)||arr('orders').some(o=>o.supplier&&o.supplier.length>2&&firm.toLowerCase().includes(o.supplier.toLowerCase().split(/\s+/)[0])));
+  if(['bestellung','lieferschein'].includes(k)) return 'std:05';
+  if(['angebot','rechnung','ab'].includes(k)) return supplier?'std:05':'std:04';
+  if(k==='foto') return /aufmaß|aufmass|besichtigung|vor-?ort|bestand/i.test(hay)||catOf(S.projects[r.pid])==='planung'?'std:01':'std:06';
+  if(k==='plan') return /pv\s?\*?\s?sol|string|schaltplan|belegung/i.test(hay)?'std:02':'std:01';
+  for(const [id,rx] of PF_RULES) if(rx.test(hay)) return id;
+  if(supplier) return 'std:05';
+  return ''; }
+// Vorschlag anwenden: nur wenn die Datei noch in keinem Ordner liegt
+function pfApply(r){ if(!r||r.folder) return ''; const f=pfSuggest(r); if(f){ r.folder=f; r.folderAuto=1; } return f; }
 const pfById=(id,pid)=>String(id||'').startsWith('std:')?pfStd(pid).find(x=>x.id===id)||null:(S.pfold||{})[id]||null;
 const pfFolderOk=f=>{ if(!f||!f.folder) return false; const o=pfById(f.folder,f.pid); return !!o&&o.pid===f.pid; };
 function pfNew(pid,then){ openSheet({title:'Neuer Ordner',fields:[{k:'name',label:'Name des Ordners',req:1,ph:'z. B. Netzbetreiber, Statik, Fotos Montage, Abnahme'}],saveLabel:'Ordner anlegen',
